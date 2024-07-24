@@ -1,3 +1,4 @@
+import Modal from './Modal'
 import React from 'react'
 
 const InputField = ({ label, type, placeholder, required }) => (
@@ -123,10 +124,7 @@ const DoctorSignupForm = () => (
     />
 
     <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
-      <a href='#' className='text-sm font-medium text-gray-900 mb-2 md:mb-0'>
-        Click here to <span className='text-violet-950'>upload</span> Documents
-        →
-      </a>
+      <Modal />
       <a href='#' className='text-sm font-medium text-gray-900'>
         Already have an account?{' '}
         <span className='text-violet-950'>Login here</span>
