@@ -62,7 +62,7 @@ const FileUpload = () => {
   }
 
   return (
-    <div className='flex justify-center items-center min-h-screen bg-gray-50 p-4 rounded-md my-8'>
+    <div className='flex justify-center items-center0 p-4 rounded-md'>
       <div className='bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl'>
         <h2 className='text-2xl font-bold mb-4'>Upload or Attach Files</h2>
         <p className='text-gray-500 mb-4'>Upload requested document here...</p>
