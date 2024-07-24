@@ -84,6 +84,8 @@ const FileUpload = () => {
             <span className='text-blue-400'>
               Drag and drop your files
               <span className='text-blue-800'> here</span>
+              {/* 
+              vgbr */}
             </span>
           </label>
         </div>
