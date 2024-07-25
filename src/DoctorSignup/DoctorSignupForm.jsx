@@ -1,7 +1,15 @@
 import Modal from './Modal'
 import React from 'react'
 
-const InputField = ({ label, type, placeholder, required }) => (
+const InputField = ({
+  label,
+  type,
+  placeholder,
+  required,
+  name,
+  value,
+  onChange
+}) => (
   <div className='mb-4'>
     <label className='block text-sm font-medium text-gray-700 mb-1'>
       {label} {required && <span className='text-red-500'>*</span>}
@@ -10,11 +18,15 @@ const InputField = ({ label, type, placeholder, required }) => (
       type={type}
       className='w-full p-2 border border-gray-300 rounded text-sm'
       placeholder={placeholder}
+      name={name}
+      value={value}
+      onChange={onChange}
+      required={required}
     />
   </div>
 )
 
-const RadioGroup = ({ label, options }) => (
+const RadioGroup = ({ label, options, name, value, onChange }) => (
   <div className='mb-4'>
     <label className='block text-sm font-medium text-gray-700 mb-1'>
       {label}
@@ -22,7 +34,14 @@ const RadioGroup = ({ label, options }) => (
     <div className='flex space-x-4'>
       {options.map(option => (
         <label key={option} className='flex items-center'>
-          <input type='radio' name={label} className='mr-2' />
+          <input
+            type='radio'
+            name={name}
+            value={option}
+            checked={value === option}
+            onChange={onChange}
+            className='mr-2'
+          />
           <span className='text-sm'>{option}</span>
         </label>
       ))}
@@ -30,122 +49,165 @@ const RadioGroup = ({ label, options }) => (
   </div>
 )
 
-const Checkbox = ({ label }) => (
+const Checkbox = ({ label, name, checked, onChange }) => (
   <label className='flex items-center space-x-2'>
-    <input type='checkbox' className='form-checkbox' />
+    <input
+      type='checkbox'
+      className='form-checkbox'
+      name={name}
+      checked={checked}
+      onChange={onChange}
+    />
     <span className='text-sm'>{label}</span>
   </label>
 )
 
-const Button = ({ children, className }) => (
-  <button
-    type='submit'
-    className={`w-24 py-2 bg-blue-600 text-white rounded text-sm ${className}`}
-  >
-    {children}
-  </button>
-)
+const DoctorSignupForm = ({ formData, setFormData }) => {
+  const handleChange = e => {
+    const { name, value, type, checked } = e.target
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? checked : value
+    }))
+  }
 
-const DoctorSignupForm = () => (
-  <form className='max-w-4xl mx-auto p-4'>
-    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-      <InputField
-        label='First Name'
-        type='text'
-        placeholder='Enter First Name'
-      />
-      <InputField label='Last Name' type='text' placeholder='Enter Surname' />
-      <InputField label='Email' type='email' placeholder='Enter Email' />
-      <div class='max-w-md space-y-3 mb-4'>
-        <div>
-          <label
-            for='hs-input-with-add-on-url'
-            class='block text-sm text-gray-700 font-medium'
-          >
-            Mobile Number
-          </label>
-          <div class='flex rounded-lg'>
-            <div class='px-4 inline-flex items-center min-w-fit rounded-s-md border border-gray-300 bg-gray-100'>
-              <span class='text-sm text-gray-500'>+234</span>
+  return (
+    <form className='max-w-4xl mx-auto p-4'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <InputField
+          label='First Name'
+          type='text'
+          placeholder='Enter First Name'
+          name='firstName'
+          value={formData.firstName || ''}
+          onChange={handleChange}
+          required
+        />
+        <InputField
+          label='Last Name'
+          type='text'
+          placeholder='Enter Surname'
+          name='lastName'
+          value={formData.lastName || ''}
+          onChange={handleChange}
+          required
+        />
+        <InputField
+          label='Email'
+          type='email'
+          placeholder='Enter Email'
+          name='email'
+          value={formData.email || ''}
+          onChange={handleChange}
+          required
+        />
+        <div className='max-w-md space-y-3 mb-4'>
+          <div>
+            <label
+              htmlFor='mobileNumber'
+              className='block text-sm text-gray-700 font-medium'
+            >
+              Mobile Number
+            </label>
+            <div className='flex rounded-lg'>
+              <div className='px-4 inline-flex items-center min-w-fit rounded-s-md border border-gray-300 bg-gray-100'>
+                <span className='text-sm text-gray-500'>+234</span>
+              </div>
+              <input
+                type='text'
+                name='mobileNumber'
+                id='mobileNumber'
+                className='py-3 px-4 block w-full border border-gray-300 rounded-e-md text-sm'
+                placeholder='Enter mobile Number'
+                value={formData.mobileNumber || ''}
+                onChange={handleChange}
+              />
             </div>
-            <input
-              type='text'
-              name='hs-input-with-add-on-url'
-              id='hs-input-with-add-on-url'
-              class='py-3 px-4  block w-full border border-gray-300 rounded-e-md text-sm'
-              placeholder='Enter mobile Number'
-            />
           </div>
         </div>
       </div>
-      {/* <div className='flex'>
-        <span className='inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md'>
-          +234
-        </span>
-        <input
+
+      <RadioGroup
+        label='Sex'
+        options={['Male', 'Female']}
+        name='sex'
+        value={formData.sex || ''}
+        onChange={handleChange}
+      />
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-[3rem]'>
+        <InputField
+          label='Medical specialization'
           type='text'
-          className='rounded-none rounded-r-lg border text-gray-900 block flex-1 min-w-0 w-full text-sm border-gray-300 p-2.5'
-          placeholder='Enter mobile Number'
+          placeholder='Enter here'
+          name='specialization'
+          value={formData.specialization || ''}
+          onChange={handleChange}
         />
-      </div> */}
-    </div>
+        <InputField
+          label='Name of Hospital you work'
+          type='text'
+          placeholder='Enter here'
+          name='hospital'
+          value={formData.hospital || ''}
+          onChange={handleChange}
+        />
+        <InputField
+          label='Input Password'
+          type='password'
+          placeholder='Password'
+          name='password'
+          value={formData.password || ''}
+          onChange={handleChange}
+          required
+        />
+        <InputField
+          label='Re-Enter Password'
+          type='password'
+          placeholder='Confirm Password'
+          name='confirmPassword'
+          value={formData.confirmPassword || ''}
+          onChange={handleChange}
+          required
+        />
+      </div>
 
-    <RadioGroup label='Sex' options={['Male', 'Female']} />
-
-    <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-[3rem]'>
       <InputField
-        label='Medical specialization'
-        type='text'
-        placeholder='Enter here'
+        label='How did you hear about us?'
+        type='textarea'
+        placeholder='How did you hear about us?'
+        name='heardAboutUs'
+        value={formData.heardAboutUs || ''}
+        onChange={handleChange}
       />
-      <InputField
-        label='Name of Hospital you work'
-        type='text'
-        placeholder='Enter here'
-      />
-      <InputField
-        label='Input Password'
-        type='password'
-        placeholder='Password'
-        required
-      />
-      <InputField
-        label='Re-Enter Password'
-        type='password'
-        placeholder='Confirm Password'
-        required
-      />
-    </div>
 
-    <InputField
-      label='How did you hear about us?'
-      type='textarea'
-      placeholder='How did you hear about us?'
-    />
+      <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
+        <Modal />
+        <a href='#' className='text-sm font-medium text-gray-900'>
+          Already have an account?{' '}
+          <span className='text-violet-950'>Login here</span>
+        </a>
+      </div>
 
-    <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
-      <Modal />
-      <a href='#' className='text-sm font-medium text-gray-900'>
-        Already have an account?{' '}
-        <span className='text-violet-950'>Login here</span>
-      </a>
-    </div>
-
-    <div className='mt-6'>
-      <Checkbox
-        label={
-          <span className='text-sm text-gray-900 font-medium'>
-            Accept the{' '}
-            <a href='#' className='text-violet-950'>
-              Terms and Conditions, Operating policies{' '}
-              <span className='text-gray-900'>and</span> cookies policies of
-              Medfair
-            </a>
-          </span>
-        }
-      />
-    </div>
-  </form>
-)
+      <div className='mt-6'>
+        <Checkbox
+          label={
+            <span className='text-sm text-gray-900 font-medium'>
+              Accept the{' '}
+              <a href='#' className='text-violet-950'>
+                Terms and Conditions, Operating policies{' '}
+                <span className='text-gray-900'>and</span> cookies policies of
+                Medfair
+              </a>
+            </span>
+          }
+          name='acceptTerms'
+          checked={formData.acceptTerms || false}
+          onChange={handleChange}
+        />
+      </div>
+    </form>
+  )
+}
 
 export default DoctorSignupForm

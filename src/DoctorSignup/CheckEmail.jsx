@@ -1,0 +1,52 @@
+import React, { useEffect } from 'react'
+
+const CheckEmail = ({ onAnimationComplete }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (onAnimationComplete) {
+        onAnimationComplete()
+      }
+    }, 3000) // Show for 3 seconds
+
+    return () => clearTimeout(timer)
+  }, [onAnimationComplete])
+
+  return (
+    <div className='flex items-center justify-center min-h-screen bg-white animate-fade-in'>
+      <div className='bg-gray-50 p-8 rounded-lg shadow-lg text-center max-w-md w-full'>
+        <svg
+          className='h-20 w-20 mx-auto mb-4 text-blue-600'
+          width='116'
+          height='116'
+          viewBox='0 0 116 116'
+          fill='none'
+          xmlns='http://www.w3.org/2000/svg'
+        >
+          <path
+            d='M58.0003 109.958C86.6961 109.958 109.959 86.6956 109.959 57.9998C109.959 29.304 86.6961 6.0415 58.0003 6.0415C29.3045 6.0415 6.04199 29.304 6.04199 57.9998C6.04199 86.6956 29.3045 109.958 58.0003 109.958Z'
+            stroke='#020E7C'
+            stroke-linecap='round'
+            stroke-linejoin='round'
+          />
+          <path
+            d='M58 20.4932C67.074 20.4989 75.8614 23.6721 82.8456 29.4651C89.8298 35.2581 94.5727 43.3074 96.2558 52.224H19.7441C21.4229 43.3053 26.1646 35.2533 33.1497 29.4596C40.1349 23.6658 48.9247 20.4943 58 20.4932ZM58 64.4282C59.3454 64.4277 60.6551 64.8608 61.7351 65.6632C62.815 66.4657 63.6076 67.5947 63.9955 68.883C64.3833 70.1713 64.3457 71.5503 63.8883 72.8155C63.4308 74.0808 62.5778 75.1649 61.4558 75.9073L64.9116 85.284H51.0883L54.5441 75.9073C53.4221 75.1649 52.5691 74.0808 52.1117 72.8155C51.6542 71.5503 51.6166 70.1713 52.0045 68.883C52.3923 67.5947 53.185 66.4657 54.2649 65.6632C55.3448 64.8608 56.6546 64.4277 58 64.4282Z'
+            stroke='#020E7C'
+            stroke-linecap='round'
+            stroke-linejoin='round'
+          />
+        </svg>
+
+        <h1 className='text-2xl font-bold text-gray-800 mb-2'>
+          Check your email!
+        </h1>
+        <p className='text-gray-500'>
+          A verification code was sent to you
+          <br />
+          (solomonmoregood97@gmail.com).
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default CheckEmail
