@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as Preline from 'preline'
 import DoctorSignupForm from './DoctorSignup/DoctorSignupForm'
 import VerificationInput from './DoctorSignup/VerificationInput'
@@ -9,6 +10,7 @@ const DoctorSignup = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [showCheckEmail, setShowCheckEmail] = useState(false)
   const [formData, setFormData] = useState({})
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (Preline.HSStepperJS && typeof Preline.HSStepperJS.init === 'function') {
@@ -41,13 +43,14 @@ const DoctorSignup = () => {
 
   const handleNextClick = () => {
     if (currentStep === 1) {
-      // Validate form data here if needed
       if (validateForm()) {
         setShowCheckEmail(true)
         setCurrentStep(2)
       }
-    } else {
-      setCurrentStep(prev => Math.min(prev + 1, 3))
+    } else if (currentStep === 2) {
+      setCurrentStep(3)
+    } else if (currentStep === 3) {
+      navigate('/dashboard') // Navigate to the dashboard
     }
   }
 
@@ -75,7 +78,6 @@ const DoctorSignup = () => {
           </p>
 
           <div data-hs-stepper>
-            {/* Stepper Nav */}
             <ul className='relative flex justify-center mb-4 ml-4 lg:ml-[14rem] mr-4 lg:mr-[18rem] rounded-md bg-slate-100 p-6'>
               {stepLabels.map((label, index) => (
                 <li
@@ -104,35 +106,10 @@ const DoctorSignup = () => {
               ))}
             </ul>
 
-            {/* Stepper Content */}
             <div className='mt-5 sm:mt-8'>{renderStepContent(currentStep)}</div>
-
-            {/* Button Group */}
-            {/* {!showCheckEmail && (
-              <div className='mt-5 flex justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
-                <button
-                  type='button'
-                  className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none'
-                  data-hs-stepper-back-btn
-                  onClick={() => setCurrentStep(prev => Math.max(prev - 1, 1))}
-                  disabled={currentStep === 1}
-                >
-                  Back
-                </button>
-                <button
-                  type='button'
-                  className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none'
-                  data-hs-stepper-next-btn
-                  onClick={() => setCurrentStep(prev => Math.min(prev + 1, 3))}
-                >
-                  {currentStep === 3 ? 'Submit' : 'Next'}
-                </button>
-              </div>
-            )} */}
           </div>
         </div>
 
-        {/* Button Group */}
         {!showCheckEmail && (
           <div className='mt-5 flex justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
             <button
@@ -154,7 +131,7 @@ const DoctorSignup = () => {
             </button>
           </div>
         )}
-        <div className='text-center mt-4'>
+        <div className='text-center mt-4 mb-12'>
           <a href='#' className='text-blue-500'>
             Back to Homepage
           </a>
