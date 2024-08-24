@@ -1,11 +1,16 @@
 import React from 'react'
-import DoctorSignup from './DoctorSignup'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import LandingPage from './LandingPage'
+import DashboardLayout from './DashboardLayout'
 
-function App () {
+const App = () => {
   return (
-    <div className='flex items-center justify-center max-w-7xl'>
-      <DoctorSignup />
-    </div>
+    <Router>
+      <Routes>
+        <Route path='/' element={<LandingPage />} />
+        <Route path='/dashboard/*' element={<DashboardLayout />} />
+      </Routes>
+    </Router>
   )
 }
 

@@ -1,0 +1,95 @@
+import React from 'react'
+import AvatarImage from '../../assets/avatar.png' // Adjust the path based on your project structure
+
+function AppointmentRequests () {
+  const appointments = [
+    {
+      name: 'Solomon Moregood',
+      condition: 'Flu',
+      date: '13/03/24 - 9am',
+      avatar: AvatarImage // Use the imported image
+    },
+    {
+      name: 'Solomon Moregood',
+      condition: 'Flu',
+      date: '13/03/24 - 9am',
+      avatar: AvatarImage // Use the imported image
+    },
+    {
+      name: 'Solomon Moregood',
+      condition: 'Flu',
+      date: '13/03/24 - 9am',
+      avatar: AvatarImage // Use the imported image
+    },
+    {
+      name: 'Solomon Moregood',
+      condition: 'Flu',
+      date: '13/03/24 - 9am',
+      avatar: AvatarImage // Use the imported image
+    }
+    // Add more appointment objects here as needed
+  ]
+
+  return (
+    <div className='sm:w-[329px] mt-4 w-full h-[370px] px-4 relative bg-white rounded-[10px] p-2'>
+      <div className='flex justify-between text-[#020e7c]'>
+        <span className="text-base font-semibold font-['Roboto'] leading-[25px]">
+          Appointment Requests
+        </span>
+        <span className="text-xs font-normal font-['Roboto'] leading-[25px]">
+          View all
+        </span>
+      </div>
+
+      {appointments.map((appointment, index) => (
+        <div
+          key={index}
+          className='flex items-center justify-between px-4 bg-gray-100 rounded-lg mt-4 p-2'
+        >
+          <div className='flex-shrink-0'>
+            <img
+              src={appointment.avatar}
+              alt={`${appointment.name}'s avatar`}
+              className='w-8 h-8 rounded-full'
+            />
+          </div>
+          <div className='flex-1 ml-2'>
+            <div className="text-[#020e7c] text-[10px] font-normal font-['Roboto'] leading-[25px]">
+              {appointment.name}
+            </div>
+            <div className="text-[#020e7c] text-[10px] font-normal font-['Roboto'] leading-[25px]">
+              {appointment.condition}
+            </div>
+          </div>
+          <div className="text-[#020e7c] text-[10px] font-normal font-['Roboto'] leading-[25px]">
+            {appointment.date}
+          </div>
+          <div className='flex space-x-2 ml-2'>
+            <div className='w-5 h-5 bg-white border border-[#020e7c] rounded-full flex justify-center items-center'>
+              <svg
+                width='12'
+                height='12'
+                viewBox='0 0 12 12'
+                fill='none'
+                xmlns='http://www.w3.org/2000/svg'
+              >
+                <path
+                  d='M3.75147 8.13335C-0.39051 9.87085 0.904074 4.94792 2.71626 3.5C2.22751 4.83334 1.98996 7.00385 5.25 5.75L11 3.5C11 3.5 8.3606 6.1999 3.75147 8.13335Z'
+                  stroke='#020E7C'
+                  stroke-width='1.5'
+                  stroke-linecap='round'
+                  stroke-linejoin='round'
+                />
+              </svg>
+            </div>
+            <div className='w-5 h-5 bg-white border border-[#ff0404] rounded-full'></div>
+          </div>
+        </div>
+      ))}
+
+      {/* <div className='w-[83px] h-[3px] absolute bottom-4 right-0 bg-[#a2adff] rounded-full'></div> */}
+    </div>
+  )
+}
+
+export default AppointmentRequests

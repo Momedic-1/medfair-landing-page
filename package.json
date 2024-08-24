@@ -13,9 +13,10 @@
     "@nextui-org/react": "^2.4.6",
     "@preline/stepper": "^2.3.0",
     "framer-motion": "^11.3.15",
-    "preline": "^2.3.0",
+    "preline": "^2.4.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
