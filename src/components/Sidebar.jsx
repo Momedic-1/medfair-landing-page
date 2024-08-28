@@ -138,7 +138,7 @@ const Sidebar = () => {
                 <span className='sr-only'>Notifications</span>
               </button>
 
-              <button className='bg-blue-800 text-white px-4 py-2 rounded-md'>
+              <button className='bg-blue-800 text-white sm:px-4 sm:py-2 rounded-md text-[6px] sm:text-sm px-2'>
                 Create appointment
               </button>
             </div>
