@@ -1,20 +1,26 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import myLogo from '../assets/medfair.svg'
+// import myLogo from '../assets/medfair.svg'
 
 const Sidebar = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen)
+  }
+
   return (
     <>
       <header className='sticky top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px]'>
         <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto'>
           <div className='me-5 whitespace-nowrap lg:me-0 lg:hidden'>
-            <a
+            <button
               className='items-center space-x-2 flex-none rounded-md text-sm inline-block font-semibold focus:outline-none focus:opacity-80'
-              href='#'
-              aria-label='Dashboard'
+              onClick={toggleSidebar}
+              aria-label='Toggle Sidebar'
             >
-              <span className='text-blue-800'>Doctor’s Dashboard</span>
-            </a>
+              <span className='text-blue-800'>Doctor's Dashboard</span>
+            </button>
           </div>
 
           <div className='w-full flex items-center justify-end ms-auto md:justify-between gap-x-1 md:gap-x-3'>
@@ -129,11 +135,8 @@ const Sidebar = () => {
             <button
               type='button'
               className='size-8 flex justify-center items-center gap-x-2 border border-gray-200 text-gray-800 hover:text-gray-500 rounded-lg focus:outline-none focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none'
-              aria-haspopup='dialog'
-              aria-expanded='false'
-              aria-controls='hs-application-sidebar'
-              aria-label='Toggle navigation'
-              data-hs-overlay='#hs-application-sidebar'
+              onClick={toggleSidebar}
+              aria-label='Toggle Navigation'
             >
               <span className='sr-only'>Toggle Navigation</span>
               <svg
@@ -144,9 +147,9 @@ const Sidebar = () => {
                 viewBox='0 0 24 24'
                 fill='none'
                 stroke='currentColor'
-                stroke-width='2'
-                stroke-linecap='round'
-                stroke-linejoin='round'
+                strokeWidth='2'
+                strokeLinecap='round'
+                strokeLinejoin='round'
               >
                 <rect width='18' height='18' x='3' y='3' rx='2' />
                 <path d='M15 3v18' />
@@ -186,17 +189,11 @@ const Sidebar = () => {
 
       <div
         id='hs-application-sidebar'
-        className='hs-overlay  [--auto-close:lg]
-      hs-overlay-open:translate-x-0
-      -translate-x-full transition-all duration-300 transform
-      w-[260px] h-full
-      hidden
-      fixed inset-y-0 start-0 z-[60]
-      bg-[#020e7c] border-e border-gray-200
-      lg:block lg:translate-x-0 lg:end-auto lg:bottom-0
-     '
+        className={`hs-overlay ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } transition-all duration-300 transform fixed inset-y-0 start-0 z-[60] w-[260px] bg-[#020e7c] border-e border-gray-200 lg:block lg:translate-x-0 lg:end-auto lg:bottom-0`}
         role='dialog'
-        tabindex='-1'
+        tabIndex='-1'
         aria-label='Sidebar'
       >
         <div className='relative flex flex-col h-full max-h-full'>
@@ -206,7 +203,7 @@ const Sidebar = () => {
               href='#'
               aria-label='Dashboard'
             >
-              <span className='text-white'>Doctor’s Dashboard</span>
+              <span className='text-white'>Doctor's Dashboard</span>
             </a>
           </div>
 
