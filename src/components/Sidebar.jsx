@@ -1,14 +1,31 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 // import myLogo from '../assets/medfair.svg'
 
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const sidebarRef = useRef(null)
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
   }
 
+  const closeSidebar = () => {
+    setIsSidebarOpen(false)
+  }
+
+  useEffect(() => {
+    const handleClickOutside = event => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        closeSidebar()
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
   return (
     <>
       <header className='sticky top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px]'>
@@ -187,7 +204,16 @@ const Sidebar = () => {
         </div>
       </div>
 
+      {/* Overlay */}
+      {isSidebarOpen && (
+        <div
+          className='fixed inset-0 bg-gray-900 bg-opacity-50 z-[59] lg:hidden'
+          onClick={closeSidebar}
+        ></div>
+      )}
+
       <div
+        ref={sidebarRef}
         id='hs-application-sidebar'
         className={`hs-overlay ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -197,7 +223,7 @@ const Sidebar = () => {
         aria-label='Sidebar'
       >
         <div className='relative flex flex-col h-full max-h-full'>
-          <div className='px-6 pt-4'>
+          <div className='px-6 pt-4 flex justify-between items-center'>
             <a
               className='flex items-center space-x-2 flex-none rounded-md text-sm inline-block font-semibold focus:outline-none focus:opacity-80'
               href='#'
@@ -205,6 +231,25 @@ const Sidebar = () => {
             >
               <span className='text-white'>Doctor's Dashboard</span>
             </a>
+            <button
+              onClick={closeSidebar}
+              className='text-white hover:text-gray-300 lg:hidden'
+              aria-label='Close sidebar'
+            >
+              <svg
+                className='h-6 w-6'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M6 18L18 6M6 6l12 12'
+                />
+              </svg>
+            </button>
           </div>
 
           <div className='h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300'>
@@ -232,9 +277,9 @@ const Sidebar = () => {
                       viewBox='0 0 24 24'
                       fill='none'
                       stroke='currentColor'
-                      stroke-width='2'
-                      stroke-linecap='round'
-                      stroke-linejoin='round'
+                      strokeWidth='2'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
                     >
                       <path d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' />
                       <polyline points='9 22 9 12 15 12 15 22' />
