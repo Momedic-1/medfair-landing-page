@@ -5,12 +5,14 @@ import DashboardLayout from './DashboardLayout'
 
 const App = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path='/' element={<LandingPage />} />
-        <Route path='/dashboard/*' element={<DashboardLayout />} />
-      </Routes>
-    </Router>
+    <div className='flex items-center justify-center'>
+      <Router>
+        <Routes>
+          <Route path='/' element={<LandingPage />} />
+          <Route path='/dashboard/*' element={<DashboardLayout />} />
+        </Routes>
+      </Router>
+    </div>
   )
 }
 
