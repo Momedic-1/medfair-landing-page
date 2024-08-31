@@ -8,10 +8,14 @@ function LeftPanel () {
     <div className='w-full lg:w-2/3 p-4 space-y-6'>
       <WelcomeBack />
       <div className='flex flex-col lg:flex-row'>
-        <AppointmentRequests />
+        <div class='hidden lg:block'>
+          <AppointmentRequests />
+        </div>
         <Appointments />
       </div>
-      <RecentPatients />
+      <div class='hidden lg:block'>
+        <RecentPatients />
+      </div>
     </div>
   )
 }

@@ -30,14 +30,60 @@ const Sidebar = () => {
     <>
       <header className='sticky top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px]'>
         <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto'>
-          <div className='me-5 whitespace-nowrap lg:me-0 lg:hidden'>
-            <button
-              className='items-center space-x-2 flex-none rounded-md text-sm inline-block font-semibold focus:outline-none focus:opacity-80'
-              onClick={toggleSidebar}
-              aria-label='Toggle Sidebar'
-            >
-              <span className='text-blue-800'>Doctor's Dashboard</span>
-            </button>
+          <div className='-mt-px'>
+            <div className='sticky top-0 inset-x-0 z-20 bg-white px-4 sm:px-6 lg:px-8 lg:hidden'>
+              <div className='flex items-center py-2'>
+                <button
+                  type='button'
+                  className='size-8 flex justify-center items-center gap-x-2 border border-gray-200 text-gray-800 hover:text-gray-500 rounded-lg focus:outline-none focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none'
+                  onClick={toggleSidebar}
+                  aria-label='Toggle Navigation'
+                >
+                  <span className='sr-only'>Toggle Navigation</span>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke-width='1.5'
+                    stroke='currentColor'
+                    class='size-6'
+                  >
+                    <path
+                      stroke-linecap='round'
+                      stroke-linejoin='round'
+                      d='M3.75 9h16.5m-16.5 6.75h16.5'
+                    />
+                  </svg>
+                </button>
+
+                {/* <ol className='ms-3 flex items-center whitespace-nowrap'>
+              <li className='flex items-center text-sm text-gray-800'>
+                Application Layout
+                <svg
+                  className='shrink-0 mx-3 overflow-visible size-2.5 text-gray-400'
+                  width='16'
+                  height='16'
+                  viewBox='0 0 16 16'
+                  fill='none'
+                  xmlns='http://www.w3.org/2000/svg'
+                >
+                  <path
+                    d='M5 1L10.6869 7.16086C10.8637 7.35239 10.8637 7.64761 10.6869 7.83914L5 14'
+                    stroke='currentColor'
+                    stroke-width='2'
+                    stroke-linecap='round'
+                  />
+                </svg>
+              </li>
+              <li
+                className='text-sm font-semibold text-gray-800 truncate'
+                aria-current='page'
+              >
+                Dashboard
+              </li>
+            </ol> */}
+              </div>
+            </div>
           </div>
 
           <div className='w-full flex items-center justify-end ms-auto md:justify-between gap-x-1 md:gap-x-3'>
@@ -145,64 +191,6 @@ const Sidebar = () => {
           </div>
         </nav>
       </header>
-
-      <div className='-mt-px'>
-        <div className='sticky top-0 inset-x-0 z-20 bg-white border-y px-4 sm:px-6 lg:px-8 lg:hidden'>
-          <div className='flex items-center py-2'>
-            <button
-              type='button'
-              className='size-8 flex justify-center items-center gap-x-2 border border-gray-200 text-gray-800 hover:text-gray-500 rounded-lg focus:outline-none focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none'
-              onClick={toggleSidebar}
-              aria-label='Toggle Navigation'
-            >
-              <span className='sr-only'>Toggle Navigation</span>
-              <svg
-                className='shrink-0 size-4'
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              >
-                <rect width='18' height='18' x='3' y='3' rx='2' />
-                <path d='M15 3v18' />
-                <path d='m8 9 3 3-3 3' />
-              </svg>
-            </button>
-
-            <ol className='ms-3 flex items-center whitespace-nowrap'>
-              <li className='flex items-center text-sm text-gray-800'>
-                Application Layout
-                <svg
-                  className='shrink-0 mx-3 overflow-visible size-2.5 text-gray-400'
-                  width='16'
-                  height='16'
-                  viewBox='0 0 16 16'
-                  fill='none'
-                  xmlns='http://www.w3.org/2000/svg'
-                >
-                  <path
-                    d='M5 1L10.6869 7.16086C10.8637 7.35239 10.8637 7.64761 10.6869 7.83914L5 14'
-                    stroke='currentColor'
-                    stroke-width='2'
-                    stroke-linecap='round'
-                  />
-                </svg>
-              </li>
-              <li
-                className='text-sm font-semibold text-gray-800 truncate'
-                aria-current='page'
-              >
-                Dashboard
-              </li>
-            </ol>
-          </div>
-        </div>
-      </div>
 
       {/* Overlay */}
       {isSidebarOpen && (
