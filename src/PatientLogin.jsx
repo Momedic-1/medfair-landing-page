@@ -46,7 +46,7 @@ export default function LoginPage() {
         localStorage.setItem('userData', JSON.stringify(user));
 
         // Redirect to the dashboard
-        navigate('/dashboard');
+        navigate('/patient-dashboard');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
