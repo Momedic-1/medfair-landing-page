@@ -10,24 +10,23 @@ export default function PatientSignupForm({ formData, setFormData }) {
       ...prevData,
       medicalSpecialization: 'string',
       nameOfHospital: 'string',
-      howDidYouHearAboutUs: 'string',
+      howDidYouHearAboutUs: 'NEWSPAPER',
       userRole : 'PATIENT'
     }));
   }, [setFormData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-     const updatedValue = name === 'phoneNumber' ? Number(`${0+value}`) : value;
     
      setFormData({
       ...formData,
-      [name]: updatedValue,
+      [name]: value,
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
+    
     console.log('Form Data Submitted:', formData);
   };
 
@@ -169,8 +168,8 @@ export default function PatientSignupForm({ formData, setFormData }) {
               <input
                 required
                 type='password'
-                name='confirmPassword'
-                value={formData.confirmPassword}
+                name='confirmedPassword'
+                value={formData.confirmedPassword}
                 onChange={handleChange}
                 placeholder='Enter Password'
                 className='border rounded-md p-3 mt-2 w-full bg-gray-100'
@@ -179,7 +178,6 @@ export default function PatientSignupForm({ formData, setFormData }) {
           </div>
 
           <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
-            <Modal />
             <a href='#' className='text-sm font-medium text-gray-900'>
               Already have an account?{' '}
               <span onClick={()=>navigate('/login')} className='text-violet-700'>Login here</span>

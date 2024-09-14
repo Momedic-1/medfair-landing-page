@@ -58,7 +58,7 @@ const PatientSignup = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email: formData.email, token: verificationToken }),
+          body: JSON.stringify({ token: verificationToken, email: formData.emailAddress }),
         });
 
         const result = await response.json();
@@ -66,14 +66,18 @@ const PatientSignup = () => {
         if (response.ok) {
           setCurrentStep(3);
         } else {
+          setLoading(false)
           alert('Incorrect token!');
           console.error(result.message);
         }
       } catch (error) {
+         console.log({ token: verificationToken, email: formData.emailAddress })
+        setLoading(false)
+        alert('Something went wrong. Try again!');
         console.error('Error verifying email:', error);
       }
     } else if (currentStep === 3) {
-      navigate('/dashboard');
+      navigate('/login');
     }
   };
 
@@ -94,8 +98,9 @@ const PatientSignup = () => {
       if (responseText) {
         try {
           result = JSON.parse(responseText);
+          console.log(result)
         } catch (error) {
-          console.error('Failed to parse JSON:', error);
+          console.error(error);
           setLoading(false);
           return false;
         }
@@ -107,6 +112,7 @@ const PatientSignup = () => {
 
       if (response.ok) {
         setLoading(false);
+        console.log(response)
         return true;
       } else {
         console.error(result.message || 'Form submission failed');

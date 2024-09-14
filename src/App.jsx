@@ -6,6 +6,7 @@ import PatientSignup from './PatientSignup'
 import LoginPage from './PatientLogin'
 import Dashboard from './PatientDashboard/dashboard'
 import Profile from './PatientDashboard/profile'
+import PaymentPage from './PatientDashboard/payment'
 
 
 const App = () => {
@@ -18,6 +19,7 @@ const App = () => {
         <Route path = '/login/*' element = {<LoginPage/>}/>
         <Route path = '/patient-dashboard/' element ={<Dashboard/>}/>
         <Route path = '/patient_profile/' element = {<Profile/>}/>
+        <Route path = '/payment' element={<PaymentPage/>}></Route>
       </Routes>
     </Router>
   )
