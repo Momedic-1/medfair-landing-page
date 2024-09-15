@@ -1,34 +1,45 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
+import ErrorModal from '../components/ErrorModal';
 
 export default function PatientSignupForm({ formData, setFormData }) {
   const navigate = useNavigate()
+  const [error, setError] = useState(false)
 
   useState(() => {
     setFormData((prevData) => ({
       ...prevData,
       medicalSpecialization: 'string',
       nameOfHospital: 'string',
-      howDidYouHearAboutUs: 'string',
+      howDidYouHearAboutUs: 'NEWSPAPER',
       userRole : 'PATIENT'
     }));
   }, [setFormData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-     const updatedValue = name === 'phoneNumber' ? Number(`${0+value}`) : value;
     
      setFormData({
       ...formData,
-      [name]: updatedValue,
+      [name]: value,
     });
+
+    if (name === 'password' || name === 'confirmedPassword') {
+      if (formData.password !== value && name === 'confirmedPassword') {
+        setError('Passwords do not match');
+      } else if (formData.confirmedPassword !== value && name === 'password') {
+        setError('Passwords do not match');
+      } else {
+        setError('');
+      }
+    }
+
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Form Data Submitted:', formData);
+
   };
 
   return (
@@ -69,7 +80,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
               <h1 className='text-gray-600 font-medium text-sm'>Email</h1>
               <input
                 required
-                type='text'
+                type='email'
                 name='emailAddress'
                 value={formData.emailAddress}
                 onChange={handleChange}
@@ -169,17 +180,20 @@ export default function PatientSignupForm({ formData, setFormData }) {
               <input
                 required
                 type='password'
-                name='confirmPassword'
-                value={formData.confirmPassword}
+                name='confirmedPassword'
+                value={formData.confirmedPassword}
                 onChange={handleChange}
                 placeholder='Enter Password'
                 className='border rounded-md p-3 mt-2 w-full bg-gray-100'
               />
+
+              {error && (
+                <p className='text-red-500 text-sm mt-1'>Password and confirmed password do not match</p>
+              )}
             </div>
           </div>
 
           <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
-            <Modal />
             <a href='#' className='text-sm font-medium text-gray-900'>
               Already have an account?{' '}
               <span onClick={()=>navigate('/login')} className='text-violet-700'>Login here</span>
@@ -187,7 +201,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
           </div>
 
           <div className='mt-6 flex items-center'>
-            <input type='checkbox' className='rounded-md mr-2' />
+            <input required type='checkbox' className='rounded-md mr-2' />
             <span className='text-sm text-gray-900 font-medium'>
               Accept the{' '}
               <a href='#' className='text-violet-700'>

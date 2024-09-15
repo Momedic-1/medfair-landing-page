@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import bell from './assets/bell.svg'
 import calendar from './assets/calendar.svg'
 import dashboard from './assets/dashboard.svg'
@@ -19,6 +19,7 @@ import book from './assets/book (2).svg'
 
 
 export default function Dashboard() {
+  const navigate = useNavigate()
      const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
 
@@ -30,7 +31,7 @@ export default function Dashboard() {
   }
 
 
-  
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -101,7 +102,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="text-blue-800 font-semibold">John Doe</span>
+            <span className="text-blue-800 font-semibold">{userData ? userData.firstName : 'Doe'}</span>
             <img src={bell} alt='notifications' className='hidden lg:block'/>
             <img src={bell} alt='notifications' className='block lg:hidden' onClick={toggleSidebar}/>
           </div>
@@ -149,11 +150,11 @@ export default function Dashboard() {
 
 
 
-        <div className="quick-tools mt-10 p-3 flex flex-col lg:flex-row items-center justify-between">
+        <div className="quick-tools mt-10 p-3 flex lg:flex-row items-center justify-between">
 
   {/* Circular Div 2 */}
   <div className="flex flex-col items-center text-center m-3">
-    <div className="w-24 h-24 flex flex-col items-center justify-center font-semibold bg-white text-blue-700 border border-blue-700 rounded-full mb-4">
+    <div className="w-24 h-24 flex flex-col items-center justify-center font-semibold text-blue-700 border border-blue-700 rounded-full mb-4">
       <span className='mb-2'>
         Instant
       </span>
@@ -162,7 +163,7 @@ export default function Dashboard() {
       </span>
     </div>
     <p className="text-[#020E7C] mb-2">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 12hours.</p>
-    <button className="bg-blue-700 text-white py-2 px-4 rounded">Subscribe</button>
+    <button className="bg-blue-700 text-white py-2 px-4 rounded" onClick={()=>navigate('/payment')}>Subscribe</button>
   </div>
 
   {/* Circular Div 3 */}
@@ -176,7 +177,7 @@ export default function Dashboard() {
       </span>
     </div>
     <p className="text-[#020E7C] mb-2">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 1 month.</p>
-    <button className="bg-blue-700 text-white py-2 px-4 rounded">Subscribe</button>
+    <button className="bg-blue-700 text-white py-2 px-4 rounded " onClick={()=>navigate('/payment')}>Subscribe</button>
   </div>
 
   {/* Circular Div 4 */}
@@ -190,7 +191,7 @@ export default function Dashboard() {
       </span>
     </div>
     <p className="text-[#020E7C] mb-2">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 1 year.</p>
-    <button className="bg-blue-700 text-white py-2 px-4 rounded">Subscribe</button>
+    <button className="bg-blue-700 text-white py-2 px-4 rounded" nClick={()=>navigate('/payment')}>Subscribe</button>
   </div>
 </div>
 

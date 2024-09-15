@@ -2,6 +2,7 @@ import person from '../src/assets/person.svg';
 import medfair from '../src/assets/medfair (2).svg';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ErrorModal from '../src/components/ErrorModal'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -39,21 +40,26 @@ export default function LoginPage() {
         setError(errorData.message || 'An error occurred. Please try again.');
       } else {
         const responseData = await response.json();
-        const { token, user } = responseData.message;
+        const token = responseData.message
+        const userData = responseData.data
 
         // Save token and user data to local storage
         localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify(user));
+        localStorage.setItem('userData', JSON.stringify(userData))
 
-        // Redirect to the dashboard
-        navigate('/patient-dashboard');
+
+          navigate('/patient-dashboard')
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError('Something went wrong, please try again');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleCloseModal = ()=>{
+    setError('')
+  }
 
   return (
     <div className="flex flex-col lg:flex-row h-screen">
@@ -133,6 +139,8 @@ export default function LoginPage() {
           </footer>
         </form>
       </div>
+
+      <ErrorModal message={error} onClose={handleCloseModal} />
     </div>
   );
 }
