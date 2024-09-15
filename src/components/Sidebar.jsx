@@ -30,14 +30,60 @@ const Sidebar = () => {
     <>
       <header className='sticky top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px]'>
         <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto'>
-          <div className='me-5 whitespace-nowrap lg:me-0 lg:hidden'>
-            <button
-              className='items-center space-x-2 flex-none rounded-md text-sm inline-block font-semibold focus:outline-none focus:opacity-80'
-              onClick={toggleSidebar}
-              aria-label='Toggle Sidebar'
-            >
-              <span className='text-blue-800'>Doctor's Dashboard</span>
-            </button>
+          <div className='-mt-px'>
+            <div className='sticky top-0 inset-x-0 z-20 bg-white px-4 sm:px-6 lg:px-8 lg:hidden'>
+              <div className='flex items-center py-2'>
+                <button
+                  type='button'
+                  className='size-8 flex justify-center items-center gap-x-2 border border-gray-200 text-gray-800 hover:text-gray-500 rounded-lg focus:outline-none focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none'
+                  onClick={toggleSidebar}
+                  aria-label='Toggle Navigation'
+                >
+                  <span className='sr-only'>Toggle Navigation</span>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke-width='1.5'
+                    stroke='currentColor'
+                    class='size-6'
+                  >
+                    <path
+                      stroke-linecap='round'
+                      stroke-linejoin='round'
+                      d='M3.75 9h16.5m-16.5 6.75h16.5'
+                    />
+                  </svg>
+                </button>
+
+                {/* <ol className='ms-3 flex items-center whitespace-nowrap'>
+              <li className='flex items-center text-sm text-gray-800'>
+                Application Layout
+                <svg
+                  className='shrink-0 mx-3 overflow-visible size-2.5 text-gray-400'
+                  width='16'
+                  height='16'
+                  viewBox='0 0 16 16'
+                  fill='none'
+                  xmlns='http://www.w3.org/2000/svg'
+                >
+                  <path
+                    d='M5 1L10.6869 7.16086C10.8637 7.35239 10.8637 7.64761 10.6869 7.83914L5 14'
+                    stroke='currentColor'
+                    stroke-width='2'
+                    stroke-linecap='round'
+                  />
+                </svg>
+              </li>
+              <li
+                className='text-sm font-semibold text-gray-800 truncate'
+                aria-current='page'
+              >
+                Dashboard
+              </li>
+            </ol> */}
+              </div>
+            </div>
           </div>
 
           <div className='w-full flex items-center justify-end ms-auto md:justify-between gap-x-1 md:gap-x-3'>
@@ -146,64 +192,6 @@ const Sidebar = () => {
         </nav>
       </header>
 
-      <div className='-mt-px'>
-        <div className='sticky top-0 inset-x-0 z-20 bg-white border-y px-4 sm:px-6 lg:px-8 lg:hidden'>
-          <div className='flex items-center py-2'>
-            <button
-              type='button'
-              className='size-8 flex justify-center items-center gap-x-2 border border-gray-200 text-gray-800 hover:text-gray-500 rounded-lg focus:outline-none focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none'
-              onClick={toggleSidebar}
-              aria-label='Toggle Navigation'
-            >
-              <span className='sr-only'>Toggle Navigation</span>
-              <svg
-                className='shrink-0 size-4'
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              >
-                <rect width='18' height='18' x='3' y='3' rx='2' />
-                <path d='M15 3v18' />
-                <path d='m8 9 3 3-3 3' />
-              </svg>
-            </button>
-
-            <ol className='ms-3 flex items-center whitespace-nowrap'>
-              <li className='flex items-center text-sm text-gray-800'>
-                Application Layout
-                <svg
-                  className='shrink-0 mx-3 overflow-visible size-2.5 text-gray-400'
-                  width='16'
-                  height='16'
-                  viewBox='0 0 16 16'
-                  fill='none'
-                  xmlns='http://www.w3.org/2000/svg'
-                >
-                  <path
-                    d='M5 1L10.6869 7.16086C10.8637 7.35239 10.8637 7.64761 10.6869 7.83914L5 14'
-                    stroke='currentColor'
-                    stroke-width='2'
-                    stroke-linecap='round'
-                  />
-                </svg>
-              </li>
-              <li
-                className='text-sm font-semibold text-gray-800 truncate'
-                aria-current='page'
-              >
-                Dashboard
-              </li>
-            </ol>
-          </div>
-        </div>
-      </div>
-
       {/* Overlay */}
       {isSidebarOpen && (
         <div
@@ -287,7 +275,6 @@ const Sidebar = () => {
                     Dashboard
                   </NavLink>
                 </li>
-
                 <li>
                   <a
                     className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'
@@ -346,6 +333,71 @@ const Sidebar = () => {
                     View Profile
                   </a>
                 </li>
+                {/* <li>
+                  <NavLink
+                    to='/dashboard'
+                    className={({ isActive }) =>
+                      `flex items-center p-2 rounded-lg ${
+                        isActive
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'text-gray-100 hover:bg-gray-100'
+                      }`
+                    }
+                  >
+                    <svg
+                      className='shrink-0 size-4 mr-2'
+                      width='12'
+                      height='12'
+                      viewBox='0 0 12 12'
+                      fill='none'
+                      xmlns='http://www.w3.org/2000/svg'
+                    >
+                      <g id='calendar-03'>
+                        <path
+                          id='Vector'
+                          d='M9 1V2M3 1V2'
+                          stroke='#A3ADFF'
+                          stroke-width='1.5'
+                          stroke-linecap='round'
+                          stroke-linejoin='round'
+                        />
+                        <path
+                          id='Vector_2'
+                          d='M5.99775 6.5H6.00225M5.99775 8.5H6.00225M7.9955 6.5H8M4 6.5H4.00449M4 8.5H4.00449'
+                          stroke='#A3ADFF'
+                          stroke-width='2'
+                          stroke-linecap='round'
+                          stroke-linejoin='round'
+                        />
+                        <path
+                          id='Vector_3'
+                          d='M1.75 4H10.25'
+                          stroke='#A3ADFF'
+                          stroke-width='1.5'
+                          stroke-linecap='round'
+                          stroke-linejoin='round'
+                        />
+                        <path
+                          id='Vector_4'
+                          d='M1.25 6.1216C1.25 3.94297 1.25 2.85364 1.87606 2.17682C2.50212 1.5 3.50975 1.5 5.525 1.5H6.475C8.49025 1.5 9.4979 1.5 10.124 2.17682C10.75 2.85364 10.75 3.94297 10.75 6.1216V6.3784C10.75 8.55705 10.75 9.64635 10.124 10.3232C9.4979 11 8.49025 11 6.475 11H5.525C3.50975 11 2.50212 11 1.87606 10.3232C1.25 9.64635 1.25 8.55705 1.25 6.3784V6.1216Z'
+                          stroke='#A3ADFF'
+                          stroke-width='1.5'
+                          stroke-linecap='round'
+                          stroke-linejoin='round'
+                        />
+                        <path
+                          id='Vector_5'
+                          d='M1.5 4H10.5'
+                          stroke='#A3ADFF'
+                          stroke-width='1.5'
+                          stroke-linecap='round'
+                          stroke-linejoin='round'
+                        />
+                      </g>
+                    </svg>
+                    Appointment Request
+                  </NavLink>
+                </li> */}
                 <li>
                   <a
                     className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'

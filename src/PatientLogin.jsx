@@ -47,6 +47,7 @@ export default function LoginPage() {
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(userData))
 
+
           navigate('/patient-dashboard')
       }
     } catch (err) {
