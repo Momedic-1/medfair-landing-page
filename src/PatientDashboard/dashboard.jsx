@@ -19,7 +19,7 @@ import book from './assets/book (2).svg'
 
 
 export default function Dashboard() {
-  const navigae = useNavigate()
+  const navigate = useNavigate()
      const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
 

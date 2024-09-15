@@ -12,6 +12,7 @@ const VerificationInput = ({ setVerificationToken }) => {
     if (index === 4) {
       // When the last input is filled, set the verification token
       setVerificationToken(newCode.join(''));
+      console.log(newCode.join(''))
     } else if (value && index < 4) {
       inputRefs.current[index + 1].focus();
     }
@@ -32,7 +33,7 @@ const VerificationInput = ({ setVerificationToken }) => {
       <p className='text-sm text-center mb-4 font-medium text-gray-400'>
         Enter the 5-digit code to verify your Medfair account
       </p>
-      <p className='text-sm text-center text-blue-500 mb-4'>Open email app</p>
+      <p className='text-sm text-center text-blue-500 mb-4'>Resend email</p>
       <div className='flex justify-center space-x-2 mb-16'>
         {code.map((digit, index) => (
           <input

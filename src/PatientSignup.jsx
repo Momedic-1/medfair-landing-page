@@ -5,6 +5,7 @@ import PatientSignupForm from './PatientSignup/PatientSignupForm';
 import VerificationInput from './PatientSignup/VerificationInput';
 import VerificationSuccessful from './PatientSignup/VerificationSuccessful';
 import CheckEmail from './PatientSignup/CheckEmail';
+import ErrorModal from './components/ErrorModal';
 
 const PatientSignup = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -12,6 +13,7 @@ const PatientSignup = () => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [verificationToken, setVerificationToken] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,38 +54,50 @@ const PatientSignup = () => {
         setCurrentStep(2);
       }
     } else if (currentStep === 2) {
-      try {
-        const response = await fetch('https://momedic.onrender.com/api/v1/registration/verify-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token: verificationToken, email: formData.emailAddress }),
-        });
+       await verifyEmail()
 
-        const result = await response.json();
-
-        if (response.ok) {
-          setCurrentStep(3);
-        } else {
-          setLoading(false)
-          alert('Incorrect token!');
-          console.error(result.message);
-        }
-      } catch (error) {
-         console.log({ token: verificationToken, email: formData.emailAddress })
-        setLoading(false)
-        alert('Something went wrong. Try again!');
-        console.error('Error verifying email:', error);
-      }
     } else if (currentStep === 3) {
       navigate('/login');
     }
   };
 
+  async function verifyEmail(){
+    const verificationData = { token: verificationToken, email: formData.emailAddress}
+   try {
+        const response = await fetch('https://momedic.onrender.com/api/v1/registration/verify-email', {
+          method: 'POST',
+          headers: {
+           'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(verificationData),
+        });
+
+      const contentType = response.headers.get('Content-Type');
+      let result;
+    if (contentType && contentType.includes('application/json')) {
+      result = await response.json();
+    } else {
+      result = await response.text();
+    }
+
+
+        if (result.includes('Email verification successful')) {
+          setLoading(false)
+          setCurrentStep(3);
+        } else {
+          setLoading(false);
+          setErrorMessage('Incorrect token! Please try again.');
+          console.error(result.message);
+        }
+      } catch (error) {
+        setLoading(false);
+        setErrorMessage('Something went wrong. Try again!');
+        console.error('Error verifying email:', error);
+      }
+  }
+
   async function validateForm() {
     try {
-      console.log(formData);
       const response = await fetch('https://momedic.onrender.com/api/v1/registration/patients-registrations', {
         method: 'POST',
         headers: {
@@ -98,30 +112,34 @@ const PatientSignup = () => {
       if (responseText) {
         try {
           result = JSON.parse(responseText);
-          console.log(result)
+          console.log(result);
         } catch (error) {
           console.error(error);
           setLoading(false);
+          setErrorMessage('Error parsing server response.');
           return false;
         }
       } else {
         console.error('Empty response from the server');
         setLoading(false);
+        setErrorMessage('Empty response from the server.');
         return false;
       }
 
       if (response.ok) {
         setLoading(false);
-        console.log(response)
+        console.log(response);
         return true;
       } else {
         console.error(result.message || 'Form submission failed');
         setLoading(false);
+        setErrorMessage(result.message || 'Form submission failed.');
         return false;
       }
     } catch (error) {
       console.error('Error submitting form:', error);
       setLoading(false);
+      setErrorMessage('Error submitting form. Please try again.');
       return false;
     }
   }
@@ -226,6 +244,9 @@ const PatientSignup = () => {
             </button>
           </div>
         )}
+
+        {/* Error Modal */}
+        <ErrorModal message={errorMessage} onClose={() => setErrorMessage('')} />
       </div>
     </div>
   );
