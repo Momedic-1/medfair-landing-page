@@ -132,7 +132,7 @@ const DoctorSignup = () => {
           </div>
         )}
         <div className='text-center mt-4 mb-12'>
-          <a href='#' className='text-blue-500'>
+          <a href='#' target="_blank" className='text-blue-500'>
             <p onClick={()=>navigate('/patient_signup')}>Signup as Patient</p>
           </a>
         </div>
