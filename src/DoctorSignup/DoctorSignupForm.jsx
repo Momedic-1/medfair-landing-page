@@ -72,7 +72,7 @@ const DoctorSignupForm = ({ formData, setFormData }) => {
   }
 
   return (
-    <form className='mx-auto items-center justify-center max-w-3xl'>
+    <form className='mx-auto lg:pr-9 items-center justify-center max-w-3xl'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <InputField
           label='First Name'
