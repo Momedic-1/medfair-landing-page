@@ -31,6 +31,27 @@ export default function Dashboard() {
   }
 
 
+  async function  handleCall(){
+  const userDataString = localStorage.getItem('userData');
+
+  const userData = JSON.parse(userDataString);
+  const patientId = userData?.id
+ 
+    try {
+      const response = await fetch('https://momedic.onrender.com/api/call/initiate?'+patientId, {
+        method: 'POST',
+        headers: {
+         'Content-Type': 'application/json'
+        },
+      });
+
+
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage('Something went wrong. Try again!');
+      console.error('Error verifying email:', error);
+    }
+  }
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -126,7 +147,7 @@ export default function Dashboard() {
         <div className='quick-tools mt-8 flex flex-col lg:flex-row items-center justify-between'>
             <div className='call flex flex-col items-center'>
                 <p className='text-[#020E7C] mb-2'>Call a doctor</p>
-                <img src={call} alt='call'/>
+                <img onClick={handleCall} src={call} alt='call'/>
             </div>
 
             <div className='call flex flex-col items-center'>
