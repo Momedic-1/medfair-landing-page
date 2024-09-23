@@ -3,6 +3,7 @@ import medfair from '../src/assets/medfair (2).svg';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorModal from '../src/components/ErrorModal'
+import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -134,7 +135,8 @@ export default function LoginPage() {
               className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-3 m-3 rounded-full flex items-center justify-center w-10 h-10 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
-              {isLoading ? '...' : '>'}
+                
+              {isLoading ?<img src={SpinnerImg}/>  : '>'}
             </button>
           </footer>
         </form>
