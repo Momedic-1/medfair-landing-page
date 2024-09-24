@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorModal from '../src/components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
+import { baseUrl } from './env';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('https://momedic.onrender.com/api/v1/auth/login', {
+      const response = await fetch(`${baseUrl}api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +121,7 @@ export default function LoginPage() {
             <div>
               <input type="checkbox" id="rememberMe" className="mr-2" />
               <label htmlFor="rememberMe" className="text-sm text-gray-600">
-                Remember me
+                {/* Remember me */}
               </label>
             </div>
             <a href="#" className="text-sm text-blue-600">

@@ -16,9 +16,13 @@ import call from './assets/call (2).svg'
 import lab from './assets/lab.svg'
 import specialist from './assets/specialist.svg'
 import book from './assets/book (2).svg'
+import { baseUrl } from '../env';
+import SpecialistModal from '../PatientSignup/SpecialistModal';
 
 
 export default function Dashboard() {
+  const[specialistModal, setSpecialistModal] = useState(false);
+  // const { isOpen, onOpen, onOpenChange } = useDisclosure()
   const navigate = useNavigate()
      const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
@@ -30,22 +34,26 @@ export default function Dashboard() {
     return null;
   }
 
+  function handleSpecialistModal(isOpen){    
+    setSpecialistModal(isOpen)    
+  }
 
   async function  handleCall(){
   const userDataString = localStorage.getItem('userData');
 
   const userData = JSON.parse(userDataString);
   const patientId = userData?.id
- 
+  
     try {
-      const response = await fetch('https://momedic.onrender.com/api/call/initiate?'+patientId, {
+      const response = await fetch( `${baseUrl}api/call/initiate`, {
         method: 'POST',
         headers: {
          'Content-Type': 'application/json'
         },
+          body: JSON.stringify({ "id" : patientId }),
       });
-
-
+      console.log(response);
+      navigate('/payment');
     } catch (error) {
       setLoading(false);
       setErrorMessage('Something went wrong. Try again!');
@@ -157,8 +165,9 @@ export default function Dashboard() {
 
             <div className='call flex flex-col items-center'>
                 <p className='text-[#020E7C] mb-2'>See a specialist</p>
-                <img src={book} alt='lab'/>
+                <img onClick={()=>handleSpecialistModal(true)} src={book} alt='lab'/>
             </div>
+            {specialistModal && <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />}
 
             <div className='call flex flex-col items-center'>
                 <p className='text-[#020E7C] mb-2'>Book a lab test</p>
@@ -166,10 +175,7 @@ export default function Dashboard() {
             </div>
         </div>
 
-
         <h1 className='text-2xl text-[#020E7C] p-3 mt-5 mb-2 font-semibold'>Choose a Plan</h1>
-
-
 
         <div className="quick-tools mt-10 p-3 flex lg:flex-row items-center justify-between">
 
