@@ -16,7 +16,7 @@ export default function PaymentPage() {
   const [selectedPlan, setSelectedPlan] = useState('monthly'); // Default to monthly
   const [discount, setDiscount] = useState(0); // Discount is 0 by default
   const [isNewCard, setIsNewCard] = useState(false); // Checkbox for new card
-  const [paymentSuccess, setPaymentSuccess] = useState(true);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const subscriptionPlans = {
     yearly: { name: 'Yearly', price: 45000 },
@@ -34,6 +34,7 @@ export default function PaymentPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("payment initiated");
     setPaymentSuccess(true);
   };
 
@@ -105,7 +106,7 @@ export default function PaymentPage() {
           </div>
 
           {/* Payment Form */}
-          <form onSubmit={handleSubmit} className="p-8 w-full max-w-md">
+          <form onSubmit={handleSubmit} className="p-8 w-full max-w-[86%]">
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cardName">
                 Card Holder Name

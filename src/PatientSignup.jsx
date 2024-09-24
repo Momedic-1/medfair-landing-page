@@ -6,6 +6,7 @@ import VerificationInput from './PatientSignup/VerificationInput';
 import VerificationSuccessful from './PatientSignup/VerificationSuccessful';
 import CheckEmail from './PatientSignup/CheckEmail';
 import ErrorModal from './components/ErrorModal';
+import { baseUrl } from './env';
 
 const PatientSignup = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -64,7 +65,7 @@ const PatientSignup = () => {
   async function verifyEmail(){
     const verificationData = { token: verificationToken, email: formData.emailAddress}
    try {
-        const response = await fetch('https://momedic.onrender.com/api/v1/registration/verify-email', {
+        const response = await fetch(`${baseUrl}api/v1/registration/verify-email`, {
           method: 'POST',
           headers: {
            'Content-Type': 'application/json'
@@ -98,7 +99,7 @@ const PatientSignup = () => {
 
   async function validateForm() {
     try {
-      const response = await fetch('https://momedic.onrender.com/api/v1/registration/patients-registrations', {
+      const response = await fetch(`${baseUrl}api/v1/registration/patients-registrations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
