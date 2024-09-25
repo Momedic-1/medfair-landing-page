@@ -5,6 +5,7 @@ import DoctorSignupForm from './DoctorSignup/DoctorSignupForm'
 import VerificationInput from './DoctorSignup/VerificationInput'
 import VerificationSuccessful from './DoctorSignup/VerificationSuccessful'
 import CheckEmail from './DoctorSignup/CheckEmail'
+import { baseUrl } from './env'
 
 const DoctorSignup = () => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -42,15 +43,57 @@ const DoctorSignup = () => {
   }
 
   const handleNextClick = () => {
+    
     if (currentStep === 1) {
       if (validateForm()) {
         setShowCheckEmail(true)
+        signUpBackend()
         setCurrentStep(2)
       }
     } else if (currentStep === 2) {
       setCurrentStep(3)
     } else if (currentStep === 3) {
       navigate('/dashboard') // Navigate to the dashboard
+    }
+  }
+  const signUpBackend = async()=>{
+    try {
+      const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      const responseText = await response.text();
+      let result = {};
+
+      if (responseText) {
+        try {
+          result = JSON.parse(responseText);
+        } catch (error) {
+          setLoading(false);
+          setErrorMessage('Error parsing server response.');
+          return false;
+        }
+      } else {
+        setLoading(false);
+        setErrorMessage('Empty response from the server.');
+        return false;
+      }
+
+      if (response.ok) {
+        setLoading(false);
+        return true;
+      } else {
+        setLoading(false);
+        setErrorMessage(result.message || 'Form submission failed.');
+        return false;
+      }
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage('Error submitting form. Please try again.');
+      return false;
     }
   }
 
@@ -111,8 +154,8 @@ const DoctorSignup = () => {
         </div>
 
         {!showCheckEmail && (
-          <div className='mt-5 flex justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
-            <button
+          <div className='mt-5 grid grid-cols-2 justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
+            {/* <button
               type='button'
               className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none'
               data-hs-stepper-back-btn
@@ -120,14 +163,14 @@ const DoctorSignup = () => {
               disabled={currentStep === 1}
             >
               Back
-            </button>
+            </button> */}
             <button
               type='button'
-              className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none'
-              data-hs-stepper-next-btn
+              className='w-[300px] lg:ml-48 md:ml-20 md:w-[720px] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none'
+              // data-hs-stepper-next-btn
               onClick={handleNextClick}
             >
-              {currentStep === 3 ? 'Submit' : 'Next'}
+             {currentStep === 3 ? 'Submit' : 'Next'}
             </button>
           </div>
         )}

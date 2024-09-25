@@ -99,7 +99,7 @@ const PatientSignup = () => {
 
   async function validateForm() {
     try {
-      const response = await fetch(`${baseUrl}api/v1/registration/patients-registrations`, {
+      const response = await fetch(`${baseUrl}/api/v1/registration/patients-registrations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

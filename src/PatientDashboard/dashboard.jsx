@@ -52,7 +52,7 @@ export default function Dashboard() {
         },
           body: JSON.stringify({ "id" : patientId }),
       });
-      console.log(response);
+      console.log(response.type);
       navigate('/payment');
     } catch (error) {
       setLoading(false);
@@ -152,7 +152,7 @@ export default function Dashboard() {
         </div>
 
 
-        <div className='quick-tools mt-8 flex flex-col lg:flex-row items-center justify-between'>
+        <div className='quick-tools mt-8 grid grid-cols-2 gap-9 md:grid-cols-2 lg:grid-cols-4 items-center justify-between'>
             <div className='call flex flex-col items-center'>
                 <p className='text-[#020E7C] mb-2'>Call a doctor</p>
                 <img onClick={handleCall} src={call} alt='call'/>
@@ -169,9 +169,9 @@ export default function Dashboard() {
             </div>
             {specialistModal && <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />}
 
-            <div className='call flex flex-col items-center'>
+            <div className='call flex flex-col items-center mr-5'>
                 <p className='text-[#020E7C] mb-2'>Book a lab test</p>
-                <img src={book} alt='lab'/>
+                <img src={book} alt='lab' className='ml-5'/>
             </div>
         </div>
 
