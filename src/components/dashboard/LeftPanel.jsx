@@ -1,4 +1,4 @@
-import WelcomeBack from './WelcomeBack'
+import WelcomeBack from './WelcomeBack/WelcomeBack'
 import AppointmentRequests from './AppointmentRequests'
 import Appointments from './Appointments'
 import RecentPatients from './RecentPatients'

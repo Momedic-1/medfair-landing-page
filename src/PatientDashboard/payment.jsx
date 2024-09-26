@@ -114,7 +114,7 @@ export default function PaymentPage() {
                     selectedPlan === planKey ? 'bg-blue-500 text-white' : 'bg-gray-100'
                   }`}
                   onClick={() => setSelectedPlan(planKey)}
-                >
+                >dksjhkj
                   <p>{plan.name} Plan</p>
                   <p className="font-bold">N{plan.price.toLocaleString()}</p>
                 </div>
