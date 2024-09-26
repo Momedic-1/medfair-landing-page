@@ -96,8 +96,8 @@ const DoctorSignupForm = ({ formData, setFormData }) => {
           label='Email'
           type='email'
           placeholder='Enter Email'
-          name='email'
-          value={formData.email || ''}
+          name='emailAddress'
+          value={formData.emailAddress || ''}
           onChange={handleChange}
           required
         />
@@ -115,11 +115,11 @@ const DoctorSignupForm = ({ formData, setFormData }) => {
               </div>
               <input
                 type='text'
-                name='mobileNumber'
+                name='phoneNumber'
                 id='mobileNumber'
                 className='py-3 px-4 block w-full border border-gray-300 rounded-e-md text-sm'
                 placeholder='Enter mobile Number'
-                value={formData.mobileNumber || ''}
+                value={formData.phoneNumber || ''}
                 onChange={handleChange}
               />
             </div>
@@ -130,8 +130,8 @@ const DoctorSignupForm = ({ formData, setFormData }) => {
       <RadioGroup
         label='Sex'
         options={['Male', 'Female']}
-        name='sex'
-        value={formData.sex || ''}
+        name='gender'
+        value={formData.gender || ''}
         onChange={handleChange}
       />
 
@@ -165,8 +165,8 @@ const DoctorSignupForm = ({ formData, setFormData }) => {
           label='Re-Enter Password'
           type='password'
           placeholder='Confirm Password'
-          name='confirmPassword'
-          value={formData.confirmPassword || ''}
+          name='confirmedPassword'
+          value={formData.confirmedPassword || ''}
           onChange={handleChange}
           required
         />

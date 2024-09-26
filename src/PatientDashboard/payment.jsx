@@ -3,6 +3,7 @@ import medfair from '../../src/assets/medfair (2).svg';
 import React, { useState } from 'react';
 import payment from './assets/payment.svg';
 import { useNavigate } from 'react-router-dom';
+import { baseUrl } from '../env';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -34,8 +35,24 @@ export default function PaymentPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("payment initiated");
-    setPaymentSuccess(true);
+    console.log(formData);
+    try {
+      const response = await fetch(`${baseUrl}/api/payment/initialize-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const responseText = await response.text();
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage('Error submitting form. Please try again.');
+      return false;
+    }finally{
+      setPaymentSuccess(true);
+    }
   };
 
   const handleNewCardChange = () => {
@@ -106,7 +123,7 @@ export default function PaymentPage() {
           </div>
 
           {/* Payment Form */}
-          <form onSubmit={handleSubmit} className="p-8 w-full max-w-[86%]">
+          <form onSubmit={handleSubmit} className="p-8 w-full md:max-w-[86%]">
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cardName">
                 Card Holder Name

@@ -1,27 +1,27 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import bell from './assets/bell.svg'
-import calendar from './assets/calendar.svg'
-import dashboard from './assets/dashboard.svg'
-import documents from './assets/documents.svg'
-import help from './assets/help-circle.svg'
-import logout from './assets/logout (2).svg'
-import message from './assets/message (2).svg'
-import profile from './assets/profile (2).svg'
-import setting from './assets/setting.svg'
-import subscription from './assets/subscription.svg'
 import doctor from './assets/doctor.svg'
 import banner from './assets/banner.svg'
 import call from './assets/call (2).svg'
-import lab from './assets/lab.svg'
-import specialist from './assets/specialist.svg'
 import book from './assets/book (2).svg'
 import { baseUrl } from '../env';
 import SpecialistModal from '../PatientSignup/SpecialistModal';
+import Sidebar from './Sidebar';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 export default function Dashboard() {
   const[specialistModal, setSpecialistModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+  setIsSidebarOpen(!isSidebarOpen);
+};
+
   // const { isOpen, onOpen, onOpenChange } = useDisclosure()
   const navigate = useNavigate()
      const token = localStorage.getItem('authToken');
@@ -38,35 +38,40 @@ export default function Dashboard() {
     setSpecialistModal(isOpen)    
   }
 
-  async function  handleCall(){
+  async function handleCall(){
   const userDataString = localStorage.getItem('userData');
 
   const userData = JSON.parse(userDataString);
   const patientId = userData?.id
-  
-    try {
-      const response = await fetch( `${baseUrl}api/call/initiate`, {
-        method: 'POST',
-        headers: {
-         'Content-Type': 'application/json'
-        },
-          body: JSON.stringify({ "id" : patientId }),
+  const response = await axios.post( `${baseUrl}/api/call/initiate`,
+    { "id" : patientId }
+  )
+    console.log(response.data)
+    const responseData = response.data
+    if (responseData.message === "Please subscribe to make calls.") {
+      // toast.success(responseData.message)
+      toast.success(responseData.message, {
+        position:"top-right",
+        autoClose:5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        rtl:false,
+          progressStyle: {
+            background: '#000080', 
+          },
+        pauseOnHover: false,
+        draggable: false,
+        pauseOnFocusLoss:false 
       });
-      console.log(response);
-      navigate('/payment');
-    } catch (error) {
-      setLoading(false);
-      setErrorMessage('Something went wrong. Try again!');
-      console.error('Error verifying email:', error);
+      setTimeout(() => {
+        navigate('/payment');
+      }, 4000);
+      
+    }else{
+      console.log("ïnitiating call");
+      
     }
   }
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -74,47 +79,10 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen">
+          <ToastContainer/>
       {/* Sidebar */}
-      <aside
-        className={`fixed lg:static top-0 left-0 h-full bg-[#020E7C] text-white flex flex-col lg:w-1/5 w-2/3 z-20 transform transition-transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
-      >
-        <div className="p-4  text-2xl font-bold flex justify-between items-center">
-          <span>Patient Dashboard</span>
-        </div>
-        <nav className="flex flex-col p-4">
-          <NavLink to="/patient-dashboard" className="flex items-center p-3 m-3 py-2 px-4 rounded bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-            <img src={dashboard}/> <span className='ml-3'>Dashboard</span>
-          </NavLink>
-          <NavLink to="/patient_profile" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-            <img src={profile}/> <span className='ml-3'>View Profile</span>
-          </NavLink>
-          <NavLink to="/appointments" className=" flex items-center p-3 m-3  py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-            <img src={calendar}/> <span className='ml-3'>Appointments</span>
-          </NavLink>
-          <NavLink to="/settings" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-            <img src={message}/> <span className='ml-3'>Messages</span>
-          </NavLink>
-          <NavLink to="/settings" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-            <img src={documents}/> <span className='ml-3'>Check Previous History</span>
-          </NavLink>
-
-          <NavLink to="/settings" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-           <img src={subscription}/> <span className='ml-3'>Subscription</span>
-          </NavLink>
-
-          <NavLink to="/settings" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-            <img src={help}/> <span className='ml-3'>Help</span>
-          </NavLink>
-
-          <NavLink to="/settings" className="flex items-center mt-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-            <img src={dashboard}/> <span className='ml-3'>Logout</span>
-          </NavLink>
-        </nav>
-      </aside>
-
-      {/* Main Content Area */}
+      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar}/>
+          {/* Main Content Area */}
       <div className="flex-1 flex flex-col bg-white">
         {/* Top Navigation */}
         <header className="w-full p-4 bg-gray-100 flex justify-between items-center shadow">
@@ -150,9 +118,7 @@ export default function Dashboard() {
     />
 
         </div>
-
-
-        <div className='quick-tools mt-8 flex flex-col lg:flex-row items-center justify-between'>
+        <div className='quick-tools mt-8 grid grid-cols-2 gap-9 md:grid-cols-2 lg:grid-cols-4 items-center justify-between'>
             <div className='call flex flex-col items-center'>
                 <p className='text-[#020E7C] mb-2'>Call a doctor</p>
                 <img onClick={handleCall} src={call} alt='call'/>
@@ -169,9 +135,9 @@ export default function Dashboard() {
             </div>
             {specialistModal && <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />}
 
-            <div className='call flex flex-col items-center'>
+            <div className='call flex flex-col items-center mr-5'>
                 <p className='text-[#020E7C] mb-2'>Book a lab test</p>
-                <img src={book} alt='lab'/>
+                <img src={book} alt='lab' className='ml-5'/>
             </div>
         </div>
 
