@@ -1,11 +1,19 @@
-import person from '../../src/assets/person.svg';
-import medfair from '../../src/assets/medfair (2).svg';
+
 import React, { useState } from 'react';
 import payment from './assets/payment.svg';
 import { useNavigate } from 'react-router-dom';
 import { baseUrl } from '../env';
+import { apiClient, setAuthToken } from '../api/AxiosConfig';
+import axios from 'axios';
+import DesignedSideBar from '../components/reuseables/DesignedSideBar';
 
 export default function PaymentPage() {
+  const subscriptionPlans = {
+  yearly: { name: 'Yearly', price: 45000 },
+  monthly: { name: 'Monthly', price: 4500 },
+  onetime: { name: 'One Time', price: 1500 },
+};
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     cardName: '',
@@ -15,15 +23,11 @@ export default function PaymentPage() {
   });
 
   const [selectedPlan, setSelectedPlan] = useState('monthly'); // Default to monthly
+  const [selectedPrice, setSelectedPrice] = useState(subscriptionPlans[selectedPlan].price); 
   const [discount, setDiscount] = useState(0); // Discount is 0 by default
   const [isNewCard, setIsNewCard] = useState(false); // Checkbox for new card
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  const subscriptionPlans = {
-    yearly: { name: 'Yearly', price: 45000 },
-    monthly: { name: 'Monthly', price: 4500 },
-    onetime: { name: 'One Time', price: 1500 },
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,17 +39,19 @@ export default function PaymentPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+    formData.plan = selectedPlan;
+    formData.amount = selectedPrice;
+  
+    const token = JSON.parse(localStorage.getItem('authToken')).token;
+    
     try {
-      const response = await fetch(`${baseUrl}/api/payment/initialize-payment`, {
-        method: 'POST',
+      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,formData,{
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+          Authorization: `Bearer ${token}`
+        }
       });
-
-      const responseText = await response.text();
+      console.log(response);
+      // const responseText = await response.text();
     } catch (error) {
       setLoading(false);
       setErrorMessage('Error submitting form. Please try again.');
@@ -65,15 +71,7 @@ export default function PaymentPage() {
   return (
     <div className="flex flex-col lg:flex-row h-screen">
       {/* Left Side - Design and Background */}
-      <div className="w-full lg:w-2/5 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center hidden lg:flex">
-        <div className="text-white text-center p-6">
-          <img src={person} className="h-60 w-60" alt="Person" />
-          <div className="flex flex-col justify-center items-center">
-            <img src={medfair} alt="Design Icon" className="h-20 w-20" />
-            <p className="text-center text-xl">MEDFAIR</p>
-          </div>
-        </div>
-      </div>
+      <DesignedSideBar/>
 
       {/* Conditional Rendering */}
       {paymentSuccess ? (
@@ -113,7 +111,10 @@ export default function PaymentPage() {
                   className={`p-4 border rounded-md cursor-pointer mb-4 lg:mb-0 ${
                     selectedPlan === planKey ? 'bg-blue-500 text-white' : 'bg-gray-100'
                   }`}
-                  onClick={() => setSelectedPlan(planKey)}
+                  onClick={() => {
+                    setSelectedPlan(planKey)
+                    setSelectedPrice(plan.price)
+                  }}
                 >
                   <p>{plan.name} Plan</p>
                   <p className="font-bold">N{plan.price.toLocaleString()}</p>

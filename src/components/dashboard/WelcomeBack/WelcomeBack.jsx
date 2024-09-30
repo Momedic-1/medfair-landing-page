@@ -11,6 +11,29 @@ function WelcomeBack () {
     setCalling(!isCalling);
     setIsActive(!isActive);
   };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    formData.plan = selectedPlan;
+    formData.amount = selectedPrice;
+  
+    const token = JSON.parse(localStorage.getItem('authToken')).token;
+    
+    try {
+      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,formData,{
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(response);
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage('Error submitting form. Please try again.');
+      return false;
+    }finally{
+      setPaymentSuccess(true);
+    }
+  };
+
   return (
     <div className='mx-auto max-w-screen-2xl px-4 md:px-8'>
       {true &&

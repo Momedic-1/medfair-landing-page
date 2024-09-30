@@ -5,13 +5,13 @@ import doctor from './assets/doctor.svg'
 import banner from './assets/banner.svg'
 import call from './assets/call (2).svg'
 import book from './assets/book (2).svg'
-import { baseUrl } from '../env';
+import specialistIcon from './assets/specialis-icon.svg'
+import { baseUrl, zoomUrl } from '../env';
 import SpecialistModal from '../PatientSignup/SpecialistModal';
 import Sidebar from './Sidebar';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 
 export default function Dashboard() {
   const[specialistModal, setSpecialistModal] = useState(false);
@@ -43,10 +43,13 @@ export default function Dashboard() {
 
   const userData = JSON.parse(userDataString);
   const patientId = userData?.id
-  const response = await axios.post( `${baseUrl}/api/call/initiate`,
-    { "id" : patientId }
-  )
-    console.log(response.data)
+  const patientEmail = userData?.email
+  const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
+    params: {
+        patientId: patientId
+    }
+})
+    console.log(response)
     const responseData = response.data
     if (responseData.message === "Please subscribe to make calls.") {
       // toast.success(responseData.message)
@@ -68,8 +71,7 @@ export default function Dashboard() {
       }, 4000);
       
     }else{
-      console.log("ïnitiating call");
-      
+      console.log("Call not initiated");
     }
   }
 
@@ -113,8 +115,8 @@ export default function Dashboard() {
            <img 
     src={doctor} 
     alt="Doctor" 
-    className="absolute left-0 ml-4 h-auto max-h-full" 
-    style={{ bottom: '0', maxHeight: '80%' }} 
+    className="absolute left-0  h-auto" 
+    style={{ bottom: '0', maxHeight: '100%' }} 
     />
 
         </div>
@@ -131,7 +133,7 @@ export default function Dashboard() {
 
             <div className='call flex flex-col items-center'>
                 <p className='text-[#020E7C] mb-2'>See a specialist</p>
-                <img onClick={()=>handleSpecialistModal(true)} src={book} alt='lab'/>
+                <img onClick={()=>handleSpecialistModal(true)} src={specialistIcon} alt='lab'/>
             </div>
             {specialistModal && <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />}
 
