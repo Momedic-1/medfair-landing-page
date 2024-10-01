@@ -42,7 +42,11 @@ export default function PaymentPage() {
     formData.plan = selectedPlan;
     formData.amount = selectedPrice;
   
-    const token = JSON.parse(localStorage.getItem('authToken')).token;
+    const userData = JSON.parse(localStorage.getItem('authToken'));
+    const token =userData.token;
+    formData.email =userData.user.emailAddress;
+    console.log(formData);
+    
     
     try {
       const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,formData,{

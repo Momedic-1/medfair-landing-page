@@ -1,25 +1,43 @@
 import DoctorImg from '../../../assets/doctor.png'
 import call from '../../../assets/call.svg'
 import './WelcomeBack.css'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { baseUrl } from '../../../env';
+import axios from 'axios';
 
 function WelcomeBack () {
-  const [isCalling, setCalling] = useState(true);
+  const [isCalling, setCalling] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const token = JSON.parse(localStorage.getItem('authToken')).token;
   
+  useEffect(() => {    
+    viewAllPendingCalls()
+  },[]);
+
+
+  const viewAllPendingCalls = async()=>{
+    try {
+    const response = await axios.get( `${baseUrl}/api/call/all-by-status`, null, {
+      params: {
+          status: ""
+      }
+  })
+      console.log(response)
+    } catch (error){
+      console.error(error);
+  setCalling(true)
+}
+  }
   const pickCall = () => {
     setCalling(!isCalling);
     setIsActive(!isActive);
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    formData.plan = selectedPlan;
-    formData.amount = selectedPrice;
   
-    const token = JSON.parse(localStorage.getItem('authToken')).token;
     
     try {
-      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,formData,{
+      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,{},{
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -38,13 +56,13 @@ function WelcomeBack () {
     <div className='mx-auto max-w-screen-2xl px-4 md:px-8'>
       {true &&
       <div 
+        onClick={pickCall}
         style={{ cursor: 'pointer' }}
-        className={`image ${isActive ? 'active' : ''} ${isCalling ? 'shake' : ''} bg-green-500 grid item-center justify-center max-w-20 lg:ml-80 mb-2 border rounded py-3`}>
+        className={`image ${isActive ? 'active' : ''} ${isCalling ? 'shake bg-green-500' : 'bg-gray-500'} grid item-center justify-center max-w-20 lg:ml-80 mb-2 border rounded py-3`}>
         <img
         src={call}
         alt={'call'}
-        className={`image ${isCalling ? 'shake' : ''}  ${isActive ? 'active' : ''}`}
-        onClick={pickCall}
+        className={`image ${isActive ? 'active' : ''}  ${isCalling ? 'shake bg-green-500' : ''} `}
       />
       </div>}
       <div className='flex flex-col overflow-hidden rounded-lg bg-gray-200 sm:flex-row'>
