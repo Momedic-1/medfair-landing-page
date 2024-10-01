@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import ErrorModal from '../src/components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import { baseUrl } from './env';
+import DesignedSideBar from './components/reuseables/DesignedSideBar';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -66,10 +67,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col lg:flex-row h-screen">
       {/* Top Banner for Mobile */}
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center p-10 lg:hidden">
-        <img src={medfair} alt="Medfair" className="h-10 w-10 mr-2" />
-        <p className="text-white text-lg">Medfair</p>
-      </div>
+      <DesignedSideBar/>
 
       {/* Left Side - Design and Background */}
       <div className="w-full lg:w-2/5 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center hidden lg:flex">

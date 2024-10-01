@@ -183,7 +183,7 @@ const DoctorSignupForm = ({ formData, setFormData }) => {
 
       <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
         <Modal />
-        <a href='#' className='text-sm font-medium text-gray-900'>
+        <a href='/login' className='text-sm font-medium text-gray-900'>
           Already have an account?{' '}
           <span className='text-violet-950'>Login here</span>
         </a>
