@@ -30,7 +30,6 @@ function WelcomeBack () {
 }
   }
   const pickCall = () => {
-    console.log(activeCall);
     window.open(activeCall, '_blank', 'noopener,noreferrer');
     // setCalling(!activeCall);
     setIsActive(!isActive);

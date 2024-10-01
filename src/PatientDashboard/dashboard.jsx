@@ -52,10 +52,7 @@ export default function Dashboard() {
     console.log(response)
     const responseData = response.data
     if (responseData.message === "Call initiated. Waiting for doctor to accept."){
-      console.log("working...");
-      console.log(responseData.data);
       window.open(responseData.data, '_blank', 'noopener,noreferrer');
-      
     }
     if (responseData.message === "Please subscribe to make calls.") {
       // toast.success(responseData.message)
