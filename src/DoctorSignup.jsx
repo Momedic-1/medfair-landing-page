@@ -166,7 +166,7 @@ const DoctorSignup = () => {
             </button> */}
             <button
               type='button'
-              className='w-[300px] lg:ml-48 md:ml-20 md:w-[720px] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none'
+              className= {`${currentStep === 2 && 'hidden'} w-[300px] lg:ml-48 md:ml-20 md:w-[720px] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}
               // data-hs-stepper-next-btn
               onClick={handleNextClick}
             >
