@@ -58,7 +58,7 @@ const DoctorSignup = () => {
   }
   const signUpBackend = async()=>{
     try {
-      const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
+      const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ const DoctorSignup = () => {
             </button> */}
             <button
               type='button'
-              className='w-[300px] lg:ml-48 md:ml-20 md:w-[720px] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none'
+              className= {`${currentStep === 2 && 'hidden'} w-[300px] lg:ml-48 md:ml-20 md:w-[720px] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}
               // data-hs-stepper-next-btn
               onClick={handleNextClick}
             >
@@ -175,8 +175,8 @@ const DoctorSignup = () => {
           </div>
         )}
         <div className='text-center mt-4 mb-12'>
-          <a href='#' target="_blank" className='text-blue-500'>
-            <p onClick={()=>navigate('/patient_signup')}>Signup as Patient</p>
+          <a href='/patient_signup' target="_blank" className='text-blue-500'>
+            <p>Signup as Patient</p>
           </a>
         </div>
       </div>
