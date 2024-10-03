@@ -57,6 +57,7 @@ const DoctorSignup = () => {
     }
   }
   const signUpBackend = async()=>{
+    console.log(formData)
     try {
       const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
         method: 'POST',
@@ -67,6 +68,14 @@ const DoctorSignup = () => {
       });
       const responseText = await response.text();
       let result = {};
+
+      const responseData = await response.json();
+      const token = responseData.message
+      const userData = responseData.data
+
+      // Save token and user data to local storage
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('userData', JSON.stringify(userData))
 
       if (responseText) {
         try {

@@ -4,6 +4,9 @@ const VerificationInput = () => {
   const [code, setCode] = useState(['', '', '', '', ''])
 
   const handleChange = (index, value) => {
+      const userData = JSON.parse(localStorage.getItem('userData'))
+      console.log(userData)
+      console.log("userData")
     const newCode = [...code]
     newCode[index] = value
     setCode(newCode)
@@ -14,7 +17,7 @@ const VerificationInput = () => {
   }
 
   return (
-    <div className='bg-white p-6 rounded-lg'>
+    <div className='bg-white mr-10 rounded-lg'>
       <h2 className='text-xl font-bold text-center mb-4'> Check your email!</h2>
       <p className='text-sm text-center text-gray-400 font-medium mb-4'>
         A verification code was sent to you (solomonmoregood97@gmail.com).
@@ -36,11 +39,6 @@ const VerificationInput = () => {
           />
         ))}
       </div>
-      {/* <div className='flex justify-center'>
-        <button className='w-full max-w-xs bg-blue-700 text-white py-2 rounded-md hover:bg-blue-800 transition duration-300'>
-          Verify
-        </button>
-      </div> */}
     </div>
   )
 }
