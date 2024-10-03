@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import Modal from './Modal'
 import React from 'react'
 
@@ -63,6 +64,7 @@ const Checkbox = ({ label, name, checked, onChange }) => (
 )
 
 const DoctorSignupForm = ({ formData, setFormData }) => {
+  const navigate = useNavigate();
   const handleChange = e => {
     const { name, value, type, checked } = e.target
     setFormData(prevData => ({
@@ -183,9 +185,9 @@ const DoctorSignupForm = ({ formData, setFormData }) => {
 
       <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
         <Modal />
-        <a href='/login' className='text-sm font-medium text-gray-900'>
+        <a onClick={()=>navigate('/login')} className='text-sm font-medium '>
           Already have an account?{' '}
-          <span className='text-violet-950'>Login here</span>
+          <span className='text-violet-650'>Login here</span>
         </a>
       </div>
 

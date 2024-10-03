@@ -18,7 +18,7 @@ function WelcomeBack () {
 
   const viewAllPendingCalls = async()=>{
     try {
-    const response = await axios.get( `${baseUrl}/api/call/all-by-status`, null, {
+    const response = await axios.get( `https://momedic.onrender.com/api/call/all-by-status`, null, {
       params: {
           status: ""
       }
@@ -39,7 +39,7 @@ function WelcomeBack () {
   
     
     try {
-      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,{},{
+      const response = await axios.post(` https://momedic.onrender.com/api/payment/initialize-payment`,{},{
         headers: {
           Authorization: `Bearer ${token}`
         }
