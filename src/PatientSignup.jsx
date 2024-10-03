@@ -47,12 +47,12 @@ const PatientSignup = () => {
   };
 
   const handleNextClick = async () => {
-    setLoading(true);
     if (currentStep === 1) {
       const formIsValid = await validateForm();
       if (formIsValid) {
         setShowCheckEmail(true);
         setCurrentStep(2);
+        console.log("first step");
       }
     } else if (currentStep === 2) {
        await verifyEmail()
@@ -63,9 +63,10 @@ const PatientSignup = () => {
   };
 
   async function verifyEmail(){
+    setLoading(true);
     const verificationData = { token: verificationToken, email: formData.emailAddress}
    try {
-        const response = await fetch(`${baseUrl}api/v1/registration/verify-email`, {
+        const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
           method: 'POST',
           headers: {
            'Content-Type': 'application/json'
@@ -80,8 +81,6 @@ const PatientSignup = () => {
     } else {
       result = await response.text();
     }
-
-
         if (result.includes('Email verification successful')) {
           setLoading(false)
           setCurrentStep(3);
@@ -98,6 +97,7 @@ const PatientSignup = () => {
   }
 
   async function validateForm() {
+    setLoading(true);
     try {
       const response = await fetch(`${baseUrl}/api/v1/registration/patients-registrations`, {
         method: 'POST',

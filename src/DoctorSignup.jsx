@@ -154,23 +154,14 @@ const DoctorSignup = () => {
         </div>
 
         {!showCheckEmail && (
-          <div className='mt-5 grid grid-cols-2 justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
-            {/* <button
-              type='button'
-              className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none'
-              data-hs-stepper-back-btn
-              onClick={() => setCurrentStep(prev => Math.max(prev - 1, 1))}
-              disabled={currentStep === 1}
-            >
-              Back
-            </button> */}
+          <div className='mt-5 justify-between items-center  lg:mx-[12rem] mx-[2rem]'>
             <button
               type='button'
-              className= {`${currentStep === 2 && 'hidden'} w-[300px] lg:ml-48 md:ml-20 md:w-[720px] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}
+              className= {` ${currentStep === 2 && 'max-w-xs bg-blue-700 text-white py-2 rounded-md hover:bg-blue-800 transition duration-300'} w-[300px] lg:ml-48 md:ml-20 md:w-[720px] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}
               // data-hs-stepper-next-btn
               onClick={handleNextClick}
             >
-             {currentStep === 3 ? 'Submit' : 'Next'}
+             {currentStep === 3 ? 'Submit' : currentStep === 2? 'Verify':  'Next'}
             </button>
           </div>
         )}
