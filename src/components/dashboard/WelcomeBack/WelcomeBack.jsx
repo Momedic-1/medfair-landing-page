@@ -62,7 +62,7 @@ function WelcomeBack () {
         style={{ cursor: 'pointer' }}
         className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-gray-500'} grid item-center justify-center max-w-20 lg:ml-80 mb-2 border rounded py-3`}>
         <img
-        src={activeCall}
+        src={call}
         alt={'call'}
         className={`image ${isActive ? 'active' : ''}  ${activeCall ? 'shake bg-green-500' : ''} `}
       />
