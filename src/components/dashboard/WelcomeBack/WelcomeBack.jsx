@@ -9,7 +9,7 @@ function WelcomeBack () {
   const [activeCall, setActiveCalling] = useState(null);
   const [callStatus, setCallStatus]= useState("");
   const [isActive, setIsActive] = useState(false);
-  const token = JSON.parse(localStorage.getItem('authToken')).token;
+  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   
   useEffect(() => {    
     viewAllPendingCalls()
@@ -46,11 +46,11 @@ function WelcomeBack () {
       });
       console.log(response);
     } catch (error) {
-      setLoading(false);
-      setErrorMessage('Error submitting form. Please try again.');
+      // setLoading(false);
+      // setErrorMessage('Error submitting form. Please try again.');
       return false;
     }finally{
-      setPaymentSuccess(true);
+      // setPaymentSuccess(true);
     }
   };
 
