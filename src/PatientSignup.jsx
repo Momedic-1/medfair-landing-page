@@ -32,7 +32,7 @@ const PatientSignup = () => {
         );
       case 2:
         return showCheckEmail ? (
-          <CheckEmail onAnimationComplete={handleCheckEmailComplete} />
+          <CheckEmail email={'Work on the email props patient'} onAnimationComplete={handleCheckEmailComplete} />
         ) : (
           <VerificationInput setVerificationToken={setVerificationToken} />
         );
@@ -211,7 +211,7 @@ const PatientSignup = () => {
             }
             <button
                 type='button'
-                className={`${currentStep === 1 && 'w-full md:w-[80%] md:ml-20  grid justify-center'} py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border bg-blue-600 text-white shadow-sm hover:bg-blue-500 focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:pointer-events-none`}
+                className={`${currentStep === 1 && 'w-full md:w-[80%] md:ml-20 grid justify-center'} py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border bg-blue-600 text-white shadow-sm hover:bg-blue-500 focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:pointer-events-none`}
                 data-hs-stepper-next-btn
                 onClick={handleNextClick}
                 disabled={loading}
