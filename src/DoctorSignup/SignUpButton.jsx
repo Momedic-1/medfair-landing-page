@@ -15,7 +15,7 @@ const SignUpButton = ({handleNextClick, currentStep, showCheckEmail} ) => (
             </div>
         )}
         <div className='text-center mt-4 mb-12'>
-            <a href='/patient_signup' target="_blank" className='text-blue-500'>
+            <a href='/patient_signup' target="" className='text-blue-500'>
                 <p>Signup as Patient</p>
             </a>
         </div>
