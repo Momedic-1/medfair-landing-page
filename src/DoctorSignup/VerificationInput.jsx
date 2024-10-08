@@ -36,11 +36,11 @@ const VerificationInput = () => {
           />
         ))}
       </div>
-      <div className='flex justify-center'>
+      {/* <div className='flex justify-center'>
         <button className='w-full max-w-xs bg-blue-700 text-white py-2 rounded-md hover:bg-blue-800 transition duration-300'>
           Verify
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }

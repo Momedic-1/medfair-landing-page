@@ -185,3 +185,4 @@ const DoctorSignup = () => {
 }
 
 export default DoctorSignup
+
