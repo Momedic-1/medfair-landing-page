@@ -39,7 +39,7 @@ function WelcomeBack () {
   
     
     try {
-      const response = await axios.post(` https://momedic.onrender.com/api/payment/initialize-payment`,{},{
+      const response = await axios.post(`https://momedic.onrender.com/api/payment/initialize-payment`,{},{
         headers: {
           Authorization: `Bearer ${token}`
         }
