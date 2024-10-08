@@ -7,6 +7,7 @@ import VerificationSuccessful from './PatientSignup/VerificationSuccessful';
 import CheckEmail from './PatientSignup/CheckEmail';
 import ErrorModal from './components/ErrorModal';
 import { baseUrl } from './env';
+import LoadingLoop from "./assets/LoadingLoop.jsx";
 
 const PatientSignup = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -197,44 +198,27 @@ const PatientSignup = () => {
 
         {!showCheckEmail && (
           <div className='mt-5 flex justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
+            {
+                currentStep !== 1 && <button
+                    type='button'
+                    className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none'
+                    data-hs-stepper-back-btn
+                    onClick={() => setCurrentStep(prev => Math.max(prev - 1, 1))}
+                    disabled={currentStep === 1}
+                >
+                  Back
+                </button>
+            }
             <button
-              type='button'
-              className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none'
-              data-hs-stepper-back-btn
-              onClick={() => setCurrentStep(prev => Math.max(prev - 1, 1))}
-              disabled={currentStep === 1}
-            >
-              Back
-            </button>
-            <button
-              type='button'
-              className='py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border bg-blue-600 text-white shadow-sm hover:bg-blue-500 focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:pointer-events-none'
-              data-hs-stepper-next-btn
-              onClick={handleNextClick}
-              disabled={loading}
+                type='button'
+                className={`${currentStep === 1 && 'w-full md:w-[80%] md:ml-20  grid justify-center'} py-2 px-3 inline-flex items-center gap-x-1 text-sm font-medium rounded-lg border bg-blue-600 text-white shadow-sm hover:bg-blue-500 focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:pointer-events-none`}
+                data-hs-stepper-next-btn
+                onClick={handleNextClick}
+                disabled={loading}
             >
               {loading ? (
-                <>
-                  <svg
-                    className='animate-spin w-4 h-4 text-white'
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                  >
-                    <circle
-                      className='opacity-25'
-                      cx='12'
-                      cy='12'
-                      r='10'
-                      stroke='currentColor'
-                      strokeWidth='4'
-                    ></circle>
-                    <path
-                      className='opacity-75'
-                      fill='currentColor'
-                      d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z'
-                    ></path>
-                  </svg>
+                  <>
+                    <LoadingLoop/>
                   <span>Processing...</span>
                 </>
               ) : (
