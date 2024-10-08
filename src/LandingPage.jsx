@@ -1,5 +1,5 @@
 import React from 'react'
-import DoctorSignup from './DoctorSignup'
+import DoctorSignup from './DoctorSignup/DoctorSignup.jsx'
 
 const LandingPage = () => {
   return (
