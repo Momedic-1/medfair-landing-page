@@ -30,7 +30,7 @@ const DoctorSignup = () => {
         )
       case 2:
         return showCheckEmail ? (
-          <CheckEmail onAnimationComplete={handleCheckEmailComplete} />
+          <CheckEmail email={'Work on the email props doctor'} onAnimationComplete={handleCheckEmailComplete} />
         ) : (
           <VerificationInput />
         )
