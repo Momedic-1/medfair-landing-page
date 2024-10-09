@@ -1,12 +1,21 @@
-import React, { useState } from 'react'
+
+import React, { useState, useEffect } from 'react'
 
 const VerificationInput = () => {
   const [code, setCode] = useState(['', '', '', '', ''])
+  const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+
+  // Load user data from localStorage
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem('userData'))
+    if (userData) {
+      setUserName(userData.name || 'User')  // Set the name from userData, default to 'User' if not available
+      setUserEmail(userData.email || '')    // Set the email from userData
+    }
+  }, [])
 
   const handleChange = (index, value) => {
-      const userData = JSON.parse(localStorage.getItem('userData'))
-      console.log(userData)
-      console.log("userData")
     const newCode = [...code]
     newCode[index] = value
     setCode(newCode)
@@ -18,9 +27,9 @@ const VerificationInput = () => {
 
   return (
     <div className='bg-white mr-10 rounded-lg'>
-      <h2 className='text-xl font-bold text-center mb-4'> Check your email!</h2>
+      <h2 className='text-xl font-bold text-center mb-4'>Check your email, {userName}!</h2>
       <p className='text-sm text-center text-gray-400 font-medium mb-4'>
-        A verification code was sent to you (solomonmoregood97@gmail.com).
+        A verification code was sent to {userEmail}.
       </p>
       <p className='text-sm text-center mb-4 font-medium text-gray-400'>
         Enter the 5-digit code to verify your Medfair account

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react'
 import CheckEmailImage from "../assets/CheckEmailImage.jsx";
 
@@ -7,7 +8,7 @@ const CheckEmail = ({ onAnimationComplete, email }) => {
       if (onAnimationComplete) {
         onAnimationComplete()
       }
-    }, 3000) // Show for 3 seconds
+    }, 3000) 
 
     return () => clearTimeout(timer)
   }, [onAnimationComplete])
@@ -21,13 +22,13 @@ const CheckEmail = ({ onAnimationComplete, email }) => {
           Check your email!
         </h1>
         <p className='text-gray-500'>
-          A verification code was sent to you
-          <br />
-          <p>({email ? email : 'solomonmoregood97@gmail.com'}).</p>
+          A verification code was sent to you <br />
+          <p>({email ? email : 'Please check your email'}).</p> 
         </p>
       </div>
     </div>
   )
 }
 
-export default CheckEmail
+export default CheckEmail;
+
