@@ -1,215 +1,233 @@
-import { useNavigate } from 'react-router-dom'
-import Modal from './Modal'
-import React from 'react'
 
-const InputField = ({
-  label,
-  type,
-  placeholder,
-  required,
-  name,
-  value,
-  onChange
-}) => (
-  <div className='mb-4'>
-    <label className='block text-sm font-medium text-gray-700 mb-1'>
-      {label} {required && <span className='text-red-500'>*</span>}
-    </label>
-    <input
-      type={type}
-      className='w-full p-2 border border-gray-300 rounded text-sm'
-      placeholder={placeholder}
-      name={name}
-      value={value}
-      onChange={onChange}
-      required={required}
-    />
-  </div>
-)
+import { useNavigate } from 'react-router-dom';
+import { Formik, Field, Form, ErrorMessage } from 'formik';
+import * as yup from 'yup';
+import Modal from './Modal';
 
-const RadioGroup = ({ label, options, name, value, onChange }) => (
-  <div className='mb-4'>
-    <label className='block text-sm font-medium text-gray-700 mb-1'>
-      {label}
-    </label>
-    <div className='flex space-x-4'>
-      {options.map(option => (
-        <label key={option} className='flex items-center'>
-          <input
-            type='radio'
-            name={name}
-            value={option}
-            checked={value === option}
-            onChange={onChange}
-            className='mr-2'
-          />
-          <span className='text-sm'>{option}</span>
-        </label>
-      ))}
-    </div>
-  </div>
-)
+const validationSchema = yup.object().shape({
+  firstName: yup.string().required('First name is required'),
+  lastName: yup.string().required('Last name is required'),
+  emailAddress: yup.string().email('Invalid email').required('Email is required'),
+  phoneNumber: yup.string().required('Phone number is required'),
+  gender: yup.string().oneOf(['Male', 'Female'], 'Invalid gender').required('Gender is required'),
+  specialization: yup.string(),
+  hospital: yup.string(),
+  password: yup
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .required('Password is required'),
+  confirmedPassword: yup
+    .string()
+    .oneOf([yup.ref('password'), null], 'Passwords do not match')
+    .required('Confirm password is required'),
+  heardAboutUs: yup.string(),
+  acceptTerms: yup.bool().oneOf([true], 'You must accept the terms and conditions'),
+});
 
-const Checkbox = ({ label, name, checked, onChange }) => (
-  <label className='flex items-center space-x-2'>
-    <input
-      type='checkbox'
-      className='form-checkbox'
-      name={name}
-      checked={checked}
-      onChange={onChange}
-    />
-    <span className='text-sm'>{label}</span>
-  </label>
-)
-
-const DoctorSignupForm = ({ formData, setFormData }) => {
+const DoctorSignupForm = () => {
   const navigate = useNavigate();
-  const handleChange = e => {
-    const { name, value, type, checked } = e.target
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: type === 'checkbox' ? checked : value
-    }))
-  }
+
+  const initialValues = {
+    firstName: '',
+    lastName: '',
+    emailAddress: '',
+    phoneNumber: '',
+    gender: '',
+    specialization: '',
+    hospital: '',
+    password: '',
+    confirmedPassword: '',
+    heardAboutUs: '',
+    acceptTerms: false,
+  };
+
+  const handleSubmit = (values, { resetForm }) => {
+    console.log(values);
+    resetForm(); 
+  };
 
   return (
-    <form className='mx-auto lg:pr-9 items-center justify-center max-w-3xl'>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-        <InputField
-          label='First Name'
-          type='text'
-          placeholder='Enter First Name'
-          name='firstName'
-          value={formData.firstName || ''}
-          onChange={handleChange}
-          required
-        />
-        <InputField
-          label='Last Name'
-          type='text'
-          placeholder='Enter Surname'
-          name='lastName'
-          value={formData.lastName || ''}
-          onChange={handleChange}
-          required
-        />
-        <InputField
-          label='Email'
-          type='email'
-          placeholder='Enter Email'
-          name='emailAddress'
-          value={formData.emailAddress || ''}
-          onChange={handleChange}
-          required
-        />
-        <div className='max-w-md space-y-3 mb-4'>
-          <div>
-            <label
-              htmlFor='mobileNumber'
-              className='block text-sm text-gray-700 font-medium'
-            >
-              Mobile Number
-            </label>
-            <div className='flex rounded-lg'>
-              <div className='px-4 inline-flex items-center min-w-fit rounded-s-md border border-gray-300 bg-gray-100'>
-                <span className='text-sm text-gray-500'>+234</span>
+    <Formik
+      initialValues={initialValues}
+      validationSchema={validationSchema}
+      onSubmit={handleSubmit}
+    >
+      {({ handleSubmit }) => (
+        <Form className="mx-auto p-4 max-w-xl md:max-w-3xl lg:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="text"
+                name="firstName"
+                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter First Name"
+              />
+              <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm" />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="text"
+                name="lastName"
+                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter Last Name"
+              />
+              <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm" />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="email"
+                name="emailAddress"
+                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter Email"
+              />
+              <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm" />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mobile Number
+              </label>
+              <div className="flex">
+                <div className="px-4 inline-flex items-center min-w-fit rounded-s-md border border-gray-300 bg-gray-100">
+                  <span className="text-sm text-gray-500">+234</span>
+                </div>
+                <Field
+                  type="text"
+                  name="phoneNumber"
+                  className="w-[56%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  placeholder="Enter mobile Number"
+                />
               </div>
-              <input
-                type='text'
-                name='phoneNumber'
-                id='mobileNumber'
-                className='py-3 px-4 block w-full border border-gray-300 rounded-e-md text-sm'
-                placeholder='Enter mobile Number'
-                value={formData.phoneNumber || ''}
-                onChange={handleChange}
+              <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sex</label>
+            <div className="flex flex-wrap space-x-4">
+              <label className="flex items-center">
+                <Field type="radio" name="gender" value="Male" className="mr-2" />
+                <span className="text-sm">Male</span>
+              </label>
+              <label className="flex items-center">
+                <Field type="radio" name="gender" value="Female" className="mr-2" />
+                <span className="text-sm">Female</span>
+              </label>
+            </div>
+            <ErrorMessage name="gender" component="div" className="text-red-500 text-sm" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Medical specialization
+              </label>
+              <Field
+                type="text"
+                name="specialization"
+                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter here"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name of Hospital you work
+              </label>
+              <Field
+                type="text"
+                name="hospital"
+                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter here"
               />
             </div>
           </div>
-        </div>
-      </div>
 
-      <RadioGroup
-        label='Sex'
-        options={['Male', 'Female']}
-        name='gender'
-        value={formData.gender || ''}
-        onChange={handleChange}
-      />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Input Password <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="password"
+                name="password"
+                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Password"
+              />
+              <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
+            </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-[3rem]'>
-        <InputField
-          label='Medical specialization'
-          type='text'
-          placeholder='Enter here'
-          name='specialization'
-          value={formData.specialization || ''}
-          onChange={handleChange}
-        />
-        <InputField
-          label='Name of Hospital you work'
-          type='text'
-          placeholder='Enter here'
-          name='hospital'
-          value={formData.hospital || ''}
-          onChange={handleChange}
-        />
-        <InputField
-          label='Input Password'
-          type='password'
-          placeholder='Password'
-          name='password'
-          value={formData.password || ''}
-          onChange={handleChange}
-          required
-        />
-        <InputField
-          label='Re-Enter Password'
-          type='password'
-          placeholder='Confirm Password'
-          name='confirmedPassword'
-          value={formData.confirmedPassword || ''}
-          onChange={handleChange}
-          required
-        />
-      </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Re-Enter Password <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="password"
+                name="confirmedPassword"
+                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Confirm Password"
+              />
+              <ErrorMessage
+                name="confirmedPassword"
+                component="div"
+                className="text-red-500 text-sm"
+              />
+            </div>
+          </div>
 
-      <InputField
-        label='How did you hear about us?'
-        type='textarea'
-        placeholder='How did you hear about us?'
-        name='heardAboutUs'
-        value={formData.heardAboutUs || ''}
-        onChange={handleChange}
-      />
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              How did you hear about us?
+            </label>
+            <Field
+              type="text"
+              name="heardAboutUs"
+              className="w-[90%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+              placeholder="How did you hear about us?"
+            />
+          </div>
 
-      <div className='flex flex-col md:flex-row justify-between items-center mt-6'>
-        <Modal />
-        <a onClick={()=>navigate('/login')} className='text-sm font-medium '>
-          Already have an account?{' '}
-          <span className='text-violet-650'>Login here</span>
-        </a>
-      </div>
+          {/* <div className="mt-6">
+            <label className="text-violet-950 text-sm cursor-pointer">
+              Click here to upload Documents →
+            </label>
+          </div> */}
+         
+          <div className="flex gap-7 flex-col md:flex-row  mt-6">
+            <Modal />
+            <a onClick={() => navigate('/login')} className="text-sm font-medium">
+              Already have an account? <span className="text-violet-950">Login here</span>
+            </a>
+          </div>
 
-      <div className='mt-6'>
-        <Checkbox
-          label={
-            <span className='text-sm text-gray-900 font-medium'>
+          <div className="mt-6 flex items-center ">
+            <Field type="checkbox" name="acceptTerms" className="form-checkbox" />
+            <span className="text-sm ml-2 ">
               Accept the{' '}
-              <a href='#' className='text-violet-950'>
+              <a href="#" className="text-violet-950">
                 Terms and Conditions, Operating policies{' '}
-                <span className='text-gray-900'>and</span> cookies policies of
-                Medfair
+                <span className="text-gray-900">and</span> cookies policies of Medfair
               </a>
             </span>
-          }
-          name='acceptTerms'
-          checked={formData.acceptTerms || false}
-          onChange={handleChange}
-        />
-      </div>
-    </form>
-  )
-}
+            <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm" />
+          </div>
+         
+        </Form>
+      )}
+    </Formik>
+  );
+};
 
-export default DoctorSignupForm
+export default DoctorSignupForm;
+
