@@ -44,7 +44,7 @@ export default function Dashboard() {
   const userData = JSON.parse(userDataString);
   const patientId = userData?.id
   const patientEmail = userData?.email
-  const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
+  const response = await axios.post( `https://momedic.onrender.com/api/call/initiate`, null, {
     params: {
         patientId: patientId
     }
