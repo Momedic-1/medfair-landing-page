@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import  {useRef, useState} from 'react'
 
-const VerificationInput = () => {
+const VerificationInput = ({setVerificationToken}) => {
   const [code, setCode] = useState(['', '', '', '', ''])
+    const inputRefs = useRef([]);
 
   const handleChange = (index, value) => {
       const userData = JSON.parse(localStorage.getItem('userData'))
@@ -14,7 +15,20 @@ const VerificationInput = () => {
     if (value && index < 4) {
       document.getElementById(`input-${index + 1}`).focus()
     }
+      if (index === 4) {
+          // When the last input is filled, set the verification token
+          setVerificationToken(newCode.join(''));
+          console.log(newCode.join(''))
+      } else if (value && index < 4) {
+          inputRefs.current[index + 1].focus();
+      }
+
   }
+    // const handleKeyDown = (e, index) => {
+    //     if (e.key === 'Backspace' && !code[index] && index > 0) {
+    //         inputRefs.current[index - 1].focus();
+    //     }
+    // }
 
   return (
     <div className='bg-white mr-10 rounded-lg'>
