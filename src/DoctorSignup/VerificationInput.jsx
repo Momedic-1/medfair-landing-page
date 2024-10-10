@@ -1,19 +1,59 @@
 import  {useRef, useState,useEffect} from 'react'
 
-const VerificationInput = ({setVerificationToken}) => {
+const VerificationInput = ({setCurrentStep}) => {
   const [code, setCode] = useState(['', '', '', '', ''])
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
     const inputRefs = useRef([]);
+    const [loading, setLoading] = useState(false);
+    const [verificationToken, setVerificationToken] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
   // Load user data from localStorage
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem('userData'))
+    const email = JSON.parse(localStorage.getItem('email'))
     if (userData) {
       setUserName(userData.name || 'User')  // Set the name from userData, default to 'User' if not available
-      setUserEmail(userData.email || '')    // Set the email from userData
+      setUserEmail(email)    // Set the email from userData
     }
   }, [])
+
+    async function verifyEmail(){
+        setLoading(true);
+        const verificationData = { token: verificationToken, email: userEmail}
+        console.log(verificationData)
+        try {
+            const response = await fetch(`https://momedic.onrender.com/api/v1/registration/verify-email`, {
+                // const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(verificationData),
+            });
+
+            const contentType = response.headers.get('Content-Type');
+            let result;
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                result = await response.text();
+            }
+            if (result.includes('Email verification successful')) {
+                setLoading(false)
+                setCurrentStep(3);
+            } else {
+                setLoading(false);
+                setErrorMessage('Incorrect token! Please try again.');
+                console.error(result.message);
+            }
+        } catch (error) {
+            setLoading(false);
+            setErrorMessage('Something went wrong. Try again!');
+            console.error('Error verifying email:', error);
+        }
+    }
 
   const handleChange = (index, value) => {
     const newCode = [...code]
@@ -43,19 +83,23 @@ const VerificationInput = ({setVerificationToken}) => {
         Enter the 5-digit code to verify your Medfair account
       </p>
       <p className='text-sm text-center text-blue-500 mb-4'>Open email app</p>
-      <div className='flex justify-center space-x-2 mb-16'>
-        {code.map((digit, index) => (
-          <input
-            key={index}
-            id={`input-${index}`}
-            type='text'
-            maxLength='1'
-            className='w-12 h-12 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-            value={digit}
-            onChange={e => handleChange(index, e.target.value)}
-          />
-        ))}
-      </div>
+        <div className='flex justify-center space-x-2 mb-16'>
+            {code.map((digit, index) => (
+                <input
+                    key={index}
+                    id={`input-${index}`}
+                    type='text'
+                    maxLength='1'
+                    className='w-12 h-12 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                    value={digit}
+                    onChange={e => handleChange(index, e.target.value)}
+                />
+            ))}
+            <button
+                onClick={() => verifyEmail()}
+                className={`md:w-[30%] bg-blue-700 text-white py-2 rounded-md hover:bg-blue-800 transition duration-300 w-[300px] lg:w-[75%] md:ml-12 ml-4 lg:ml-24  px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold  border border-transparent disabled:opacity-50 disabled:pointer-events-none`}> Next
+            </button>
+        </div>
     </div>
   )
 }
