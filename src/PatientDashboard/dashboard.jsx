@@ -6,7 +6,7 @@ import banner from './assets/banner.svg'
 import call from './assets/call (2).svg'
 import book from './assets/book (2).svg'
 import specialistIcon from './assets/specialis-icon.svg'
-import { baseUrl, zoomUrl } from '../env';
+import { baseUrl } from '../env';
 import SpecialistModal from '../PatientSignup/SpecialistModal';
 import Sidebar from './Sidebar';
 import axios from 'axios';
@@ -33,7 +33,24 @@ export default function Dashboard() {
     navigate('/login');
     return null;
   }
-
+function makePaymentToast(message){
+    toast.success(message, {
+        position:"top-right",
+        autoClose:5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        rtl:false,
+        progressStyle: {
+            background: '#000080',
+        },
+        pauseOnHover: false,
+        draggable: false,
+        pauseOnFocusLoss:false
+    });
+    setTimeout(() => {
+        navigate('/payment');
+    }, 4000);
+}
   function handleSpecialistModal(isOpen){    
     setSpecialistModal(isOpen)    
   }
@@ -43,39 +60,25 @@ export default function Dashboard() {
 
   const userData = JSON.parse(userDataString);
   const patientId = userData?.id
-  const patientEmail = userData?.email
-  const response = await axios.post( `https://momedic.onrender.com/api/call/initiate`, null, {
-    params: {
-        patientId: patientId
-    }
-})
-    console.log(response)
-    const responseData = response.data
-    if (responseData.message === "Call initiated. Waiting for doctor to accept."){
-      window.open(responseData.data, '_blank', 'noopener,noreferrer');
-    }
-    if (responseData.message === "Please subscribe to make calls.") {
-      // toast.success(responseData.message)
-      toast.success(responseData.message, {
-        position:"top-right",
-        autoClose:5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        rtl:false,
-          progressStyle: {
-            background: '#000080', 
-          },
-        pauseOnHover: false,
-        draggable: false,
-        pauseOnFocusLoss:false 
-      });
-      setTimeout(() => {
-        navigate('/payment');
-      }, 4000);
-      
-    }else{
-      console.log("Call not initiated");
-    }
+      try{
+          const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
+              params: {
+                  userId: patientId
+              }
+          })
+          console.log(response.data)
+          const responseData = response.data
+              window.open(responseData.start_url, '_blank', 'noopener,noreferrer');
+
+      }catch (error){
+          console.log(error)
+          const responseData = error.response.data
+          if (responseData.error ) {
+              makePaymentToast(responseData.error)
+          }else{
+              console.log("Call not initiated ");
+          }
+      }
   }
 
   const handleSearchChange = (e) => {
@@ -189,7 +192,7 @@ export default function Dashboard() {
       </span>
     </div>
     <p className="text-[#020E7C] mb-2">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 1 year.</p>
-    <button className="bg-blue-700 text-white py-2 px-4 rounded" nClick={()=>navigate('/payment')}>Subscribe</button>
+    <button className="bg-blue-700 text-white py-2 px-4 rounded" onClick={()=>navigate('/payment')}>Subscribe</button>
   </div>
 </div>
 

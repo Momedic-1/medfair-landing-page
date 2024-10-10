@@ -15,6 +15,8 @@ const DoctorSignup = () => {
   const [showCheckEmail, setShowCheckEmail] = useState(false)
   const [formData, setFormData] = useState({})
   const navigate = useNavigate()
+  const [verificationToken, setVerificationToken] = useState('');
+
 
   useEffect(() => {
     if (Preline.HSStepperJS && typeof Preline.HSStepperJS.init === 'function') {
@@ -32,7 +34,7 @@ const DoctorSignup = () => {
         return showCheckEmail ? (
           <CheckEmail email={'Work on the email props doctor'} onAnimationComplete={handleCheckEmailComplete} />
         ) : (
-          <VerificationInput />
+          <VerificationInput setVerificationToken={setVerificationToken} />
         )
       case 3:
         return (
@@ -61,13 +63,15 @@ const DoctorSignup = () => {
     }
   }
   const signUpBackend = async()=>{
+    const verificationData = { token: verificationToken, email: formData.emailAddress}
+
     try {
       const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(verificationData),
       });
       const responseText = await response.text();
       console.log(response)

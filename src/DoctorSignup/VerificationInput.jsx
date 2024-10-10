@@ -1,10 +1,10 @@
+import  {useRef, useState,useEffect} from 'react'
 
-import React, { useState, useEffect } from 'react'
-
-const VerificationInput = () => {
+const VerificationInput = ({setVerificationToken}) => {
   const [code, setCode] = useState(['', '', '', '', ''])
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
+    const inputRefs = useRef([]);
 
   // Load user data from localStorage
   useEffect(() => {
@@ -23,6 +23,14 @@ const VerificationInput = () => {
     if (value && index < 4) {
       document.getElementById(`input-${index + 1}`).focus()
     }
+      if (index === 4) {
+          // When the last input is filled, set the verification token
+          setVerificationToken(newCode.join(''));
+          console.log(newCode.join(''))
+      } else if (value && index < 4) {
+          inputRefs.current[index + 1].focus();
+      }
+
   }
 
   return (

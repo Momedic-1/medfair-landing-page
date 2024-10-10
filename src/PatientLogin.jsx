@@ -30,7 +30,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch(`https://momedic.onrender.com/api/v1/auth/login`, {
+      const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

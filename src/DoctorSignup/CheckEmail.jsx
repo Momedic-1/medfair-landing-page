@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import CheckEmailImage from "../assets/CheckEmailImage.jsx";
 
 const CheckEmail = ({ onAnimationComplete, email }) => {
