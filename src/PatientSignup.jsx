@@ -24,6 +24,7 @@ const PatientSignup = () => {
     }
   }, []);
 
+
   const renderStepContent = step => {
     switch (step) {
       case 1:

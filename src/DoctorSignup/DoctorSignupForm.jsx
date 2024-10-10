@@ -24,7 +24,7 @@ const validationSchema = yup.object().shape({
   acceptTerms: yup.bool().oneOf([true], 'You must accept the terms and conditions'),
 });
 
-const DoctorSignupForm = () => {
+const DoctorSignupForm = ({setCurrentStep}) => {
   const navigate = useNavigate();
 
   const initialValues = {
@@ -41,10 +41,32 @@ const DoctorSignupForm = () => {
     acceptTerms: false,
   };
 
-  const handleSubmit = (values, { resetForm }) => {
+  const handleSubmit =async (values, { resetForm }) => {
     console.log(values);
-    resetForm(); 
-  };
+    try {
+      // const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
+      const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+      const responseText = await response.text();
+      console.log(response)
+      localStorage.setItem('email', JSON.stringify(values.emailAddress));
+
+      setCurrentStep(2)
+      // navigate('/check-mail')
+      // let result = {};
+
+    }catch (error) {
+      console.log(error)
+    }finally {
+      resetForm();
+    }
+  }
+
 
   return (
     <Formik
@@ -222,6 +244,7 @@ const DoctorSignupForm = () => {
             </span>
             <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm" />
           </div>
+          <button className={` w-[300px] lg:w-[75%] md:ml-12 ml-4 lg:ml-24 md:w-[95%] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next </button>
          
         </Form>
       )}

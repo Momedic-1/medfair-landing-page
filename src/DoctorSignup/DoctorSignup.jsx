@@ -28,7 +28,7 @@ const DoctorSignup = () => {
     switch (step) {
       case 1:
         return (
-          <DoctorSignupForm formData={formData} setFormData={setFormData} />
+          <DoctorSignupForm setCurrentStep={setCurrentStep} />
         )
       case 2:
         return showCheckEmail ? (
@@ -48,62 +48,10 @@ const DoctorSignup = () => {
   }
 
   const handleNextClick = () => {
-    
-    if (currentStep === 1) {
-      if (validateForm()) {
-        setShowCheckEmail(true)
-        signUpBackend()
-        setCurrentStep(2)
-        // navigate('/check-mail')
-      }
-    } else if (currentStep === 2) {
+    if (currentStep === 2) {
       setCurrentStep(3)
     } else if (currentStep === 3) {
       navigate('/dashboard/*') // Navigate to the dashboard
-    }
-  }
-  const signUpBackend = async()=>{
-    const verificationData = { token: verificationToken, email: formData.emailAddress}
-
-    try {
-      // const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
-      const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(verificationData),
-      });
-      const responseText = await response.text();
-      console.log(response)
-      // let result = {};
-
-      if (responseText) {
-        try {
-          // result = JSON.parse(responseText);
-        } catch (error) {
-          // setLoading(false);
-          // setErrorMessage('Error parsing server response.');
-          return false;
-        }
-      } else {
-        // setLoading(false);
-        // setErrorMessage('Empty response from the server.');
-        return false;
-      }
-
-      if (response.ok) {
-        // setLoading(false);
-        return true;
-      } else {
-        // setLoading(false);
-        // setErrorMessage(result.message || 'Form submission failed.');
-        return false;
-      }
-    } catch (error) {
-      // setLoading(false);
-      // setErrorMessage('Error submitting form. Please try again.');
-      return false;
     }
   }
 
