@@ -61,7 +61,8 @@ function makePaymentToast(message){
   const userData = JSON.parse(userDataString);
   const patientId = userData?.id
       try{
-          const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
+          // const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
+          const response = await axios.post( `https://momedic.onrender.com/api/call/initiate`, null, {
               params: {
                   userId: patientId
               }

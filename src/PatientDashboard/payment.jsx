@@ -49,7 +49,8 @@ export default function PaymentPage() {
     
     
     try {
-      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,formData,{
+      const response = await axios.post(`https://momedic.onrender.com/api/payment/initialize-payment`,formData,{
+      // const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`,formData,{
         headers: {
           Authorization: `Bearer ${token}`
         }
