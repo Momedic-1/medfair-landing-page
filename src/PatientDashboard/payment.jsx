@@ -9,9 +9,9 @@ import DesignedSideBar from '../components/reuseables/DesignedSideBar';
 
 export default function PaymentPage() {
   const subscriptionPlans = {
-  yearly: { name: 'Yearly', price: 45000 },
-  monthly: { name: 'Monthly', price: 4500 },
-  onetime: { name: 'One Time', price: 1500 },
+  yearly: { name: 'Yearly', price: 45000.00 },
+  monthly: { name: 'Monthly', price: 5000.00 },
+  onetime: { name: 'One Time', price: 1500.00 },
 };
 
   const navigate = useNavigate();
