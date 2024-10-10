@@ -15,7 +15,7 @@ const Stepper = ({stepLabels, currentStep})=>{
                     <span
                         className={`size-7 flex justify-center items-center flex-shrink-0 ${
                             currentStep >= index + 1
-                                ? 'bg-blue-600 text-white'
+                                ? 'bg-[#020E7C] text-white'
                                 : 'bg-gray-100 text-gray-800'
                         } font-medium rounded-full`}
                     >

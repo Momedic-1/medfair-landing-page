@@ -1,6 +1,9 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { useState } from 'react';
 import * as yup from 'yup';
 import Modal from './Modal';
 
@@ -12,6 +15,7 @@ const validationSchema = yup.object().shape({
   gender: yup.string().oneOf(['Male', 'Female'], 'Invalid gender').required('Gender is required'),
   specialization: yup.string(),
   hospital: yup.string(),
+  dateOfBirth: yup.string(),
   password: yup
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -20,11 +24,12 @@ const validationSchema = yup.object().shape({
     .string()
     .oneOf([yup.ref('password'), null], 'Passwords do not match')
     .required('Confirm password is required'),
-  heardAboutUs: yup.string(),
+ howDidYouHearAboutUs: yup.string(),
   acceptTerms: yup.bool().oneOf([true], 'You must accept the terms and conditions'),
 });
 
 const DoctorSignupForm = ({setCurrentStep}) => {
+  const [value, setValue] = useState()
   const navigate = useNavigate();
 
   const initialValues = {
@@ -37,7 +42,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
     hospital: '',
     password: '',
     confirmedPassword: '',
-    heardAboutUs: '',
+   howDidYouHearAboutUs: '',
     acceptTerms: false,
   };
 
@@ -57,8 +62,6 @@ const DoctorSignupForm = ({setCurrentStep}) => {
       localStorage.setItem('email', JSON.stringify(values.emailAddress));
 
       setCurrentStep(2)
-      // navigate('/check-mail')
-      // let result = {};
 
     }catch (error) {
       console.log(error)
@@ -117,22 +120,32 @@ const DoctorSignupForm = ({setCurrentStep}) => {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mobile Number
-              </label>
-              <div className="flex">
-                <div className="px-4 inline-flex items-center min-w-fit rounded-s-md border border-gray-300 bg-gray-100">
-                  <span className="text-sm text-gray-500">+234</span>
-                </div>
-                <Field
-                  type="text"
-                  name="phoneNumber"
-                  className="w-[56%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                  placeholder="Enter mobile Number"
-                />
-              </div>
-              <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" />
-            </div>
+           <label className="block text-sm font-medium text-gray-700 mb-1">
+          Mobile Number
+        </label>
+        <Field name="phoneNumber">
+    {({ field, form }) => (
+      <PhoneInput
+        placeholder="Enter mobile number"
+        country={'ng'}
+        value={field.value}
+        onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
+        inputStyle={{
+          width: '76%',
+          height: '40px',
+          paddingLeft: '60px',
+        }}
+        buttonStyle={{
+          padding: '10px',
+        }}
+      />
+    )}
+  </Field>
+
+       <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" /> 
+    </div>
+
+
           </div>
 
           <div className="mb-4">
@@ -208,28 +221,35 @@ const DoctorSignupForm = ({setCurrentStep}) => {
             </div>
           </div>
 
+          
+          
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              How did you hear about us?
+  <label htmlFor='howDidYouHearAboutUs' className="block text-sm font-medium text-gray-700 mb-1">
+    How did you hear about us?
+  </label>
+  <Field
+    type="text"
+    name="howDidYouHearAboutUs"
+    
+    placeholder="Enter heard About Us"
+    className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
+  />
+</div>
+       <div className="mb-4">
+            <label htmlFor='dateOfBirth' className="block text-sm font-medium text-gray-700 mb-1">
+              Date of Birth
             </label>
             <Field
-              type="text"
-              name="heardAboutUs"
-              className="w-[90%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-              placeholder="How did you hear about us?"
+              type="date"
+              name="dateOfBirth"
+             className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
             />
           </div>
-
-          {/* <div className="mt-6">
-            <label className="text-violet-950 text-sm cursor-pointer">
-              Click here to upload Documents →
-            </label>
-          </div> */}
          
           <div className="flex gap-7 flex-col md:flex-row  mt-6">
             <Modal />
-            <a onClick={() => navigate('/login')} className="text-sm font-medium">
-              Already have an account? <span className="text-violet-950">Login here</span>
+            <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
+              Already have an account? <span className="text-[#020E7C]">Login here</span>
             </a>
           </div>
 
@@ -237,14 +257,14 @@ const DoctorSignupForm = ({setCurrentStep}) => {
             <Field type="checkbox" name="acceptTerms" className="form-checkbox" />
             <span className="text-sm ml-2 ">
               Accept the{' '}
-              <a href="#" className="text-violet-950">
+              <a href="#" className="text-[#020E7C]">
                 Terms and Conditions, Operating policies{' '}
                 <span className="text-gray-900">and</span> cookies policies of Medfair
               </a>
             </span>
             <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm" />
           </div>
-          <button className={` w-[300px] lg:w-[75%] md:ml-12 ml-4 lg:ml-24 md:w-[95%] py-2 px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next </button>
+          <button type='submit' className={` w-[300px] mt-5 lg:w-[90%]  md:w-[95%] py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next </button>
          
         </Form>
       )}
