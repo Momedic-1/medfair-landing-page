@@ -69,7 +69,7 @@ const DoctorSignup = () => {
 
   return (
     <div className='min-h-screen min-w-[90vw] flex items-center justify-center bg-gray-50'>
-      <div className='w-full bg-white rounded-md'>
+      <div className='w-full bg-white rounded-md mt-5'>
         <div className='p-8 bg-white rounded-md'>
            <SignUpTop/>
 
