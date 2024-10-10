@@ -99,7 +99,6 @@ const PatientSignup = () => {
 
   async function validateForm() {
     setLoading(true);
-    console.log("register now!")
     try {
       const response = await fetch(`${baseUrl}/api/v1/registration/patients-registrations`, {
         method: 'POST',
