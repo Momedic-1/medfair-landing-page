@@ -40,7 +40,8 @@ export default function App () {
         onPress={onOpen}
         className='p-0 m-0 border-none bg-transparent shadow-none h-full'
       >
-        <a href='#' className='text-sm font-medium text-gray-900 mb-2 md:mb-0'>
+       <a href='#' className='text-sm font-medium text-gray-900 mr-24 lg:mr-0 mt-3 lg:mt-0 lg:mb-3'>
+
           Click here to <span className='text-violet-950'>upload</span>{' '}
           Documents →
         </a>
