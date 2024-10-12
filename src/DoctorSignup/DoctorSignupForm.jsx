@@ -147,21 +147,34 @@ const DoctorSignupForm = ({setCurrentStep}) => {
 
 
           </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sex</label>
-            <div className="flex flex-wrap space-x-4">
-              <label className="flex items-center">
-                <Field type="radio" name="gender" value="Male" className="mr-2" />
-                <span className="text-sm">Male</span>
-              </label>
-              <label className="flex items-center">
-                <Field type="radio" name="gender" value="Female" className="mr-2" />
-                <span className="text-sm">Female</span>
-              </label>
-            </div>
-            <ErrorMessage name="gender" component="div" className="text-red-500 text-sm" />
+          <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
+          <div className='flex items-center justify-between w-full mb-6'>
+         
+          <div className='flex items-center w-1/2 px-2'>
+              <p className='mr-2'>Male</p>
+              <Field
+                required
+                type='radio'
+                name='gender'
+                value='Male'
+                className='rounded-md'
+              />
           </div>
+           
+          <div className='flex items-center w-1/2 px-2'>
+              <p className='mr-2'>Female</p>
+              <input
+                required
+                type='radio'
+                name='gender'
+                value='Female'
+                
+                className='rounded-md'
+              />
+            </div>
+          </div>
+          
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="mb-4">
@@ -249,7 +262,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
           <div className="flex gap-7 flex-col md:flex-row  mt-6">
             <Modal />
             <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
-              Already have an account? <span className="text-[#020E7C]">Login here</span>
+              Already have an account? <span className="text-[#020E7C] cursor-pointer">Login here</span>
             </a>
           </div>
 

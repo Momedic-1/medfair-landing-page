@@ -49,9 +49,13 @@ export default function LoginPage() {
         // Save token and user data to local storage
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(userData))
-
-
-          navigate('/patient-dashboard')
+        console.log(userData,"userRole")
+         if(userData.userRole === "DOCTOR"){
+          navigate('/dashboard/*')
+         }else{
+            navigate('/patient-dashboard')
+         }
+              
       }
     } catch (err) {
       setError('Something went wrong, please try again');

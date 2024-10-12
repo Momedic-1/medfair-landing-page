@@ -179,7 +179,7 @@ function makePaymentToast(message){
       </span>
     </div>
     <p className="text-[#020E7C] mb-2">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 1 month.</p>
-    <button className="bg-blue-700 text-white py-2 px-4 rounded " onClick={()=>navigate('/payment')}>Subscribe</button>
+    <button className="bg-[#020E7C] text-white py-2 px-4 rounded " onClick={()=>navigate('/payment')}>Subscribe</button>
   </div>
 
   {/* Circular Div 4 */}
