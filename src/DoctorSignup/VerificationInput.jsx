@@ -1,6 +1,7 @@
 import  {useRef, useState,useEffect} from 'react'
+import {baseUrl} from "../env.jsx";
 
-const VerificationInput = ({setCurrentStep}) => {
+const VerificationInput = ({setCurrentSte}) => {
   const [code, setCode] = useState(['', '', '', '', ''])
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
@@ -20,13 +21,15 @@ const VerificationInput = ({setCurrentStep}) => {
   }, [])
 
     async function verifyEmail(){
+        console.log("calling verifyEmail")
+
         setLoading(true);
         const verificationData = { token: verificationToken, email: userEmail}
         console.log(verificationData)
         try {
-            // const response = await fetch(`https://momedic.onrender.com/api/v1/registration/verify-email`, {
-            const response = await fetch(`http://localhost:8081/api/v1/registration/verify-email`, {
-                // const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
+            const response = await fetch(`https://momedic.onrender.com/api/v1/registration/verify-email`, {
+            // const response = await fetch(`http://localhost:8081/api/v1/registration/verify-email`, {
+            //     const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -43,7 +46,7 @@ const VerificationInput = ({setCurrentStep}) => {
             }
             if (result.includes('Email verification successful')) {
                 setLoading(false)
-                setCurrentStep(2);
+                // setCurrentStep(2);
             } else {
                 setLoading(false);
                 setErrorMessage('Incorrect token! Please try again.');

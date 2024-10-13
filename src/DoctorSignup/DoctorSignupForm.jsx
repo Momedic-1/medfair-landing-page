@@ -6,6 +6,7 @@ import "react-phone-input-2/lib/style.css";
 import { useState } from 'react';
 import * as yup from 'yup';
 import Modal from './Modal';
+import {baseUrl} from "../env.jsx";
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required('First name is required'),
@@ -51,8 +52,8 @@ const DoctorSignupForm = ({setCurrentStep}) => {
     console.log(values);
     try {
       // const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
-      // const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
-      const response = await fetch(`http://localhost:8081/api/v1/registration/doctors-registration`, {
+      const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
+      // const response = await fetch(`http://localhost:8081/api/v1/registration/doctors-registration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
