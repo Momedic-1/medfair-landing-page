@@ -44,13 +44,15 @@ const DoctorSignupForm = ({setCurrentStep}) => {
     confirmedPassword: '',
    howDidYouHearAboutUs: '',
     acceptTerms: false,
+    userRole: "DOCTOR",
   };
 
   const handleSubmit =async (values, { resetForm }) => {
     console.log(values);
     try {
       // const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
-      const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
+      // const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
+      const response = await fetch(`http://localhost:8081/api/v1/registration/doctors-registration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +79,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
       validationSchema={validationSchema}
       onSubmit={handleSubmit}
     >
-      {({ handleSubmit }) => (
+      {({ handleSubmit , setFieldValue}) => (
         <Form className="mx-auto p-4 max-w-xl md:max-w-3xl lg:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="mb-4">
@@ -168,7 +170,6 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type='radio'
                 name='gender'
                 value='Female'
-                
                 className='rounded-md'
               />
             </div>

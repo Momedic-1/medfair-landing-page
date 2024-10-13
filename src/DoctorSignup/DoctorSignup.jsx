@@ -34,7 +34,7 @@ const DoctorSignup = () => {
         return showCheckEmail ? (
           <CheckEmail email={'Work on the email props doctor'} onAnimationComplete={handleCheckEmailComplete} />
         ) : (
-          <VerificationInput setVerificationToken={setVerificationToken} />
+          <VerificationInput setCurrentStep={setCurrentStep()} />
         )
       case 3:
         return (
