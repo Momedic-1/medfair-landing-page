@@ -1,17 +1,19 @@
 
-import { useEffect } from 'react'
+import {useEffect, useState} from 'react'
 import CheckEmailImage from "../assets/CheckEmailImage.jsx";
+import {useNavigate} from "react-router-dom";
 
-const CheckEmail = ({ onAnimationComplete, email }) => {
+const CheckEmail = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
   useEffect(() => {
+   setEmail( localStorage.getItem("email"));
     const timer = setTimeout(() => {
-      if (onAnimationComplete) {
-        onAnimationComplete()
-      }
-    }, 3000) 
+      navigate('/verify-email');
+    }, 3000)
 
     return () => clearTimeout(timer)
-  }, [onAnimationComplete])
+  }, [])
 
   return (
     <div className='flex items-center justify-center mt-14 bg-white animate-fade-in'>

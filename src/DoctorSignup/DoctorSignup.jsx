@@ -12,10 +12,9 @@ import SignUpButton from "./SignUpButton.jsx";
 
 const DoctorSignup = () => {
   const [currentStep, setCurrentStep] = useState(1)
-  const [showCheckEmail, setShowCheckEmail] = useState(false)
+  const [showCheckEmail, setShowCheckEmail] = useState(true)
   const [formData, setFormData] = useState({})
   const navigate = useNavigate()
-  const [verificationToken, setVerificationToken] = useState('');
 
 
   useEffect(() => {
@@ -32,10 +31,8 @@ const DoctorSignup = () => {
         )
       case 2:
         return showCheckEmail ? (
-          <CheckEmail email={'Work on the email props doctor'} onAnimationComplete={handleCheckEmailComplete} />
-        ) : (
-          <VerificationInput setVerificationToken={setVerificationToken} />
-        )
+                <CheckEmail onAnimationComplete={handleCheckEmailComplete} />
+      ) : ( <VerificationInput setCurrentStep={setCurrentStep()} />)
       case 3:
         return (
           <div>
@@ -47,19 +44,13 @@ const DoctorSignup = () => {
     }
   }
 
-  const handleNextClick = () => {
-    if (currentStep === 2) {
-      setCurrentStep(3)
-    } else if (currentStep === 3) {
-      navigate('/dashboard/*') // Navigate to the dashboard
-    }
-  }
-
-  const validateForm = () => {
-    // Add your form validation logic here
-    // Return true if the form is valid, false otherwise
-    return true
-  }
+  // const handleNextClick = () => {
+  //   if (currentStep === 2) {
+  //     setCurrentStep(3)
+  //   } else if (currentStep === 3) {
+  //     navigate('/dashboard/*') // Navigate to the dashboard
+  //   }
+  // }
 
   const handleCheckEmailComplete = () => {
     setShowCheckEmail(false)
