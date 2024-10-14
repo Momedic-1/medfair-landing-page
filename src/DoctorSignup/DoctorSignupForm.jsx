@@ -45,7 +45,6 @@ const DoctorSignupForm = ({setCurrentStep}) => {
     confirmedPassword: '',
    howDidYouHearAboutUs: '',
     acceptTerms: false,
-    userRole: "DOCTOR",
   };
 
   const handleSubmit =async (values, { resetForm }) => {
@@ -81,213 +80,216 @@ const DoctorSignupForm = ({setCurrentStep}) => {
       validationSchema={validationSchema}
       onSubmit={handleSubmit}
     >
-      {({ handleSubmit , setFieldValue}) => (
-          <Form className="mx-auto p-4 max-w-xl md:max-w-3xl lg:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <Field
-                    type="text"
-                    name="firstName"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter First Name"
-                />
-                <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm"/>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <Field
-                    type="text"
-                    name="lastName"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter Last Name"
-                />
-                <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm"/>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <Field
-                    type="email"
-                    name="emailAddress"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter Email"
-                />
-                <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm"/>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mobile Number
-                </label>
-                <Field name="phoneNumber">
-                  {({field, form}) => (
-                      <PhoneInput
-                          placeholder="Enter mobile number"
-                          country={'ng'}
-                          value={field.value}
-                          onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
-                          inputStyle={{
-                            width: '76%',
-                            height: '40px',
-                            paddingLeft: '60px',
-                          }}
-                          buttonStyle={{
-                            padding: '10px',
-                          }}
-                      />
-                  )}
-                </Field>
-
-                <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm"/>
-              </div>
-
-
-            </div>
-            <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
-            <div className='flex items-center justify-between w-full mb-6'>
-
-              <div className='flex items-center w-1/2 px-2'>
-                <p className='mr-2'>Male</p>
-                <Field
-                    required
-                    type='radio'
-                    name='gender'
-                    value='Male'
-                    className='rounded-md'
-                />
-              </div>
-
-              <div className='flex items-center w-1/2 px-2'>
-                <p className='mr-2'>Female</p>
-                <input
-                    required
-                    type='radio'
-                    name='gender'
-                    value='Female'
-                    className='rounded-md'
-                />
-              </div>
-            </div>
-
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Medical specialization
-                </label>
-                <Field
-                    type="text"
-                    name="specialization"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter here"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name of Hospital you work
-                </label>
-                <Field
-                    type="text"
-                    name="hospital"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter here"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Input Password <span className="text-red-500">*</span>
-                </label>
-                <Field
-                    type="password"
-                    name="password"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Password"
-                />
-                <ErrorMessage name="password" component="div" className="text-red-500 text-sm"/>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Re-Enter Password <span className="text-red-500">*</span>
-                </label>
-                <Field
-                    type="password"
-                    name="confirmedPassword"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Confirm Password"
-                />
-                <ErrorMessage
-                    name="confirmedPassword"
-                    component="div"
-                    className="text-red-500 text-sm"
-                />
-              </div>
-            </div>
-
-
+      {({ handleSubmit }) => (
+        <Form className="mx-auto p-4 max-w-xl space-y-7 md:max-w-3xl lg:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="mb-4">
-              <label htmlFor='howDidYouHearAboutUs' className="block text-sm font-medium text-gray-700 mb-1">
-                How did you hear about us?
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First Name <span className="text-red-500">*</span>
               </label>
               <Field
-                  type="text"
-                  name="howDidYouHearAboutUs"
+                type="text"
+                name="firstName"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter First Name"
+              />
+              <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm" />
+            </div>
 
-                  placeholder="Enter heard About Us"
-                  className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="text"
+                name="lastName"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter Last Name"
+              />
+              <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm" />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="email"
+                name="emailAddress"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter Email"
+              />
+              <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm" />
+            </div>
+
+            <div className="mb-4">
+           <label className="block text-sm font-medium text-gray-700 mb-1">
+          Mobile Number
+        </label>
+        <Field name="phoneNumber">
+         {({ field, form }) => (
+      <PhoneInput
+        placeholder="Enter mobile number"
+        country={'ng'}
+        value={field.value}
+        onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
+        inputStyle={{
+          width: '100%',
+          height: '40px',
+          paddingLeft: '60px',
+        }}
+        buttonStyle={{
+          padding: '10px',
+        }}
+      />
+    )}
+  </Field>
+
+       <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" /> 
+    </div>
+
+
+          </div>
+          <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
+          <div className='flex items-center justify-between w-full mb-6'>
+         
+          <div className='flex items-center w-1/2 px-2'>
+              <p className='mr-2'>Male</p>
+              <Field
+                required
+                type='radio'
+                name='gender'
+                value='Male'
+                className='rounded-md'
+              />
+          </div>
+           
+          <div className='flex items-center w-1/2 px-6'>
+              <p className=' mr-2'>Female</p>
+              <input
+                required
+                type='radio'
+                name='gender'
+                value='Female'
+                
+                className='rounded-md'
               />
             </div>
+          </div>
+          
+
+
+          <div className="grid grid-cols-1  md:grid-cols-2 gap-10">
             <div className="mb-4">
-              <label htmlFor='dateOfBirth' className="block text-sm font-medium text-gray-700 mb-1">
-                Date of Birth
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Medical specialization
               </label>
               <Field
-                  type="date"
-                  name="dateOfBirth"
-                  className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
+                type="text"
+                name="specialization"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter here"
               />
             </div>
 
-            <div className="flex gap-7 flex-col md:flex-row  mt-6">
-              <Modal/>
-              <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
-                Already have an account? <span className="text-[#020E7C] cursor-pointer">Login here</span>
-              </a>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name of Hospital you work
+              </label>
+              <Field
+                type="text"
+                name="hospital"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Enter here"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Input Password <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="password"
+                name="password"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Password"
+              />
+              <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
             </div>
 
-            <div className="mt-6 flex items-center ">
-              <Field type="checkbox" name="acceptTerms" className="form-checkbox"/>
-              <span className="text-sm ml-2 ">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Re-Enter Password <span className="text-red-500">*</span>
+              </label>
+              <Field
+                type="password"
+                name="confirmedPassword"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Confirm Password"
+              />
+              <ErrorMessage
+                name="confirmedPassword"
+                component="div"
+                className="text-red-500 text-sm"
+              />
+            </div>
+          </div>
+
+          
+          <div className="mb-4">
+  <label htmlFor="howDidYouHearAboutUs" className="block text-sm font-medium text-gray-700 mb-1">
+    How did you hear about us?
+  </label>
+  <Field
+    as="select"  
+    name="howDidYouHearAboutUs"
+    className="w-[100%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm"
+  >
+    <option value="">Select an option</option> 
+    <option value="INSTAGRAM">Instagram</option>
+    <option value="FACEBOOK">Facebook</option>
+    <option value="X">X </option>
+    <option value="NEWSPAPER">Newspaper</option>
+    <option value="LINKEDIN">LinkedIn</option>
+    <option value="OTHERS">Others</option>
+  </Field>
+</div>
+
+        
+   <div className="mb-4">
+            <label htmlFor='dateOfBirth' className="block text-sm font-medium text-gray-700 mb-1">
+              Date of Birth
+            </label>
+            <Field
+              type="date"
+              name="dateOfBirth"
+             className="w-[76%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm"
+            />
+          </div>
+         
+          <div className="flex gap-7 flex-col md:flex-row  mt-6">
+            <Modal />
+            <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
+              Already have an account? <span className="text-[#020E7C] cursor-pointer">Login here</span>
+            </a>
+          </div>
+
+          <div className="mt-6 flex items-center ">
+            <Field type="checkbox" name="acceptTerms" className="form-checkbox" />
+            <span className="text-sm ml-2 ">
               Accept the{' '}
-                <a href="#" className="text-[#020E7C]">
+              <a href="#" className="text-[#020E7C]">
                 Terms and Conditions, Operating policies{' '}
-                  <span className="text-gray-900">and</span> cookies policies of Medfair
+                <span className="text-gray-900">and</span> cookies policies of Medfair
               </a>
             </span>
-              <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm"/>
-            </div>
-            <button type='submit'
-                    className={` w-[300px] mt-5 lg:w-[90%]  md:w-[95%] py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next
-            </button>
-
-            <div className='text-center mt-4 mb-12'>
-              <a href='/patient_signup' target="" className='text-blue-500'>
-                <p>Signup as Patient</p>
-              </a>
-            </div>
-          </Form>
+            <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm" />
+          </div>
+          <button type='submit' className={` w-[300px] mt-5 lg:w-[100%]  md:w-[95%] py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next </button>
+         
+        </Form>
       )}
     </Formik>
   );
