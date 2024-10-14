@@ -2,7 +2,7 @@ import person from '../src/assets/person.svg';
 import medfair from '../src/assets/medfair (2).svg';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ErrorModal from '../src/components/ErrorModal'
+import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
@@ -74,18 +74,10 @@ export default function LoginPage() {
       <DesignedSideBar/>
 
       {/* Left Side - Design and Background */}
-      <div className="w-full lg:w-2/5 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center hidden lg:flex">
-        <div className="text-white text-center p-6">
-          <img src={person} className="h-60 w-60" alt="Person" />
-          <div className="flex flex-col justify-center items-center">
-            <img src={medfair} alt="Design Icon" className="h-20 w-20" />
-            <p className="text-center text-xl">MEDFAIR</p>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center">
         <h1 className="text-2xl mb-3 text-blue-500 mt-5 lg:mt-0">Get Started</h1>
         <form onSubmit={handleSubmit} className="p-8 w-3/4 max-w-md">
           {error && <p className="text-red-600 mb-4">{error}</p>}
@@ -120,19 +112,17 @@ export default function LoginPage() {
             />
           </div>
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <input type="checkbox" id="rememberMe" className="mr-2" />
-              <label htmlFor="rememberMe" className="text-sm text-gray-600">
-                {/* Remember me */}
-              </label>
-            </div>
+            {/* <div> */}
+              
+              <p className=' text-sm text-blue-600 cursor-pointer'>Forgot password? </p>
+            {/* </div> */}
             <a href="#" className="text-sm text-blue-600">
-              Forgot password?
+             Click here
             </a>
           </div>
 
           <footer className="flex items-center justify-between mt-4 lg:mt-8">
-            <p className="text-sm text-blue-600 m-3">By continuing, you agree to the TERMS & CONDITIONS</p>
+           <p className="text-sm text-blue-600 m-3">By continuing, you agree to the TERMS & CONDITIONS</p> 
             <button
               type="submit"
               className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-3 m-3 rounded-full flex items-center justify-center w-10 h-10 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}

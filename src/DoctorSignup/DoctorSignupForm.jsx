@@ -78,8 +78,8 @@ const DoctorSignupForm = ({setCurrentStep}) => {
       onSubmit={handleSubmit}
     >
       {({ handleSubmit }) => (
-        <Form className="mx-auto p-4 max-w-xl md:max-w-3xl lg:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Form className="mx-auto p-4 max-w-xl space-y-7 md:max-w-3xl lg:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 First Name <span className="text-red-500">*</span>
@@ -87,7 +87,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               <Field
                 type="text"
                 name="firstName"
-                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Enter First Name"
               />
               <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm" />
@@ -100,7 +100,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               <Field
                 type="text"
                 name="lastName"
-                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Enter Last Name"
               />
               <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm" />
@@ -113,7 +113,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               <Field
                 type="email"
                 name="emailAddress"
-                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Enter Email"
               />
               <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm" />
@@ -124,14 +124,14 @@ const DoctorSignupForm = ({setCurrentStep}) => {
           Mobile Number
         </label>
         <Field name="phoneNumber">
-    {({ field, form }) => (
+         {({ field, form }) => (
       <PhoneInput
         placeholder="Enter mobile number"
         country={'ng'}
         value={field.value}
         onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
         inputStyle={{
-          width: '76%',
+          width: '100%',
           height: '40px',
           paddingLeft: '60px',
         }}
@@ -161,8 +161,8 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               />
           </div>
            
-          <div className='flex items-center w-1/2 px-2'>
-              <p className='mr-2'>Female</p>
+          <div className='flex items-center w-1/2 px-6'>
+              <p className=' mr-2'>Female</p>
               <input
                 required
                 type='radio'
@@ -176,7 +176,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
           
 
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1  md:grid-cols-2 gap-10">
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Medical specialization
@@ -184,7 +184,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               <Field
                 type="text"
                 name="specialization"
-                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Enter here"
               />
             </div>
@@ -196,13 +196,13 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               <Field
                 type="text"
                 name="hospital"
-                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Enter here"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Input Password <span className="text-red-500">*</span>
@@ -210,7 +210,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               <Field
                 type="password"
                 name="password"
-                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Password"
               />
               <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
@@ -223,7 +223,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
               <Field
                 type="password"
                 name="confirmedPassword"
-                className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Confirm Password"
               />
               <ErrorMessage
@@ -235,27 +235,34 @@ const DoctorSignupForm = ({setCurrentStep}) => {
           </div>
 
           
-          
           <div className="mb-4">
-  <label htmlFor='howDidYouHearAboutUs' className="block text-sm font-medium text-gray-700 mb-1">
+  <label htmlFor="howDidYouHearAboutUs" className="block text-sm font-medium text-gray-700 mb-1">
     How did you hear about us?
   </label>
   <Field
-    type="text"
+    as="select"  
     name="howDidYouHearAboutUs"
-    
-    placeholder="Enter heard About Us"
-    className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
-  />
+    className="w-[100%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm"
+  >
+    <option value="">Select an option</option> 
+    <option value="INSTAGRAM">Instagram</option>
+    <option value="FACEBOOK">Facebook</option>
+    <option value="X">X </option>
+    <option value="NEWSPAPER">Newspaper</option>
+    <option value="LINKEDIN">LinkedIn</option>
+    <option value="OTHERS">Others</option>
+  </Field>
 </div>
-       <div className="mb-4">
+
+        
+   <div className="mb-4">
             <label htmlFor='dateOfBirth' className="block text-sm font-medium text-gray-700 mb-1">
               Date of Birth
             </label>
             <Field
               type="date"
               name="dateOfBirth"
-             className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
+             className="w-[100%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm"
             />
           </div>
          
@@ -277,7 +284,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
             </span>
             <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm" />
           </div>
-          <button type='submit' className={` w-[300px] mt-5 lg:w-[90%]  md:w-[95%] py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next </button>
+          <button type='submit' className={` w-[300px] mt-5 lg:w-[100%]  md:w-[95%] py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next </button>
          
         </Form>
       )}

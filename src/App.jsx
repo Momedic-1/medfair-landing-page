@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import LandingPage from './LandingPage'
 import DashboardLayout from './DashboardLayout'
 import PatientSignup from './PatientSignup'
-import LoginPage from './PatientLogin'
+import LoginPage from './Login'
 import Dashboard from './PatientDashboard/dashboard'
 import Profile from './PatientDashboard/profile'
 import PaymentPage from './PatientDashboard/payment'
@@ -25,4 +25,4 @@ const App = () => {
   )
 }
 
-export default App
+export default App;
