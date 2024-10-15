@@ -1,9 +1,11 @@
 import React from 'react'
 import ProfileP from '../../assets/ProfileP.png'
+import messages from "../../assets/mail-add-02.png"
+import missedCall from "../../assets/call-missed-02.png"
 
 const DoctorProfile = () => {
   return (
-    <div className='bg-white rounded-3xl shadow-lg p-6 max-w-md mx-auto'>
+    <div className='bg-white rounded-3xl shadow-lg p-6 max-w-md mx-auto mt-14'>
       <div className='flex flex-col items-center mb-6'>
         <img
           src={ProfileP}
@@ -43,14 +45,17 @@ const DoctorProfile = () => {
       </div>
 
       <div className='flex justify-between'>
-        <button className='bg-blue-900 text-white whitespace-nowrap rounded-lg py-3 px-4 flex items-center justify-center w-[48%]'>
-          <span className='mr-2'>9</span>
-          <span className='text-sm'>Missed calls</span>
-        </button>
-        <button className='border border-blue-900 whitespace-nowrap text-blue-900 rounded-lg py-3 px-4 flex items-center justify-center w-[48%]'>
-          <span className='mr-2'>10</span>
-          <span className='text-sm'>Messages</span>
-        </button>
+      <button className='bg-blue-900 text-white whitespace-nowrap rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
+    <span className='text-2xl font-bold mb-1'>9</span>
+    <span className='text-sm mb-2'>Missed calls</span>
+    <img src={missedCall} alt='missed calls' className='w-6 h-6' />
+  </button>
+       
+  <button className='border border-blue-900 whitespace-nowrap text-blue-900 rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
+    <span className='text-2xl font-bold mb-1'>10</span>
+    <span className='text-sm mb-2'>Messages</span>
+    <img src={messages} alt='messages' className='w-6 h-6' />
+  </button>
       </div>
     </div>
   )
