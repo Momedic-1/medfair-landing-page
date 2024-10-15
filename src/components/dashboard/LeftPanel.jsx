@@ -5,7 +5,7 @@ import RecentPatients from './RecentPatients'
 
 function LeftPanel () {
   return (
-    <div className='w-full lg:w-2/3 p-4 space-y-6'>
+    <div className='w-[70%] lg:w-2/3 p-4  space-y-6'>
       <WelcomeBack />
       <div className='flex flex-col lg:flex-row'>
         <div class='hidden lg:block'>

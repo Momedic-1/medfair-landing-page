@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { useState } from 'react';
+import SignUpTop from './SignUpTop.jsx';
 import * as yup from 'yup';
 import Modal from './Modal';
 import {baseUrl} from "../env.jsx";
@@ -30,7 +30,7 @@ const validationSchema = yup.object().shape({
 });
 
 const DoctorSignupForm = ({setCurrentStep}) => {
-  const [value, setValue] = useState()
+  // const [value, setValue] = useState()
   const navigate = useNavigate();
 
   const initialValues = {
@@ -46,9 +46,11 @@ const DoctorSignupForm = ({setCurrentStep}) => {
    howDidYouHearAboutUs: '',
     acceptTerms: false,
   };
+  const onSubmit =  () => {
+    console.log("the errror is:")
+  }
 
   const handleSubmit =async (values, { resetForm }) => {
-
     try {
       // const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
       const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
@@ -75,11 +77,12 @@ const DoctorSignupForm = ({setCurrentStep}) => {
 
 
   return (
+    <>
+   <SignUpTop/>
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
-      onSubmit={handleSubmit}
-    >
+      onSubmit= {onSubmit}>
       {({ handleSubmit }) => (
         <Form className="mx-auto p-4 max-w-xl space-y-7 md:max-w-3xl lg:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -91,8 +94,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type="text"
                 name="firstName"
                 className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Enter First Name"
-              />
+                placeholder="Enter First Name" />
               <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm" />
             </div>
 
@@ -104,8 +106,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type="text"
                 name="lastName"
                 className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Enter Last Name"
-              />
+                placeholder="Enter Last Name" />
               <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm" />
             </div>
 
@@ -117,66 +118,62 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type="email"
                 name="emailAddress"
                 className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Enter Email"
-              />
+                placeholder="Enter Email" />
               <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm" />
             </div>
 
             <div className="mb-4">
-           <label className="block text-sm font-medium text-gray-700 mb-1">
-          Mobile Number
-        </label>
-        <Field name="phoneNumber">
-         {({ field, form }) => (
-      <PhoneInput
-        placeholder="Enter mobile number"
-        country={'ng'}
-        value={field.value}
-        onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
-        inputStyle={{
-          width: '100%',
-          height: '40px',
-          paddingLeft: '60px',
-        }}
-        buttonStyle={{
-          padding: '10px',
-        }}
-      />
-    )}
-  </Field>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mobile Number
+              </label>
+              <Field name="phoneNumber">
+                {({ field, form }) => (
+                  <PhoneInput
+                    placeholder="Enter mobile number"
+                    country={'ng'}
+                    value={field.value}
+                    onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
+                    inputStyle={{
+                      width: '100%',
+                      height: '40px',
+                      paddingLeft: '60px',
+                    }}
+                    buttonStyle={{
+                      padding: '10px',
+                    }} />
+                )}
+              </Field>
 
-       <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" /> 
-    </div>
+              <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" />
+            </div>
 
 
           </div>
           <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
           <div className='flex items-center justify-between w-full mb-6'>
-         
-          <div className='flex items-center w-1/2 px-2'>
+
+            <div className='flex items-center w-1/2 px-2'>
               <p className='mr-2'>Male</p>
               <Field
                 required
                 type='radio'
                 name='gender'
                 value='Male'
-                className='rounded-md'
-              />
-          </div>
-           
-          <div className='flex items-center w-1/2 px-6'>
+                className='rounded-md' />
+            </div>
+
+            <div className='flex items-center w-1/2 px-6'>
               <p className=' mr-2'>Female</p>
               <input
                 required
                 type='radio'
                 name='gender'
                 value='Female'
-                
-                className='rounded-md'
-              />
+
+                className='rounded-md' />
             </div>
           </div>
-          
+
 
 
           <div className="grid grid-cols-1  md:grid-cols-2 gap-10">
@@ -188,8 +185,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type="text"
                 name="specialization"
                 className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Enter here"
-              />
+                placeholder="Enter here" />
             </div>
 
             <div className="mb-4">
@@ -200,8 +196,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type="text"
                 name="hospital"
                 className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Enter here"
-              />
+                placeholder="Enter here" />
             </div>
           </div>
 
@@ -214,8 +209,7 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type="password"
                 name="password"
                 className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Password"
-              />
+                placeholder="Password" />
               <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
             </div>
 
@@ -227,48 +221,45 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                 type="password"
                 name="confirmedPassword"
                 className="w-full max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Confirm Password"
-              />
+                placeholder="Confirm Password" />
               <ErrorMessage
                 name="confirmedPassword"
                 component="div"
-                className="text-red-500 text-sm"
-              />
+                className="text-red-500 text-sm" />
             </div>
           </div>
 
-          
-          <div className="mb-4">
-  <label htmlFor="howDidYouHearAboutUs" className="block text-sm font-medium text-gray-700 mb-1">
-    How did you hear about us?
-  </label>
-  <Field
-    as="select"  
-    name="howDidYouHearAboutUs"
-    className="w-[100%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm"
-  >
-    <option value="">Select an option</option> 
-    <option value="INSTAGRAM">Instagram</option>
-    <option value="FACEBOOK">Facebook</option>
-    <option value="X">X </option>
-    <option value="NEWSPAPER">Newspaper</option>
-    <option value="LINKEDIN">LinkedIn</option>
-    <option value="OTHERS">Others</option>
-  </Field>
-</div>
 
-        
-   <div className="mb-4">
+          <div className="mb-4">
+            <label htmlFor="howDidYouHearAboutUs" className="block text-sm font-medium text-gray-700 mb-1">
+              How did you hear about us?
+            </label>
+            <Field
+              as="select"
+              name="howDidYouHearAboutUs"
+              className="w-[100%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm"
+            >
+              <option value="">Select an option</option>
+              <option value="INSTAGRAM">Instagram</option>
+              <option value="FACEBOOK">Facebook</option>
+              <option value="X">X </option>
+              <option value="NEWSPAPER">Newspaper</option>
+              <option value="LINKEDIN">LinkedIn</option>
+              <option value="OTHERS">Others</option>
+            </Field>
+          </div>
+
+
+          <div className="mb-4">
             <label htmlFor='dateOfBirth' className="block text-sm font-medium text-gray-700 mb-1">
               Date of Birth
             </label>
             <Field
               type="date"
               name="dateOfBirth"
-             className="w-[76%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm"
-            />
+              className="w-[76%] lg:w-[100%] p-2 border border-gray-300 rounded text-sm" />
           </div>
-         
+
           <div className="flex gap-7 flex-col md:flex-row  mt-6">
             <Modal />
             <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
@@ -288,10 +279,11 @@ const DoctorSignupForm = ({setCurrentStep}) => {
             <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm" />
           </div>
           <button type='submit' className={` w-[300px] mt-5 lg:w-[100%]  md:w-[95%] py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next </button>
-         
+
+
         </Form>
       )}
-    </Formik>
+    </Formik><button onClick={onSubmit}>submit</button></>
   );
 };
 

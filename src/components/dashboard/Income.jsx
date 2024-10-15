@@ -5,6 +5,7 @@ function Income () {
         <h3 className='font-semibold text-[#020e7c]'>Income</h3>
         <select className='rounded p-1 text-[#020e7c]'>
           <option>March</option>
+          <option>April</option>
         </select>
       </div>
       <div className='flex justify-between'>

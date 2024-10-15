@@ -13,7 +13,7 @@ import SignUpButton from "./SignUpButton.jsx";
 const DoctorSignup = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [showCheckEmail, setShowCheckEmail] = useState(true)
-  const [formData, setFormData] = useState({})
+  // const [formData, setFormData] = useState({})
   const navigate = useNavigate()
 
 

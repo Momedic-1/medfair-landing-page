@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react'
 import CheckEmailImage from "../assets/CheckEmailImage.jsx";
 import {useNavigate} from "react-router-dom";
 
+
 const CheckEmail = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
