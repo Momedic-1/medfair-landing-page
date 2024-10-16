@@ -17,11 +17,11 @@ const CheckEmail = () => {
   }, [])
 
   return (
-    <div className='flex items-center justify-center mt-14 bg-white animate-fade-in'>
+    <div className='flex items-center  justify-center  bg-white animate-fade-in'>
       <div className='bg-gray-50 p-8 rounded-lg shadow-lg text-center max-w-md w-full'>
         <CheckEmailImage/>
 
-        <h1 className='text-2xl font-bold text-gray-800 mb-2'>
+        <h1 className='text-2xl font-bold text-gray-800 '>
           Check your email!
         </h1>
         <p className='text-gray-500'>

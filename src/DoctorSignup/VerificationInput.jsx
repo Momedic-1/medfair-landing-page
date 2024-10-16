@@ -78,7 +78,7 @@ const VerificationInput = () => {
 
     return (
 
-        <div className='bg-white mr-10 rounded-lg p-6'>
+        <div className='bg-white mr-10 rounded-lg p-6 mt-10'>
             <h2 className='text-xl font-bold text-center mb-4 text-[#020E7C]'>Check your email, {userName}!</h2>
             <p className='text-sm text-center text-gray-400 font-medium mb-4'>
                 A verification code was sent to {userEmail}.
@@ -107,7 +107,7 @@ const VerificationInput = () => {
 
                 <button
                     onClick={() => verifyEmail()}
-                    className={`md:w-[30%] bg-[#020E7C] text-white py-2 rounded-md hover:bg-blue-800 transition duration-300 w-[300px] lg:w-[55%]  px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold  border border-transparent disabled:opacity-50 disabled:pointer-events-none`}
+                    className={`md:w-[30%] bg-[#020E7C] text-white py-2 rounded-md hover:bg-blue-800 transition duration-300 w-[300px] lg:w-[32%]  px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold  border border-transparent disabled:opacity-50 disabled:pointer-events-none`}
                 >
                     Next
                 </button>

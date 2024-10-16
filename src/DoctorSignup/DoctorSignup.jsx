@@ -44,13 +44,13 @@ const DoctorSignup = () => {
     }
   }
 
-  // const handleNextClick = () => {
-  //   if (currentStep === 2) {
-  //     setCurrentStep(3)
-  //   } else if (currentStep === 3) {
-  //     navigate('/dashboard/*') // Navigate to the dashboard
-  //   }
-  // }
+  const handleNextClick = () => {
+    if (currentStep === 2) {
+      setCurrentStep(3)
+    } else if (currentStep === 3) {
+      navigate('/doctor-dashboard') // Navigate to the dashboard
+    }
+  }
 
   const handleCheckEmailComplete = () => {
     setShowCheckEmail(false)

@@ -6,6 +6,7 @@ import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
+import {  LuEye,LuEyeOff } from "react-icons/lu";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordVisible,setIsPasswordVisible] = useState();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -23,7 +25,9 @@ export default function LoginPage() {
       [name]: value,
     }));
   };
-
+  const handlePasswordVisibility = ()=>{
+    setIsPasswordVisible((prevState)=> !prevState)
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -96,7 +100,7 @@ export default function LoginPage() {
               className="border rounded-md w-full p-3 text-gray-700"
             />
           </div>
-          <div className="mb-4 lg:mt-8">
+          {/* <div className="mb-4 lg:mt-8">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
               Password
             </label>
@@ -110,22 +114,46 @@ export default function LoginPage() {
               required
               className="border rounded-md w-full p-3 text-gray-700"
             />
-          </div>
+            <LuEyeOff />
+          </div> */}
+          <div className="mb-4 lg:mt-8">
+       <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+        Password
+      </label>
+      <div className="relative">
+        <input
+          type={isPasswordVisible ? 'text' : 'password'}
+          name="password"
+          id="password"
+          placeholder="Enter your password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+          className="border rounded-md w-full p-3 text-gray-700"
+        />
+        <div 
+          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+          onClick={handlePasswordVisibility}
+        >
+          {isPasswordVisible ? <LuEye /> : <LuEyeOff />}
+        </div>
+      </div>
+    </div>
           <div className="flex items-center justify-between mb-6">
             {/* <div> */}
               
-              <p className=' text-sm text-blue-600 cursor-pointer'>Forgot password? </p>
+              <p className=' text-sm text-blue-600 cursor-pointer'>Password </p>
             {/* </div> */}
             <a href="#" className="text-sm text-blue-600">
-             Click here
+             Forgot password?
             </a>
           </div>
 
           <footer className="flex items-center justify-between mt-4 lg:mt-8">
-           <p className="text-sm text-blue-600 m-3">By continuing, you agree to the TERMS & CONDITIONS</p> 
+           {/* <p className="text-sm text-blue-600 m-3">By continuing, you agree to the TERMS & CONDITIONS</p>  */}
             <button
               type="submit"
-              className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-3 m-3 rounded-full flex items-center justify-center w-10 h-10 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-5  w-full h-12 rounded-md flex items-center justify-center   ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
                 

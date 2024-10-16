@@ -1,11 +1,22 @@
-import React from 'react'
+import React, { useEffect } from 'react';
 import {useNavigate} from "react-router-dom";
 
 const VerificationSuccessful = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/doctor-dashboard');
+    }, 3000); 
+   
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+ 
+  
   return (
-    <div className='flex items-center justify-center bg-white'>
-      <div className='bg-gray-50 p-8 rounded-lg shadow-lg text-center max-w-md w-full'>
+    <div className='flex items-center justify-center bg-white mt-24'>
+      <div className='bg-gray-50 p-20 rounded-lg shadow-lg text-center max-w-md w-full'>
 
         <svg
           width='167'
@@ -66,7 +77,6 @@ const VerificationSuccessful = () => {
         <h1 className='text-2xl font-bold text-gray-800 mb-2'>
           Verification Successful!
         </h1>
-        <button onClick={()=>navigate('doctor-dashboard')}> Dashboard</button>
       </div>
     </div>
   )
