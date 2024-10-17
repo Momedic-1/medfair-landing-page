@@ -61,7 +61,7 @@ function WelcomeBack () {
       <div 
         onClick={pickCall}
         style={{ cursor: 'pointer' }}
-        className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} grid place-items-center item-center justify-center w-32 h-24 lg:ml-80 mb-4 border rounded py-4 `}>
+        className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} grid place-items-center item-center justify-center w-32 h-24 lg:ml-80 mb-4 border rounded py-4 mx-auto lg:mx-0 `}>
           <p className='text-white font-semibold text-center'>Join<br/>Meeting Room</p>
         <img
         src={call}

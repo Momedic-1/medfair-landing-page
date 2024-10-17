@@ -2,14 +2,13 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import SignUpTop from './SignUpTop.jsx';
 import * as yup from 'yup';
 import Modal from './Modal';
 import { baseUrl } from "../env.jsx";
 import Steps from "../Steps.jsx";
 import React, {useState} from "react";
+import flag from "../assets/Vector.png"
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required('First name is required'),
@@ -49,6 +48,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
     howDidYouHearAboutUs: '', 
     dateOfBirth: '', 
     acceptTerms: true, 
+    userRole: "DOCTOR",
   };
 
   const handleSubmit = async (values, { resetForm }) => {
@@ -84,7 +84,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
         onSubmit={handleSubmit}
       >
         {({ handleSubmit }) => (
-          <Form className="mx-auto  max-w-xl space-y-7 md:max-w-3xl lg:p-6">
+          <Form className="mx-auto px-8  max-w-xl space-y-7 md:max-w-3xl lg:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -93,7 +93,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 <Field
                   type="text"
                   name="firstName"
-                  className="w-full h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  className="w-[95%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm "
                   placeholder="Enter First Name"
                 />
                 <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm" />
@@ -106,7 +106,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 <Field
                   type="text"
                   name="lastName"
-                  className="w-[93%]  max-w-xs sm:max-w-sm md:max-w-full p-3 border border-gray-300 rounded text-sm"
+                  className="w-[97%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Enter Last Name"
                 />
                 <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm" />
@@ -119,7 +119,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 <Field
                   type="email"
                   name="emailAddress"
-                  className="w-full  max-w-xs sm:max-w-sm md:max-w-full p-3 border border-gray-300 rounded text-sm"
+                  className="w-[97%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Enter Email"
                 />
                 <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm" />
@@ -127,27 +127,29 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
       
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mobile Number
-                </label>
-                <Field name="phoneNumber">
-                  {({ field, form }) => (
-                    <PhoneInput
-                      placeholder="Enter mobile number"
-                      country={'ng'}
-                      value={field.value}
-                      onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
-                      
-                      inputStyle={{
-                        
-                        height: '47px',
-                       paddingLeft: '60px',
-                      }}  
-                    />
-                  )}
-                </Field>
-                <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" />
-              </div> 
+               <label className="block text-sm font-medium text-gray-700 mb-1">
+             Mobile Number
+              </label>
+            <div className="w-[99%] ">
+             <div className="flex items-center border border-gray-300 rounded-md bg-gray-100 ">
+            <div className="flex items-center px-2 space-x-1 bg-white border-r-2 border-gray-300">
+           <img src={flag} alt="flag" width="20px" />
+            <span className="text-sm text-gray-700">+234</span>
+           </div>
+          <Field
+        name="phoneNumber"
+        className="w-[100%] p-4 bg-gray-100 focus:outline-none text-sm"
+        placeholder="Enter mobile Number"
+      />
+    </div>
+  </div>
+  <ErrorMessage
+    name="phoneNumber"
+    component="div"
+    className="text-red-500 text-sm mt-1"
+  />
+</div>
+
             
             </div>
 
@@ -171,7 +173,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 <Field
                   type="text"
                   name="specialization"
-                  className="w-full h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  className="w-[97%] max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Enter here"
                 />
               </div>
@@ -183,7 +185,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 <Field
                   type="text"
                   name="hospital"
-                  className="w-[93%] h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  className="w-[100%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Enter here"
                 />
               </div>
@@ -197,7 +199,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 <Field
                   type="password"
                   name="password"
-                  className="w-full h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  className="w-[97%] max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Password"
                 />
                 <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
@@ -210,7 +212,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 <Field
                   type="password"
                   name="confirmedPassword"
-                  className="w-[93%] h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  className="w-[100%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Confirm Password"
                 />
                 <ErrorMessage
@@ -228,7 +230,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
               <Field
                 as="select"
                 name="howDidYouHearAboutUs"
-                className="w-[81%] lg:w-[97%] p-3 border border-gray-300 rounded text-sm"
+                className="w-[97%] lg:w-[100%] p-4 border border-gray-300 rounded text-sm"
 
               >
                 <option value="INSTAGRAM">Instagram</option>
@@ -247,7 +249,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
               <Field
                 type="date"
                 name="dateOfBirth"
-                className="w-[81%]  lg:w-[97%] p-3 border border-gray-300 rounded text-sm"
+                className="w-[95%]  lg:w-[100%] p-4 border border-gray-300 rounded text-sm"
               />
               <ErrorMessage name="dateOfBirth" component="div" className="text-red-500 text-sm" />
             </div>
@@ -271,7 +273,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
 
             <button
               type="submit"
-              className={` w-[300px]  mt-5 lg:w-[97%]  md:w-[95%] p-3 py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-[#020E7C] text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}
+              className={` w-[300px]  mt-5 lg:w-[97%]  md:w-[95%] p-4 py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-[#020E7C] text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}
             >
               Next
             </button>

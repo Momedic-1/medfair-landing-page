@@ -53,9 +53,11 @@ export default function LoginPage() {
         localStorage.setItem('userData', JSON.stringify(userData))
         console.log(userData,"userRole")
          if(userData.userRole === "DOCTOR"){
-          navigate('/dashboard/*')
-         }else{
+          navigate('/doctor-dashboard')
+         }else if(userData.userRole === "PATIENT"){
             navigate('/patient-dashboard')
+         }else{
+          setError('Invalid user role')
          }
               
       }
@@ -98,22 +100,7 @@ export default function LoginPage() {
               className="border rounded-md w-full p-3 text-gray-700"
             />
           </div>
-          {/* <div className="mb-4 lg:mt-8">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              id="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="border rounded-md w-full p-3 text-gray-700"
-            />
-            <LuEyeOff />
-          </div> */}
+          
           <div className="mb-4 lg:mt-8">
        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
         Password
@@ -148,14 +135,14 @@ export default function LoginPage() {
           </div>
 
           <footer className="flex items-center justify-between mt-4 lg:mt-8">
-           {/* <p className="text-sm text-blue-600 m-3">By continuing, you agree to the TERMS & CONDITIONS</p>  */}
+        
             <button
               type="submit"
               className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-5  w-full h-12 rounded-md flex items-center justify-center   ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
                 
-              {isLoading ?<img src={SpinnerImg}/>  : 'Login'}
+              {isLoading ?<img src={SpinnerImg} className=' w-7'/>  : 'Login'}
             </button>
           </footer>
         </form>

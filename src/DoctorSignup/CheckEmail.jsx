@@ -20,7 +20,7 @@ const CheckEmail = () => {
 
     const stepLabels = ['Account', 'Verification', 'Login']
   return (
-    <div className='grid items-center justify-center  bg-white animate-fade-in'>
+    <div className=' w-full grid items-center justify-center  bg-white animate-fade-in'>
         <SignUpTop />
         <Steps stepLabels={stepLabels} currentStep={2} />
       <div className='bg-gray-50 p-8 rounded-lg shadow-lg lg:ml-40 mt-8 text-center max-w-md w-full'>

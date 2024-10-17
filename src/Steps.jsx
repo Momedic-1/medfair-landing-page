@@ -4,7 +4,7 @@ import React from "react";
 const Stepper = ({stepLabels, currentStep})=>{
     return <>
         <div data-hs-stepper>
-            <ul className='relative flex justify-center items-center mb-4 ml-4 lg:ml-[14rem] mr-4 lg:mr-[18rem] rounded-md bg-slate-100 p-6'>
+            <ul className='relative flex justify-center mr items-center mb-4 ml-4 lg:ml-[18rem] mr-4 lg:mr-[19rem] rounded-md bg-slate-100 p-6'>
                 {stepLabels.map((label, index) => (
                     <li
                         key={index}
