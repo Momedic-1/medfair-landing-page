@@ -5,7 +5,7 @@ function HomePage () {
   return (
     <div className='flex flex-col lg:flex-row min-h-screen bg-gray-100'>
       <LeftPanel />
-      <RightPanel />
+      <RightPanel /> 
     </div>
   )
 }

@@ -1,12 +1,13 @@
 
+
 import { useNavigate } from 'react-router-dom';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { useState } from 'react';
+import SignUpTop from './SignUpTop.jsx';
 import * as yup from 'yup';
 import Modal from './Modal';
-import {baseUrl} from "../env.jsx";
+import { baseUrl } from "../env.jsx";
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required('First name is required'),
@@ -25,12 +26,11 @@ const validationSchema = yup.object().shape({
     .string()
     .oneOf([yup.ref('password'), null], 'Passwords do not match')
     .required('Confirm password is required'),
- howDidYouHearAboutUs: yup.string(),
+  howDidYouHearAboutUs: yup.string(),
   acceptTerms: yup.bool().oneOf([true], 'You must accept the terms and conditions'),
 });
 
-const DoctorSignupForm = ({setCurrentStep}) => {
-  const [value, setValue] = useState()
+const DoctorSignupForm = ({ setCurrentStep }) => {
   const navigate = useNavigate();
 
   const initialValues = {
@@ -38,22 +38,19 @@ const DoctorSignupForm = ({setCurrentStep}) => {
     lastName: '',
     emailAddress: '',
     phoneNumber: '',
-    gender: '',
+    gender: '', 
     specialization: '',
     hospital: '',
     password: '',
     confirmedPassword: '',
-   howDidYouHearAboutUs: '',
-    acceptTerms: false,
-    userRole: "DOCTOR",
+    howDidYouHearAboutUs: '', 
+    dateOfBirth: '', 
+    acceptTerms: true, 
   };
 
-  const handleSubmit =async (values, { resetForm }) => {
-
+  const handleSubmit = async (values, { resetForm }) => {
     try {
-      // const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
       const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
-      // const response = await fetch(`http://localhost:8081/api/v1/registration/doctors-registration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,40 +58,39 @@ const DoctorSignupForm = ({setCurrentStep}) => {
         body: JSON.stringify(values),
       });
       const responseText = await response.text();
-      console.log(response)
+      console.log(response);
       localStorage.setItem('email', JSON.stringify(values.emailAddress));
 
-      // setCurrentStep(2)
-      navigate('/check-email')
-
-    }catch (error) {
-      console.log(error)
-    }finally {
+      navigate('/check-email');
+    } catch (error) {
+      console.log(error);
+    } finally {
       resetForm();
     }
-  }
-
+  };
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={validationSchema}
-      onSubmit={handleSubmit}
-    >
-      {({ handleSubmit , setFieldValue}) => (
-          <Form className="mx-auto p-4 max-w-xl md:max-w-3xl lg:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <>
+      <SignUpTop />
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ handleSubmit }) => (
+          <Form className="mx-auto  max-w-xl space-y-7 md:max-w-3xl lg:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   First Name <span className="text-red-500">*</span>
                 </label>
                 <Field
-                    type="text"
-                    name="firstName"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter First Name"
+                  type="text"
+                  name="firstName"
+                  className="w-full h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  placeholder="Enter First Name"
                 />
-                <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm"/>
+                <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm" />
               </div>
 
               <div className="mb-4">
@@ -102,12 +98,12 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                   Last Name <span className="text-red-500">*</span>
                 </label>
                 <Field
-                    type="text"
-                    name="lastName"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter Last Name"
+                  type="text"
+                  name="lastName"
+                  className="w-[93%]  max-w-xs sm:max-w-sm md:max-w-full p-3 border border-gray-300 rounded text-sm"
+                  placeholder="Enter Last Name"
                 />
-                <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm"/>
+                <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm" />
               </div>
 
               <div className="mb-4">
@@ -115,79 +111,62 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                   Email <span className="text-red-500">*</span>
                 </label>
                 <Field
-                    type="email"
-                    name="emailAddress"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter Email"
+                  type="email"
+                  name="emailAddress"
+                  className="w-full  max-w-xs sm:max-w-sm md:max-w-full p-3 border border-gray-300 rounded text-sm"
+                  placeholder="Enter Email"
                 />
-                <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm"/>
+                <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm" />
               </div>
+      
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Mobile Number
                 </label>
                 <Field name="phoneNumber">
-                  {({field, form}) => (
-                      <PhoneInput
-                          placeholder="Enter mobile number"
-                          country={'ng'}
-                          value={field.value}
-                          onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
-                          inputStyle={{
-                            width: '76%',
-                            height: '40px',
-                            paddingLeft: '60px',
-                          }}
-                          buttonStyle={{
-                            padding: '10px',
-                          }}
-                      />
+                  {({ field, form }) => (
+                    <PhoneInput
+                      placeholder="Enter mobile number"
+                      country={'ng'}
+                      value={field.value}
+                      onChange={(phoneNumber) => form.setFieldValue('phoneNumber', phoneNumber)}
+                      
+                      inputStyle={{
+                        
+                        height: '47px',
+                       paddingLeft: '60px',
+                      }}  
+                    />
                   )}
                 </Field>
-
-                <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm"/>
-              </div>
-
-
+                <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" />
+              </div> 
+            
             </div>
-            <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
-            <div className='flex items-center justify-between w-full mb-6'>
 
-              <div className='flex items-center w-1/2 px-2'>
-                <p className='mr-2'>Male</p>
-                <Field
-                    required
-                    type='radio'
-                    name='gender'
-                    value='Male'
-                    className='rounded-md'
-                />
+            <h1 className="mt-3 mb-1 p-2 text-gray-600 font-medium text-sm">Sex</h1>
+            <div className="flex items-center justify-between w-full mb-6">
+              <div className="flex items-center w-1/2 px-2">
+                <p className="mr-2">Male</p>
+                <Field required type="radio" name="gender" value="Male" className="rounded-md" />
               </div>
-
-              <div className='flex items-center w-1/2 px-2'>
-                <p className='mr-2'>Female</p>
-                <input
-                    required
-                    type='radio'
-                    name='gender'
-                    value='Female'
-                    className='rounded-md'
-                />
+              <div className="flex items-center w-1/2 px-10">
+                <p className="mr-2">Female</p>
+                <Field required type="radio" name="gender" value="Female" className="rounded-md" />
               </div>
             </div>
 
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Medical specialization
                 </label>
                 <Field
-                    type="text"
-                    name="specialization"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter here"
+                  type="text"
+                  name="specialization"
+                  className="w-full h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  placeholder="Enter here"
                 />
               </div>
 
@@ -196,26 +175,26 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                   Name of Hospital you work
                 </label>
                 <Field
-                    type="text"
-                    name="hospital"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Enter here"
+                  type="text"
+                  name="hospital"
+                  className="w-[93%] h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  placeholder="Enter here"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Input Password <span className="text-red-500">*</span>
                 </label>
                 <Field
-                    type="password"
-                    name="password"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Password"
+                  type="password"
+                  name="password"
+                  className="w-full h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  placeholder="Password"
                 />
-                <ErrorMessage name="password" component="div" className="text-red-500 text-sm"/>
+                <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
               </div>
 
               <div className="mb-4">
@@ -223,75 +202,82 @@ const DoctorSignupForm = ({setCurrentStep}) => {
                   Re-Enter Password <span className="text-red-500">*</span>
                 </label>
                 <Field
-                    type="password"
-                    name="confirmedPassword"
-                    className="w-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
-                    placeholder="Confirm Password"
+                  type="password"
+                  name="confirmedPassword"
+                  className="w-[93%] h-[75%] max-w-xs sm:max-w-sm md:max-w-full p-2 border border-gray-300 rounded text-sm"
+                  placeholder="Confirm Password"
                 />
                 <ErrorMessage
-                    name="confirmedPassword"
-                    component="div"
-                    className="text-red-500 text-sm"
+                  name="confirmedPassword"
+                  component="div"
+                  className="text-red-500 text-sm"
                 />
               </div>
             </div>
 
-
             <div className="mb-4">
-              <label htmlFor='howDidYouHearAboutUs' className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="howDidYouHearAboutUs" className="block text-sm font-medium text-gray-700 mb-1">
                 How did you hear about us?
               </label>
               <Field
-                  type="text"
-                  name="howDidYouHearAboutUs"
-
-                  placeholder="Enter heard About Us"
-                  className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
-              />
+                as="select"
+                name="howDidYouHearAboutUs"
+                className="w-[81%] lg:w-[97%] p-3 border border-gray-300 rounded text-sm"
+              >
+                <option value="INSTAGRAM">Instagram</option>
+                <option value="FACEBOOK">Facebook</option>
+                <option value="X">X</option>
+                <option value="NEWSPAPER">Newspaper</option>
+                <option value="LINKEDIN">LinkedIn</option>
+                <option value="OTHERS">Others</option>
+              </Field>
             </div>
+
             <div className="mb-4">
-              <label htmlFor='dateOfBirth' className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Date of Birth
               </label>
               <Field
-                  type="date"
-                  name="dateOfBirth"
-                  className="w-[76%] lg:w-[88%] p-2 border border-gray-300 rounded text-sm"
+                type="date"
+                name="dateOfBirth"
+                className="w-[81%]  lg:w-[97%] p-3 border border-gray-300 rounded text-sm"
               />
+              <ErrorMessage name="dateOfBirth" component="div" className="text-red-500 text-sm" />
             </div>
-
             <div className="flex gap-7 flex-col md:flex-row  mt-6">
-              <Modal/>
-              <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
-                Already have an account? <span className="text-[#020E7C] cursor-pointer">Login here</span>
-              </a>
-            </div>
+            <Modal />
+            <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
+               Already have an account? <span className="text-[#020E7C] cursor-pointer">Login here</span>
+             </a>
+           </div>
+           <div className="mt-6 flex items-center font-bold  ">
+             <Field type="checkbox" name="acceptTerms" className="form-checkbox" />
+             <span className="text-sm ml-2 ">
+               Accept the{' '}
+               <a href="#" className="text-[#020E7C]">
+                 Terms and Conditions, of Medfair{' '}
+                 
+               </a>
+             </span>
+             <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm" />
+           </div>
 
-            <div className="mt-6 flex items-center ">
-              <Field type="checkbox" name="acceptTerms" className="form-checkbox"/>
-              <span className="text-sm ml-2 ">
-              Accept the{' '}
-                <a href="#" className="text-[#020E7C]">
-                Terms and Conditions, Operating policies{' '}
-                  <span className="text-gray-900">and</span> cookies policies of Medfair
-              </a>
-            </span>
-              <ErrorMessage name="acceptTerms" component="div" className="text-red-500 text-sm"/>
-            </div>
-            <button type='submit'
-                    className={` w-[300px] mt-5 lg:w-[90%]  md:w-[95%] py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}> Next
+            <button
+              type="submit"
+              className={` w-[300px]  mt-5 lg:w-[97%]  md:w-[95%] p-3 py-2 px-3 inline-flex items-center justify-center  text-sm font-semibold rounded-lg border border-transparent bg-[#020E7C] text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none`}
+            >
+              Next
             </button>
-
-            <div className='text-center mt-4 mb-12'>
-              <a href='/patient_signup' target="" className='text-blue-500'>
-                <p>Signup as Patient</p>
-              </a>
-            </div>
           </Form>
-      )}
-    </Formik>
+        )}
+      </Formik>
+      <div className='text-center mt-4 mb-12'>
+             <a href='/patient_signup' target="" className='text-blue-500'>
+                 <p>Signup as Patient</p>
+            </a>
+        </div>
+    </>
   );
 };
 
 export default DoctorSignupForm;
-
