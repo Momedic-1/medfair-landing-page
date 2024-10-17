@@ -1,6 +1,4 @@
-import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import LandingPage from './LandingPage'
 import DashboardLayout from './DashboardLayout'
 import PatientSignup from './PatientSignup'
 import LoginPage from './PatientLogin'
