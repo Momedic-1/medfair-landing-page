@@ -8,6 +8,8 @@ import SignUpTop from './SignUpTop.jsx';
 import * as yup from 'yup';
 import Modal from './Modal';
 import { baseUrl } from "../env.jsx";
+import Steps from "../Steps.jsx";
+import React, {useState} from "react";
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required('First name is required'),
@@ -31,6 +33,7 @@ const validationSchema = yup.object().shape({
 });
 
 const DoctorSignupForm = ({ setCurrentStep }) => {
+  const[heardAboutus, setheardAbout] = useState("");
   const navigate = useNavigate();
 
   const initialValues = {
@@ -49,6 +52,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
   };
 
   const handleSubmit = async (values, { resetForm }) => {
+   values.howDidYouHearAboutUs = "NEWSPAPER";
     try {
       const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
         method: 'POST',
@@ -68,10 +72,12 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
       resetForm();
     }
   };
+  const stepLabels = ['Account', 'Verification', 'Login']
 
   return (
     <>
       <SignUpTop />
+      <Steps stepLabels={stepLabels} currentStep={1} />
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -223,6 +229,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                 as="select"
                 name="howDidYouHearAboutUs"
                 className="w-[81%] lg:w-[97%] p-3 border border-gray-300 rounded text-sm"
+
               >
                 <option value="INSTAGRAM">Instagram</option>
                 <option value="FACEBOOK">Facebook</option>

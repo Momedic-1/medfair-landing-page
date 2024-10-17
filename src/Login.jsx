@@ -1,6 +1,4 @@
-import person from '../src/assets/person.svg';
-import medfair from '../src/assets/medfair (2).svg';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
@@ -157,7 +155,7 @@ export default function LoginPage() {
               disabled={isLoading}
             >
                 
-              {isLoading ?<img src={SpinnerImg}/>  : '>'}
+              {isLoading ?<img src={SpinnerImg}/>  : 'Login'}
             </button>
           </footer>
         </form>

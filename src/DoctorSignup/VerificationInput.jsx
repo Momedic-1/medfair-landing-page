@@ -1,6 +1,9 @@
-import  {useRef, useState,useEffect} from 'react'
+import React, {useRef, useState,useEffect} from 'react'
 import {baseUrl} from "../env.jsx";
 import {useNavigate} from "react-router-dom";
+import SignUpTop from "./SignUpTop.jsx";
+import Stepper from "../Steps.jsx";
+import Steps from "../Steps.jsx";
 const VerificationInput = () => {
     const navigate = useNavigate();
     const [code, setCode] = useState(['', '', '', '', ''])
@@ -75,11 +78,13 @@ const VerificationInput = () => {
         }
 
     }
-
+    const stepLabels = ['Account', 'Verification', 'Login']
     return (
 
         <div className='bg-white mr-10 rounded-lg p-6 mt-10'>
-            <h2 className='text-xl font-bold text-center mb-4 text-[#020E7C]'>Check your email, {userName}!</h2>
+            <SignUpTop />
+            <Steps stepLabels={stepLabels} currentStep={2} />
+            <h2 className='text-xl font-bold text-center mb-4 md:mt-14 mt-10 text-[#020E7C]'>Check your email, {userName}!</h2>
             <p className='text-sm text-center text-gray-400 font-medium mb-4'>
                 A verification code was sent to {userEmail}.
             </p>
@@ -89,7 +94,7 @@ const VerificationInput = () => {
             <p className='text-sm text-center text-blue-500 mb-4'>Open email app</p>
 
 
-            <div className='flex flex-col items-center space-y-4 mb-16'>
+            <div className='flex flex-col items-center space-y-4 '>
                 <div className='flex space-x-2'>
                     {code.map((digit, index) => (
                         <input
@@ -105,9 +110,10 @@ const VerificationInput = () => {
                 </div>
 
 
+                <div className={`mt-96`}></div>
                 <button
                     onClick={() => verifyEmail()}
-                    className={`md:w-[30%] bg-[#020E7C] text-white py-2 rounded-md hover:bg-blue-800 transition duration-300 w-[300px] lg:w-[32%]  px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold  border border-transparent disabled:opacity-50 disabled:pointer-events-none`}
+                    className={`md:w-[30%] bg-[#020E7C] text-white py-2  rounded-md hover:bg-blue-800 transition duration-300 w-[300px] px-3 inline-flex items-center justify-center gap-x-1 text-sm font-semibold  border border-transparent disabled:opacity-50 disabled:pointer-events-none`}
                 >
                     Next
                 </button>

@@ -65,7 +65,7 @@ const DoctorSignup = () => {
            <SignUpTop/>
 
 
-            <Steps stepLabels={stepLabels} currentStep={currentStep} />
+              <Steps stepLabels={stepLabels} currentStep={currentStep} />
             <div className='mt-5 sm:mt-8'>{renderStepContent(currentStep)}</div>
         </div>
 
