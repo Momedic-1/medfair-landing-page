@@ -142,7 +142,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
         placeholder="Enter mobile Number"
       />
     </div>
-  </div>
+   </div>
   <ErrorMessage
     name="phoneNumber"
     component="div"

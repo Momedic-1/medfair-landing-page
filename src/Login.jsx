@@ -4,7 +4,7 @@ import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
-import {  LuEye,LuEyeOff } from "react-icons/lu";
+// import {  LuEye,LuEyeOff } from "react-icons/lu";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -13,7 +13,7 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isPasswordVisible,setIsPasswordVisible] = useState();
+  // const [isPasswordVisible,setIsPasswordVisible] = useState();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -120,7 +120,7 @@ export default function LoginPage() {
           className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
           onClick={handlePasswordVisibility}
         >
-          {isPasswordVisible ? <LuEye /> : <LuEyeOff />}
+          {/* {isPasswordVisible ? <LuEye /> : <LuEyeOff />} */}
         </div>
       </div>
     </div>
