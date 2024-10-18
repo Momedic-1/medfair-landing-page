@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import ErrorModal from '../components/ErrorModal';
+import flag from "../assets/Vector.png"
 
 export default function PatientSignupForm({ formData, setFormData }) {
   const navigate = useNavigate()
@@ -75,33 +76,44 @@ export default function PatientSignupForm({ formData, setFormData }) {
             </div>
           </div>
 
-          <div className='w-full flex flex-col lg:flex-row lg:items-center justify-between mb-6'>
-            <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
-              <h1 className='text-gray-600 font-medium text-sm'>Email</h1>
-              <input
-                required
-                type='email'
-                name='emailAddress'
-                value={formData.emailAddress}
-                onChange={handleChange}
-                placeholder='Enter Email'
-                className='border rounded-md p-3 mt-2 w-full bg-gray-100'
-              />
-            </div>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
-            <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
-              <h1 className='text-gray-600 font-medium text-sm'>Mobile Number</h1>
-              <input
-                required
-                type='text'
-                name='phoneNumber'
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder='Enter Mobile Number'
-                className='border rounded-md p-3 mt-2 w-full bg-gray-100'
-              />
-            </div>
-          </div>
+
+<div className='flex flex-col w-full mt-7'>
+  <h1 className='text-gray-600 font-medium text-sm'>Email</h1>
+  <input
+    required
+    type='email'
+    name='emailAddress'
+    placeholder='Enter Email'
+    value={formData.emailAddress}
+    onChange={handleChange}
+    className='border rounded-md p-4 mt-3 w-full bg-gray-100'
+  />
+</div>
+
+
+<div className='flex flex-col w-full mt-7'>
+  <h1 className='text-gray-600 font-medium text-sm'>Mobile Number</h1>
+  <div className='flex items-center border rounded-md mt-3 p-1 bg-gray-100'>
+    <div className='flex items-center px-2'>
+      <img src={flag} alt='flag' className='w-12 rounded' />
+    </div>
+    <span className='text-gray-600'>+234</span>
+    <div className='border-l-2 h-12 mx-2'></div>
+    <input
+      required
+      type='text'
+      name='phoneNumber'
+      value={formData.phoneNumber}
+      onChange={handleChange}
+      placeholder='Enter mobile number'
+      className='flex-1 bg-transparent focus:outline-none'
+    />
+  </div>
+</div>
+
+</div>
 
           <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
           <div className='flex items-center justify-between w-full mb-6'>
@@ -131,33 +143,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
             </div>
           </div>
 
-          <div className='w-full flex flex-col lg:flex-row lg:items-center justify-between mb-6'>
-            <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
-              <h1 className='text-gray-600 font-medium text-sm'>Date of Birth</h1>
-              <input
-                required
-                type='text'
-                name='dateOfBirth'
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                placeholder='dd/mm/yy'
-                className='border rounded-md p-3 mt-2 w-full bg-gray-100'
-              />
-            </div>
-
-            <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
-              <h1 className='text-gray-600 font-medium text-sm'>Age</h1>
-              <input
-                required
-                type='text'
-                name='age'
-                value={formData.age}
-                onChange={handleChange}
-                placeholder='Enter Age'
-                className='border rounded-md p-3 mt-2 w-full bg-gray-100'
-              />
-            </div>
-          </div>
+          
 
           <div className='w-full flex flex-col lg:flex-row lg:items-center justify-between mb-6'>
             <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
