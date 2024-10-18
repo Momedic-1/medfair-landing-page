@@ -18,7 +18,7 @@ const validationSchema = yup.object().shape({
   gender: yup.string().oneOf(['Male', 'Female'], 'Invalid gender').required('Gender is required'),
   specialization: yup.string(),
   hospital: yup.string(),
-  dateOfBirth: yup.string(),
+
   password: yup
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -46,7 +46,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
     password: '',
     confirmedPassword: '',
     howDidYouHearAboutUs: '', 
-    dateOfBirth: '', 
+    
     acceptTerms: true, 
     userRole: "DOCTOR",
   };
@@ -84,135 +84,144 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
         onSubmit={handleSubmit}
       >
         {({ handleSubmit }) => (
-          <Form className="mx-auto px-8  max-w-xl space-y-7 md:max-w-3xl lg:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <Field
-                  type="text"
-                  name="firstName"
-                  className="w-[95%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm "
-                  placeholder="Enter First Name"
-                />
-                <ErrorMessage name="firstName" component="div" className="text-red-500 text-sm" />
-              </div>
+          <Form className="mx-auto px-8  max-w-xl  md:max-w-3xl lg:p-6">
+        
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-20'>
+            <div className='   mt-7'>
+              <h1 className='text-gray-600 font-medium text-sm'>First Name</h1>
+              <input
+                required
+                type='text'
+                name='firstName'
+                
+                placeholder='Enter First Name'
+                className='w-[100%] mt-3  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm '
+              />
+            </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <Field
-                  type="text"
-                  name="lastName"
-                  className="w-[97%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
-                  placeholder="Enter Last Name"
-                />
-                <ErrorMessage name="lastName" component="div" className="text-red-500 text-sm" />
-              </div>
+            <div className=' mt-7'>
+              <h1 className='text-gray-600 font-medium text-sm'>Last Name</h1>
+              <input
+                required
+                type='text'
+                name='lastName'
+               
+                placeholder='Enter Last Name'
+                className='w-[100%] mt-3  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm '
+              />
+            </div>
+          </div>
+           
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-20'>
+  
+      <div className=' mt-7'>
+       <h1 className='text-gray-600 font-medium text-sm'>Email</h1>
+    <Field
+      required
+      type='email'
+      name='emailAddress'
+      placeholder='Enter Email'
+      className='w-[100%] mt-3  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm  '
+    />
+  </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <Field
-                  type="email"
-                  name="emailAddress"
-                  className="w-[97%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
-                  placeholder="Enter Email"
-                />
-                <ErrorMessage name="emailAddress" component="div" className="text-red-500 text-sm" />
-              </div>
+ 
+  <div className='flex flex-col  mt-9'>
+    <h1 className='text-gray-600 font-medium text-sm'>Mobile Number</h1>
+    <div className='flex items-center border border-gray-300 rounded  mt-2'>
       
-
-              <div className="mb-4">
-               <label className="block text-sm font-medium text-gray-700 mb-1">
-             Mobile Number
-              </label>
-            <div className="w-[99%] ">
-             <div className="flex items-center border border-gray-300 rounded-md bg-gray-100 ">
-            <div className="flex items-center px-2 space-x-1 bg-white border-r-2 border-gray-300">
-           <img src={flag} alt="flag" width="20px" />
-            <span className="text-sm text-gray-700">+234</span>
-           </div>
-          <Field
-        name="phoneNumber"
-        className="w-[100%] p-4 bg-gray-100 focus:outline-none text-sm"
-        placeholder="Enter mobile Number"
+      <div className='flex items-center px-2'>
+        <img src={flag} alt='flag' className='w-12 rounded' />
+      </div>
+      <span className=' text-gray-600'>+234</span>
+     
+      <div className='border-2  h-14 mx-2'></div>
+      <Field
+        required
+        type='text'
+        name='phoneNumber'
+        placeholder='Enter mobile number'
+        className='p-4  bg-transparent focus:outline-none'
       />
     </div>
-   </div>
-  <ErrorMessage
-    name="phoneNumber"
-    component="div"
-    className="text-red-500 text-sm mt-1"
-  />
+  </div>
 </div>
 
-            
-            </div>
 
-            <h1 className="mt-3 mb-1 p-2 text-gray-600 font-medium text-sm">Sex</h1>
-            <div className="flex items-center justify-between w-full mb-6">
-              <div className="flex items-center w-1/2 px-2">
-                <p className="mr-2">Male</p>
-                <Field required type="radio" name="gender" value="Male" className="rounded-md" />
-              </div>
-              <div className="flex items-center w-1/2 px-10">
-                <p className="mr-2">Female</p>
-                <Field required type="radio" name="gender" value="Female" className="rounded-md" />
-              </div>
-            </div>
 
+          <h1 className=' mt-9  p-2 text-gray-600 font-medium text-sm'>Sex</h1>
+          <div className='flex items-center justify-between w-full mb-6'>
+            <div className='flex items-center w-1/2 px-2'>
+              <p className='mr-2'>Male</p>
+              <input
+                required
+                type='radio'
+                name='gender'
+                value='Male'
+                className='rounded-md'
+              />
+            </div>
+            <div className='flex items-center w-1/2 px-10'>
+              <p className='mr-2'>Female</p>
+              <input
+                required
+                type='radio'
+                name='gender'
+                value='Female'
+                className='rounded-md'
+              />
+            </div>
+          </div>
+           
+           
             <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
-              <div className="mb-4">
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Medical specialization
                 </label>
                 <Field
                   type="text"
                   name="specialization"
-                  className="w-[97%] max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
+                  className="w-[100%] mt-3  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm "
                   placeholder="Enter here"
                 />
               </div>
 
-              <div className="mb-4">
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Name of Hospital you work
                 </label>
                 <Field
                   type="text"
                   name="hospital"
-                  className="w-[100%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
+                  className="w-[100%] mt-3  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm "
                   placeholder="Enter here"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
-              <div className="mb-4">
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Input Password <span className="text-red-500">*</span>
                 </label>
                 <Field
                   type="password"
                   name="password"
-                  className="w-[97%] max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
+                  className="w-[100%] mt-2 max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Password"
                 />
                 <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
               </div>
 
-              <div className="mb-4">
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Re-Enter Password <span className="text-red-500">*</span>
                 </label>
                 <Field
                   type="password"
                   name="confirmedPassword"
-                  className="w-[100%]  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
+                  className="w-[100%] mt-2  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Confirm Password"
                 />
                 <ErrorMessage
@@ -223,14 +232,14 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
               </div>
             </div>
 
-            <div className="mb-4">
+            <div className="mb-6">
               <label htmlFor="howDidYouHearAboutUs" className="block text-sm font-medium text-gray-700 mb-1">
                 How did you hear about us?
               </label>
               <Field
                 as="select"
                 name="howDidYouHearAboutUs"
-                className="w-[97%] lg:w-[100%] p-4 border border-gray-300 rounded text-sm"
+                className="w-[97%] mt-2 lg:w-[100%] p-4 border border-gray-300 rounded text-sm"
 
               >
                 <option value="INSTAGRAM">Instagram</option>
@@ -242,18 +251,10 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
               </Field>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date of Birth
-              </label>
-              <Field
-                type="date"
-                name="dateOfBirth"
-                className="w-[95%]  lg:w-[100%] p-4 border border-gray-300 rounded text-sm"
-              />
-              <ErrorMessage name="dateOfBirth" component="div" className="text-red-500 text-sm" />
-            </div>
+            
+            
             <div className="flex gap-7 flex-col md:flex-row  mt-6">
+           
             <Modal />
             <a onClick={() => navigate('/login')} className="text-sm font-medium lg:ml-36 md:mr-8">
                Already have an account? <span className="text-[#020E7C] cursor-pointer">Login here</span>
