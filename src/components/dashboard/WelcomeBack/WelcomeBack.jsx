@@ -10,7 +10,8 @@ function WelcomeBack () {
   const [callStatus, setCallStatus]= useState("");
   const [isActive, setIsActive] = useState(false);
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
-  
+  const userData = JSON.parse(localStorage.getItem('userData'));
+
   useEffect(() => {    
     viewAllPendingCalls()
   },[]);
@@ -19,35 +20,33 @@ function WelcomeBack () {
   const viewAllPendingCalls = async()=>{
     try {
     const response = await axios.get( `https://momedic.onrender.com/api/call/all-by-status`, null, {
-      params: {
-          status: ""
+    // const response = await axios.post( `${baseUrl}/api/call/broadcast`,{},{
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-  })
-      setActiveCalling(response.data[0].zoomMeetingLink);
+    })
+      setActiveCalling(response.data.data);
     } catch (error){
       console.error(error);
   // setCalling(true)
 }
   }
-  const pickCall = () => {
-    window.open(activeCall, '_blank', 'noopener,noreferrer');
-    // setCalling(!activeCall);
-    setIsActive(!isActive);
-  };
-  const handleSubmit = async (e) => {
+  const pickCall = async (e) => {
     e.preventDefault();
-  
-    
     try {
       const response = await axios.post(`https://momedic.onrender.com/api/payment/initialize-payment`,{},{
+      // const response = await axios.post(`${baseUrl}/api/call/join`,{
+        "doctorId": userData?.id,
+        "callId": activeCall[0].callId
+      },{
         headers: {
           Authorization: `Bearer ${token}`
-        }
+        },
       });
-      console.log(response);
+      setIsActive(!isActive);
+      window.open(response.data.data, '_blank', 'noopener,noreferrer');
     } catch (error) {
-      // setLoading(false);
-      // setErrorMessage('Error submitting form. Please try again.');
+      console.log('Error submitting form. Please try again.'+error.message);
       return false;
     }finally{
       // setPaymentSuccess(true);

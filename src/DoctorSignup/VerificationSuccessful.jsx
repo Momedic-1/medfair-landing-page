@@ -6,7 +6,7 @@ const VerificationSuccessful = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate('/doctor-dashboard');
+      navigate('/login');
     }, 3000); 
    
     return () => clearTimeout(timer);

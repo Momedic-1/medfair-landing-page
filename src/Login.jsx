@@ -24,7 +24,7 @@ export default function LoginPage() {
     }));
   };
   const handlePasswordVisibility = ()=>{
-    setIsPasswordVisible((prevState)=> !prevState)
+    // setIsPasswordVisible((prevState)=> !prevState)
   }
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,6 +33,7 @@ export default function LoginPage() {
 
     try {
       const response = await fetch(`https://momedic.onrender.com/api/v1/auth/login`, {
+      // const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,9 +53,9 @@ export default function LoginPage() {
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(userData))
         console.log(userData,"userRole")
-         if(userData.userRole === "DOCTOR"){
+         if(userData.role === "DOCTOR"){
           navigate('/doctor-dashboard')
-         }else if(userData.userRole === "PATIENT"){
+         }else if(userData.role === "PATIENT"){
             navigate('/patient-dashboard')
          }else{
           setError('Invalid user role')
@@ -107,7 +108,7 @@ export default function LoginPage() {
       </label>
       <div className="relative">
         <input
-          type={isPasswordVisible ? 'text' : 'password'}
+          // type={isPasswordVisible ? 'text' : 'password'}
           name="password"
           id="password"
           placeholder="Enter your password"
