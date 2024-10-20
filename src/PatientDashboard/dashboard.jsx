@@ -35,11 +35,11 @@ export default function Dashboard() {
   }
 function makePaymentToast(message) {
     toast.success(message, {
-        position: "top-right",
-        autoClose: 5000,
+        position:"top-right",
+        autoClose:5000,
         hideProgressBar: false,
         closeOnClick: false,
-        rtl: false,
+        rtl:false,
         progressStyle: {
             background: '#000080',
         },
