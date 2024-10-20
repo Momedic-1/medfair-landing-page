@@ -24,12 +24,13 @@ export default function Dashboard() {
 
   // const { isOpen, onOpen, onOpenChange } = useDisclosure()
   const navigate = useNavigate()
-     const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
 
   // Check if user data and token exist
   if (!token || !userData) {
     // Redirect to login page if no valid data is found
+      console.log("User not logged in.")
     navigate('/login');
     return null;
   }
