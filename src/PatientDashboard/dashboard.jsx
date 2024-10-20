@@ -33,23 +33,20 @@ export default function Dashboard() {
     navigate('/login');
     return null;
   }
-function makePaymentToast(message){
+function makePaymentToast(message) {
     toast.success(message, {
-        position:"top-right",
-        autoClose:5000,
+        position: "top-right",
+        autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: false,
-        rtl:false,
+        rtl: false,
         progressStyle: {
             background: '#000080',
         },
         pauseOnHover: false,
         draggable: false,
-        pauseOnFocusLoss:false
+        pauseOnFocusLoss: false
     });
-    setTimeout(() => {
-        navigate('/payment');
-    }, 4000);
 }
   function handleSpecialistModal(isOpen){    
     setSpecialistModal(isOpen)    
@@ -73,9 +70,16 @@ function makePaymentToast(message){
 
       }catch (error){
           console.log(error)
+
+          if (error.message === "Network Error") {
+              makePaymentToast(error.message)
+          }
           const responseData = error.response.data
           if (responseData.error ) {
               makePaymentToast(responseData.error)
+              setTimeout(() => {
+                      navigate('/payment');
+              }, 4000)
           }else{
               console.log("Call not initiated ");
           }
