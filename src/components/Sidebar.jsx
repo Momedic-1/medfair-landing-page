@@ -5,6 +5,8 @@ import { NavLink } from 'react-router-dom'
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const sidebarRef = useRef(null)
+  const userData = JSON.parse(localStorage.getItem('userData'));
+
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
@@ -111,7 +113,7 @@ const Sidebar = () => {
                   className='py-2 ps-10 pe-16 block w-[34rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
                   placeholder='Search anything'
                 />
-                <div className='hidden absolute inset-y-0 end-0 flex items-center pointer-events-none z-20 pe-1'>
+                <div className='hidden absolute inset-y-0 end-0 items-center pointer-events-none z-20 pe-1'>
                   <button
                     type='button'
                     className='inline-flex shrink-0 justify-center items-center size-6 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none focus:text-blue-600'
@@ -161,7 +163,7 @@ const Sidebar = () => {
                 </svg>
                 <span className='sr-only'>Search</span>
               </button>
-
+              <p> {userData ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase() : 'Doe'}</p> 
               <button
                 type='button'
                 className='size-[38px] relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'

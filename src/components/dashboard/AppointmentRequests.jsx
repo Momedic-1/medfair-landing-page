@@ -31,7 +31,7 @@ function AppointmentRequests () {
   ]
 
   return (
-    <div className='sm:w-[329px] mt-4 w-full h-[370px] px-4 relative bg-white rounded-[10px] p-2'>
+    <div className='sm:w-[329px] mt-4 w-[300px] h-auto px-4 relative bg-white rounded-[10px] p-2'>
       <div className='flex justify-between text-[#020e7c]'>
         <span className="text-base font-semibold font-['Roboto'] leading-[25px]">
           Appointment Requests

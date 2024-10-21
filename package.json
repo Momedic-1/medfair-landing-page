@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.13.0",
     "@nextui-org/react": "^2.4.6",
     "@preline/stepper": "^2.3.0",
+    "@reduxjs/toolkit": "^2.3.0",
     "axios": "^1.7.7",
     "formik": "^2.4.6",
     "framer-motion": "^11.3.15",

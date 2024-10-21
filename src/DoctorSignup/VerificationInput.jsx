@@ -84,7 +84,7 @@ const VerificationInput = () => {
         <div className='bg-white mr-10 rounded-lg p-6 mt-10'>
             <SignUpTop />
             <Steps stepLabels={stepLabels} currentStep={2} />
-            <h2 className='text-xl font-bold text-center mb-4 md:mt-14 mt-10 text-[#020E7C]'>Check your email, {userName}!</h2>
+            <h2 className='text-xl font-bold text-center mb-4 md:mt-14 mt-10 text-[#020E7C]'>Check your email, {userName.toUpperCase()}!</h2>
             <p className='text-sm text-center text-gray-400 font-medium mb-4'>
                 A verification code was sent to {userEmail}.
             </p>

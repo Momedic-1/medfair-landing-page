@@ -4,6 +4,8 @@ import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
+import eye from "./assets/ph_eye.png";
+import close from "./assets/eye-close-svgrepo-com.svg"
 // import {  LuEye,LuEyeOff } from "react-icons/lu";
 
 export default function LoginPage() {
@@ -13,7 +15,7 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // const [isPasswordVisible,setIsPasswordVisible] = useState();
+  const [isPasswordVisible,setIsPasswordVisible] = useState();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -121,15 +123,18 @@ export default function LoginPage() {
           className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
           onClick={handlePasswordVisibility}
         >
-          {/* {isPasswordVisible ? <LuEye /> : <LuEyeOff />} */}
+        <img
+          src={isPasswordVisible ? close : eye }
+          className=' w-6'
+        />
+        
         </div>
       </div>
     </div>
           <div className="flex items-center justify-between mb-6">
-            {/* <div> */}
-              
+            
               <p className=' text-sm text-blue-600 cursor-pointer'>Password </p>
-            {/* </div> */}
+           
             <a href="#" className="text-sm text-blue-600">
              Forgot password?
             </a>
