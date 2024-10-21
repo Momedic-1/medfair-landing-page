@@ -9,9 +9,9 @@ import DesignedSideBar from '../components/reuseables/DesignedSideBar';
 
 export default function PaymentPage() {
   const subscriptionPlans = {
-  yearly: { name: 'Yearly', price: 45000.00 },
-  monthly: { name: 'Monthly', price: 5000.00 },
-  onetime: { name: 'One Time', price: 1500.00 },
+  yearly: { name: 'Yearly', price: 45000 },
+  monthly: { name: 'Monthly', price: 5000 },
+  onetime: { name: 'One Time', price: 1500 },
 };
 
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ export default function PaymentPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     formData.plan = selectedPlan;
-    formData.amount = selectedPrice;
+    formData.amount = selectedPrice +".00";
   
     const userData = JSON.parse(localStorage.getItem('authToken'));
     const token =userData.token;

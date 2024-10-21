@@ -32,7 +32,7 @@ const validationSchema = yup.object().shape({
 });
 
 const DoctorSignupForm = ({ setCurrentStep }) => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
   const initialValues = {
     firstName: '',
@@ -64,7 +64,6 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
       const responseText = await response.text();
       console.log(response);
       localStorage.setItem('email', JSON.stringify(values.emailAddress));
-
       navigate('/check-email');
     } catch (error) {
       console.log(error);
