@@ -87,7 +87,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
             <div className='grid grid-cols-1 md:grid-cols-2 gap-20'>
             <div className='   mt-7'>
               <h1 className='text-gray-600 font-medium text-sm'>First Name</h1>
-              <input
+              <Field
                 required
                 type='text'
                 name='firstName'
@@ -99,7 +99,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
 
             <div className=' mt-7'>
               <h1 className='text-gray-600 font-medium text-sm'>Last Name</h1>
-              <input
+              <Field
                 required
                 type='text'
                 name='lastName'
@@ -151,7 +151,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
           <div className='flex items-center justify-between w-full mb-6'>
             <div className='flex items-center w-1/2 px-2'>
               <p className='mr-2'>Male</p>
-              <input
+              <Field
                 required
                 type='radio'
                 name='gender'
@@ -161,7 +161,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
             </div>
             <div className='flex items-center w-1/2 px-10'>
               <p className='mr-2'>Female</p>
-              <input
+              <Field
                 required
                 type='radio'
                 name='gender'
@@ -208,6 +208,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                   name="password"
                   className="w-[100%] mt-2 max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Password"
+                  autoComplete="new-password"
                 />
                 <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
               </div>
@@ -221,6 +222,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
                   name="confirmedPassword"
                   className="w-[100%] mt-2  max-w-xs sm:max-w-sm md:max-w-full p-4 border border-gray-300 rounded text-sm"
                   placeholder="Confirm Password"
+                  autoComplete="new-password"
                 />
                 <ErrorMessage
                   name="confirmedPassword"
