@@ -3,7 +3,7 @@ import RightPanel from './RightPanel'
 
 function HomePage () {
   return (
-    <div className='flex flex-col lg:flex-row min-h-screen items-center justify-center bg-gray-100'>
+    <div className='flex flex-col lg:flex-row min-h-screen items-stretch lg:items-start justify-center bg-gray-100 p-4'>
       <LeftPanel />
       <RightPanel /> 
     </div>
