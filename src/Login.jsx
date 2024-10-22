@@ -124,7 +124,7 @@ export default function LoginPage() {
         >
         <img
           src={isPasswordVisible ? close : eye }
-          className=' w-2'
+          className=' w-4'
         />
         </div>
       </div>
