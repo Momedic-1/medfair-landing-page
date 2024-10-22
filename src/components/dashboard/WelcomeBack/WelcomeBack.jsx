@@ -19,7 +19,7 @@ function WelcomeBack () {
 
   const viewAllPendingCalls = async()=>{
     try {
-    const response = await axios.get( `https://momedic.onrender.com/api/call/broadcast`, {}, {
+    const response = await axios.post( `https://momedic.onrender.com/api/call/broadcast`, {}, {
     // const response = await axios.post( `${baseUrl}/api/call/broadcast`,{},{
       headers: {
         Authorization: `Bearer ${token}`
