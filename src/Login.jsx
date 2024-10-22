@@ -4,8 +4,8 @@ import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
-import close_eye from './assets/close_eye.png';
-import open_eye from './assets/open_eye.png';
+import eye from "./assets/ph_eye.png";
+import close from "./assets/eye-close-svgrepo-com.svg"
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -122,17 +122,17 @@ export default function LoginPage() {
           className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
           onClick={handlePasswordVisibility}
         >
-           {isPasswordVisible ?
-               <img height={20} width={15} src={close_eye} alt={`password is visible`} /> :
-               <img height={20} width={15} src={open_eye} alt={`password is invisible`} />}
+        <img
+          src={isPasswordVisible ? close : eye }
+          className=' w-2'
+        />
         </div>
       </div>
     </div>
           <div className="flex items-center justify-between mb-6">
-            {/* <div> */}
-              
+
               <p className=' text-sm text-blue-600 cursor-pointer'>Password </p>
-            {/* </div> */}
+
             <a href="#" className="text-sm text-blue-600">
              Forgot password?
             </a>
