@@ -31,8 +31,7 @@ export default function Dashboard() {
     navigate('/login');
     return null;
   }
-
-  function makePaymentToast(message) {
+function makePaymentToast(message){
     toast.success(message, {
       position: "top-right",
       autoClose: 5000,
@@ -46,37 +45,43 @@ export default function Dashboard() {
       draggable: false,
       pauseOnFocusLoss: false
     });
-    setTimeout(() => {
-      navigate('/payment');
-    }, 4000);
+}
+  function handleSpecialistModal(isOpen){    
+    setSpecialistModal(isOpen)    
   }
 
-  function handleSpecialistModal(isOpen) {
-    setSpecialistModal(isOpen);
-  }
+  async function handleCall(){
+  const userDataString = localStorage.getItem('userData');
 
-  async function handleCall() {
-    const userDataString = localStorage.getItem('userData');
-    const userData = JSON.parse(userDataString);
-    const patientId = userData?.id;
-    try {
-      const response = await axios.post(`https://momedic.onrender.com/api/call/initiate`, null, {
-        params: {
-          userId: patientId
-        }
-      });
-      console.log(response.data);
-      const responseData = response.data;
-      window.open(responseData.start_url, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.log(error);
-      const responseData = error.response.data;
-      if (responseData.error) {
-        makePaymentToast(responseData.error);
-      } else {
-        console.log("Call not initiated ");
+  const userData = JSON.parse(userDataString);
+  const patientId = userData?.id
+      try{
+          // const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
+          const response = await axios.post( `https://momedic.onrender.com/api/call/initiate`, null, {
+              params: {
+                  userId: patientId
+              }
+          })
+          console.log(response.data)
+          const responseData = response.data
+              window.open(responseData.start_url, '_blank', 'noopener,noreferrer');
+
+      }catch (error){
+          console.log(error)
+
+          if (error.message === "Network Error") {
+              makePaymentToast(error.message)
+          }
+          const responseData = error.response.data
+          if (responseData.error ) {
+              makePaymentToast(responseData.error)
+              setTimeout(() => {
+                      navigate('/payment');
+              }, 4000)
+          }else{
+              console.log("Call not initiated ");
+          }
       }
-    }
   }
 
   const handleSearchChange = (e) => {
@@ -153,7 +158,7 @@ export default function Dashboard() {
                    <p className="text-[#7D8FB3] mb-2 max-w-xs">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 12hours.</p>
               <button className=" border text-[#7D8FB3] py-2 p-6 px-4 rounded-lg" onClick={()=>navigate('/payment')}>Subscribe</button>
             </div>
-           
+
             <div className="flex flex-col items-center text-center m-3">
             <div className="w-32 h-32 flex flex-col items-center justify-center font-semibold bg-[#020E7C] text-white border border-blue-700 rounded-full mb-4">
          <span className='mb-2'>
@@ -175,12 +180,12 @@ export default function Dashboard() {
          N45000
        </span>
      </div>
-       <p className="text-[#7D8FB3] mb-2 max-w-80">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 1 year.</p>    
+       <p className="text-[#7D8FB3] mb-2 max-w-80">By clicking subscribe you can make instant calls to consult a Doctor which is valid for only 1 year.</p>
         <button className="border text-[#7D8FB3]  py-2 px-4  rounded-md" onClick={()=>navigate('/payment')}>Subscribe</button>
         </div>
-            
+
           </div>
-          
+
 
         </main>
       </div>

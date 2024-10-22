@@ -6,7 +6,6 @@ import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
 import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg"
-// import {  LuEye,LuEyeOff } from "react-icons/lu";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -26,7 +25,7 @@ export default function LoginPage() {
     }));
   };
   const handlePasswordVisibility = ()=>{
-    // setIsPasswordVisible((prevState)=> !prevState)
+    setIsPasswordVisible((prevState)=> !prevState)
   }
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,7 +109,7 @@ export default function LoginPage() {
       </label>
       <div className="relative">
         <input
-          // type={isPasswordVisible ? 'text' : 'password'}
+          type={isPasswordVisible ? 'text' : 'password'}
           name="password"
           id="password"
           placeholder="Enter your password"
@@ -125,16 +124,15 @@ export default function LoginPage() {
         >
         <img
           src={isPasswordVisible ? close : eye }
-          className=' w-6'
+          className=' w-4'
         />
-        
         </div>
       </div>
     </div>
           <div className="flex items-center justify-between mb-6">
-            
+
               <p className=' text-sm text-blue-600 cursor-pointer'>Password </p>
-           
+
             <a href="#" className="text-sm text-blue-600">
              Forgot password?
             </a>
