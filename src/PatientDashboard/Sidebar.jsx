@@ -13,13 +13,21 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
     <aside
       className={`fixed lg:static top-0 left-0 h-full bg-[#020E7C] text-white flex flex-col lg:w-1/5 w-2/3 z-20 transform transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
     >
+     
       <div className="p-4 text-2xl font-bold flex justify-between items-center">
         <span>Patient Dashboard</span>
+        <button
+           onClick={toggleSidebar}
+          className="lg:hidden text-white text-2xl focus:outline-none"
+         >
+           ✕
+        </button>
       </div>
       <nav className="flex flex-col p-4">
-      <NavLink to="/patient-dashboard" className="flex items-center p-3 m-3 py-2 px-4 rounded bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
+        <NavLink to="/patient-dashboard" className="flex items-center p-3 m-3 py-2 px-4 rounded bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
             <img src={dashboard}/> <span className='ml-3 text-black'>Dashboard</span>
           </NavLink>
+          
            <NavLink to="/patient_profile" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
              <img src={profile}/> <span className='ml-3'>View Profile</span>
            </NavLink>
