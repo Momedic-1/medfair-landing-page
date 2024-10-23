@@ -9,11 +9,7 @@ import { NextUIProvider } from '@nextui-org/react'
 // import { Provider } from 'react-redux'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-<<<<<<< HEAD
-  
-=======
   // <Provider store={store}>
->>>>>>> 12171ab96999e9a20f134ee5adc31ba97e4ff276
   <React.StrictMode>
     <NextUIProvider>
     {/* <Provider store={store}> */}
@@ -21,9 +17,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       {/* </Provider> */}
     </NextUIProvider>
   </React.StrictMode>
-<<<<<<< HEAD
- 
-=======
   // </Provider>
->>>>>>> 12171ab96999e9a20f134ee5adc31ba97e4ff276
 )
