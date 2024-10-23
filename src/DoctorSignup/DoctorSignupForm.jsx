@@ -7,8 +7,9 @@ import * as yup from 'yup';
 import Modal from './Modal';
 import { baseUrl } from "../env.jsx";
 import Steps from "../Steps.jsx";
-import React, {useState} from "react";
+import React, {useState,useEffect} from "react";
 import flag from "../assets/Vector.png"
+// import { useRegisterDoctorMutation } from '../redux-query/RegistrationQuery.js';
 
 const validationSchema = yup.object().shape({
   firstName: yup.string().required('First name is required'),
@@ -34,6 +35,7 @@ const validationSchema = yup.object().shape({
 const DoctorSignupForm = ({ setCurrentStep }) => {
     const navigate = useNavigate();
 
+
   const initialValues = {
     firstName: '',
     lastName: '',
@@ -50,8 +52,17 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
     userRole: "DOCTOR",
   };
 
+ 
+    
+  
+  //  const [registerDoctor, { isLoading, isSuccess, isError }] = useRegisterDoctorMutation();
+ 
+
   const handleSubmit = async (values, { resetForm }) => {
     console.log('Form is being submitted', values);
+
+    
+    
    values.howDidYouHearAboutUs = "NEWSPAPER";
     try {
       const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
@@ -64,10 +75,23 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
       const responseText = await response.text();
       console.log(response);
       localStorage.setItem('email', JSON.stringify(values.emailAddress));
+      
       navigate('/check-email');
     } catch (error) {
       console.log(error);
-    } finally {
+    } 
+    try {
+      const result = await registerDoctor(values).unwrap();
+      console.log('Registration successful:', result);
+      if(result) {
+        localStorage.setItem('email', JSON.stringify(values.emailAddress));
+      
+       navigate('/check-email');
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+    }
+    finally {
       resetForm();
     }
   };

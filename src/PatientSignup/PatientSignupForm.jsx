@@ -17,7 +17,8 @@ export default function PatientSignupForm({ formData, setFormData }) {
       userRole : 'PATIENT'
     }));
   }, [setFormData]);
-
+  
+  const [registerPatient, { isLoading, isSuccess, isError }] = useRegisterPatientMutation();
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -25,7 +26,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
       ...formData,
       [name]: value,
     });
-
+      
     if (name === 'password' || name === 'confirmedPassword') {
       if (formData.password !== value && name === 'confirmedPassword') {
         setError('Passwords do not match');

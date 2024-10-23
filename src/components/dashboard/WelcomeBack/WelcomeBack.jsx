@@ -55,22 +55,22 @@ function WelcomeBack () {
 
   return (
     
-    <div className='w-[100%] '>
+    <div className='w-[100%]  '>
       {true &&
       <div 
         onClick={pickCall}
         style={{ cursor: 'pointer' }}
-        className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} grid place-items-center item-center justify-center w-32 h-24 lg:ml-80 mb-4 border rounded py-4 mx-auto lg:mx-0 `}>
+        className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} grid place-items-center mb-4 item-center justify-center w-32 h-24 lg:ml-80 border rounded-lg py-4 mx-auto lg:mx-0 -m-14 `}>
           <p className='text-white font-semibold text-center'>Join<br/>Meeting Room</p>
         <img
         src={call}
         alt={'call'}
         className={`image ${isActive ? 'active' : ''}  ${activeCall ? 'shake bg-green-500' : ''} `}
       />
-     
       </div>}
+      
       <div className='flex flex-col overflow-hidden rounded-lg bg-gradient-to-r from-blue-100 to-blue-300 sm:flex-row shadow-lg border border-[#020e7c]'>
-    <div className='flex w-full flex-col p-4 sm:w-1/2 sm:p-8 lg:w-3/5'>
+    <div className='flex w-full flex-col p-4 sm:w-2/3 sm:p-8 lg:w-3/5'>
       <h2 className='mb-1 text-xl font-bold text-[#020e7c] md:text-2xl lg:text-4xl'>
         Welcome Back!
       </h2>

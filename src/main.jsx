@@ -12,7 +12,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   // <Provider store={store}>
   <React.StrictMode>
     <NextUIProvider>
+    {/* <Provider store={store}> */}
       <App />
+      {/* </Provider> */}
     </NextUIProvider>
   </React.StrictMode>
   // </Provider>

@@ -5,7 +5,7 @@ import missedCall from "../../assets/call-missed-02.png"
 
 const DoctorProfile = () => {
   return (
-    <div className='bg-white rounded-3xl shadow-lg p-6 max-w-md mx-auto mt-14'>
+    <div className='bg-white rounded-3xl shadow-lg p-6  max-w-md mx-auto mt-14'>
       <div className='flex flex-col items-center mb-6'>
         <img
           src={ProfileP}

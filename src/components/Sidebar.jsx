@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
-// import myLogo from '../assets/medfair.svg'
-
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const sidebarRef = useRef(null)
   const userData = JSON.parse(localStorage.getItem('userData'));
-
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
@@ -30,176 +27,156 @@ const Sidebar = () => {
   }, [])
   return (
     <>
-      <header className='sticky top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px]'>
-        <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto'>
-          <div className='-mt-px'>
-            <div className='sticky top-0 inset-x-0 z-20 bg-white px-4 sm:px-6 lg:px-8 lg:hidden'>
-              <div className='flex items-center py-2'>
-                <button
-                  type='button'
-                  className='size-8 flex justify-center items-center gap-x-2 border border-gray-200 text-gray-800 hover:text-gray-500 rounded-lg focus:outline-none focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none'
-                  onClick={toggleSidebar}
-                  aria-label='Toggle Navigation'
-                >
-                  <span className='sr-only'>Toggle Navigation</span>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    strokeWidth='1.5'
-                    stroke='currentColor'
-                    className='size-6'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      d='M3.75 9h16.5m-16.5 6.75h16.5'
-                    />
-                  </svg>
-                </button>
+        
+      <header className='sticky top-0 inset-x-0 px-4 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px]'>
+          <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto flex-col'>
 
-                {/* <ol className='ms-3 flex items-center whitespace-nowrap'>
-              <li className='flex items-center text-sm text-gray-800'>
-                Application Layout
-                <svg
-                  className='shrink-0 mx-3 overflow-visible size-2.5 text-gray-400'
-                  width='16'
-                  height='16'
-                  viewBox='0 0 16 16'
-                  fill='none'
-                  xmlns='http://www.w3.org/2000/svg'
-                >
-                  <path
-                    d='M5 1L10.6869 7.16086C10.8637 7.35239 10.8637 7.64761 10.6869 7.83914L5 14'
-                    stroke='currentColor'
-                    stroke-width='2'
-                    stroke-linecap='round'
-                  />
-                </svg>
-              </li>
-              <li
-                className='text-sm font-semibold text-gray-800 truncate'
-                aria-current='page'
-              >
-                Dashboard
-              </li>
-            </ol> */}
-              </div>
-            </div>
-          </div>
+    <div className='flex items-center px-3 justify-between w-full mb-2 lg:hidden'>
+      {/* Hamburger Menu */}
+      <button
+        type='button'
+        className='flex justify-center items-center gap-x-2 border border-gray-200 text-gray-800 hover:text-gray-500 rounded-lg focus:outline-none focus:text-gray-500 disabled:opacity-50 disabled:pointer-events-none'
+        onClick={toggleSidebar}
+        aria-label='Toggle Navigation'
+      >
+        <span className='sr-only'>Toggle Navigation</span>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          fill='none'
+          viewBox='0 0 24 24'
+          strokeWidth='1.5'
+          stroke='currentColor'
+          className='size-6'
+        >
+          <path strokeLinecap='round' strokeLinejoin='round' d='M3.75 9h16.5m-16.5 6.75h16.5' />
+        </svg>
+      </button>
 
-          <div className='w-full flex items-center justify-end ms-auto md:justify-between gap-x-1 md:gap-x-3'>
-            <div className='hidden md:block'>
-              <div className='relative'>
-                <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none z-20 ps-3.5'>
-                  <svg
-                    className='shrink-0 size-4 text-gray-400'
-                    xmlns='http://www.w3.org/2000/svg'
-                    width='24'
-                    height='24'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  >
-                    <circle cx='11' cy='11' r='8' />
-                    <path d='m21 21-4.3-4.3' />
-                  </svg>
-                </div>
-                <input
-                  type='text'
-                  className='py-2 ps-10 pe-16 block w-[34rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
-                  placeholder='Search anything'
-                />
-                <div className='hidden absolute inset-y-0 end-0 items-center pointer-events-none z-20 pe-1'>
-                  <button
-                    type='button'
-                    className='inline-flex shrink-0 justify-center items-center size-6 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none focus:text-blue-600'
-                    aria-label='Close'
-                  >
-                    <span className='sr-only'>Close</span>
-                    <svg
-                      className='shrink-0 size-4'
-                      xmlns='http://www.w3.org/2000/svg'
-                      width='24'
-                      height='24'
-                      viewBox='0 0 24 24'
-                      fill='none'
-                      stroke='currentColor'
-                      strokeWidth='2'
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    >
-                      <circle cx='12' cy='12' r='10' />
-                      <path d='m15 9-6 6' />
-                      <path d='m9 9 6 6' />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* Notification */}
+      <button
+        type='button'
+        className='size-[39px] relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
+      >
+        <svg
+          className='shrink-0 size-4'
+          xmlns='http://www.w3.org/2000/svg'
+          width='24'
+          height='24'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        >
+          <path d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9' />
+          <path d='M10.3 21a1.94 1.94 0 0 0 3.4 0' />
+        </svg>
+        <span className='sr-only'>Notifications</span>
+      </button>
+    </div>
 
-            <div className='flex flex-row items-center justify-end gap-1'>
-              <button
-                type='button'
-                className='md:hidden size-[38px] relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
-              >
-                <svg
-                  className='shrink-0 size-4'
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='24'
-                  height='24'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                >
-                  <circle cx='11' cy='11' r='8' />
-                  <path d='m21 21-4.3-4.3' />
-                </svg>
-                <span className='sr-only'>Search</span>
-              </button>
-              <p> {userData ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase() : 'Doe'}</p> 
-              <button
-                type='button'
-                className='size-[38px] relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
-              >
-                <svg
-                  className='shrink-0 size-4'
-                  xmlns='http://www.w3.org/2000/svg'
-                  width='24'
-                  height='24'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                >
-                  <path d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9' />
-                  <path d='M10.3 21a1.94 1.94 0 0 0 3.4 0' />
-                </svg>
-                <span className='sr-only'>Notifications</span>
-              </button>
+    {/* Mobile Layout: Second Row for Search and Create Appointment */}
+    <div className='flex items-center px-4 justify-between w-full lg:hidden'>
+      {/* Search Bar */}
+      <div className='relative flex-grow w-[12rem] mr-2'>
+        <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none ps-3.5'>
+          <svg
+            className='shrink-0 size-4 text-gray-400'
+            xmlns='http://www.w3.org/2000/svg'
+            width='24'
+            height='24'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <circle cx='11' cy='11' r='8' />
+            <path d='m21 21-4.3-4.3' />
+          </svg>
+        </div>
+        <input
+          type='text'
+          className='py-4 pl-14 pr-20 w-[10rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
+          placeholder='Search anything'
+        />
+      </div>
 
-              <button className='bg-blue-800 text-white sm:px-4 sm:py-2 rounded-md text-[6px] sm:text-sm px-2'>
-                Create appointment
-              </button>
-            </div>
-          </div>
-        </nav>
-      </header>
+     
+      <button className='bg-blue-800 text-white py-2 w-[10rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
+        Create appointment
+      </button>
+    </div>
 
-      {/* Overlay */}
+    {/* Desktop Layout: Search Bar and User Information */}
+    <div className='hidden md:flex md:flex-row items-center justify-between gap-1 md:gap-x-3 w-full'>
+      <div className='relative w-[40rem]'>
+        <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none z-20 ps-3.5'>
+          <svg
+            className='shrink-0 size-4 text-gray-400'
+            xmlns='http://www.w3.org/2000/svg'
+            width='24'
+            height='24'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <circle cx='11' cy='11' r='8' />
+            <path d='m21 21-4.3-4.3' />
+          </svg>
+        </div>
+        <input
+          type='text'
+          className='py-4 ps-10 pe-16 block w-[40rem] bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
+          placeholder='Search anything'
+        />
+      </div>
+
+      <span className="font-bold text-[#020E7C]">
+        {userData
+          ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
+          : 'Doe'}
+      </span>
+      <button
+        type='button'
+        className='size-[38px] relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
+      >
+        <svg
+          className='shrink-0 size-4'
+          xmlns='http://www.w3.org/2000/svg'
+          width='24'
+          height='24'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        >
+          <path d='M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9' />
+          <path d='M10.3 21a1.94 1.94 0 0 0 3.4 0' />
+        </svg>
+        <span className='sr-only'>Notifications</span>
+      </button>
+      <button className='bg-blue-800 text-white py-2 font-bold sm:px-4 sm:py-4 rounded-md sm:text-sm px-2'>
+        Create appointment
+      </button>
+    </div>
+  </nav>
+</header>
+
       {isSidebarOpen && (
         <div
           className='fixed inset-0 bg-gray-900 bg-opacity-50 z-[59] lg:hidden'
           onClick={closeSidebar}
-        ></div>
+        >
+
+        </div>
       )}
 
       <div
@@ -335,71 +312,7 @@ const Sidebar = () => {
                     View Profile
                   </a>
                 </li>
-                {/* <li>
-                  <NavLink
-                    to='/dashboard'
-                    className={({ isActive }) =>
-                      `flex items-center p-2 rounded-lg ${
-                        isActive
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'text-gray-100 hover:bg-gray-100'
-                      }`
-                    }
-                  >
-                    <svg
-                      className='shrink-0 size-4 mr-2'
-                      width='12'
-                      height='12'
-                      viewBox='0 0 12 12'
-                      fill='none'
-                      xmlns='http://www.w3.org/2000/svg'
-                    >
-                      <g id='calendar-03'>
-                        <path
-                          id='Vector'
-                          d='M9 1V2M3 1V2'
-                          stroke='#A3ADFF'
-                          stroke-width='1.5'
-                          stroke-linecap='round'
-                          stroke-linejoin='round'
-                        />
-                        <path
-                          id='Vector_2'
-                          d='M5.99775 6.5H6.00225M5.99775 8.5H6.00225M7.9955 6.5H8M4 6.5H4.00449M4 8.5H4.00449'
-                          stroke='#A3ADFF'
-                          stroke-width='2'
-                          stroke-linecap='round'
-                          stroke-linejoin='round'
-                        />
-                        <path
-                          id='Vector_3'
-                          d='M1.75 4H10.25'
-                          stroke='#A3ADFF'
-                          stroke-width='1.5'
-                          stroke-linecap='round'
-                          stroke-linejoin='round'
-                        />
-                        <path
-                          id='Vector_4'
-                          d='M1.25 6.1216C1.25 3.94297 1.25 2.85364 1.87606 2.17682C2.50212 1.5 3.50975 1.5 5.525 1.5H6.475C8.49025 1.5 9.4979 1.5 10.124 2.17682C10.75 2.85364 10.75 3.94297 10.75 6.1216V6.3784C10.75 8.55705 10.75 9.64635 10.124 10.3232C9.4979 11 8.49025 11 6.475 11H5.525C3.50975 11 2.50212 11 1.87606 10.3232C1.25 9.64635 1.25 8.55705 1.25 6.3784V6.1216Z'
-                          stroke='#A3ADFF'
-                          stroke-width='1.5'
-                          stroke-linecap='round'
-                          stroke-linejoin='round'
-                        />
-                        <path
-                          id='Vector_5'
-                          d='M1.5 4H10.5'
-                          stroke='#A3ADFF'
-                          stroke-width='1.5'
-                          stroke-linecap='round'
-                          stroke-linejoin='round'
-                        />
-                      </g>
-                    </svg>
-                    Appointment Request
-                  </NavLink>
-                </li> */}
+             
                 <li>
                   <a
                     className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'
@@ -672,9 +585,7 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* <div className='w-full lg:ps-64'>
-        <div className='p-4 sm:p-6 space-y-4 sm:space-y-6'>h vbmrxyu hbn</div>
-      </div> */}
+     
     </>
   )
 }
