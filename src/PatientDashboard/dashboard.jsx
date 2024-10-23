@@ -31,8 +31,7 @@ export default function Dashboard() {
     navigate('/login');
     return null;
   }
-
-  function makePaymentToast(message) {
+function makePaymentToast(message){
     toast.success(message, {
       position: "top-right",
       autoClose: 5000,
@@ -46,37 +45,43 @@ export default function Dashboard() {
       draggable: false,
       pauseOnFocusLoss: false
     });
-    setTimeout(() => {
-      navigate('/payment');
-    }, 4000);
+}
+  function handleSpecialistModal(isOpen){    
+    setSpecialistModal(isOpen)    
   }
 
-  function handleSpecialistModal(isOpen) {
-    setSpecialistModal(isOpen);
-  }
+  async function handleCall(){
+  const userDataString = localStorage.getItem('userData');
 
-  async function handleCall() {
-    const userDataString = localStorage.getItem('userData');
-    const userData = JSON.parse(userDataString);
-    const patientId = userData?.id;
-    try {
-      const response = await axios.post(`https://momedic.onrender.com/api/call/initiate`, null, {
-        params: {
-          userId: patientId
-        }
-      });
-      console.log(response.data);
-      const responseData = response.data;
-      window.open(responseData.start_url, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.log(error);
-      const responseData = error.response.data;
-      if (responseData.error) {
-        makePaymentToast(responseData.error);
-      } else {
-        console.log("Call not initiated ");
+  const userData = JSON.parse(userDataString);
+  const patientId = userData?.id
+      try{
+          // const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
+          const response = await axios.post( `https://momedic.onrender.com/api/call/initiate`, null, {
+              params: {
+                  userId: patientId
+              }
+          })
+          console.log(response.data)
+          const responseData = response.data
+              window.open(responseData.start_url, '_blank', 'noopener,noreferrer');
+
+      }catch (error){
+          console.log(error)
+
+          if (error.message === "Network Error") {
+              makePaymentToast(error.message)
+          }
+          const responseData = error.response.data
+          if (responseData.error ) {
+              makePaymentToast(responseData.error)
+              setTimeout(() => {
+                      navigate('/payment');
+              }, 4000)
+          }else{
+              console.log("Call not initiated ");
+          }
       }
-    }
   }
 
   const handleSearchChange = (e) => {

@@ -291,7 +291,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
   >
     Next
   </button>
-    </Form> 
+    </Form>
         )}
       </Formik>
       <div className='text-center mt-4 mb-12'>
