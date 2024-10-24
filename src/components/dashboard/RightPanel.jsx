@@ -1,5 +1,4 @@
 import DoctorInfo from './DoctorInfo'
-import Stats from './Stats'
 import Income from './Income'
 
 

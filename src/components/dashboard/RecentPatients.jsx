@@ -95,7 +95,7 @@ export default function RecentPatients() {
   ];
 
   return (
-    <div className='max-w-screen-2xl w-full mx-auto '>
+    <div className='max-w-screen-2xl w-full mx-auto  '>
       <div className='bg-white shadow-lg rounded-lg border border-blue-300'>
         <h2 className='text-xl font-bold text-[#020e7c] p-4'>
           Recent Patient

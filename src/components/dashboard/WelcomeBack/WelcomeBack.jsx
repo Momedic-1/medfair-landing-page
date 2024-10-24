@@ -69,7 +69,7 @@ function WelcomeBack () {
       />
       </div>}
       
-      <div className='flex flex-col overflow-hidden rounded-lg bg-gradient-to-r from-blue-100 to-blue-300 sm:flex-row shadow-lg border border-[#020e7c]'>
+      <div className='flex flex-col overflow-hidden rounded-lg  bg-gradient-to-r from-blue-100 to-blue-300 sm:flex-row shadow-lg border border-[#020e7c]'>
     <div className='flex w-full flex-col p-4 sm:w-2/3 sm:p-8 lg:w-3/5'>
       <h2 className='mb-1 text-xl font-bold text-[#020e7c] md:text-2xl lg:text-4xl'>
         Welcome Back!
