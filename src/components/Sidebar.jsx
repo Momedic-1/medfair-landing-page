@@ -28,7 +28,7 @@ const Sidebar = () => {
   return (
     <>
         
-      <header className='sticky top-0 inset-x-0 px-4 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px]'>
+      <header className='sticky top-0 inset-x-0 px-4 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px] overflow-x-hidden'>
           <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto flex-col'>
 
     <div className='flex items-center px-3 justify-between w-full mb-2 lg:hidden'>
@@ -132,7 +132,7 @@ const Sidebar = () => {
         </div>
         <input
           type='text'
-          className='py-4 ps-10 pe-16 block w-[40rem] bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
+          className='py-4 ps-10 pe-16 block w-[38rem] bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
           placeholder='Search anything'
         />
       </div>

@@ -19,7 +19,6 @@ const Modal = ({ isOpen, onClose, onConfirm }) => {
         </h3>
         
         <div className="flex justify-center items-center mb-4 space-x-4">
-          {/* Hours input */}
           <div className="flex flex-col items-center">
             <label className="text-sm font-medium text-blue-900 mb-1">Hour</label>
             <input
@@ -32,11 +31,8 @@ const Modal = ({ isOpen, onClose, onConfirm }) => {
               placeholder="HH"
             />
           </div>
-
-          {/* Colon separator */}
           <span className="text-2xl font-semibold">:</span>
 
-          {/* Minutes input */}
           <div className="flex flex-col items-center">
             <label className="text-sm font-medium text-blue-900 mb-1">Minutes</label>
             <input
@@ -73,15 +69,8 @@ const Modal = ({ isOpen, onClose, onConfirm }) => {
             </div>
           </div>
         </div>
-
-        {/* Confirm and Cancel buttons */}
         <div className="flex items-center justify-center mt-4">
-          {/* <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 text-gray-500 rounded-lg"
-          >
-            Cancel
-          </button> */}
+          
           <button
             onClick={handleConfirm}
             className="px-6 py-2 bg-blue-900 text-white rounded-lg font-semibold"
