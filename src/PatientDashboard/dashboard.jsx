@@ -91,7 +91,7 @@ function makePaymentToast(message){
   return (
 
   
-<div className="flex h-screen w-full overflow-x-hidden">
+<div className="flex h-screen w-[100%] overflow-hidden">
 <ToastContainer />
 <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 <div className={`flex-1 flex flex-col bg-white transition-all ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
@@ -151,7 +151,7 @@ function makePaymentToast(message){
     {specialistModal && <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />}
 
  
-<h1 className="text-2xl text-[#020E7C] p-3 ml-16 font-bold mt-5 cursor-pointer">Choose a Plan</h1>
+<h1 className="text-2xl text-[#020E7C] p-3  font-bold mt-5 cursor-pointer ml-2  md:ml-20 ">Choose a Plan</h1>
 
 
 <div className="flex flex-row items-start mt-2 space-x-6">
@@ -161,8 +161,8 @@ function makePaymentToast(message){
       <span>Instant</span>
       <span>N1500</span>
     </div>
-    <p className="text-[#7D8FB3] text-center max-w-60">Make instant calls to consult a Doctor, valid for only 12 hours.</p>
-    <button className="border text-[#7D8FB3] py-2 px-4 rounded-md mt-4 md:mt-10" onClick={() => navigate('/payment')}>Subscribe</button>
+    <p className="text-[#7D8FB3] text-center max-w-60">Get a one time consultation with a doctor for immediate medical advice.</p>
+    <button className="border text-[#7D8FB3] py-2 px-4 rounded-md mt-20 md:mt-10" onClick={() => navigate('/payment')}>Subscribe</button>
   </div>
 
 
@@ -171,19 +171,25 @@ function makePaymentToast(message){
       <span>Monthly</span>
       <span>N5000</span>
     </div>
-    <p className="text-[#7D8FB3] text-center max-w-60">Make instant calls to consult a Doctor, valid for 1 month.</p>
-    <button className="bg-[#020E7C] text-white py-2 px-4 rounded-md mt-9" onClick={() => navigate('/payment')}>Subscribe</button>
+    <p className="text-[#7D8FB3] text-center max-w-72">Enjoy up to 4 doctor consultations throughout the month for ongoing health support.</p>
+    <button className="bg-[#020E7C] text-white py-2 px-4 rounded-md mt-14" onClick={() => navigate('/payment')}>Subscribe</button>
   </div>
 
  
   <div className="flex flex-col items-center text-center w-full h-full flex-grow">
-    <div className="w-24 h-24 md:w-32 md:h-32 flex flex-col items-center justify-center font-semibold bg-white text-blue-700 border border-[#020E7C] rounded-full mb-4">
-      <span>Yearly</span>
-      <span>N45000</span>
-    </div>
-    <p className="text-[#7D8FB3] text-center max-w-60">Make instant calls to consult a Doctor, valid for 1 year.</p>
-    <button className="border text-[#7D8FB3] py-2 px-4 rounded-md mt-9" onClick={() => navigate('/payment')}>Subscribe</button>
+  <div className="w-24 h-24 md:w-32 md:h-32 flex flex-col items-center justify-center font-semibold bg-white text-blue-700 border border-[#020E7C] rounded-full mb-4">
+    <span>Yearly</span>
+    <span>N45000</span>
   </div>
+  <p className="text-[#7D8FB3] text-center max-w-56 mb-14 md:mb-9">
+  Access up to 10 consultations per year, providing expert care whenever you need it.
+</p>
+<button className="border text-[#7D8FB3] py-2 px-4 rounded-md " onClick={() => navigate('/payment')}>
+  Subscribe
+</button>
+
+   </div>
+
 </div>
 
  
@@ -191,11 +197,12 @@ function makePaymentToast(message){
   </main>
 </div>
 
-{/* Sidebar overlay for mobile */}
+
 {isSidebarOpen && (
   <div className="fixed inset-0 bg-black opacity-50 z-10 lg:hidden" onClick={toggleSidebar}></div>
 )}
 </div>
+
 
 
 );
