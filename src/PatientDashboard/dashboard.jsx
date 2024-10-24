@@ -91,7 +91,7 @@ function makePaymentToast(message){
   return (
 
   
-<div className="flex h-screen w-[100%] overflow-hidden">
+<div className="flex h-screen w-[105%] md:w-full relative right-2 md:right-0  overflow-hidden">
 <ToastContainer />
 <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 <div className={`flex-1 flex flex-col bg-white transition-all ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
