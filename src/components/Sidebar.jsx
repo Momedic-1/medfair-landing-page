@@ -79,7 +79,7 @@ const Sidebar = () => {
     {/* Mobile Layout: Second Row for Search and Create Appointment */}
     <div className='flex items-center px-4 justify-between w-full lg:hidden'>
       {/* Search Bar */}
-      <div className='relative flex-grow w-[12rem] mr-2'>
+      <div className='relative flex-grow w-[7rem] mr-2'>
         <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none ps-3.5'>
           <svg
             className='shrink-0 size-4 text-gray-400'
@@ -99,13 +99,13 @@ const Sidebar = () => {
         </div>
         <input
           type='text'
-          className='py-4 pl-14 pr-20 w-[10rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
+          className='py-4 pl-10 pr-8 w-[8rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
           placeholder='Search anything'
         />
       </div>
 
      
-      <button className='bg-blue-800 text-white py-2 w-[10rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
+      <button className='bg-blue-800 text-white py-2 w-[7rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
         Create appointment
       </button>
     </div>
