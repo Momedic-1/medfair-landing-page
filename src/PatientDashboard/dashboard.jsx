@@ -118,79 +118,119 @@ function makePaymentToast(message){
     </div>
   </header>
   <main className="p-4 overflow-auto h-full">
+  <div className="quick-tools mt-6 grid grid-cols-2 gap-2 md:grid-cols-4">
+  <div className="flex flex-col items-center cursor-pointer text-center">
+    <img onClick={handleCall} src={call} alt="call" className="w-20 h-20 md:w-15 md:h-15" />
+    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Call a doctor</p>
+  </div>
 
-    <div className="relative w-full flex flex-col items-center">
-      <img src={banner} alt="Banner" className="w-full h-auto" />
-      <img src={doctor} alt="Doctor" className="absolute left-0 bottom-0 h-auto" style={{ maxHeight: '100%' }} />
+  <div className="flex flex-col items-center cursor-pointer text-center">
+    <img src={book} alt="book" className="w-20 h-20 md:w-15 md:h-15" />
+    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book an Appointment</p>
+  </div>
+
+  <div className="flex flex-col items-center cursor-pointer text-center">
+    <div className="border-2 border-[#020E7C] rounded-full w-20 h-20 md:w-20 md:h-20 flex items-center justify-center">
+      <img onClick={() => handleSpecialistModal(true)} src={specialistIcon} alt="specialist" className="w-8 h-8" />
     </div>
-    <div className="quick-tools mt-6 grid grid-cols-4 gap-2">
-      <div className="flex flex-col items-center cursor-pointer text-center">
-        <img onClick={handleCall} src={call} alt="call" className="w-10 h-10 md:w-12 md:h-12" />
-        <p className="text-[#020E7C] mt-1 text-[10px] md:text-xs">Call a doctor</p>
-      </div>
+    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">See a specialist</p>
+  </div>
 
-      <div className="flex flex-col items-center cursor-pointer text-center">
-        <img src={book} alt="book" className="w-10 h-10 md:w-12 md:h-12" />
-        <p className="text-[#020E7C] mt-1 text-[10px] md:text-xs">Book an Appointment</p>
-      </div>
+  <div className="flex flex-col items-center cursor-pointer text-center">
+    <img src={book} alt="lab" className="w-20 h-20 md:w-15 md:h-15" />
+    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book a lab test</p>
+  </div>
+</div>
 
-      <div className="flex flex-col items-center cursor-pointer text-center">
-        <div className="border-2 border-[#020E7C] rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
-          <img onClick={() => handleSpecialistModal(true)} src={specialistIcon} alt="specialist" className="w-6 h-6" />
-        </div>
-        <p className="text-[#020E7C] mt-1 text-[10px] md:text-xs">See a specialist</p>
-      </div>
 
-      <div className="flex flex-col items-center cursor-pointer text-center">
-        <img src={book} alt="lab" className="w-10 h-10 md:w-12 md:h-12" />
-        <p className="text-[#020E7C] mt-1 text-[10px] md:text-xs">Book a lab test</p>
-      </div>
-    </div>
 
    
     {specialistModal && <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />}
 
  
 <h1 className="text-2xl text-[#020E7C] p-3  font-bold mt-5 cursor-pointer ml-2  md:ml-20 ">Choose a Plan</h1>
-
-
-<div className="flex flex-row items-start mt-2 space-x-6">
+<div className="flex flex-wrap items-start justify-between mt-2 space-y-6 lg:space-y-0 lg:space-x-6">
  
-  <div className="flex flex-col items-center text-center w-full h-full flex-grow">
-    <div className="w-24 h-24 md:w-32 md:h-32 flex flex-col items-center justify-center font-semibold text-[#020E7C] border border-[#020E7C] rounded-full mb-4">
-      <span>Instant</span>
-      <span>N1500</span>
+  <div className="flex flex-col w-full md:w-[48%] lg:w-[30%] min-h-[350px] h-full bg-white p-6 border border-gray-300 rounded-lg shadow-md cursor-pointer">
+   
+    <div className="mb-4">
+      <span className="text-blue-600 text-lg font-bold">Instant</span>
+      <div className="text-4xl font-bold text-[#020E7C] leading-normal mt-2">N1500</div>
     </div>
-    <p className="text-[#7D8FB3] text-center max-w-60">Get a one time consultation with a doctor for immediate medical advice.</p>
-    <button className="border text-[#7D8FB3] py-2 px-4 rounded-md mt-20 md:mt-10" onClick={() => navigate('/payment')}>Subscribe</button>
+
+    
+    <ul className="text-[#7D8FB3] max-w-72 mb-4 space-y-2">
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        One-time consultation for immediate advice
+      </li>
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Access to certified doctors
+      </li>
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Available 24/7
+      </li>
+    </ul>
+
+   
+    <button className="mt-auto border text-white bg-[#020E7C] py-2 px-4 rounded-md" onClick={() => navigate('/payment')}>
+      Subscribe
+    </button>
   </div>
-
-
-  <div className="flex flex-col items-center text-center w-full h-full flex-grow">
-    <div className="w-24 h-24 md:w-32 md:h-32 flex flex-col items-center justify-center font-semibold bg-[#020E7C] text-white border border-blue-700 rounded-full mb-4">
-      <span>Monthly</span>
-      <span>N5000</span>
+  
+  <div className="flex flex-col w-full md:w-[48%] lg:w-[30%] min-h-[350px] h-full bg-white p-6 border border-gray-300 rounded-lg shadow-md cursor-pointer">
+    
+    <div className="mb-4">
+      <span className="text-blue-600 text-lg font-bold">Monthly</span>
+      <div className="text-4xl font-bold text-[#020E7C] mt-2">N5000</div>
     </div>
-    <p className="text-[#7D8FB3] text-center max-w-72">Enjoy up to 4 doctor consultations throughout the month for ongoing health support.</p>
-    <button className="bg-[#020E7C] text-white py-2 px-4 rounded-md mt-14" onClick={() => navigate('/payment')}>Subscribe</button>
+    <ul className="text-[#7D8FB3] max-w-72 mb-5 space-y-2">
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Up to 4 consultations per month
+      </li>
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Ongoing health support
+      </li>
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Access to specialists
+      </li>
+    </ul>
+    <button className="mt-auto border text-white bg-[#020E7C] py-2 px-4 rounded-md" onClick={() => navigate('/payment')}>
+      Subscribe
+    </button>
   </div>
-
- 
-  <div className="flex flex-col items-center text-center w-full h-full flex-grow">
-  <div className="w-24 h-24 md:w-32 md:h-32 flex flex-col items-center justify-center font-semibold bg-white text-blue-700 border border-[#020E7C] rounded-full mb-4">
-    <span>Yearly</span>
-    <span>N45000</span>
+  <div className="flex flex-col w-full md:w-[48%] lg:w-[30%] min-h-[350px] h-full bg-white p-6 border border-gray-300 rounded-lg shadow-md cursor-pointer">
+    <div className="mb-5">
+      <span className="text-blue-600 text-lg font-bold">Yearly</span>
+      <div className="text-4xl font-bold text-[#020E7C] mt-2">N45000</div>
+    </div>
+    <ul className="text-[#7D8FB3] max-w-80 mb-4 space-y-2">
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Up to 10 consultations per year
+      </li>
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Expert care anytime
+      </li>
+      <li className="flex items-start">
+        <span className="text-blue-600 mr-2">✔</span>
+        Priority support
+      </li>
+    </ul>
+    <button className="mt-auto border text-white bg-[#020E7C] py-2 px-4 rounded-md" onClick={() => navigate('/payment')}>
+      Subscribe
+    </button>
   </div>
-  <p className="text-[#7D8FB3] text-center max-w-56 mb-14 md:mb-9">
-  Access up to 10 consultations per year, providing expert care whenever you need it.
-</p>
-<button className="border text-[#7D8FB3] py-2 px-4 rounded-md " onClick={() => navigate('/payment')}>
-  Subscribe
-</button>
-
-   </div>
-
 </div>
+
+
+
 
  
  
@@ -201,9 +241,10 @@ function makePaymentToast(message){
 {isSidebarOpen && (
   <div className="fixed inset-0 bg-black opacity-50 z-10 lg:hidden" onClick={toggleSidebar}></div>
 )}
+
+
 </div>
 
 
+)};
 
-);
-}
