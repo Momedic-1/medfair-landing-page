@@ -18,7 +18,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
     }));
   }, [setFormData]);
   
-  const [registerPatient, { isLoading, isSuccess, isError }] = useRegisterPatientMutation();
+  // const [registerPatient, { isLoading, isSuccess, isError }] = useRegisterPatientMutation();
   const handleChange = (e) => {
     const { name, value } = e.target;
     
