@@ -65,7 +65,10 @@ export default function Dashboard() {
   const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
   const swiperRef = useRef(null);
+  
 
+ 
+  
   const handlePrev = () => {
     if (swiperRef.current) {
       swiperRef.current.slidePrev();
@@ -214,11 +217,11 @@ function makePaymentToast(message){
   )}
 
  
-  <h1 className="text-2xl text-[#020E7C] p-3 font-bold mt-5 cursor-pointer ml-2 md:ml-20">
+  <h1 className="text-2xl text-[#020E7C] p-3 font-bold  mt-5 cursor-pointer ml-2 md:ml-20">
     Choose a Subscription Plan
     </h1>
-    <div className=" m-auto">
-  <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className=" ">
+  <div className="mt-9 grid grid-cols-1 md:grid-cols-3 gap-8">
     {ActiveSlide.map((swipe, index) => (
       <div
         key={index}
@@ -226,9 +229,10 @@ function makePaymentToast(message){
       >
         <span className="text-blue-600 text-lg font-bold">{swipe.title}</span>
         <div className="text-4xl font-bold text-[#020E7C] mt-2">{swipe.subTitle}</div>
-        <button className="mt-7 w-32  border text-white bg-[#020E7C] py-2 px-4 rounded-3xl"onClick={() => navigate('/payment')}>
+        <button className="mt-7 w-32  border text-white bg-[#020E7C] py-2 px-4 rounded-3xl"  onClick={() => navigate('/payment', { state: { selectedPlan: swipe.title.toLowerCase() } })}>
           Subscribe
         </button>
+        <div className="border-y-2 mt-3" />
         <div className="">
           <ul className="text-[#7D8FB3] max-w-72 mb-5 space-y-2">
             {swipe.content.map((content, idx) => (

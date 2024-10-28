@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import payment from './assets/payment.svg';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import axios from 'axios';
 import DesignedSideBar from '../components/reuseables/DesignedSideBar';
 
@@ -9,7 +9,7 @@ export default function PaymentPage() {
   const subscriptionPlans = {
     yearly: { name: 'Yearly', price: 45000 },
     monthly: { name: 'Monthly', price: 5000 },
-    onetime: { name: 'One Time', price: 1500 },
+    instant: { name: 'Instant', price: 1500 },
   };
 
   const navigate = useNavigate();
@@ -20,11 +20,17 @@ export default function PaymentPage() {
     date: '',
   });
 
-  const [selectedPlan, setSelectedPlan] = useState(null); // No default selection
-  const [discount, setDiscount] = useState(0); // Discount is 0 by default
-  const [isNewCard, setIsNewCard] = useState(false); // Checkbox for new card
+ 
+  
+  const location = useLocation();
+  const initialPlan = location.state?.selectedPlan || 'monthly';
+  const [selectedPlan, setSelectedPlan] = useState(initialPlan); 
+  const [selectedPrice, setSelectedPrice] = useState(subscriptionPlans[selectedPlan].price);
+  const [discount, setDiscount] = useState(0);
+  const [isNewCard, setIsNewCard] = useState(false); 
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -35,11 +41,8 @@ export default function PaymentPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPlan) return; // Prevent submission if no plan is selected
-
-    const plan = subscriptionPlans[selectedPlan];
     formData.plan = selectedPlan;
-    formData.amount = `${plan.price}.00`;
+    formData.amount = `${selectedPrice}.00`;
 
     const userData = JSON.parse(localStorage.getItem('authToken'));
     const token = userData.token;
@@ -62,8 +65,7 @@ export default function PaymentPage() {
     setIsNewCard((prev) => !prev);
   };
 
-  const selectedPlanPrice = selectedPlan ? subscriptionPlans[selectedPlan].price : 0;
-  const total = selectedPlanPrice - (selectedPlanPrice * discount) / 100;
+  const total = selectedPrice - (selectedPrice * discount) / 100;
 
   return (
     <div className="flex flex-col lg:flex-row h-screen">
@@ -99,7 +101,10 @@ export default function PaymentPage() {
                   className={`p-4 border rounded-md cursor-pointer mb-4 lg:mb-0 ${
                     selectedPlan === planKey ? 'bg-blue-500 text-white' : 'bg-gray-100'
                   }`}
-                  onClick={() => setSelectedPlan(planKey)}
+                  onClick={() => {
+                    setSelectedPlan(planKey);
+                    setSelectedPrice(plan.price);
+                  }}
                 >
                   <p>{plan.name} Plan</p>
                   <p className="font-bold">N{plan.price.toLocaleString()}</p>
@@ -175,28 +180,26 @@ export default function PaymentPage() {
               </div>
             </div>
 
-            {selectedPlan && (
-              <div className="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
-                <div className="flex flex-col">
-                  <p>Subtotal: <span className="font-bold">N{selectedPlanPrice.toLocaleString()}</span></p>
-                  <p>Discount: <span className="font-bold text-red-500">{discount}%</span></p>
-                  <p>Total: <span className="font-bold">N{total.toLocaleString()}</span></p>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="newCard"
-                    checked={isNewCard}
-                    onChange={handleNewCardChange}
-                    className="mr-2 rounded-full bg-blue-500"
-                  />
-                  <label htmlFor="newCard">Use New Card</label>
-                </div>
+            <div className="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
+              <div className="flex flex-col">
+                <p>Subtotal: <span className="font-bold">N{selectedPrice.toLocaleString()}</span></p>
+                <p>Discount: <span className="font-bold text-red-500">{discount}%</span></p>
+                <p>Total: <span className="font-bold">N{total.toLocaleString()}</span></p>
               </div>
-            )}
 
-            <button type="submit" disabled={!selectedPlan} className="bg-blue-600 text-white p-3 mt-5 rounded-md w-full">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="newCard"
+                  checked={isNewCard}
+                  onChange={handleNewCardChange}
+                  className="mr-2 rounded-full bg-blue-500"
+                />
+                <label htmlFor="newCard">Use New Card</label>
+              </div>
+            </div>
+
+            <button type="submit" className="bg-blue-600 text-white p-3 mt-5 rounded-md w-full">
               Checkout
             </button>
           </form>
