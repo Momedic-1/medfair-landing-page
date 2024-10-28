@@ -1,9 +1,7 @@
 
-import { useState } from 'react';
+import { useState,useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bell from './assets/bell.svg';
-import doctor from './assets/doctor.svg';
-import banner from './assets/banner.svg';
 import call from './assets/call (2).svg';
 import book from './assets/book (2).svg';
 import specialistIcon from './assets/specialis-icon.svg';
@@ -13,6 +11,13 @@ import Sidebar from './Sidebar';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import Slider from "react-slick";
+import { ActiveSlide } from './constants';
+
+// import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+
 
 export default function Dashboard() {
   const [specialistModal, setSpecialistModal] = useState(false);
@@ -22,10 +27,56 @@ export default function Dashboard() {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-
+  const settings = {
+    dots: true,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 4,
+    initialSlide: 0,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 2,
+          infinite: true,
+          dots: true
+        }
+      },
+      {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 2,
+          initialSlide: 2
+        }
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1
+        }
+      }
+    ]
+  };
   const navigate = useNavigate();
   const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
+  const swiperRef = useRef(null);
+
+  const handlePrev = () => {
+    if (swiperRef.current) {
+      swiperRef.current.slidePrev();
+    }
+  };
+
+  const handleNext = () => {
+    if (swiperRef.current) {
+      swiperRef.current.slideNext();
+    }
+  };
 
   if (!token || !userData) {
     navigate('/login');
@@ -91,7 +142,7 @@ function makePaymentToast(message){
   return (
 
   
-<div className="flex h-screen w-[100%] overflow-hidden">
+<div className="flex h-screen overflow-hidden  w-full ">
 <ToastContainer />
 <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 <div className={`flex-1 flex flex-col bg-white transition-all ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
@@ -113,128 +164,92 @@ function makePaymentToast(message){
     <div className="flex items-center gap-4">
       <img src={bell} alt="notifications" className="w-4 md:w-4 sm:w-4" />
       <span className="font-bold text-[#020E7C] hidden lg:block">
+      Welcome,
         {userData ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase() : 'Doe'}
       </span>
     </div>
   </header>
-  <main className="p-4 overflow-auto h-full">
-  <div className="quick-tools mt-6 grid grid-cols-2 gap-2 md:grid-cols-4">
-  <div className="flex flex-col items-center cursor-pointer text-center">
-    <img onClick={handleCall} src={call} alt="call" className="w-20 h-20 md:w-15 md:h-15" />
-    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Call a doctor</p>
-  </div>
-
-  <div className="flex flex-col items-center cursor-pointer text-center">
-    <img src={book} alt="book" className="w-20 h-20 md:w-15 md:h-15" />
-    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book an Appointment</p>
-  </div>
-
-  <div className="flex flex-col items-center cursor-pointer text-center">
-    <div className="border-2 border-[#020E7C] rounded-full w-20 h-20 md:w-20 md:h-20 flex items-center justify-center">
-      <img onClick={() => handleSpecialistModal(true)} src={specialistIcon} alt="specialist" className="w-8 h-8" />
-    </div>
-    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">See a specialist</p>
-  </div>
-
-  <div className="flex flex-col items-center cursor-pointer text-center">
-    <img src={book} alt="lab" className="w-20 h-20 md:w-15 md:h-15" />
-    <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book a lab test</p>
-  </div>
+  <div className='flex  justify-center items-center font-bold text-[#7D8FB3] '>
+  <p >How can we assist you today?</p>
 </div>
 
-
-
-   
-    {specialistModal && <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />}
-
- 
-<h1 className="text-2xl text-[#020E7C] p-3  font-bold mt-5 cursor-pointer ml-2  md:ml-20 ">Choose a Plan</h1>
-<div className="flex flex-wrap items-start justify-between mt-2 space-y-6 lg:space-y-0 lg:space-x-6">
- 
-  <div className="flex flex-col w-full md:w-[48%] lg:w-[30%] min-h-[350px] h-full bg-white p-6 border border-gray-300 rounded-lg shadow-md cursor-pointer">
-   
-    <div className="mb-4">
-      <span className="text-blue-600 text-lg font-bold">Instant</span>
-      <div className="text-4xl font-bold text-[#020E7C] leading-normal mt-2">N1500</div>
-    </div>
-
-    
-    <ul className="text-[#7D8FB3] max-w-72 mb-4 space-y-2">
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        One-time consultation for immediate advice
-      </li>
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Access to certified doctors
-      </li>
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Available 24/7
-      </li>
-    </ul>
-
-   
-    <button className="mt-auto border text-white bg-[#020E7C] py-2 px-4 rounded-md" onClick={() => navigate('/payment')}>
-      Subscribe
-    </button>
-  </div>
+     <main className="p-4 overflow-auto h-full">
   
-  <div className="flex flex-col w-full md:w-[48%] lg:w-[30%] min-h-[350px] h-full bg-white p-6 border border-gray-300 rounded-lg shadow-md cursor-pointer">
-    
-    <div className="mb-4">
-      <span className="text-blue-600 text-lg font-bold">Monthly</span>
-      <div className="text-4xl font-bold text-[#020E7C] mt-2">N5000</div>
+  <div className="quick-tools mt-6 grid grid-cols-2 gap-2 md:grid-cols-4">
+    <div className="flex flex-col items-center  text-center">
+      <img
+        onClick={handleCall}
+        src={call}
+        alt="call"
+        className="w-20 h-20 md:w-15 md:h-15 cursor-pointer"
+      />
+      <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Call a doctor</p>
     </div>
-    <ul className="text-[#7D8FB3] max-w-72 mb-5 space-y-2">
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Up to 4 consultations per month
-      </li>
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Ongoing health support
-      </li>
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Access to specialists
-      </li>
-    </ul>
-    <button className="mt-auto border text-white bg-[#020E7C] py-2 px-4 rounded-md" onClick={() => navigate('/payment')}>
-      Subscribe
-    </button>
+
+    <div className="flex flex-col items-center  text-center">
+      <img src={book} alt="book" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" />
+      <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book an Appointment</p>
+    </div>
+
+    <div className="flex flex-col items-center  text-center">
+      <div className="border-2 border-[#020E7C] rounded-full w-20 h-20 md:w-20 md:h-20 flex items-center justify-center">
+        <img
+          onClick={() => handleSpecialistModal(true)}
+          src={specialistIcon}
+          alt="specialist"
+          className="w-8 h-8 cursor-pointer"
+        />
+      </div>
+      <p className="text-[#020E7C] mt-1 text-sm md:text-xs">See a specialist</p>
+    </div>
+
+    <div className="flex flex-col items-center  text-center">
+      <img src={book} alt="lab" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" />
+      <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book a lab test</p>
+    </div>
   </div>
-  <div className="flex flex-col w-full md:w-[48%] lg:w-[30%] min-h-[350px] h-full bg-white p-6 border border-gray-300 rounded-lg shadow-md cursor-pointer">
-    <div className="mb-5">
-      <span className="text-blue-600 text-lg font-bold">Yearly</span>
-      <div className="text-4xl font-bold text-[#020E7C] mt-2">N45000</div>
-    </div>
-    <ul className="text-[#7D8FB3] max-w-80 mb-4 space-y-2">
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Up to 10 consultations per year
-      </li>
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Expert care anytime
-      </li>
-      <li className="flex items-start">
-        <span className="text-blue-600 mr-2">✔</span>
-        Priority support
-      </li>
-    </ul>
-    <button className="mt-auto border text-white bg-[#020E7C] py-2 px-4 rounded-md" onClick={() => navigate('/payment')}>
-      Subscribe
-    </button>
+
+  {specialistModal && (
+    <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />
+  )}
+
+ 
+  <h1 className="text-2xl text-[#020E7C] p-3 font-bold mt-5 cursor-pointer ml-2 md:ml-20">
+    Choose a Subscription Plan
+    </h1>
+    <div className=" m-auto">
+  <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+    {ActiveSlide.map((swipe, index) => (
+      <div
+        key={index}
+        className="flex flex-col w-full max-w-md min-h-[350px] bg-white p-5 border border-gray-300 rounded-lg shadow-md mb-8"
+      >
+        <span className="text-blue-600 text-lg font-bold">{swipe.title}</span>
+        <div className="text-4xl font-bold text-[#020E7C] mt-2">{swipe.subTitle}</div>
+        <button className="mt-7 w-32  border text-white bg-[#020E7C] py-2 px-4 rounded-3xl"onClick={() => navigate('/payment')}>
+          Subscribe
+        </button>
+        <div className="">
+          <ul className="text-[#7D8FB3] max-w-72 mb-5 space-y-2">
+            {swipe.content.map((content, idx) => (
+              <li key={idx} className="flex items-start">
+                <span className="text-blue-600 mr-2">✔</span> {content}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    ))}
   </div>
 </div>
 
+   
 
-
+  
+</main>
 
  
- 
-  </main>
+
 </div>
 
 
@@ -248,3 +263,4 @@ function makePaymentToast(message){
 
 )};
 
+ 
