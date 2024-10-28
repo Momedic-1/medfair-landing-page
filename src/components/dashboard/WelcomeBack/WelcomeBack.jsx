@@ -34,7 +34,7 @@ function WelcomeBack () {
   const pickCall = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`https://momedic.onrender.com/api/payment/initialize-payment`,{},{
+      const response = await axios.post(`https://momedic.onrender.com/api/call/join`,{},{
       // const response = await axios.post(`${baseUrl}/api/call/join`,{
         "doctorId": userData?.id,
         "callId": activeCall[0].callId
@@ -57,7 +57,7 @@ function WelcomeBack () {
     
     <div className='w-[100%]  '>
       {true &&
-      <div 
+      <div
         onClick={pickCall}
         style={{ cursor: 'pointer' }}
         className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} grid place-items-center mb-4 item-center justify-center w-32 h-24 lg:ml-80 border rounded-lg py-4 mx-auto lg:mx-0 -m-14 `}>
