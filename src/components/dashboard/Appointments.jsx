@@ -50,7 +50,7 @@ const CalendarPage = () => {
     <div className=' flex flex-row gap-4 rounded-lg   w-full'> 
       
       <AppointmentRequests appointments={appointments} />
-      <div className='bg-white rounded-lg shadow-lg relative w-full sm:w-[350px] h-[420px] p-4'>
+      <div className=' bg-white rounded-lg shadow-lg  relative w-[150%] -left-10 p-24 md:[80%] md:h-[420px] md:-left-2 md:p-8  sm:w-[350px] h-[470px] lg:w-[60%] lg:h-[420px] lg:p-4 lg:-left-2'>
         <div className='flex-grow'>
           <div className='flex justify-between items-center mb-6'>
             <h2 className='text-lg font-bold text-blue-900'>Appointments</h2>
@@ -71,9 +71,9 @@ const CalendarPage = () => {
              : "")}
           />
         </div>
-        <div className='absolute bottom-4 left-0 right-0 px-4 flex justify-between space-x-2 sm:space-x-4 lg:mr-9'>
+        <div className='absolute bottom-4 left-0 right-0 px-4 flex justify-between mr-7  space-x-3 sm:space-x-4 lg:mr-9'>
          <button
-    className='border-gray-500 border text-gray-700 w-[120px] h-[45px] font-semibold rounded-lg hover:bg-gray-200 transition duration-300 ease-in-out'
+    className='border-gray-500 border text-gray-700 w-[120px] h-[45px] ml-16 md:ml-0 lg:ml-0 font-semibold rounded-lg hover:bg-gray-200 transition duration-300 ease-in-out'
     onClick={handleCancel}
        >
     Cancel

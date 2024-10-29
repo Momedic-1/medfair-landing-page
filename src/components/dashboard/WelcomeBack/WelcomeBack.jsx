@@ -60,7 +60,7 @@ function WelcomeBack () {
       <div
         onClick={pickCall}
         style={{ cursor: 'pointer' }}
-        className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} items-center grid place-items-center  justify-center mb-4 w-32 h-24 border rounded-lg py-4 mx-auto `}>
+        className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} items-center grid place-items-center  justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto md:mb-10 lg:mb-4 sm:mb-10  `}>
           <p className='text-white font-semibold text-center'>Join<br/>Meeting Room</p>
         <img
         src={call}
@@ -75,9 +75,13 @@ function WelcomeBack () {
         Welcome Back!
       </h2>
 
-      <p className='mb-4 max-w-md text-[#020e7c] font-semibold text-xl text-center items-center justify-center'>
-        Doctor A. Buchi
-      </p>
+      <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center">
+          Doctor  {'  '}
+        {userData
+         
+          ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
+          : 'Doe'}
+      </span>
     </div>
     <div className='h-44 w-full sm:h-[13rem] sm:w-1/2 lg:w-2/5'>
       <img
