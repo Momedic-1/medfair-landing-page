@@ -36,19 +36,19 @@ const Sidebar = () => {
     {/* Mobile Layout: Second Row for Search and Create Appointment */}
     <div className='flex items-center px-4 justify-between w-full lg:hidden'>
       {/* Search Bar */}
-      <div className='relative flex-grow w-[7rem] mr-2'>
+      <div className='relative flex-grow w-[10rem] mr-2'>
         <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none ps-3.5'>
           <MagnifyingGlass/>
         </div>
         <input
           type='text'
-          className='py-4 pl-10 pr-8 w-[8rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
+          className='py-4 pl-10 pr-8 w-[9rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
           placeholder='Search anything'
         />
       </div>
 
      
-      <button className='bg-blue-800 text-white py-2 w-[7rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
+      <button className='bg-blue-800 text-white py-2 w-[8rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
         Create appointment
       </button>
     </div>
@@ -61,7 +61,7 @@ const Sidebar = () => {
         </div>
         <input
           type='text'
-          className='py-4 ps-10 pe-16 block w-[38rem] bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
+          className='py-4 ps-10 pe-16 block w-[34rem] bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
           placeholder='Search anything'
         />
       </div>
@@ -78,7 +78,7 @@ const Sidebar = () => {
         <NotificationBell/>
         <span className='sr-only'>Notifications</span>
       </button>
-      <button className='bg-blue-800 text-white py-2 font-bold sm:px-4 sm:py-4 rounded-md sm:text-sm px-2'>
+      <button className='bg-blue-800 text-white py-4 w-32 h-16 pe-16 font-bold sm:px-4 sm:py-4 rounded-2xl sm:text-sm px-2'>
         Create appointment
       </button>
     </div>
