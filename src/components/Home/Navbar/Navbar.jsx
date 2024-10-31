@@ -22,8 +22,7 @@ const Navbar = () => {
             <img src={chevron} alt="chevron" className="w-4 h-4" />
           </div>
         </li>
-        <li><a href="#pricing" className="text-[#50555C] hover:text-blue-500">Pricing</a></li>
-        <li><a href="#partners" className="text-[#50555C] hover:text-blue-500">Partners</a></li>
+     
         <li><a href="#about" className="text-[#50555C] hover:text-blue-500">About Us</a></li>
       </ul>
 
