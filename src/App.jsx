@@ -9,13 +9,16 @@ import VerificationInput from "./DoctorSignup/VerificationInput.jsx";
 import CheckEmail from "./DoctorSignup/CheckEmail.jsx";
 import VerificationSuccessful from "./DoctorSignup/VerificationSuccessful.jsx";
 import DoctorSignupForm from "./DoctorSignup/DoctorSignupForm.jsx";
+import HomePage from './components/Home/HomePage.jsx/HomePage.jsx'
+
 
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<DoctorSignupForm />} />
+       <Route path='/' element={<HomePage/>}/>
+        {/* <Route path='/' element={<DoctorSignupForm />} /> */}
         <Route path='/doctor-dashboard' element={<DashboardLayout />} />
         <Route path ='/patient_signup/*' element = {<PatientSignup/>}/>
         <Route path ='/verify-email' element = { <VerificationInput />}/>
