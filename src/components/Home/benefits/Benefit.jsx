@@ -4,7 +4,7 @@ import { FiArrowUpRight } from "react-icons/fi";
 const Benefit = () => {
   return (
     <div className="bg-[#FFFFFF]">
-    <div className="sm:flex gap-20 justify-center p-16">
+    <div className="sm:flex gap-20 justify-center p-16 md:flex-col lg:flex-row">
       <div>
         <h2 className="font-normal text-[15px] text-[#020E7C]">
           Who Benefits from Medfair?
@@ -24,7 +24,7 @@ const Benefit = () => {
           <img src={group} alt="group"  className='lg:w-[70%] md:[60%] w-[80%] mt-3' />
         </div>
       </div>
-      <div className="mt-16 -ml-6">
+      <div className="mt-16 -ml-6 md:px-10">
         <div className=" sm:w-[636px] sm:h-[138px]  w-[305px] h-[171px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C]">
           <h1 className="font-bold text-[20px] leading-9">Patients</h1>
           <p className="sm:w-[552px] h-[98px] w-[286px] font-normal text-[12px] sm:w[700px] sm:h-[61px]">

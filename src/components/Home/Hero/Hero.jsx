@@ -25,8 +25,8 @@ const Hero = () => {
           of digital medical attention with us. We create long-lasting
           digital medical experiences with ease.
         </p>
-        <button className="mt-7 bg-[#020E7C] rounded-md text-white p-3 sm:w-[20%] w-[45%] font-bold text-[20px]">
-          Learn More
+        <button className="mt-7 bg-[#020E7C] rounded-md text-white p-3 sm:w-[20%] w-[45%] lg:w-[30%] lg:p-8 lg:font-semibold font-bold text-[20px]">
+          Sign Up
         </button>
       </div>
     </div>
