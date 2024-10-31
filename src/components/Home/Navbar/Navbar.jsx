@@ -37,7 +37,7 @@ const Navbar = () => {
       </div>
 
       
-      <div className="hidden md:flex space-x-5">
+      <div className="hidden md:flex space-x-5 ">
         <button className="px-4 py-2 border border-[#020E7C] text-[#020E7C] rounded-md hover:bg-blue-100">
           Login
         </button>
