@@ -141,6 +141,7 @@ function makePaymentToast(message){
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
+  const userName = userData && userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase();
 
   return (
 
@@ -168,12 +169,12 @@ function makePaymentToast(message){
       <img src={bell} alt="notifications" className="w-4 md:w-4 sm:w-4" />
       <span className="font-bold text-[#020E7C] hidden lg:block">
       Welcome,
-        {userData ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase() : 'Doe'}
+        {userName}
       </span>
     </div>
   </header>
   <div className='flex  justify-center items-center font-bold text-[#7D8FB3] '>
-  <p >How can we assist you today?</p>
+  <p >How can we assist you today {userName}?</p>
 </div>
 
      <main className="p-4 overflow-auto h-full">
@@ -217,11 +218,11 @@ function makePaymentToast(message){
   )}
 
  
-  <h1 className="text-2xl text-[#020E7C] p-3 font-bold  mt-5 cursor-pointer ml-2 md:ml-20">
+  <h1 className="sm:text-2xl text-[19px] text-[#020E7C] p-3 font-bold mt-5 cursor-pointer ml-2 md:ml-20">
     Choose a Subscription Plan
     </h1>
     <div className=" ">
-  <div className="mt-9 grid grid-cols-1 md:grid-cols-3 gap-8">
+  <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-8">
     {ActiveSlide.map((swipe, index) => (
       <div
         key={index}
