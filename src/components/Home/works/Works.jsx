@@ -9,7 +9,7 @@ const Works = () => {
     <div className="bg-[#E5E9F0] p-16 mt-3">
       <div className="flex justify-center text-[#020E7C]">
         <div>
-          <h2 className="font-normal text-[15px] leading-10 ml-[2rem]">
+          <h2 className="font-normal text-[15px] leading-10 ml-[4rem]">
             OUR SERVICES
           </h2>
           <div>

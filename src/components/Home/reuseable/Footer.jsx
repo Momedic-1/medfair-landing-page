@@ -99,14 +99,13 @@ export default function Footer() {
         <img src={Call} alt="call"/>
        
       </span>
-      <p>+234903353384909</p>
         </div>
         <div className="flex gap-3 items-center mt-2">
         <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-10 h-10"  >
         <img src={Message} alt="message"/>
         
       </span>
-      <p>E: info@medfairhealth.com</p>
+      <p>medfairtechnologies@gmail.com</p>
         </div>
           </div>
        
@@ -114,7 +113,7 @@ export default function Footer() {
         </div>
         
       </div>
-        <div className="sm:grid sm:ml-4 sm:mb-3  grid-cols-3 gap-10 flex flex-col pb-4 mt-3">
+        <div className="sm:grid sm:ml-4 sm:mb-3  grid-cols-3 gap-10 flex ml-3  pb-4 mt-5">
         <div className="sm:flex gap-3 items-center">
         <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-10 h-10"  >
         <img src={Facebook} alt="facebook" className="w-7 h-7"/>

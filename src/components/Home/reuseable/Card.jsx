@@ -1,10 +1,5 @@
 import React from "react";
 
-// export interface Service {
-//   title: string;
-//   description: string;
-//   icon: React.ElementType;
-// }
 
 const Card = ({ title, description, icon }) => {
   return (
