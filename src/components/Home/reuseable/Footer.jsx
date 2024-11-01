@@ -13,7 +13,7 @@ export default function Footer() {
       <footer className="  ">
         <div className="container bg-[#020E7C] text-white mx-auto px-4 p-8">
           <div className="sm:flex flex-wrap justify-around grid grid-cols-2 pb-4">
-            {/* Company Section */}
+      
             <div className="w-full md:w-1/4 mb-6 md:mb-0">
               <h2 className="text-xl font-bold mb-4">Company</h2>
               <ul className="text-sm">
@@ -35,7 +35,7 @@ export default function Footer() {
               </ul>
             </div>
   
-            {/* Services Section */}
+           
             <div className="w-full md:w-1/4 mb-6 md:mb-0">
               <h2 className="text-xl font-bold mb-4">Services</h2>
               <ul className="text-sm">
@@ -54,7 +54,7 @@ export default function Footer() {
               </ul>
             </div>
   
-            {/* Policy Section */}
+           
             <div className="w-full md:w-1/4 mb-6 md:mb-0">
               <h2 className="text-xl font-bold mb-4">Legal Policy</h2>
               <ul className="text-sm">
