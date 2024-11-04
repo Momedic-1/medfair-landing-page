@@ -3,7 +3,7 @@ import React from "react";
 
 const Card = ({ title, description, icon }) => {
   return (
-    <div className="w-[143px] sm:w-[191px] h-[184px] rounded-xl bg-white border border-[#A3ADFF] p-4 text-[#020E7C] flex flex-col justify-center items-center text-center transition duration-300 ease-in-out hover:bg-[#020E7C] hover:text-white">
+    <div className="w-[158px] sm:w-[191px] h-[184px] rounded-xl bg-white border border-[#A3ADFF] p-4 text-[#020E7C] flex flex-col justify-center items-center text-center transition duration-300 ease-in-out hover:bg-[#020E7C] hover:text-white">
       <span className="bg-[#A3ADFF] w-[48px] h-[48px] rounded-full flex items-center justify-center mb-2">
       {React.createElement(icon, { size: 15 })}
       </span>

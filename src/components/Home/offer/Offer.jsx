@@ -31,9 +31,9 @@ const Offer = () => {
                 <h1 className="mt-2 font-bold text-[15px] text-center">
                   24/7 Book Appoint
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[11px] ">
-                  Call on the go with 24/7 Doctors on standby when you use the
-                  MEDFAIR app.
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[14px] ">
+                Book an appointment at any time, day or night, 
+                with doctors always ready on standby through the MEDFAIR app.
                 </p>
               </div>
   
@@ -43,11 +43,11 @@ const Offer = () => {
                   
                 </span>
                 <h1 className="mt-2 font-bold text-[15px] text-center">
-                  24/7 Book Appoint
+                Instant Doctor Call
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[11px] ">
-                  Call on thee go with 24/7 Doctors on standby when you use the
-                  MEDFAIR app.
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] ">
+                Skip the wait—connect with a doctor instantly, 
+                anytime, anywhere, without the need for an appointment.
                 </p>
               </div>
               <div className="flex flex-col items-center">
@@ -58,9 +58,9 @@ const Offer = () => {
                 <h1 className="mt-2 font-bold text-[15px] text-center">
                   Topnotch Privacy
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[11px] ">
-                  Call on thee go with 24/7 Doctors on standby when you use the
-                  MEDFAIR app.
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] ">
+                 Experience secure and confidential consultations,
+                 with your privacy fully protected on the MEDFAIR app.
                 </p>
               </div>
               <div className="flex flex-col items-center">
@@ -69,11 +69,12 @@ const Offer = () => {
                  
                 </span>
                 <h1 className="mt-2 font-bold text-[15px] text-center">
-                  24/7 Client Attention
+                 24/7 Patient Support
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[11px] ">
-                  Call on thee go with 24/7 Doctors on standby when you use the
-                  MEDFAIR app.
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] ">
+                Dedicated support around the clock, 
+                ensuring you're never alone 
+                when you need assistance or medical guidance.
                 </p>
               </div>
             </div>
