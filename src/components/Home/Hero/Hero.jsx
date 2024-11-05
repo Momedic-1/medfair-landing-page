@@ -14,14 +14,14 @@ const Hero = () => {
 
      
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-        <h1 className="sm:text-xl md:font-bold md:text-[50px] md:text-4xl font-roboto text-white">
+        <h1 className="sm:text-xl md:font-bold md:text-[50px] md:text-4xl font-roboto text-white max-w-5xl">
           Transform Your Physical Presence With{" "}
           <span className="text-[#020E7C] md:font-bold md:text-[45px] font-bold text-[20px]">
             Our Medical Digital Expert
           </span>{" "}
           in Medfair Limited
         </h1>
-        <p className="text-[#FFFFFF] text-[12px] mt-2 w-[100%] font-semibold max-w-xl">
+        <p className="text-[#FFFFFF] text-[16px] mt-2 w-[100%] font-bold max-w-xl">
           Crafting Experiences, building relationships- Experience the beauty
           of digital medical attention with us. We create long-lasting
           digital medical experiences with ease.
