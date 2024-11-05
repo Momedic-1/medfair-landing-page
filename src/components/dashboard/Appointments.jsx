@@ -47,50 +47,60 @@ const CalendarPage = () => {
   };
 
   return (
-    <div className=' flex flex-row gap-4 rounded-lg   w-full'> 
+
+<div className='flex flex-row gap-4 rounded-xl w-[145%] justify-center items-center'>
+  <AppointmentRequests appointments={appointments} />
+  
+  <div className='bg-white rounded-lg shadow-lg relative w-[120%] p-24 md:w-[80%] md:h-[420px] md:-left-2 md:p-8 sm:w-[350px] h-[470px] lg:w-[60%] lg:h-[420px] lg:p-4 lg:-left-2'>
+    
+    <div className='flex-grow'>
+      <div className='flex justify-between items-center mb-6'>
+        <h2 className='text-2xl font-bold text-blue-900 ml-4 md:ml-0 lg:ml-0 '>Appointments</h2>
+        
+        <select className='text-blue-900 bg-transparent ml-3 border-none text-xl font-semibold focus:outline-none'>
+          <option>Today</option>
+        </select>
+      </div>
       
-      <AppointmentRequests appointments={appointments} />
-      <div className=' bg-white rounded-lg shadow-lg  relative w-[150%] -left-10 p-24 md:[80%] md:h-[420px] md:-left-2 md:p-8  sm:w-[350px] h-[470px] lg:w-[60%] lg:h-[420px] lg:p-4 lg:-left-2'>
-        <div className='flex-grow'>
-          <div className='flex justify-between items-center mb-6'>
-            <h2 className='text-lg font-bold text-blue-900'>Appointments</h2>
-            <select className='text-blue-900  bg-r bg-transparent border-none text-sm font-semibold focus:outline-none'>
-              <option>Today</option>
-            </select>
-          </div>
-          
-          <DatePicker
-            selected={selectedDate}
-            onChange={handleDateChange}
-            inline
-           calendarClassName="custom-calendar"
-          dayClassName={date => 
-           "flex items-center justify-center w-[30px] h-[30px] rounded-md text-[14px] cursor-pointer hover:bg-[#e6f0ff] " +
+     
+      <div className='flex justify-center'>
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleDateChange}
+          inline
+          calendarClassName='custom-calendar'
+          dayClassName={(date) => 
+            'flex items-center justify-center w-[100%] h-[30px] rounded-md text-[14px] cursor-pointer hover:bg-[#e6f0ff] ' +
             (date.getDate() === new Date().getDate() && date.getMonth() === new Date().getMonth() 
-              ? "bg-red-600 text-white font-bold" 
-             : "")}
-          />
-        </div>
-        <div className='absolute bottom-4 left-0 right-0 px-4 flex justify-between mr-7  space-x-3 sm:space-x-4 lg:mr-9'>
-         <button
-    className='border-gray-500 border text-gray-700 w-[120px] h-[45px] ml-16 md:ml-0 lg:ml-0 font-semibold rounded-lg hover:bg-gray-200 transition duration-300 ease-in-out'
-    onClick={handleCancel}
-       >
-    Cancel
-  </button>
-      <button
-    className='bg-blue-900 text-white w-[120px] h-[45px] font-semibold rounded-lg hover:bg-blue-800 transition duration-300 ease-in-out '
-    onClick={handleApply}
-  >
-    Apply
-  </button>
-</div>
-
-
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} onConfirm={handleTimeConfirm} />
+              ? 'bg-red-600 text-white font-bold' 
+              : '')
+          }
+        />
       </div>
       
     </div>
+
+   
+    <div className='absolute bottom-4 left-0 right-0 px-4 flex justify-between space-x-3 sm:space-x-4 lg:mr-9'>
+      <button
+        className='border-gray-500 border ml-20 md:ml-0 lg:ml-0  text-gray-700 w-[120px] h-[45px] font-semibold rounded-lg hover:bg-gray-200 transition duration-300 ease-in-out'
+        onClick={handleCancel}
+      >
+        Cancel
+      </button>
+      
+      <button
+        className='bg-blue-900 text-white w-[120px] h-[45px] relative -left-14 md:-left-0 lg:-left-0  md:-right-0 lg:-right-0  font-semibold rounded-lg hover:bg-blue-800 transition duration-300 ease-in-out'
+        onClick={handleApply}
+      >
+        Apply
+      </button>
+    </div>
+
+    <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} onConfirm={handleTimeConfirm} />
+  </div>
+</div>
+
   );
 };
 

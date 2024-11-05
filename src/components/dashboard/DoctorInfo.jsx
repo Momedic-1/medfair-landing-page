@@ -2,7 +2,7 @@ import React from 'react'
 import ProfileP from '../../assets/ProfileP.png'
 import messages from "../../assets/mail-add-02.png"
 import missedCall from "../../assets/call-missed-02.png"
-
+const userData = JSON.parse(localStorage.getItem('userData'));
 const DoctorProfile = () => {
   return (
     <div className='bg-white rounded-3xl shadow-lg p-6  max-w-md mx-auto mt-14'>
@@ -12,7 +12,13 @@ const DoctorProfile = () => {
           alt='Dr. Buchi David'
           className='w-32 h-32 rounded-2xl mb-4'
         />
-        <h2 className='text-xl font-bold text-blue-900'>Dr. Buchi David</h2>
+      <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center">
+          Doctor  {'  '}
+        {userData
+         
+          ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
+          : ''}
+      </span>
         <p className='text-sm text-gray-600'>
           Darmatologist, Nigerian Hospital.
         </p>

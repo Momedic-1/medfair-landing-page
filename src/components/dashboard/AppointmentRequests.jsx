@@ -75,7 +75,7 @@ function AppointmentRequests({ appointments }) {
             </div>
           ))
         ) : (
-          <div className="text-center text-blue-900 text-sm">No appointment requests yet.</div>
+          <div className="text-center text-blue-900 text-sm  lg:pr-[5rem] ">No appointment requests yet.</div>
         )}
       </div>
     </div>

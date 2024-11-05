@@ -75,12 +75,12 @@ function WelcomeBack () {
         Welcome Back!
       </h2>
 
-      <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center">
+      <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center pr-[18rem] lg:pr-[14rem] sm:pr-[17rem] md:pr-[18rem]">
           Doctor  {'  '}
         {userData
          
           ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
-          : 'Doe'}
+          : ''}
       </span>
     </div>
     <div className='h-44 w-full sm:h-[13rem] sm:w-1/2 lg:w-2/5'>
