@@ -47,9 +47,12 @@ const Navbar = () => {
       </ul>
 
       <div className="hidden md:flex space-x-5">
-        <button className="px-4 py-2 border border-[#020E7C] text-[#020E7C] rounded-md hover:bg-blue-100">
-          Login
-        </button>
+      <li className=' list-none mt-2'>
+      <a href="/login" className="px-4 py-2 border border-[#020E7C] text-[#020E7C] rounded-md hover:bg-blue-100">
+       Login
+       </a>
+         </li>
+
 
         <div className="relative" ref={dropdownRef}> 
           <button
@@ -117,9 +120,13 @@ const Navbar = () => {
             </li>
 
             <div className="flex flex-col space-y-4 w-full items-center">
-              <button className="px-4 py-2 border border-white text-white rounded-md hover:bg-blue-300">
+            <li>
+              <a href='/login'>Login</a>
+            </li>
+              {/* <button className="px-4 py-2 border border-white text-white rounded-md hover:bg-blue-300">
+               
                 Login
-              </button>
+              </button> */}
 
               <div className="relative">
                 <button

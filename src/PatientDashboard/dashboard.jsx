@@ -5,7 +5,6 @@ import bell from './assets/bell.svg';
 import call from './assets/call (2).svg';
 import book from './assets/book (2).svg';
 import specialistIcon from './assets/specialis-icon.svg';
-// import { baseUrl } from '../env';
 import SpecialistModal from '../PatientSignup/SpecialistModal';
 import Sidebar from './Sidebar';
 import axios from 'axios';
@@ -13,13 +12,29 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import Slider from "react-slick";
-import { ActiveSlide } from './constants';
 
-// import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { ActiveSlide } from './constants';
+import InfoModal from './infoModal';
 
 
 export default function Dashboard() {
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
+
+  const handleModalClose = () => setModalOpen(false);
+
+  const handleServiceClick = (serviceName) => {
+   
+    const serviceUnavailable = true;
+
+    if (serviceUnavailable) {
+      setModalTitle(serviceName);
+      setModalMessage(`Sorry, ${serviceName} is currently not available.`);
+      setModalOpen(true);
+    }
+  };
+
   const [specialistModal, setSpecialistModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -168,7 +183,7 @@ function makePaymentToast(message){
     <div className="flex items-center gap-4">
       <img src={bell} alt="notifications" className="w-4 md:w-4 sm:w-4" />
       <span className="font-bold text-[#020E7C] hidden lg:block">
-      Welcome,
+       Welcome,
         {userName}
       </span>
     </div>
@@ -191,7 +206,7 @@ function makePaymentToast(message){
     </div>
 
     <div className="flex flex-col items-center  text-center">
-      <img src={book} alt="book" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" />
+      <img src={book} alt="book" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" onClick={() => handleServiceClick('Book an Appointment')}/>
       <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book an Appointment</p>
     </div>
 
@@ -208,11 +223,16 @@ function makePaymentToast(message){
     </div>
 
     <div className="flex flex-col items-center  text-center">
-      <img src={book} alt="lab" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" />
+      <img src={book} alt="lab" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" onClick={()=> handleServiceClick('Book a lab test')} />
       <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book a lab test</p>
     </div>
   </div>
-
+   <InfoModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        title={modalTitle}
+        message={modalMessage}
+   />
   {specialistModal && (
     <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />
   )}
@@ -247,24 +267,14 @@ function makePaymentToast(message){
     ))}
   </div>
 </div>
-
-   
-
   
 </main>
-
- 
-
 </div>
-
-
 {isSidebarOpen && (
   <div className="fixed inset-0 bg-black opacity-50 z-10 lg:hidden" onClick={toggleSidebar}></div>
 )}
 
-
 </div>
-
 
 )};
 

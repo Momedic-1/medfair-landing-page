@@ -111,38 +111,49 @@ export default function Footer() {
         </div>
         
       </div>
-        <div className="sm:grid sm:ml-4 sm:mb-3  grid-cols-3 gap-10 flex ml-3  pb-4 mt-5">
+        <div className="sm:grid sm:ml-4 sm:mb-3  grid-cols-3 gap-10 flex ml-3  pb-4 mt-5 cursor-pointer">
         <div className="sm:flex gap-3 items-center">
         <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-10 h-10"  >
         <img src={Facebook} alt="facebook" className="w-7 h-7"/>
         
       </span>
       
-        </div><div className="flex gap-3 items-center">
-        <span className="bg-white border text-red-500 border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
+        </div>
+        <div className="flex gap-3 items-center cursor-pointer">
+      <li className="mb-2 list-none"> 
+     <a href="https://www.instagram.com/the_medfair?igsh=YzljYTk1ODg3Zg==" target="_blank" rel="noopener noreferrer" className="hover:underline">
+      <span className="bg-white border text-red-500 border-gray-300 rounded-full flex items-center justify-center w-7 h-7">
         <img src={Instagram} alt="instagram" className="w-7 h-7"/>
-
-        
       </span>
-      
-        </div><div className="flex gap-3 items-center">
+    </a>
+  </li>
+</div>
+
+        <div className="flex gap-3 items-center cursor-pointer">
+        <li className="mb-2 list-none">
+        <a href="https://x.com/The_Medfair?t=LHZb7Y1ZtZf8D6APbHel2g&s=09">
         <span className="bg-white border text-black border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
         <img src={Twitter} alt="X" className="w-7 h-7"/>
-        
       </span>
-     
-        </div><div className="flex gap-3 items-center">
+        </a>
+        </li>
+        </div>
+        <div className="flex gap-3 items-center cursor-pointer">
         <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
         <img src={Whatapp} className=""/>
      
       </span>
   
-        </div><div className="flex gap-3 items-center">
-        <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
-        <img src={Linkedin} alt="linkedin" className=""/>
+        </div>
+        <div className="flex gap-3 items-center cursor-pointer">
+        <li className="mb-2 list-none">
+          <a href="https://www.linkedin.com/company/the-medfair">
+          <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
+           <img src={Linkedin} alt="linkedin" className=""/>
     
       </span>
-   
+          </a>
+        </li>
         </div>
         </div>
       </div>
