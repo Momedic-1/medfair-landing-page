@@ -48,9 +48,7 @@ export default function Footer() {
                 <li className="mb-2">
                   <a href="#" className="hover:underline">Access Doctors</a>
                 </li>
-                <li className="mb-2">
-                  <a href="#" className="hover:underline">Access Doctors</a>
-                </li>
+                
               </ul>
             </div>
   

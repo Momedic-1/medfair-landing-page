@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
-import { baseUrl } from './env';
+// import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
 import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg"

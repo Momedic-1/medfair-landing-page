@@ -1,14 +1,33 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import logo from "../assets/Frame 7667.png";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); 
+  const dropdownRef = useRef(null); 
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+  
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   return (
     <nav className="flex items-center justify-between px-6 py-2 bg-white shadow-lg h-auto">
@@ -32,7 +51,7 @@ const Navbar = () => {
           Login
         </button>
 
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}> 
           <button
             className="px-4 py-2 bg-[#020E7C] text-white rounded-md hover:bg-blue-600 z-10"
             onClick={toggleDropdown}
@@ -40,7 +59,6 @@ const Navbar = () => {
             Sign Up
           </button>
 
-        
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
               <ul>
@@ -103,7 +121,6 @@ const Navbar = () => {
                 Login
               </button>
 
-            
               <div className="relative">
                 <button
                   className="px-4 py-2 bg-white text-[#020E7C] rounded-md hover:bg-blue-300"
