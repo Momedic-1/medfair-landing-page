@@ -31,19 +31,19 @@ const Navbar = () => {
 
   return (
     <nav className="flex items-center justify-between px-6 py-2 bg-white shadow-lg h-auto">
-      <div className="items-center text-[#020E7C] font-bold text-lg">
-        <img src={logo} alt="MedFair Logo" className="h-8 ml-5" />
+      <div className="items-center text-[#020E7C] font-bold text-3xl">
+        <img src={logo} alt="MedFair Logo" className="h-8 ml-12" />
         <span>MedFair</span>
       </div>
 
       <ul className="hidden md:flex space-x-6 text-gray-800 font-medium">
-        <li><a href="#home" className="text-[#020E7C]">Home</a></li>
+        <li><a href="#home" className="text-[#020E7C] font-bold text-[24px]">Home</a></li>
         <li>
           <div className="flex items-center space-x-1">
-            <a href="#services" className="text-[#50555C] hover:text-blue-500">Services</a>
+            <a href="#services" className="text-[#50555C] font-bold text-[24px] hover:text-blue-500">Services</a>
           </div>
         </li>
-        <li><a href="#about" className="text-[#50555C] hover:text-blue-500">About Us</a></li>
+        <li><a href="#about" className="text-[#50555C] font-bold text-[24px] hover:text-blue-500">About Us</a></li>
       </ul>
 
       <div className="hidden md:flex space-x-5">

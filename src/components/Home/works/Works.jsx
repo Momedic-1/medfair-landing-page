@@ -23,13 +23,14 @@ const Works = () => {
         “Discover the Range of Amazing Features We Offer for Your Well-Being”
       </p>
 
-      <div className="grid grid-cols-2 gap-12 mt-8 ml-[-2rem] md:grid-cols-2 md:ml-[9rem] lg:grid-cols-3  sm:grid-cols-3 sm:ml-[0rem]">
+      <div className="grid grid-cols-2 gap-12 mt-8 ml-[-2rem] md:grid-cols-2 md:ml-[9rem] lg:grid-cols-3  sm:grid-cols-3 sm:ml-[0rem] ">
         {services.map((service, index) => (
           <Card
             key={index}
             title={service.title}
             description={service.description}
             icon={service.icon}
+             img={service.img}
           />
         ))}
       </div>
