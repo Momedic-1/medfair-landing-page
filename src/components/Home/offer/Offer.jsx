@@ -11,7 +11,7 @@ const Offer = () => {
     <h1 className="font-normal text-[15px] font-roboto">
       WHY CHOOSE US?
     </h1>
-    <h1 className="mt-2 font-bold text-[23px] md:w-[40%] leading-tight">
+    <h1 className="mt-2 font-bold text-[23px] md:w-[40%]  leading-loose">
       Access your medical care <br />
       and services all in one app
     </h1>
@@ -31,7 +31,7 @@ const Offer = () => {
                 <h1 className="mt-2 font-bold text-[15px] text-center">
                   24/7 Book Appoint
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[14px] ">
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[14px] lg:w-[90%] hover:text-gray-500">
                 Book an appointment at any time, day or night, 
                 with doctors always ready on standby through the MEDFAIR app.
                 </p>
@@ -45,7 +45,7 @@ const Offer = () => {
                 <h1 className="mt-2 font-bold text-[15px] text-center">
                 Instant Doctor Call
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] ">
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] lg:w-[90%] hover:text-gray-500">
                 Skip the wait—connect with a doctor instantly, 
                 anytime, anywhere, without the need for an appointment.
                 </p>
@@ -58,7 +58,7 @@ const Offer = () => {
                 <h1 className="mt-2 font-bold text-[15px] text-center">
                   Topnotch Privacy
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] ">
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] lg:w-[90%] hover:text-gray-500">
                  Experience secure and confidential consultations,
                  with your privacy fully protected on the MEDFAIR app.
                 </p>
@@ -71,7 +71,7 @@ const Offer = () => {
                 <h1 className="mt-2 font-bold text-[15px] text-center">
                  24/7 Patient Support
                 </h1>
-                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] ">
+                <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-bold text-[14px] lg:w-[90%] hover:text-gray-500">
                 Dedicated support around the clock, 
                 ensuring you're never alone 
                 when you need assistance or medical guidance.

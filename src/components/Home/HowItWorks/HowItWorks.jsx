@@ -7,7 +7,7 @@ import frame from "../assets/Frame 175.png";
 const HowItWorks = () => {
   
   return (
-    <div className="bg-[#FFFFFF] px-10 py-16 text-[#020E7C]">
+    <div className="bg-[#FFFFFF] px-20 py-16 text-[#020E7C]">
      
       <div className="flex justify-center">
        <h1 className='text-2xl'>Get Started with Your Account</h1>
@@ -53,9 +53,9 @@ const HowItWorks = () => {
             </div>
           </div>
 
-          <button className="flex items-center justify-center mt-8 bg-[#020E7C] rounded-md text-white py-4 px-6 w-full lg:w-3/4 font-bold text-lg">
+          <button className="flex items-center justify-center mt-8 bg-[#020E7C] rounded-md text-white py-4 px-6 w-full lg:w-[37%] ml-12 font-bold text-lg">
             
-            <a href='/doctor_signup' target="" className='text-blue-500'>
+            <a href='/doctor_signup' target="" className='text-white'>
                  <p>Get Started</p>
             </a>
           </button>
