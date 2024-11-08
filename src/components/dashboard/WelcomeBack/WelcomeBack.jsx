@@ -69,13 +69,13 @@ function WelcomeBack () {
       />
       </div>}
       
-      <div className='flex flex-col w-[140%] -mx-14  lg:w-[100%] lg:-mx-1 sm:w-[125%] sm:-mx-14 md:w-[115%]  md:-mx-14  overflow-hidden rounded-lg  bg-gradient-to-r from-blue-100 to-blue-300 sm:flex-row shadow-lg border border-[#020e7c]'>
-    <div className='flex  flex-col p-4 sm:w-2/3 sm:p-3 lg:w-3/4'>
-      <h2 className='mb-1 text-xl font-bold text-[#020e7c] md:text-2xl lg:text-4xl'>
+      <div className='flex flex-row w-[170%] -mx-14  lg:w-[100%] lg:-mx-1 sm:w-[125%] sm:-mx-14 md:w-[115%]  md:-mx-14  overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/40 to-white/40   sm:flex-row shadow-lg border border-[#020e7c]'>
+    <div className='flex flex-1 flex-col p-4 sm:w-2/3 sm:p-3 lg:w-3/4'>
+      <h2 className='mb-1 text-xl font-bold text-[#020e7c] pl-3  md:text-2xl lg:text-3xl lg:pl-5'>
         Welcome Back!
       </h2>
 
-      <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center pr-[18rem] lg:pr-[14rem] sm:pr-[17rem] md:pr-[18rem]">
+      <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center pr-[3rem]  sm:pr-[12rem] lg:pr-[7rem] md:pr-[13rem]">
           Doctor  {'  '}
         {userData
          
@@ -83,7 +83,7 @@ function WelcomeBack () {
           : ''}
       </span>
     </div>
-    <div className='h-44 w-full sm:h-[13rem] sm:w-1/2 lg:w-2/5'>
+    <div className='h-44 flex-1  w-full sm:h-[13rem] sm:w-1/2 lg:w-2/5 '>
       <img
         src={DoctorImg}
         loading='lazy'

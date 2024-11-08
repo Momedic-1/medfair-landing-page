@@ -213,7 +213,7 @@ function makePaymentToast(message){
     <div className="flex flex-col items-center  text-center">
       <div className="border-2 border-[#020E7C] rounded-full w-20 h-20 md:w-20 md:h-20 flex items-center justify-center">
         <img
-          onClick={() => handleSpecialistModal(true)}
+          onClick={() => handleServiceClick('See a specialist')}
           src={specialistIcon}
           alt="specialist"
           className="w-8 h-8 cursor-pointer"
