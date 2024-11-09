@@ -62,7 +62,7 @@ export default function LoginPage() {
          }else{
           setError('Invalid user role')
          }
-              
+
       }
     } catch (err) {
       setError('Something went wrong, please try again');
@@ -138,7 +138,6 @@ export default function LoginPage() {
              Forgot password?
             </a>
           </div>
-
                 <footer className="flex items-center justify-between mt-4 lg:mt-8">
 
                     <button
