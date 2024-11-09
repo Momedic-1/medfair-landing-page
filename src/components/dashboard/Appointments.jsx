@@ -49,9 +49,9 @@ const CalendarPage = () => {
   return (
 
 <div className='flex flex-row gap-4 rounded-xl w-[145%] justify-center items-center'>
-  <AppointmentRequests appointments={appointments} />
+  <AppointmentRequests appointments={appointments} className="" />
   
-  <div className='bg-white rounded-lg shadow-lg relative w-[120%] p-24 md:w-[80%] md:h-[420px] md:-left-2 md:p-8 sm:w-[350px] h-[470px] lg:w-[60%] lg:h-[420px] lg:p-4 lg:-left-2'>
+  <div className='bg-white rounded-lg shadow-lg relative w-[120%] p-24 md:w-[40%] md:h-[420px] md:-left-2 md:p-8 sm:w-[350px] h-[470px]  lg:w-[50%] lg:h-[420px] lg:p-4 '>
     
     <div className='flex-grow'>
       <div className='flex justify-between items-center mb-6'>
@@ -63,7 +63,7 @@ const CalendarPage = () => {
       </div>
       
      
-      <div className='flex justify-center'>
+      <div className='flex justify-center w-[250px]'>
         <DatePicker
           selected={selectedDate}
           onChange={handleDateChange}
@@ -83,7 +83,7 @@ const CalendarPage = () => {
    
     <div className='absolute bottom-4 left-0 right-0 px-4 flex justify-between space-x-3 sm:space-x-4 lg:mr-9'>
       <button
-        className='border-gray-500 border ml-20 md:ml-0 lg:ml-0  text-gray-700 w-[120px] h-[45px] font-semibold rounded-lg hover:bg-gray-200 transition duration-300 ease-in-out'
+        className='border-gray-500 border ml-20 md:ml-0 lg:ml-0  text-gray-700 w-[120px] h-[45px] font-semibold rounded-md hover:bg-gray-200 transition duration-300 ease-in-out'
         onClick={handleCancel}
       >
         Cancel
