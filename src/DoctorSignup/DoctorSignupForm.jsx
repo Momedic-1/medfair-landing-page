@@ -66,6 +66,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
    values.howDidYouHearAboutUs = "NEWSPAPER";
     try {
       const response = await fetch(`https://momedic.onrender.com/api/v1/registration/doctors-registration`, {
+      // const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

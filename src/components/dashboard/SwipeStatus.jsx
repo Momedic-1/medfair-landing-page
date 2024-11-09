@@ -1,19 +1,25 @@
 
 
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useSwipeable } from 'react-swipeable';
 
-const SwipeStatus = () => {
-  const [status, setStatus] = useState('Online');
+const SwipeStatus = ({status, setStatus}) => {
+  const onlineStatus = "onlineStatus"
+  useEffect(()=>{
+    console.log("current status is " + status)
+    saveToStore()
+  }, [status])
 
   const handlers = useSwipeable({
-    onSwipedLeft: () => setStatus('Offline'),
+    onSwipedLeft: () => {setStatus('Offline')},
     onSwipedRight: () => setStatus('Online'),
     preventDefaultTouchmoveEvent: true,
     trackMouse: true,
    
   });
-
+  const saveToStore = () =>{
+    localStorage.setItem(onlineStatus, status);
+  }
   return (
     <div
       {...handlers}

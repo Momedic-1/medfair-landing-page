@@ -6,6 +6,7 @@ import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
 import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg"
+import {baseUrl} from "./env.jsx";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -138,19 +139,19 @@ export default function LoginPage() {
             </a>
           </div>
 
-          <footer className="flex items-center justify-between mt-4 lg:mt-8">
-        
-            <button
-              type="submit"
-              className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-5  w-full h-12 rounded-md flex items-center justify-center   ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={isLoading}
-            >
-                
-              {isLoading ?<img src={SpinnerImg} className=' w-7'/>  : 'Login'}
-            </button>
-          </footer>
-        </form>
-      </div>
+                <footer className="flex items-center justify-between mt-4 lg:mt-8">
+
+                    <button
+                        type="submit"
+                        className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-5  w-full h-12 rounded-md flex items-center justify-center   ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={isLoading}
+                    >
+
+                        {isLoading ? <img src={SpinnerImg} className=' w-7'/> : 'Login'}
+                    </button>
+                </footer>
+            </form>
+        </div>
 
       <ErrorModal message={error} onClose={handleCloseModal} />
     </div>

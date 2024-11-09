@@ -5,12 +5,12 @@ import { useEffect, useState } from 'react';
 import { baseUrl } from '../../../env';
 import axios from 'axios';
 
-function WelcomeBack () {
+function WelcomeBack ({status}) {
   const [activeCall, setActiveCalling] = useState(null);
-  const [callStatus, setCallStatus]= useState("");
   const [isActive, setIsActive] = useState(false);
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData'));
+  const online = "Online";
 
   useEffect(() => {    
     viewAllPendingCalls()
@@ -34,8 +34,8 @@ function WelcomeBack () {
   const pickCall = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`https://momedic.onrender.com/api/call/join`,{},{
-      // const response = await axios.post(`${baseUrl}/api/call/join`,{
+      // const response = await axios.post(`https://momedic.onrender.com/api/call/join`,{},{
+      const response = await axios.post(`${baseUrl}/api/call/join`,{
         "doctorId": userData?.id,
         "callId": activeCall[0].callId
       },{
@@ -56,18 +56,19 @@ function WelcomeBack () {
   return (
     
     <div className='w-[100%]  '>
-      {true &&
+      {/*{true &&*/}
       <div
         onClick={pickCall}
         style={{ cursor: 'pointer' }}
-        className={`image ${isActive ? 'active' : ''} ${activeCall ? 'shake bg-green-500' : 'bg-[#020e7c]'} items-center grid place-items-center  justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto md:mb-10 lg:mb-4 sm:mb-10  `}>
+        className={`image ${isActive ? 'active' : ''} ${activeCall && status === online  ? 'shake bg-green-500' : 'bg-[#020e7c]'} items-center grid place-items-center  justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto md:mb-10 lg:mb-4 sm:mb-10  `}>
           <p className='text-white font-semibold text-center'>Join<br/>Meeting Room</p>
         <img
         src={call}
         alt={'call'}
-        className={`image ${isActive ? 'active' : ''}  ${activeCall ? 'shake bg-green-500' : ''} `}
+        className={`image ${isActive ? 'active' : ''}  ${activeCall && status === online ? 'shake bg-green-500' : ''} `}
       />
-      </div>}
+      </div>
+    {/*}*/}
       
       <div className='flex flex-col w-[140%] -mx-14  lg:w-[100%] lg:-mx-1 sm:w-[125%] sm:-mx-14 md:w-[115%]  md:-mx-14  overflow-hidden rounded-lg  bg-gradient-to-r from-blue-100 to-blue-300 sm:flex-row shadow-lg border border-[#020e7c]'>
     <div className='flex  flex-col p-4 sm:w-2/3 sm:p-3 lg:w-3/4'>

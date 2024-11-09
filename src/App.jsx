@@ -19,7 +19,7 @@ const App = () => {
       <Routes>
        <Route path='/' element={<HomePage/>}/>
         <Route path='/doctor_signup/*' element={<DoctorSignupForm />} />  
-        <Route path='/doctor-dashboard' element={<DashboardLayout />} />
+        <Route path='/doctor-dashboard/*' element={<DashboardLayout />} />
         <Route path ='/patient_signup/*' element = {<PatientSignup/>}/>
         <Route path ='/verify-email' element = { <VerificationInput />}/>
         <Route path ='/check-email' element = { <CheckEmail />}/>
