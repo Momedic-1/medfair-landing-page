@@ -4,7 +4,7 @@ import AvatarImage from '../../assets/avatar.png';
 
 function AppointmentRequests({ appointments }) {
   return (
-    <div className='sm:block hidden sm:w-[329px] w-[250px] h-[420px] bg-white rounded-[10px] p-2 flex-col justify-between shadow-lg'>
+    <div className='sm:block hidden sm:w-[329px] w-[250px] h-[420px]  bg-white rounded-[10px] p-2 flex-col lg:px-2 lg:w-[228px] justify-between xl:w-[300px] shadow-lg'>
       <div>
         <div className='flex justify-between text-[#020e7c]'>
           <span className="text-base font-semibold font-['Roboto'] leading-[25px]">
@@ -75,7 +75,7 @@ function AppointmentRequests({ appointments }) {
             </div>
           ))
         ) : (
-          <div className="text-center text-blue-900 text-sm  lg:pr-[5rem] ">No appointment requests yet.</div>
+          <div className="text-center text-blue-900 text-sm   ">No appointment requests yet.</div>
         )}
       </div>
     </div>
