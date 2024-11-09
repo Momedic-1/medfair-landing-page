@@ -83,7 +83,7 @@ const CalendarPage = () => {
    
     <div className='absolute bottom-4 left-0 right-0 px-4 flex justify-between space-x-3 sm:space-x-4 lg:mr-9'>
       <button
-        className='border-gray-500 border ml-20 md:ml-0 lg:ml-0  text-gray-700 w-[120px] h-[45px] font-semibold rounded-lg hover:bg-gray-200 transition duration-300 ease-in-out'
+        className='border-gray-500 border ml-20 md:ml-0 lg:ml-0  text-gray-700 w-[120px] h-[45px] font-semibold rounded-md hover:bg-gray-200 transition duration-300 ease-in-out'
         onClick={handleCancel}
       >
         Cancel
