@@ -6,7 +6,6 @@ import { useSwipeable } from 'react-swipeable';
 const SwipeStatus = ({status, setStatus}) => {
   const onlineStatus = "onlineStatus"
   useEffect(()=>{
-    console.log("current status is " + status)
     saveToStore()
   }, [status])
 
