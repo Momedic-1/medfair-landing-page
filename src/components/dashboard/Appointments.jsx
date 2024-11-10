@@ -54,12 +54,12 @@ const CalendarPage = () => {
   <div className='bg-white rounded-lg shadow-lg relative w-[120%] p-24 md:w-[40%] md:h-[420px] md:-left-2 md:p-8 sm:w-[350px] h-[470px]  lg:w-[50%] lg:h-[420px] lg:p-4 '>
     
     <div className='flex-grow'>
-      <div className='flex justify-between items-center mb-6'>
+      <div className='grid grid-cols-2  justify-between items-center mb-6'>
         <h2 className='text-2xl font-bold text-blue-900 ml-4 md:ml-0 lg:ml-0 '>Appointments</h2>
         
-        <select className='text-blue-900 bg-transparent ml-3 border-none text-xl font-semibold focus:outline-none'>
+        <div className='grid justify-center text-blue-900 bg-transparent ml-3 border-none text-xl font-semibold focus:outline-none'>
           <option>Today</option>
-        </select>
+        </div>
       </div>
       
      
