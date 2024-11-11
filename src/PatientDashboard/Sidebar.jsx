@@ -23,6 +23,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
            ✕
         </button>
       </div>
+      
       <nav className="flex flex-col p-4">
         <NavLink to="/patient-dashboard" className="flex items-center p-3 m-3 py-2 px-4 rounded bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
             <img src={dashboard}/> <span className='ml-3 text-black'>Dashboard</span>
