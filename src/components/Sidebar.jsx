@@ -32,9 +32,14 @@ const Sidebar = () => {
         
       <header className='sticky top-0 inset-x-0 px-2 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px] overflow-x-hidden'>
           <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto flex-col'>
-    <div className='flex items-center px-4 justify-between w-full md:hidden'>
-      
-      <div className='relative flex-grow w-[10rem] mr-2'>
+         <div className='flex items-center px-4 justify-between w-full md:hidden'>
+         <button
+        onClick={toggleSidebar}
+        className="text-2xl mr-4  mb-20 text-blue-800 focus:outline-none"
+      >
+        {isSidebarOpen ? '✕' : '☰'}
+      </button>
+         <div className='relative flex-grow w-[10rem] mr-2'>
         <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none ps-3.5'>
           <MagnifyingGlass/>
         </div>
@@ -50,8 +55,6 @@ const Sidebar = () => {
         Create appointment
       </button>
     </div>
-
-    {/* Desktop Layout: Search Bar and User Information */}
     <div className='hidden md:flex md:flex-row items-center justify-between gap-1 md:gap-x-3 w-full'>
       <div className='relative w-[40rem]'>
         <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none z-20 ps-3.5'>
@@ -102,6 +105,7 @@ const Sidebar = () => {
         tabIndex='-1'
         aria-label='Sidebar'
       >
+        
         <div className='relative flex flex-col h-full max-h-full'>
           <div className='px-6 pt-4 flex justify-between items-center'>
             <a
@@ -112,9 +116,8 @@ const Sidebar = () => {
               <span className='text-white'>Doctor's Dashboard</span>
             </a>
             <button
-              onClick={closeSidebar}
-              className='text-white hover:text-gray-300 lg:hidden'
-              aria-label='Close sidebar'
+                onClick={toggleSidebar}
+               className="lg:hidden mr-4 mb-20 text-white text-2xl focus:outline-none"
             >
               <svg
                 className='h-6 w-6'
