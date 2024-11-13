@@ -1,9 +1,47 @@
-import React from 'react'
+import React, { useEffect,useState } from 'react'
 import ProfileP from '../../assets/ProfileP.png'
 import messages from "../../assets/mail-add-02.png"
 import missedCall from "../../assets/call-missed-02.png"
+import axios from 'axios'
 const userData = JSON.parse(localStorage.getItem('userData'));
 const DoctorProfile = () => {
+
+  const [stats, setStats] = useState({
+    appointment: 0,
+    totalPatient: 0,
+    consultations: 0,
+    returnPatient: 0,
+  });
+  const [missedCalls, setMissedCalls] = useState(0);
+  useEffect(() => {
+    axios.get('https://momedic.onrender.com/api/call/1/total-patients-consultation')
+      .then(response => {
+        const data = response.data;
+
+        const consultations = data.consultations || 0;
+
+        setStats(prevStats => ({
+          ...prevStats,
+          appointment: data.appointment || 0,
+          consultations: consultations,
+          returnPatient: data.returnPatient || 0,
+          totalPatient: consultations,  
+        }));
+      })
+      .catch(error => {
+        console.error('Error fetching consultation and patient data:', error);
+      });
+  }, []);
+
+  useEffect(() => {
+    axios.get('https://momedic.onrender.com/api/call/missed/count?doctorId=1')
+      .then(response => {
+        setMissedCalls(response.data.missedCalls || 0); 
+      })
+      .catch(error => {
+        console.error('Error fetching missed calls data:', error);
+      });
+  }, []);
   return (
     <div className='bg-white rounded-3xl shadow-lg p-6  max-w-md mx-auto mt-14'>
       <div className='flex flex-col items-center mb-6'>
@@ -38,10 +76,10 @@ const DoctorProfile = () => {
 
       <div className='grid grid-cols-2 gap-4 mb-6'>
         {[
-          { label: 'Appointment', value: '10' },
-          { label: 'Total Patient', value: '50' },
-          { label: 'Consultations', value: '20' },
-          { label: 'Return Patient', value: '5' }
+          { label: 'Appointment', value: stats.appointment },
+          { label: 'Total Patient', value: stats.totalPatient },
+          { label: 'Consultations', value: stats.consultations },
+          { label: 'Return Patient', value: stats.returnPatient }
         ].map((item, index) => (
           <div key={index} className='text-center'>
             <p className='text-2xl font-bold text-blue-900'>{item.value}</p>
@@ -51,18 +89,19 @@ const DoctorProfile = () => {
       </div>
 
       <div className='flex justify-between'>
-      <button className='bg-blue-900 text-white whitespace-nowrap rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
-    <span className='text-2xl font-bold mb-1'>9</span>
-    <span className='text-sm mb-2'>Missed calls</span>
-    <img src={missedCall} alt='missed calls' className='w-6 h-6' />
-  </button>
-       
-  <button className='border border-blue-900 whitespace-nowrap text-blue-900 rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
-    <span className='text-2xl font-bold mb-1'>10</span>
-    <span className='text-sm mb-2'>Messages</span>
-    <img src={messages} alt='messages' className='w-6 h-6' />
-  </button>
+        <button className='bg-blue-900 text-white whitespace-nowrap rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
+          <span className='text-2xl font-bold mb-1'>{missedCalls}</span> 
+          <span className='text-sm mb-2'>Missed calls</span>
+          <img src={missedCall} alt='missed calls' className='w-6 h-6' />
+        </button>
+
+        <button className='border border-blue-900 whitespace-nowrap text-blue-900 rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
+          <span className='text-2xl font-bold mb-1'>10</span>
+          <span className='text-sm mb-2'>Messages</span>
+          <img src={messages} alt='messages' className='w-6 h-6' />
+        </button>
       </div>
+   
     </div>
   )
 }
