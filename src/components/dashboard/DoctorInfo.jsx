@@ -1,8 +1,8 @@
 import React, { useEffect,useState } from 'react'
-import ProfileP from '../../assets/ProfileP.png'
 import messages from "../../assets/mail-add-02.png"
 import missedCall from "../../assets/call-missed-02.png"
 import axios from 'axios'
+import profile from "../../assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg"
 const userData = JSON.parse(localStorage.getItem('userData'));
 const DoctorProfile = () => {
 
@@ -13,11 +13,16 @@ const DoctorProfile = () => {
     returnPatient: 0,
   });
   const [missedCalls, setMissedCalls] = useState(0);
-  useEffect(() => {
-    axios.get('https://momedic.onrender.com/api/call/1/total-patients-consultation')
+  const [message,setMesseges] = useState(0);
+
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+   useEffect(() => {
+    const id = sessionStorage.getItem("id")
+    axios.get( `${apiUrl}/call/${id}/total-patients-consultation`)
       .then(response => {
         const data = response.data;
-
+        console.log("The consultation: ",data)
         const consultations = data.consultations || 0;
 
         setStats(prevStats => ({
@@ -34,22 +39,25 @@ const DoctorProfile = () => {
   }, []);
 
   useEffect(() => {
-    axios.get('https://momedic.onrender.com/api/call/missed/count?doctorId=1')
+    const id = sessionStorage.getItem("id")
+    axios.get(`${apiUrl}/call/missed/count?doctorId=${id}`)
       .then(response => {
         setMissedCalls(response.data.missedCalls || 0); 
+        setMesseges(response.data.message || 0)
       })
       .catch(error => {
         console.error('Error fetching missed calls data:', error);
+        console.error('Error fetching messages:', error);
       });
   }, []);
   return (
     <div className='bg-white rounded-3xl shadow-lg p-6  max-w-md mx-auto mt-14'>
       <div className='flex flex-col items-center mb-6'>
-        <img
-          src={ProfileP}
-          alt='Dr. Buchi David'
-          className='w-32 h-32 rounded-2xl mb-4'
-        />
+      <img 
+        src={profile}
+        alt='user avatar'
+        className='w-40 h-40 rounded-2xl mb-4'
+      />
       <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center">
           Doctor  {'  '}
         {userData
@@ -57,9 +65,6 @@ const DoctorProfile = () => {
           ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
           : ''}
       </span>
-        <p className='text-sm text-gray-600'>
-          Darmatologist, Nigerian Hospital.
-        </p>
       </div>
 
       <hr className='my-8' />
@@ -96,7 +101,7 @@ const DoctorProfile = () => {
         </button>
 
         <button className='border border-blue-900 whitespace-nowrap text-blue-900 rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
-          <span className='text-2xl font-bold mb-1'>10</span>
+          <span className='text-2xl font-bold mb-1'>{message}</span>
           <span className='text-sm mb-2'>Messages</span>
           <img src={messages} alt='messages' className='w-6 h-6' />
         </button>
