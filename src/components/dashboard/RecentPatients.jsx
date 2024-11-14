@@ -10,10 +10,10 @@ export default function RecentPatients() {
   const [loading, setLoading] = useState(true);  
   const [error, setError] = useState(null); 
 
-
+  const apiUrl = import.meta.env.VITE_API_URL;
   useEffect(() => {
-   
-    axios.get('https://momedic.onrender.com/api/call/1/patients-consultation')
+    const id = sessionStorage.getItem("id")
+    axios.get(`${apiUrl}/call/${id}/patients-consultation`)
       .then(response => {
         setPatients(response.data); 
         setLoading(false);           

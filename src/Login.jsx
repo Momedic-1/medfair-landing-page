@@ -50,7 +50,9 @@ export default function LoginPage() {
         const responseData = await response.json();
         const token = responseData.message
         const userData = responseData.data
-
+        const id = userData.id
+        sessionStorage.setItem("id", id)
+        
         // Save token and user data to local storage
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(userData))

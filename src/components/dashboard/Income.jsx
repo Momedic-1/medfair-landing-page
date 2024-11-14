@@ -6,24 +6,26 @@ function Income() {
   const [income, setIncome] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  
+  const apiUrl = import.meta.env.VITE_API_URL;
+   
   useEffect(() => {
-    const fetchIncome = async () => {
-      try {
-        const response = await axios.get("https://momedic.onrender.com/api/doctors/1/total-doctors-amount");
-        const fetchedAmount = response.data.amount;
-    
-        setIncome(fetchedAmount != null ? fetchedAmount : 0);
+    console.log("income is:",income)
+    const id = sessionStorage.getItem("id")
+   
+    axios.get(`${apiUrl}/doctors/${id}/total-doctors-amount`)
+      .then(response => {
+        setIncome(response.data != null ? response.data : 0); 
+         setLoading(false);  
+         console.log(response.data,"fetchAmount is:")            
+      })
+      .catch(err => {
+        setError('Failed to to fetch doctor income data.'); 
         setLoading(false);
-      } catch (error) {
-        setError("Error fetching income");
-        setLoading(false);
-      }
-    };
-
-    fetchIncome();
+      });
   }, []);
-
+ 
+  
   if (loading) {
     return <p>Loading...</p>;
   }

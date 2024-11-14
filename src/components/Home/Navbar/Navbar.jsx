@@ -30,7 +30,7 @@ const Navbar = () => {
   }, [isDropdownOpen]);
 
   return (
-    <nav className="flex items-center justify-between px-6 py-2 bg-white shadow-lg h-auto">
+    <nav className="flex items-center justify-between px-6 py-2 bg-white shadow-lg h-auto overflow-y-hidden">
       <div className="items-center text-[#020E7C] font-bold text-3xl">
         <img src={logo} alt="MedFair Logo" className="h-8 ml-12" />
         <span>MedFair</span>
@@ -123,11 +123,6 @@ const Navbar = () => {
             <li>
               <a href='/login'>Login</a>
             </li>
-              {/* <button className="px-4 py-2 border border-white text-white rounded-md hover:bg-blue-300">
-               
-                Login
-              </button> */}
-
               <div className="relative">
                 <button
                   className="px-4 py-2 bg-white text-[#020E7C] rounded-md hover:bg-blue-300"
@@ -141,7 +136,7 @@ const Navbar = () => {
                     <ul>
                       <li>
                         <a
-                          href="/doctor_signup"
+                             href="/doctor_signup"
                           className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                         >
                           As a Doctor
