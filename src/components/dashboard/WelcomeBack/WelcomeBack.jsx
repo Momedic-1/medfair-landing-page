@@ -25,6 +25,7 @@ function WelcomeBack ({status}) {
         Authorization: `Bearer ${token}`
       }
     })
+      console.log("The active calls are : "+ response.data.data)
       setActiveCalling(response.data.data);
     } catch (error){
       console.error(error);
@@ -34,8 +35,8 @@ function WelcomeBack ({status}) {
   const pickCall = async (e) => {
     e.preventDefault();
     try {
-      // const response = await axios.post(`https://momedic.onrender.com/api/call/join`,{},{
-      const response = await axios.post(`${baseUrl}/api/call/join`,{
+      const response = await axios.post(`https://momedic.onrender.com/api/call/join`,{},{
+      // const response = await axios.post(`${baseUrl}/api/call/join`,{
         "doctorId": userData?.id,
         "callId": activeCall[0].callId
       },{
