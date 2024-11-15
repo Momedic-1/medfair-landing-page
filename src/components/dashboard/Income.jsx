@@ -1,46 +1,87 @@
 
+
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 
 function Income() {
-  const [income, setIncome] = useState(0);
+  const [income, setIncome] = useState(0); 
+  const [previousIncome, setPreviousIncome] = useState(0); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [selectedMonth, setSelectedMonth] = useState(""); 
+
   const apiUrl = import.meta.env.VITE_API_URL;
-   
-  useEffect(() => {
-    console.log("income is:",income)
-    const id = sessionStorage.getItem("id")
-   
-    axios.get(`${apiUrl}/doctors/${id}/total-doctors-amount`)
-      .then(response => {
-        setIncome(response.data != null ? response.data : 0); 
-         setLoading(false);  
-         console.log(response.data,"fetchAmount is:")            
-      })
-      .catch(err => {
-        setError('Failed to to fetch doctor income data.'); 
-        setLoading(false);
-      });
-  }, []);
+
+
+  const getMonthNames = () => {
+    const months = [
+      "January", "February", "March", "April", "May", "June", 
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const currentMonth = new Date().getMonth();
+    const nextMonth = (currentMonth + 1) % 12; 
+    return [months[currentMonth], months[nextMonth]];
+  };
+
  
-  
+  const calculatePercentageChange = (current, previous) => {
+    if (previous === 0) return 0; 
+    return ((current - previous) / previous) * 100;
+  };
+
+  useEffect(() => {
+    const fetchIncome = async () => {
+      const id = sessionStorage.getItem("id");
+
+      if (!id) {
+        setError("No ID found, displaying default income.");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Retrieved ID from session:", id); 
+      console.log("API URL is:", apiUrl); 
+
+      try {
+        const response = await axios.get(`${apiUrl}/doctors/${id}/total-doctors-amount`);
+        console.log("API Response:", response.data); 
+        const fetchedAmount = response.data.amount;
+        const fetchedPreviousAmount = response.data.previousAmount; 
+
+        setIncome(fetchedAmount != null ? fetchedAmount : 0);
+        setPreviousIncome(fetchedPreviousAmount != null ? fetchedPreviousAmount : 0);
+        setLoading(false);
+      } catch (error) {
+        console.error("API Error:", error); 
+        setError("Failed to fetch income data.");
+        setLoading(false);
+      }
+    };
+
+    fetchIncome();
+  }, [apiUrl]);
+
   if (loading) {
     return <p>Loading...</p>;
   }
 
-  if (error) {
-    return <p>{error}</p>;
-  }
+
+  const [currentMonth, nextMonth] = getMonthNames();
+
+ 
+  const percentageChange = calculatePercentageChange(income, previousIncome);
 
   return (
     <div className='space-y-4 bg-white p-6 rounded-lg'>
       <div className='flex justify-between items-center'>
         <h3 className='font-semibold text-[#020e7c]'>Income</h3>
-        <select className='rounded p-1 text-[#020e7c]'>
-          <option>March</option>
-          <option>April</option>
+        <select 
+          className='rounded p-1 text-[#020e7c]' 
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+        >
+          <option value={currentMonth}>{currentMonth}</option>
+          <option value={nextMonth}>{nextMonth}</option>
         </select>
       </div>
       <div className='flex justify-between'>
@@ -49,8 +90,8 @@ function Income() {
           <p className='text-sm text-[#020e7c] mt-8 mb-12'>Total income</p>
         </div>
         <div className=''>
-          <p className='text-md font-bold text-white bg-[#020e7c] w-20 px-4 py-1 rounded-sm'>
-            +56%
+          <p className={`text-md font-bold ${percentageChange >= 0 ? 'text-white bg-[#020e7c]' : 'text-red-600 bg-gray-200'} w-20 px-4 py-1 rounded-sm`}>
+            {percentageChange >= 0 ? `+${percentageChange.toFixed(2)}%` : `${percentageChange.toFixed(2)}%`}
           </p>
           <p className='text-sm text-[#020e7c] mt-8 mb-12'>From last month</p>
         </div>

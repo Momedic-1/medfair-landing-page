@@ -30,7 +30,7 @@ const Navbar = () => {
   }, [isDropdownOpen]);
 
   return (
-    <nav className="flex items-center justify-between px-6 py-2 bg-white shadow-lg h-auto overflow-y-hidden">
+    <nav className="flex items-center justify-between px-6 py-2 bg-white shadow-lg h-auto ">
       <div className="items-center text-[#020E7C] font-bold text-3xl">
         <img src={logo} alt="MedFair Logo" className="h-8 ml-12" />
         <span>MedFair</span>
@@ -97,7 +97,7 @@ const Navbar = () => {
       </div>
 
       {isMobileMenuOpen && (
-        <div className="absolute -top-6 left-0 right-0 w-full bg-[#020E7C] text-white font-medium md:hidden flex flex-col items-center shadow-lg z-10">
+        <div className="absolute -top-6 left-0 right-0 w-full  bg-[#020E7C] text-white font-medium md:hidden flex flex-col items-center shadow-lg z-10">
           <div className="flex items-center justify-between w-full px-6 py-4 -mb-6">
             <div className="flex items-center space-x-2">
               <img src={logo} alt="MedFair Logo" className="" />
@@ -132,7 +132,7 @@ const Navbar = () => {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg ">
                     <ul>
                       <li>
                         <a
