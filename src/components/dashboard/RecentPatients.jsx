@@ -1,5 +1,4 @@
 
-
 import AvatarImage from '../../assets/avatar.png';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
@@ -11,8 +10,9 @@ export default function RecentPatients() {
   const [error, setError] = useState(null); 
 
   const apiUrl = import.meta.env.VITE_API_URL;
+  
   useEffect(() => {
-    const id = sessionStorage.getItem("id")
+    const id = sessionStorage.getItem("id");
     axios.get(`${apiUrl}/call/${id}/patients-consultation`)
       .then(response => {
         setPatients(response.data); 
@@ -23,29 +23,36 @@ export default function RecentPatients() {
         setLoading(false);
       });
   }, []);
+
   return (
-    <div className='max-w-screen-2xl w-full mx-auto'>
+    <div className='max-w-screen-2xl w-full mx-auto overflow-x-scroll'>
       <div className='bg-white shadow-lg rounded-lg border border-blue-300'>
         <h2 className='text-xl font-bold text-[#020e7c] p-4'>
           Recent Patients
         </h2>
         {loading ? (
           <div className='p-4'>Loading...</div>
-        ) : error ? (
-          <div className='p-4 text-red-500'>{error}</div>
         ) : (
           <div className='max-h-80 overflow-y-auto'>
+         
             <table className='w-full table-auto text-sm text-left'>
               <thead className='bg-blue-50 text-[#020e7c] font-semibold border-b'>
                 <tr>
                   <th className='py-3 px-6'>Name</th>
                   <th className='py-3 px-6'>Age</th>
-                  <th className='py-3 px-6'>Date</th>
-                  <th className='py-3 px-6'>Status</th>
+                  <th className='py-3 px-6'>Date</th> 
+                  <th className='py-3 px-6'>Status</th> 
                 </tr>
               </thead>
+             
               <tbody className='divide-y divide-gray-200'>
-                {patients.length > 0 ? (
+                {patients.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="py-4 px-6 text-center text-gray-500">
+                      No recent patients found.
+                    </td>
+                  </tr>
+                ) : (
                   patients.map((patient, index) => (
                     <tr
                       key={index}
@@ -80,12 +87,6 @@ export default function RecentPatients() {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="py-4 px-6 text-center">
-                      No recent patients found.
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>

@@ -3,9 +3,10 @@ import { useState,useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bell from './assets/bell.svg';
 import call from './assets/call (2).svg';
-import book from './assets/book (2).svg';
 import specialistIcon from './assets/specialis-icon.svg';
 import SpecialistModal from '../PatientSignup/SpecialistModal';
+import testTube from "../assets/test.jpeg"
+import CalendarIcon from  "../assets/calendarIcon.jpeg"
 import Sidebar from './Sidebar';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -206,7 +207,7 @@ function makePaymentToast(message){
     </div>
 
     <div className="flex flex-col items-center  text-center">
-      <img src={book} alt="book" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" onClick={() => handleServiceClick('Book an Appointment')}/>
+      <img src={CalendarIcon} alt="book" className="w-16 h-20  md:w-15 md:h-15 cursor-pointer" onClick={() => handleServiceClick('Book an Appointment')}/>
       <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book an Appointment</p>
     </div>
 
@@ -222,8 +223,8 @@ function makePaymentToast(message){
       <p className="text-[#020E7C] mt-1 text-sm md:text-xs">See a specialist</p>
     </div>
 
-    <div className="flex flex-col items-center  text-center">
-      <img src={book} alt="lab" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer" onClick={()=> handleServiceClick('Book a lab test')} />
+    <div className="flex flex-col items-center  text-center ">
+      <img src={testTube} alt="lab" className="w-20 h-20 md:w-15 md:h-15 cursor-pointer rounded-md" onClick={()=> handleServiceClick('Book a lab test')} />
       <p className="text-[#020E7C] mt-1 text-sm md:text-xs">Book a lab test</p>
     </div>
   </div>

@@ -29,7 +29,7 @@ const Offer = () => {
                  
                 </span>
                 <h1 className="mt-2 font-bold text-[15px] text-center">
-                  24/7 Book Appoint
+                 24/7 availablity
                 </h1>
                 <p className="w-[85%] sm:w-[50%] ml-[30px] mt-3 font-normal text-[14px] lg:w-[90%] hover:text-gray-500">
                 Book an appointment at any time, day or night, 
