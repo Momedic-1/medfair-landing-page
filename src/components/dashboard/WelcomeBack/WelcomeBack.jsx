@@ -19,7 +19,7 @@ function WelcomeBack ({status}) {
 
   const viewAllPendingCalls = async()=>{
     try {
-    const response = await axios.post( `${baseUrl}/api/call/broadcast`,{},{
+    const response = await axios.post( `${baseUrl}/api/call/broadcast?doctorId=${userData.id}`,{},{
       headers: {
         Authorization: `Bearer ${token}`
       }
