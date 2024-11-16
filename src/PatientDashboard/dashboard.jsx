@@ -16,6 +16,7 @@ import "slick-carousel/slick/slick-theme.css";
 
 import { ActiveSlide } from './constants';
 import InfoModal from './infoModal';
+import {baseUrl} from "../env.jsx";
 
 
 export default function Dashboard() {
@@ -126,8 +127,7 @@ function makePaymentToast(message){
   const userData = JSON.parse(userDataString);
   const patientId = userData?.id
       try{
-          // const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
-          const response = await axios.post( `https://momedic.onrender.com/api/call/initiate`, null, {
+          const response = await axios.post( `${baseUrl}/api/call/initiate`, null, {
               params: {
                   userId: patientId
               }
