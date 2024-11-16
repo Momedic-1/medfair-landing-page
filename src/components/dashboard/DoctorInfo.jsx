@@ -40,7 +40,7 @@ const DoctorProfile = () => {
 
   useEffect(() => {
     const id = sessionStorage.getItem("id")
-    axios.get(`https://momedic.onrender.com/call/missed/count?doctorId=${id}`)
+    axios.get(`${baseUrl}/call/missed/count?doctorId=${id}`)
     // axios.get(`${baseUrl}/call/missed/count?doctorId=${id}`)
       .then(response => {
         setMissedCalls(response.data.missedCalls || 0); 
