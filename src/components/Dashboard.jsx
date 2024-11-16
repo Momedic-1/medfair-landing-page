@@ -3,13 +3,21 @@ import React, {useEffect, useState} from 'react';
 import SwipeStatus from './dashboard/SwipeStatus';
 import LeftPanel from "./dashboard/LeftPanel.jsx";
 import RightPanel from "./dashboard/RightPanel.jsx";
+import {useNavigate} from "react-router-dom";
 
 const Dashboard = () => {
+    const navigate = useNavigate();
     const onlineStatus = "onlineStatus"
     const online = localStorage.getItem(onlineStatus);
     const value = online ? online : "Online";
 
     const [status, setStatus] = useState(value);
+    const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+
+    if (!token){
+        navigate('/login');
+    }
+
     useEffect(() => {
         if (status !== value) {
             window.location.reload();
