@@ -3,6 +3,7 @@ import messages from "../../assets/mail-add-02.png"
 import missedCall from "../../assets/call-missed-02.png"
 import axios from 'axios'
 import profile from "../../assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg"
+import {baseUrl} from "../../env.jsx";
 const userData = JSON.parse(localStorage.getItem('userData'));
 const DoctorProfile = () => {
 
@@ -16,10 +17,10 @@ const DoctorProfile = () => {
   const [message,setMesseges] = useState(0);
 
 
-  const apiUrl = import.meta.env.VITE_API_URL;
    useEffect(() => {
     const id = sessionStorage.getItem("id")
-    axios.get( `${apiUrl}/call/${id}/total-patients-consultation`)
+    axios.get( `https://momedic.onrender.com/call/${id}/total-patients-consultation`)
+    // axios.get( `${baseUrl}/call/${id}/total-patients-consultation`)
       .then(response => {
         const data = response.data;
         console.log("The consultation: ",data)
@@ -40,7 +41,8 @@ const DoctorProfile = () => {
 
   useEffect(() => {
     const id = sessionStorage.getItem("id")
-    axios.get(`${apiUrl}/call/missed/count?doctorId=${id}`)
+    axios.get(`https://momedic.onrender.com/call/missed/count?doctorId=${id}`)
+    // axios.get(`${baseUrl}/call/missed/count?doctorId=${id}`)
       .then(response => {
         setMissedCalls(response.data.missedCalls || 0); 
         setMesseges(response.data.message || 0)

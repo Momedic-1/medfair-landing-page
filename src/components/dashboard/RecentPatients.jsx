@@ -2,6 +2,7 @@
 import AvatarImage from '../../assets/avatar.png';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
+import {baseUrl} from "../../env.jsx";
 
 export default function RecentPatients() {
   
@@ -9,11 +10,11 @@ export default function RecentPatients() {
   const [loading, setLoading] = useState(true);  
   const [error, setError] = useState(null); 
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-  
+
   useEffect(() => {
     const id = sessionStorage.getItem("id");
-    axios.get(`${apiUrl}/call/${id}/patients-consultation`)
+    axios.get(`https://momedic.onrender.com/call/${id}/patients-consultation`)
+    // axios.get(`${baseUrl}/call/${id}/patients-consultation`)
       .then(response => {
         setPatients(response.data); 
         setLoading(false);           
