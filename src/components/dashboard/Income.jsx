@@ -40,10 +40,10 @@ function Income() {
       }
 
       console.log("Retrieved ID from session:", id); 
+      console.log("Retrieved ID from session:", baseUrl);
 
       try {
-        const response = await axios.get(`https://momedic.onrender.com/doctors/${id}/total-doctors-amount`);
-        // const response = await axios.get(`${baseUrl}/doctors/${id}/total-doctors-amount`);
+        const response = await axios.get(`${baseUrl}/doctors/${id}/total-doctors-amount`);
         console.log("API Response:", response.data);
         const fetchedAmount = response.data.amount;
         const fetchedPreviousAmount = response.data.previousAmount; 
