@@ -68,8 +68,7 @@ const PatientSignup = () => {
     setLoading(true);
     const verificationData = { token: verificationToken, email: formData.emailAddress}
    try {
-        const response = await fetch(`https://momedic.onrender.com/api/v1/registration/verify-email`, {
-        // const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
+      const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
           method: 'POST',
           headers: {
            'Content-Type': 'application/json'

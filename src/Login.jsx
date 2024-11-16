@@ -7,6 +7,7 @@ import DesignedSideBar from './components/reuseables/DesignedSideBar';
 import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg"
 import {baseUrl} from "./env.jsx";
+import axios from "axios";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -32,10 +33,8 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
     try {
-      const response = await fetch(`https://momedic.onrender.com/api/v1/auth/login`, {
-      // const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
+      const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -19,8 +19,7 @@ const DoctorProfile = () => {
 
    useEffect(() => {
     const id = sessionStorage.getItem("id")
-    axios.get( `https://momedic.onrender.com/call/${id}/total-patients-consultation`)
-    // axios.get( `${baseUrl}/call/${id}/total-patients-consultation`)
+    axios.get( `${baseUrl}/call/${id}/total-patients-consultation`)
       .then(response => {
         const data = response.data;
         console.log("The consultation: ",data)

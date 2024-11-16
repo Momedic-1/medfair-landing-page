@@ -19,8 +19,7 @@ function WelcomeBack ({status}) {
 
   const viewAllPendingCalls = async()=>{
     try {
-    const response = await axios.post( `https://momedic.onrender.com/api/call/broadcast`, {}, {
-    // const response = await axios.post( `${baseUrl}/api/call/broadcast`,{},{
+    const response = await axios.post( `${baseUrl}/api/call/broadcast`,{},{
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -35,8 +34,7 @@ function WelcomeBack ({status}) {
   const pickCall = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`https://momedic.onrender.com/api/call/join`,{},{
-      // const response = await axios.post(`${baseUrl}/api/call/join`,{
+      const response = await axios.post(`${baseUrl}/api/call/join`,{
         "doctorId": userData?.id,
         "callId": activeCall[0].callId
       },{
