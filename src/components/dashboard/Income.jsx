@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import React, { useState, useEffect } from "react";
+import {baseUrl} from "../../env.jsx";
 
 function Income() {
   const [income, setIncome] = useState(0); 
@@ -10,7 +11,6 @@ function Income() {
   const [error, setError] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(""); 
 
-  const apiUrl = import.meta.env.VITE_API_URL;
 
 
   const getMonthNames = () => {
@@ -40,11 +40,11 @@ function Income() {
       }
 
       console.log("Retrieved ID from session:", id); 
-      console.log("API URL is:", apiUrl); 
 
       try {
-        const response = await axios.get(`${apiUrl}/doctors/${id}/total-doctors-amount`);
-        console.log("API Response:", response.data); 
+        const response = await axios.get(`https://momedic.onrender.com/doctors/${id}/total-doctors-amount`);
+        // const response = await axios.get(`${baseUrl}/doctors/${id}/total-doctors-amount`);
+        console.log("API Response:", response.data);
         const fetchedAmount = response.data.amount;
         const fetchedPreviousAmount = response.data.previousAmount; 
 
@@ -59,7 +59,7 @@ function Income() {
     };
 
     fetchIncome();
-  }, [apiUrl]);
+  }, []);
 
   if (loading) {
     return <p>Loading...</p>;
