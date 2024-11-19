@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import payment from './assets/payment.svg';
 import { useNavigate,useLocation } from 'react-router-dom';
 import axios from 'axios';
 import DesignedSideBar from '../components/reuseables/DesignedSideBar';
+import {baseUrl} from "../env.jsx";
 
 export default function PaymentPage() {
   const subscriptionPlans = {
@@ -38,6 +39,26 @@ export default function PaymentPage() {
       [name]: value,
     }));
   };
+  useEffect( () => {
+    console.log("use effect called ... ")
+    viewPaymentPrice()
+  },[])
+  const viewPaymentPrice = async () => {
+
+    const userData = JSON.parse(localStorage.getItem('authToken'));
+    const token = userData.token;
+    console.log("viewing all payment price...");
+    try {
+      const response = await axios.get(`${baseUrl}/api/payment/payment-price/view`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(response);
+    } catch (error) {
+      console.error('Error viewing payment prices :', error);
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,7 +70,7 @@ export default function PaymentPage() {
     formData.email = userData.user.emailAddress;
 
     try {
-      const response = await axios.post(`https://momedic.onrender.com/api/payment/initialize-payment`, formData, {
+      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
