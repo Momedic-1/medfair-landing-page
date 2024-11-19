@@ -1,12 +1,10 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import logo from "../assets/Frame 7667.png";
-
+import { Link } from 'react-router-dom';
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); 
-  const dropdownRef = useRef(null); 
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -18,11 +16,10 @@ const Navbar = () => {
         setIsDropdownOpen(false);
       }
     };
-  
+
     if (isDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -53,8 +50,7 @@ const Navbar = () => {
        </a>
          </li>
 
-
-        <div className="relative" ref={dropdownRef}> 
+        <div className="relative" ref={dropdownRef}>
           <button
             className="px-4 py-2 bg-[#020E7C] text-white rounded-md hover:bg-blue-600 z-10"
             onClick={toggleDropdown}
@@ -66,20 +62,14 @@ const Navbar = () => {
             <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
               <ul>
                 <li>
-                  <a
-                    href="/doctor_signup"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    As a Doctor
-                  </a>
+                <Link to="/doctor_signup" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                As a Doctor
+                </Link>
                 </li>
                 <li>
-                  <a
-                    href="/patient_signup"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    As a Patient
-                  </a>
+                 <Link to="/patient_signup" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                       As a Patient
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -123,6 +113,7 @@ const Navbar = () => {
             <li>
               <a href='/login'>Login</a>
             </li>
+
               <div className="relative">
                 <button
                   className="px-4 py-2 bg-white text-[#020E7C] rounded-md hover:bg-blue-300"
@@ -132,27 +123,17 @@ const Navbar = () => {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg ">
-                    <ul>
-                      <li>
-                        <a
-                             href="/doctor_signup"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                        >
-                          As a Doctor
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          href="/patient_signup"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                        >
-                          As a Patient
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                )}
+                   <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10 ">
+            <Link to="/doctor_signup" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            As a Doctor
+             </Link>
+
+          <Link to="/patient_signup" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            As a Patient
+          </Link>
+
+    </div>
+  )}
               </div>
             </div>
           </ul>
