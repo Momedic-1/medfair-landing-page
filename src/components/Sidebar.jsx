@@ -12,6 +12,7 @@ import FinanceIcon from '../assets/FinanceIcon.jsx';
 import SettingsIcon from '../assets/SettingsIcon.jsx';
 import HelpIcon from '../assets/HelpIcon.jsx';
 import CloseIcon from '../assets/CloseIcon.jsx';
+import Logout from '../Logout.jsx';
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const sidebarRef = useRef(null)
@@ -217,6 +218,10 @@ const Sidebar = () => {
                     <HelpIcon/>
                     Help
                   </a>
+                </li>
+                <li>
+                  
+                    <Logout/>
                 </li>
               </ul>
             </nav>

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ErrorModal from './components/ErrorModal'
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
-// import { baseUrl } from './env';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
 import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg"
@@ -51,14 +50,18 @@ export default function LoginPage() {
         const userData = responseData.data
         const id = userData.id
         sessionStorage.setItem("id", id)
+        sessionStorage.clear()
         
         // Save token and user data to local storage
         localStorage.setItem('authToken', token);
+       
         localStorage.setItem('userData', JSON.stringify(userData))
-        console.log(userData,"userRole")
+        localStorage.setItem("roleType",userData.role)
+        console.log(userData.role,"userRole")
          if(userData.role === "DOCTOR"){
           navigate('/doctor-dashboard')
          }else if(userData.role === "PATIENT"){
+         
             navigate('/patient-dashboard')
          }else{
           setError('Invalid user role')

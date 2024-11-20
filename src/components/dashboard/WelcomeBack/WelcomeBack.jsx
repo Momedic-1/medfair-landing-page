@@ -44,6 +44,7 @@ function WelcomeBack ({status}) {
       });
       setIsActive(!isActive);
       window.open(response.data.data, '_blank', 'noopener,noreferrer');
+      setIsActive(false);
     } catch (error) {
       console.log('Error submitting form. Please try again.'+error.message);
       return false;
