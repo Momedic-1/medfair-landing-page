@@ -7,7 +7,7 @@ import help from './assets/help-circle.svg';
 import message from './assets/message (2).svg';
 import profile from './assets/profile (2).svg';
 import subscription from './assets/subscription.svg';
-
+import Logout from '../Logout';
 function Sidebar({ isSidebarOpen, toggleSidebar }) {
   return (
     <aside
@@ -46,6 +46,10 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
         </NavLink>
         <NavLink to="/subscription" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
           <img src={subscription} alt="Subscription" /> <span className='ml-3 '>Subscriptions</span>
+        </NavLink>
+
+        <NavLink className="flex items-center p-3 m-3 py-2 px-2 rounded hover:bg-white hover:text-[#020E7C]">
+          <Logout/>
         </NavLink>
       </nav>
     </aside>

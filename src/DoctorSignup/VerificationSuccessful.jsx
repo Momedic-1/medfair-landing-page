@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const VerificationSuccessful = () => {
   const navigate = useNavigate();
@@ -12,12 +12,9 @@ const VerificationSuccessful = () => {
     return () => clearTimeout(timer);
   }, [navigate]);
 
- 
-  
   return (
     <div className='flex items-center justify-center bg-white mt-24'>
       <div className='bg-gray-50 p-20 rounded-lg shadow-lg text-center max-w-md w-full'>
-
         <svg
           width='167'
           height='167'
@@ -44,7 +41,7 @@ const VerificationSuccessful = () => {
               width='68.5981'
               height='59.4336'
               filterUnits='userSpaceOnUse'
-              color-interpolation-filters='sRGB'
+              colorInterpolationFilters='sRGB'
             >
               <feFlood floodOpacity='0' result='BackgroundImageFix' />
               <feColorMatrix
@@ -79,7 +76,7 @@ const VerificationSuccessful = () => {
         </h1>
       </div>
     </div>
-  )
+  );
 }
 
-export default VerificationSuccessful
+export default VerificationSuccessful;

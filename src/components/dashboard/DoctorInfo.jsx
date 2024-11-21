@@ -37,7 +37,10 @@ const DoctorProfile = () => {
         console.error('Error fetching consultation and patient data:', error);
       });
   }, []);
+    
 
+
+  
   useEffect(() => {
     const id = sessionStorage.getItem("id")
     axios.get(`${baseUrl}/call/missed/count?doctorId=${id}`)
@@ -113,3 +116,4 @@ const DoctorProfile = () => {
 }
 
 export default DoctorProfile
+
