@@ -27,7 +27,7 @@ const App = () => {
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/verification-success" element={<VerificationSuccessful />} />
         <Route path="/login" element={<LoginPage />} />
-
+        <Route path='/patient-dashboard' element={<Dashboard/>}/>
         <Route
           path="/doctor-dashboard/*"
           element={

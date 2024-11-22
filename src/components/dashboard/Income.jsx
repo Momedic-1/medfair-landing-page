@@ -40,7 +40,7 @@ function Income() {
       }
 
       console.log("Retrieved ID from session:", id); 
-      console.log("Retrieved ID from session:", baseUrl);
+      
 
       try {
         const response = await axios.get(`${baseUrl}/doctors/${id}/total-doctors-amount`);
