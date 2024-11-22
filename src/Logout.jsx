@@ -1,15 +1,21 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logout } from './features/authSlice';
 import { IoIosLogOut } from "react-icons/io";
 
 const Logout = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLogout = () => {
-    localStorage.clear();
+    sessionStorage.clear();
+    localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
+    localStorage.removeItem('roleType');
+    dispatch(logout());
 
- 
     navigate('/login', { replace: true });
   };
 
