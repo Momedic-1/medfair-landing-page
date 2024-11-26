@@ -7,8 +7,10 @@ import * as yup from 'yup';
 import Modal from './Modal';
 import { baseUrl } from "../env.jsx";
 import Steps from "../Steps.jsx";
-import React, {useState,useEffect} from "react";
+import React from "react";
 import flag from "../assets/Vector.png"
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
 // import { useRegisterDoctorMutation } from '../redux-query/RegistrationQuery.js';
 
 const validationSchema = yup.object().shape({
@@ -109,8 +111,8 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
         {({ handleSubmit }) => (
 
           <Form className="mx-auto px-4 sm:px-6 lg:px-10 max-w-full md:max-w-3xl lg:max-w-5xl lg:p-4">
-       <div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20'>
-      <div className='mt-4'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20'>
+       <div className='mt-4'>
       <h1 className='text-gray-600 font-medium text-sm'>First Name</h1>
       <Field
         required
@@ -147,24 +149,20 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
 
     <div className='flex flex-col mt-4'>
       <h1 className='text-gray-600 font-medium text-sm'>Mobile Number</h1>
-      <div className='flex items-center border border-gray-300 rounded mt-2'>
-        <div className='flex items-center px-2'>
-          <img src={flag} alt='flag' className='w-12 rounded' />
-        </div>
-        <span className='text-gray-600'>+234</span>
-        <div className='border-l-2 h-14 mx-2'></div>
-        <Field
-          required
-          type='text'
-          name='phoneNumber'
-          placeholder='Enter mobile number'
-          className='p-4 bg-transparent focus:outline-none'
+      <div className='flex items-center mt-2' style={{ width: '100%' }}>
+      <div style={{ width: '100%' }}>
+        <PhoneInput
+          country={'ng'}
+          inputStyle={{ width: '100%', height: "53px"}}
+          containerStyle={{ width: '100%' }}
         />
       </div>
     </div>
+
+    </div>
   </div>
   <h1 className='mt-2 text-gray-600 font-medium text-sm ml-2'>Sex</h1>
-<div className='flex flex-col md:flex-row items-center justify-between w-full mb-4'>
+    <div className='flex flex-col md:flex-row items-center justify-between w-full mb-4'>
   <div className='flex items-center w-full md:w-1/2 px-2 mb-4 md:mb-0'>
     <p className='mr-2'>Male</p>
     <Field
@@ -267,7 +265,7 @@ const DoctorSignupForm = ({ setCurrentStep }) => {
     </Field>
   </div>
 
-  <div className='flex gap-4 flex-col md:flex-row mt-4'>
+  <div className='flex space-x-10 flex-col md:flex-row mt-4'>
     <Modal />
     <a onClick={() => navigate('/login')} className='text-sm font-medium'>
       Already have an account? <span className='text-[#020E7C] cursor-pointer'>Login here</span>

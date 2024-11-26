@@ -1,4 +1,5 @@
 
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { baseUrl } from '../env';
@@ -32,6 +33,12 @@ const authSlice = createSlice({
       localStorage.removeItem('userData');
       localStorage.removeItem('roleType');
     },
+    clearError(state) {
+      state.error = null;
+    },
+    setError(state, action) {
+      state.error = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -55,5 +62,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, clearError, setError } = authSlice.actions;
 export default authSlice.reducer;
