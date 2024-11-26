@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from './features/authSlice';
@@ -40,25 +40,22 @@ export default function LoginPage() {
     setError('');
   };
 
-  if (userData) {
-    const role = userData.role;
-    if (role === "DOCTOR") {
-      navigate('/doctor-dashboard');
-    } else if (role === "PATIENT") {
-      navigate('/patient-dashboard');
-    } else {
-      setError('Invalid user role');
+  useEffect(() => {
+    if (userData) {
+      const role = userData.role;
+      if (role === "DOCTOR") {
+        navigate('/doctor-dashboard');
+      } else if (role === "PATIENT") {
+        navigate('/patient-dashboard');
+      } else {
+        setError('Invalid user role');
+      }
     }
-  }
+  }, [userData, navigate]);
 
   return (
     <div className="flex flex-col lg:flex-row h-screen">
-      {/* Top Banner for Mobile */}
       <DesignedSideBar />
-
-      {/* Left Side - Design and Background */}
-
-      {/* Right Side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center">
         <h1 className="text-2xl mb-3 text-blue-500 mt-5 lg:mt-0">Get Started</h1>
         <form onSubmit={handleSubmit} className="p-8 w-3/4 max-w-md">

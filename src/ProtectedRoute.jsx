@@ -1,24 +1,22 @@
 
-
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ role }) => {
   const userData = localStorage.getItem('userData');
 
-  const parsedUserData = JSON.parse(userData); 
-  const { role } = parsedUserData;
-
-  console.log("The role type: ", role)
-
- 
   if (!userData) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  const parsedUserData = JSON.parse(userData);
+  const userRole = parsedUserData.role;
+
+  if (userRole !== role) {
+    return <Navigate to={`/${userRole.toLowerCase()}-dashboard`} replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default ProtectedRoute;
-
-

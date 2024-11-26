@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import ErrorModal from '../components/ErrorModal';
-import flag from "../assets/Vector.png"
-
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
 export default function PatientSignupForm({ formData, setFormData }) {
   const navigate = useNavigate()
   const [error, setError] = useState(false)
@@ -94,26 +94,20 @@ export default function PatientSignupForm({ formData, setFormData }) {
 </div>
 
 
-<div className='flex flex-col w-full mt-7'>
-  <h1 className='text-gray-600 font-medium text-sm'>Mobile Number</h1>
-  <div className='flex items-center border rounded-md mt-3 p-1 bg-gray-100'>
-    <div className='flex items-center px-2'>
-      <img src={flag} alt='flag' className='w-12 rounded' />
+    <div className='flex flex-col mt-7'>
+      <h1 className='text-gray-600 font-medium text-sm'>Mobile Number</h1>
+      <div className='flex items-center mt-3 ' style={{ width: '100%' }}>
+      <div style={{ width: '100%' }}>
+        <PhoneInput
+          country={'ng'}
+          inputStyle={{ width: '100%', height: "53px"}}
+          containerStyle={{ width: '98%' }}
+        
+        />
+      </div>
     </div>
-    <span className='text-gray-600'>+234</span>
-    <div className='border-l-2 h-12 mx-2'></div>
-    <input
-      required
-      type='text'
-      name='phoneNumber'
-      value={formData.phoneNumber}
-      onChange={handleChange}
-      placeholder='Enter mobile number'
-      className='flex-1 bg-transparent focus:outline-none'
-    />
-  </div>
-</div>
 
+    </div>
 </div>
 
           <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>

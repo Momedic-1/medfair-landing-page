@@ -1,17 +1,16 @@
 
 
+
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import {baseUrl} from "../../env.jsx";
+import { baseUrl } from "../../env.jsx";
 
 function Income() {
   const [income, setIncome] = useState(0); 
   const [previousIncome, setPreviousIncome] = useState(0); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState(""); 
-
-
+  const [selectedMonth, setSelectedMonth] = useState("");
 
   const getMonthNames = () => {
     const months = [
@@ -23,37 +22,37 @@ function Income() {
     return [months[currentMonth], months[nextMonth]];
   };
 
- 
   const calculatePercentageChange = (current, previous) => {
     if (previous === 0) return 0; 
     return ((current - previous) / previous) * 100;
   };
-
+  
   useEffect(() => {
     const fetchIncome = async () => {
-      const id = sessionStorage.getItem("id");
-
-      if (!id) {
-        setError("No ID found, displaying default income.");
-        setLoading(false);
-        return;
-      }
-
-      console.log("Retrieved ID from session:", id); 
-      
-
       try {
-        const response = await axios.get(`${baseUrl}/doctors/${id}/total-doctors-amount`);
-        console.log("API Response:", response.data);
-        const fetchedAmount = response.data.amount;
-        const fetchedPreviousAmount = response.data.previousAmount; 
+        const id = sessionStorage.getItem("id");
+        const token = localStorage.getItem("authToken"); 
+        console.log("Doctor ID:", id);
 
+        if (!id || !token) {
+          setError("No ID or token found, unable to fetch earnings.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${baseUrl}/earnings/${id}/earnings`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        console.log("API Response:", response.data);
+
+        const fetchedAmount = response.data;
         setIncome(fetchedAmount != null ? fetchedAmount : 0);
-        setPreviousIncome(fetchedPreviousAmount != null ? fetchedPreviousAmount : 0);
         setLoading(false);
       } catch (error) {
-        console.error("API Error:", error); 
-        setError("Failed to fetch income data.");
+        console.error("API Error:", error);
+        setError("Failed to fetch earnings data.");
         setLoading(false);
       }
     };
@@ -65,10 +64,7 @@ function Income() {
     return <p>Loading...</p>;
   }
 
-
   const [currentMonth, nextMonth] = getMonthNames();
-
- 
   const percentageChange = calculatePercentageChange(income, previousIncome);
 
   return (
