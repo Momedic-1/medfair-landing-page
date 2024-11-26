@@ -29,9 +29,11 @@ function Income() {
   
   useEffect(() => {
     const fetchIncome = async () => {
+
       try {
         const id = sessionStorage.getItem("id");
-        const token = localStorage.getItem("authToken"); 
+        const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+        const userData = JSON.parse(localStorage.getItem('userData'));
         console.log("Doctor ID:", id);
 
         if (!id || !token) {
@@ -40,7 +42,7 @@ function Income() {
           return;
         }
 
-        const response = await axios.get(`${baseUrl}/earnings/${id}/earnings`, {
+        const response = await axios.get(`${baseUrl}/earnings/${userData.id}/earnings`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

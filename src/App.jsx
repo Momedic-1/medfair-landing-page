@@ -12,7 +12,7 @@ import VerificationSuccessful from './DoctorSignup/VerificationSuccessful.jsx';
 import DoctorSignupForm from './DoctorSignup/DoctorSignupForm.jsx';
 import HomePage from './components/Home/HomePage.jsx/HomePage.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
-
+import IncomingCalls from './components/dashboard/WelcomeBack/IncomingCall.jsx';
 const App = () => {
   return (
     <Router>
@@ -24,7 +24,7 @@ const App = () => {
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/verification-success" element={<VerificationSuccessful />} />
         <Route path="/login" element={<LoginPage />} />
-
+        <Route path='/incoming-call'element={<IncomingCalls/>}/>
         <Route element={<ProtectedRoute role="PATIENT" />}>
           <Route path="/patient-dashboard" element={<Dashboard />} />
           <Route path="/patient_profile" element={<Profile />} />

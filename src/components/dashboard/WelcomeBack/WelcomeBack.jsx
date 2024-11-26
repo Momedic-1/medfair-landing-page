@@ -1,29 +1,31 @@
 
+
+
 import DoctorImg from '../../../assets/doctor.png';
 import call from '../../../assets/call.svg';
 import './WelcomeBack.css';
 import { useEffect, useState } from 'react';
 import { baseUrl } from '../../../env';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function WelcomeBack({ status }) {
-  const [activeCall, setActiveCalling] = useState(null);
+  const [activeCall, setActiveCalling] = useState([]);
   const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null); 
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData'));
   const online = "Online";
+  const navigate = useNavigate();
 
   useEffect(() => {
     viewAllPendingCalls();
   }, []);
 
   useEffect(() => {
-    if (activeCall && status === online) {
-  
+    if (activeCall.length > 0 && status === online) {
       startCallTimer();
     } else {
-   
       clearCallTimer();
     }
   }, [activeCall, status]);
@@ -46,38 +48,15 @@ function WelcomeBack({ status }) {
     }
   };
 
-  const pickCall = async (e) => {
-    e.preventDefault();
-    try {
-      if (activeCall?.length > 0) {
-        const response = await axios.post(
-          `${baseUrl}/api/call/join`,
-          {
-            doctorId: userData?.id,
-            callId: activeCall[0].callId,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setIsActive(true);
-        clearCallTimer(); 
-        window.open(response.data.data, '_blank', 'noopener,noreferrer');
-        setIsActive(false);
-        setActiveCalling(null); 
-      }
-    } catch (error) {
-      console.error('Error submitting form. Please try again.', error.message);
-    }
+  const navigateToIncomingCalls = () => {
+    navigate('/incoming-call');
   };
 
   const startCallTimer = () => {
-    clearCallTimer(); 
+    clearCallTimer();
     const timer = setTimeout(() => {
       dropCall();
-    }, 30000); 
+    }, 30000);
     setCallTimer(timer);
   };
 
@@ -91,7 +70,7 @@ function WelcomeBack({ status }) {
   const dropCall = async () => {
     try {
       console.log('Call dropped due to timeout');
-      setActiveCalling(null); 
+      setActiveCalling(null);
     } catch (error) {
       console.error('Error dropping the call:', error.message);
     }
@@ -100,19 +79,20 @@ function WelcomeBack({ status }) {
   return (
     <div className='w-[100%]'>
       <div
-        onClick={pickCall}
+        onClick={navigateToIncomingCalls}
         style={{ cursor: 'pointer' }}
         className={`image ${isActive ? 'active' : ''} ${
-          activeCall && status === online ? 'shake bg-green-500' : 'bg-[#020e7c]'
-        } items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto md:mb-10 lg:mb-4 sm:mb-10`}>
+          activeCall.length > 0 && status === online ? 'shake bg-green-500' : 'bg-[#020e7c]'
+        } items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto md:mb-10 lg:mb-4 sm:mb-10`}
+      >
         <p className='text-white font-semibold text-center'>
-          Join<br />Meeting Room
+          Incoming<br />Call
         </p>
         <img
           src={call}
           alt={'call'}
           className={`image ${isActive ? 'active' : ''} ${
-            activeCall && status === online ? 'shake bg-green-500' : ''
+            activeCall.length > 0 && status === online ? 'shake bg-green-500' : ''
           }`}
         />
       </div>
