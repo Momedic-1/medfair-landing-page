@@ -102,7 +102,8 @@ export default function PatientSignupForm({ formData, setFormData }) {
           country={'ng'}
           inputStyle={{ width: '100%', height: "53px"}}
           containerStyle={{ width: '98%' }}
-        
+         value={formData.PhoneInput}
+         onChange={(Phone)=> setFormData({...formData,PhoneInput: Phone})}
         />
       </div>
     </div>

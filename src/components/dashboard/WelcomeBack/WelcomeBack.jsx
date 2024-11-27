@@ -42,7 +42,7 @@ function WelcomeBack({ status }) {
         }
       );
       console.log("The active calls are:", response.data.data);
-      setActiveCalling(response.data.data);
+      setActiveCalling(response.data.data || []);
     } catch (error) {
       console.error(error);
     }
@@ -70,7 +70,7 @@ function WelcomeBack({ status }) {
   const dropCall = async () => {
     try {
       console.log('Call dropped due to timeout');
-      setActiveCalling(null);
+      setActiveCalling([]);
     } catch (error) {
       console.error('Error dropping the call:', error.message);
     }
@@ -86,7 +86,7 @@ function WelcomeBack({ status }) {
         } items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto md:mb-10 lg:mb-4 sm:mb-10`}
       >
         <p className='text-white font-semibold text-center'>
-          Incoming<br />Call
+          Incoming<br />Calls
         </p>
         <img
           src={call}
