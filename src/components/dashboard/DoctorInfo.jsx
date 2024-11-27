@@ -1,12 +1,13 @@
-import React, { useEffect,useState } from 'react'
-import messages from "../../assets/mail-add-02.png"
-import missedCall from "../../assets/call-missed-02.png"
-import axios from 'axios'
-import profile from "../../assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg"
-import {baseUrl} from "../../env.jsx";
-const userData = JSON.parse(localStorage.getItem('userData'));
-const DoctorProfile = () => {
 
+
+import React, { useEffect, useState } from 'react';
+import messages from "../../assets/mail-add-02.png";
+import missedCall from "../../assets/call-missed-02.png";
+import axios from 'axios';
+import profile from "../../assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg";
+import { baseUrl } from "../../env.jsx";
+
+const DoctorProfile = () => {
   const [stats, setStats] = useState({
     appointment: 0,
     totalPatient: 0,
@@ -14,61 +15,90 @@ const DoctorProfile = () => {
     returnPatient: 0,
   });
   const [missedCalls, setMissedCalls] = useState(0);
-  const [message,setMesseges] = useState(0);
+  const [message, setMessages] = useState(0);
 
+  const userData = JSON.parse(localStorage.getItem('userData'));
+  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
 
-   useEffect(() => {
-    const id = sessionStorage.getItem("id")
-    axios.get( `${baseUrl}/call/${id}/total-patients-consultation`)
-      .then(response => {
-        const data = response.data;
-        console.log("The consultation: ",data)
-        const consultations = data.consultations || 0;
-
-        setStats(prevStats => ({
-          ...prevStats,
-          appointment: data.appointment || 0,
-          consultations: consultations,
-          returnPatient: data.returnPatient || 0,
-          totalPatient: consultations,  
-        }));
-      })
-      .catch(error => {
-        console.error('Error fetching consultation and patient data:', error);
-      });
-  }, []);
-    
-
-
-  
   useEffect(() => {
-    const id = sessionStorage.getItem("id")
-    axios.get(`${baseUrl}/call/missed/count?doctorId=${id}`)
-    // axios.get(`${baseUrl}/call/missed/count?doctorId=${id}`)
-      .then(response => {
-        setMissedCalls(response.data.missedCalls || 0); 
-        setMesseges(response.data.message || 0)
-      })
-      .catch(error => {
-        console.error('Error fetching missed calls data:', error);
-        console.error('Error fetching messages:', error);
-      });
-  }, []);
+    const fetchStats = async () => {
+      if (userData && token) {
+        const id = userData.id;
+
+        try {
+          // Fetch consultation and patient data
+          const response = await axios.get(
+            `${baseUrl}/api/call/${id}/total-patients-consultation`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          console.log("API Response for Stats:", response.data);
+
+       
+          const data = response.data;
+          setStats({
+            appointment: data.appointment || 0,
+            consultations: data.consultations || 0,
+            returnPatient: data.returnPatient || 0,
+            totalPatient: data.totalPatients || data.consultations || 0,
+          });
+        } catch (error) {
+          console.error("Error fetching consultation and patient data:", error);
+        }
+      }
+    };
+
+    fetchStats();
+  }, [userData, token]);
+
+  useEffect(() => {
+    const fetchMissedCallsAndMessages = async () => {
+      if (userData && token) {
+        const id = userData.id;
+
+        try {
+       
+          const response = await axios.get(
+            `${baseUrl}/api/call/missed/count?doctorId=${id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          console.log("API Response for Missed Calls and Messages:", response.data);
+
+          setMissedCalls(response.data.missedCalls || 0);
+          setMessages(response.data.message || 0);
+        } catch (error) {
+          console.error("Error fetching missed calls data:", error);
+        }
+      }
+    };
+
+    fetchMissedCallsAndMessages();
+  }, [userData, token]);
+
   return (
-    <div className='bg-white rounded-3xl shadow-lg p-6  max-w-md mx-auto mt-14'>
+    <div className='bg-white rounded-3xl shadow-lg p-6 max-w-md mx-auto mt-14'>
       <div className='flex flex-col items-center mb-6'>
-      <img 
-        src={profile}
-        alt='user avatar'
-        className='w-40 h-40 rounded-2xl mb-4'
-      />
-      <span className="font-bold text-[#020E7C] mb-4 max-w-md  text-xl text-center items-center justify-center">
-          Doctor  {'  '}
-        {userData
-         
-          ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
-          : ''}
-      </span>
+        <img
+          src={profile}
+          alt='user avatar'
+          className='w-40 h-40 rounded-2xl mb-4'
+        />
+        <span className="font-bold text-[#020E7C] mb-4 max-w-md text-xl text-center items-center justify-center">
+          Doctor{' '}
+          {userData
+            ? userData.firstName.charAt(0).toUpperCase() +
+              userData.firstName.slice(1).toLowerCase()
+            : ''}
+        </span>
       </div>
 
       <hr className='my-8' />
@@ -88,7 +118,7 @@ const DoctorProfile = () => {
           { label: 'Appointment', value: stats.appointment },
           { label: 'Total Patient', value: stats.totalPatient },
           { label: 'Consultations', value: stats.consultations },
-          { label: 'Return Patient', value: stats.returnPatient }
+          { label: 'Return Patient', value: stats.returnPatient },
         ].map((item, index) => (
           <div key={index} className='text-center'>
             <p className='text-2xl font-bold text-blue-900'>{item.value}</p>
@@ -99,7 +129,7 @@ const DoctorProfile = () => {
 
       <div className='flex justify-between'>
         <button className='bg-blue-900 text-white whitespace-nowrap rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
-          <span className='text-2xl font-bold mb-1'>{missedCalls}</span> 
+          <span className='text-2xl font-bold mb-1'>{missedCalls}</span>
           <span className='text-sm mb-2'>Missed calls</span>
           <img src={missedCall} alt='missed calls' className='w-6 h-6' />
         </button>
@@ -110,10 +140,8 @@ const DoctorProfile = () => {
           <img src={messages} alt='messages' className='w-6 h-6' />
         </button>
       </div>
-   
     </div>
-  )
-}
+  );
+};
 
-export default DoctorProfile
-
+export default DoctorProfile;

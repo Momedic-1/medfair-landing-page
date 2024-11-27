@@ -13,8 +13,8 @@ export default function RecentPatients() {
 
   useEffect(() => {
     const id = sessionStorage.getItem("id");
-    axios.get(`${baseUrl}/call/${id}/patients-consultation`)
-    // axios.get(`${baseUrl}/call/${id}/patients-consultation`)
+    axios.get(`${baseUrl}/api/call/${id}/patients-consultation`)
+    
       .then(response => {
         setPatients(response.data); 
         setLoading(false);           
@@ -97,3 +97,4 @@ export default function RecentPatients() {
     </div>
   );
 }
+

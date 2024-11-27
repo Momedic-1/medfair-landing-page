@@ -102,14 +102,15 @@ export default function PatientSignupForm({ formData, setFormData }) {
           country={'ng'}
           inputStyle={{ width: '100%', height: "53px"}}
           containerStyle={{ width: '98%' }}
-        
+          name="PhoneInput"
+          value={formData.PhoneInput}
+          onChange={handleChange}
         />
       </div>
     </div>
 
     </div>
-</div>
-
+       </div>
           <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
           <div className='flex items-center justify-between w-full mb-6'>
             <div className='flex items-center w-1/2 px-2'>
