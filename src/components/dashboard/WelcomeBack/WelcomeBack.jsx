@@ -56,7 +56,7 @@ function WelcomeBack({ status }) {
     clearCallTimer();
     const timer = setTimeout(() => {
       dropCall();
-    }, 30000);
+    }, 60000);
     setCallTimer(timer);
   };
 
