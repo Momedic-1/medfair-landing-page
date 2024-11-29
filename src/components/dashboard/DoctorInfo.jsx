@@ -17,16 +17,16 @@ const DoctorProfile = () => {
   const [missedCalls, setMissedCalls] = useState(0);
   const [message, setMessages] = useState(0);
 
-  const userData = JSON.parse(localStorage.getItem('userData'));
-  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+  const [userData] = useState(() => JSON.parse(localStorage.getItem('userData')));
+  const [token] = useState(() => JSON.parse(localStorage.getItem('authToken'))?.token);
 
+ 
   useEffect(() => {
     const fetchStats = async () => {
       if (userData && token) {
         const id = userData.id;
 
         try {
-          // Fetch consultation and patient data
           const response = await axios.get(
             `${baseUrl}/api/call/${id}/total-patients-consultation`,
             {
@@ -35,10 +35,8 @@ const DoctorProfile = () => {
               },
             }
           );
-
           console.log("API Response for Stats:", response.data);
-
-       
+        
           const data = response.data;
           setStats({
             appointment: data.appointment || 0,
@@ -52,8 +50,9 @@ const DoctorProfile = () => {
       }
     };
 
-    fetchStats();
-  }, [userData, token]);
+    fetchStats(); 
+  }, [userData, token]); 
+
 
   useEffect(() => {
     const fetchMissedCallsAndMessages = async () => {
@@ -61,7 +60,6 @@ const DoctorProfile = () => {
         const id = userData.id;
 
         try {
-       
           const response = await axios.get(
             `${baseUrl}/api/call/missed/count?doctorId=${id}`,
             {
@@ -70,19 +68,19 @@ const DoctorProfile = () => {
               },
             }
           );
-
           console.log("API Response for Missed Calls and Messages:", response.data);
 
+          
           setMissedCalls(response.data.missedCalls || 0);
           setMessages(response.data.message || 0);
         } catch (error) {
-          console.error("Error fetching missed calls data:", error);
+          console.error("Error fetching missed calls and messages data:", error);
         }
       }
     };
 
-    fetchMissedCallsAndMessages();
-  }, [userData, token]);
+    fetchMissedCallsAndMessages(); 
+  }, [userData, token]); 
 
   return (
     <div className='bg-white rounded-3xl shadow-lg p-6 max-w-md mx-auto mt-14'>

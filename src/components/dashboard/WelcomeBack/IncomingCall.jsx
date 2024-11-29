@@ -1,14 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { baseUrl } from '../../../env';
 
 const IncomingCall = () => {
   const [incomingCalls, setIncomingCalls] = useState([]);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData'));
 
+  
+  const incomingCallsRef = useRef([]);
+  
   useEffect(() => {
     const fetchIncomingCalls = async () => {
       try {
@@ -24,11 +28,13 @@ const IncomingCall = () => {
         const incomingCallsData = incomingResponse.data.data || [];
         const patientCallsData = patientResponse.data.data || [];
 
-        setIncomingCalls([...incomingCallsData, ...patientCallsData]);
+        const allCalls = [...incomingCallsData, ...patientCallsData];
+        incomingCallsRef.current = allCalls; 
+        setIncomingCalls(allCalls);
       } catch (error) {
         console.error('Error fetching calls:', error);
       } finally {
-        setLoading(false); 
+        setLoading(false);
       }
     };
 
@@ -37,14 +43,19 @@ const IncomingCall = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIncomingCalls(prevCalls => {
-        const now = new Date().getTime();
-        return prevCalls.filter(call => (now - new Date(call.callInitiationTime).getTime()) < 120000);
+      const now = new Date().getTime();
+
+
+      const updatedCalls = incomingCallsRef.current.filter(call => {
+        return (now - new Date(call.callInitiationTime).getTime()) < 120000; 
       });
+
+      
+      setIncomingCalls(updatedCalls);
     }, 60000); 
 
-    return () => clearInterval(timer); 
-  }, [incomingCalls]);
+    return () => clearInterval(timer);
+  }, []);
 
   const pickCall = async (callId) => {
     try {
@@ -67,6 +78,12 @@ const IncomingCall = () => {
     }
   };
 
+  
+  const formatTime = (time) => {
+    const date = new Date(time);
+    return date.toLocaleTimeString(); 
+  };
+
   return (
     <div className='w-[100%] p-6 sm:w-[100%] lg:w-[70%] md:w-[100%]'>
       <h1 className='text-2xl font-bold text-[#020e7c] mb-4'>Incoming Calls</h1>
@@ -77,8 +94,13 @@ const IncomingCall = () => {
           {incomingCalls.length > 0 ? incomingCalls.map((call) => (
             <div key={call.callId} className='flex justify-between items-center border p-4 rounded'>
               <div>
-                <p className='font-bold'>Patient: {call.patientFirstName} {call.patientLastName}</p>
-                <p className='text-sm text-gray-600'>Initiated at: {new Date(call.callInitiationTime).toLocaleTimeString()}</p>
+                <p className='font-bold'>
+                  Patient: {call.patientFirstName} {call.patientLastName}
+                </p>
+                
+                <p className='text-sm text-gray-600'>
+                  Initiated at: {formatTime(call.callInitiationTime)}
+                </p>
               </div>
               <button
                 onClick={() => pickCall(call.callId)}

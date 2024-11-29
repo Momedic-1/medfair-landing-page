@@ -10,10 +10,13 @@ import VideoCallIcon from '../assets/VideoCallIcon.jsx';
 import DocumentsIcon from '../assets/DocumentIcon.jsx';
 import FinanceIcon from '../assets/FinanceIcon.jsx';
 import SettingsIcon from '../assets/SettingsIcon.jsx';
+import { FaUser } from "react-icons/fa";
 import HelpIcon from '../assets/HelpIcon.jsx';
 import CloseIcon from '../assets/CloseIcon.jsx';
 import Logout from '../Logout.jsx';
+//  import { useLocation } from 'react-router-dom';
 const Sidebar = () => {
+  //  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const sidebarRef = useRef(null)
   const userData = JSON.parse(localStorage.getItem('userData'));
@@ -134,7 +137,7 @@ const Sidebar = () => {
               <ul className='flex flex-col space-y-1 mt-6'>
                 <li className='mb-2'>
                   <NavLink
-                    to='/dashboard'
+                    to='dashboard'
                     className={({ isActive }) =>
                       `flex items-center p-2 rounded-lg ${
                         isActive
@@ -220,6 +223,23 @@ const Sidebar = () => {
                   </a>
                 </li>
                 <li>
+                
+                <NavLink
+                    to='search'
+                    className={({ isActive }) =>
+                      `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
+                        isActive
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'text-gray-100 hover:bg-gray-100'
+                      }`
+                    }
+                  >
+                  <FaUser /> 
+                  Notes
+                  </NavLink>
+</li>
+
+                <li>
                   
                     <Logout/>
                 </li>
@@ -232,3 +252,4 @@ const Sidebar = () => {
   )
 }
 export default Sidebar
+
