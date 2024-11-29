@@ -1,5 +1,5 @@
 
-import AvatarImage from '../../assets/avatar.png';
+import AvatarImage from '../../assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import {baseUrl} from "../../env.jsx";

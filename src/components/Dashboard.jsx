@@ -25,10 +25,12 @@ const Dashboard = () => {
     }, [status, value]);
   return (
     <div className='lg:ml-[15rem] relative '>
+    
         <div
             className='flex flex-col px-2 lg:flex-row min-h-screen items-stretch lg:items-start justify-center bg-gray-100 p-2'>
             <LeftPanel status={status}  />
             <RightPanel/>
+            
         </div>
 
         <div

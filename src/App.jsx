@@ -13,11 +13,14 @@ import DoctorSignupForm from './DoctorSignup/DoctorSignupForm.jsx';
 import HomePage from './components/Home/HomePage.jsx/HomePage.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import IncomingCalls from './components/dashboard/WelcomeBack/IncomingCall.jsx';
+// import Search from './pages/Search.jsx';
+
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
+       
         <Route path="/doctor_signup/*" element={<DoctorSignupForm />} />
         <Route path="/patient_signup/*" element={<PatientSignup />} />
         <Route path="/verify-email" element={<VerificationInput />} />
@@ -25,6 +28,7 @@ const App = () => {
         <Route path="/verification-success" element={<VerificationSuccessful />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path='/incoming-call'element={<IncomingCalls/>}/>
+        {/* <Route path='/search'element={<Search/>}/> */}
         <Route element={<ProtectedRoute role="PATIENT" />}>
           <Route path="/patient-dashboard" element={<Dashboard />} />
           <Route path="/patient_profile" element={<Profile />} />
@@ -39,3 +43,4 @@ const App = () => {
 };
 
 export default App;
+
