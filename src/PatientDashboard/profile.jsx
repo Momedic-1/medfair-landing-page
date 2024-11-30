@@ -16,6 +16,7 @@ import profile_img from './assets/profile-img.svg'
 export default function Profile() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const userData = JSON.parse(localStorage.getItem('userData'));
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -84,7 +85,11 @@ export default function Profile() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="text-blue-800 font-semibold">John Doe</span>
+          <span className="font-bold text-[#020E7C]">
+        {userData
+          ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
+          : null}
+      </span>
             <img src={bell} alt='notifications' className='hidden lg:block'/>
             <img src={bell} alt='notifications' className='block lg:hidden' onClick={toggleSidebar}/>
           </div>
