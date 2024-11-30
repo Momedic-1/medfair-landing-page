@@ -13,6 +13,7 @@ import DoctorSignupForm from './DoctorSignup/DoctorSignupForm.jsx';
 import HomePage from './components/Home/HomePage.jsx/HomePage.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import IncomingCalls from './components/dashboard/WelcomeBack/IncomingCall.jsx';
+import PatientNotes from './PatientDashboard/patientNotes.jsx';
 // import Search from './pages/Search.jsx';
 
 const App = () => {
@@ -28,10 +29,12 @@ const App = () => {
         <Route path="/verification-success" element={<VerificationSuccessful />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path='/incoming-call'element={<IncomingCalls/>}/>
+        
         {/* <Route path='/search'element={<Search/>}/> */}
         <Route element={<ProtectedRoute role="PATIENT" />}>
           <Route path="/patient-dashboard" element={<Dashboard />} />
           <Route path="/patient_profile" element={<Profile />} />
+          <Route path='/patient-notes' element={<PatientNotes/>}/>
           <Route path="/payment" element={<PaymentPage />} />
         </Route>
         <Route element={<ProtectedRoute role="DOCTOR" />}>

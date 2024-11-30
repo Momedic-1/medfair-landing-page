@@ -14,9 +14,9 @@ import { FaUser } from "react-icons/fa";
 import HelpIcon from '../assets/HelpIcon.jsx';
 import CloseIcon from '../assets/CloseIcon.jsx';
 import Logout from '../Logout.jsx';
-//  import { useLocation } from 'react-router-dom';
+
 const Sidebar = () => {
-  //  const location = useLocation();
+ 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const sidebarRef = useRef(null)
   const userData = JSON.parse(localStorage.getItem('userData'));
@@ -137,7 +137,7 @@ const Sidebar = () => {
               <ul className='flex flex-col space-y-1 mt-6'>
                 <li className='mb-2'>
                   <NavLink
-                    to='dashboard'
+                    to='/doctor-dashboard'
                     className={({ isActive }) =>
                       `flex items-center p-2 rounded-lg ${
                         isActive

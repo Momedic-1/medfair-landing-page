@@ -9,6 +9,7 @@ import SpecialistModal from '../PatientSignup/SpecialistModal';
 import testTube from "../assets/test.jpeg"
 import CalendarIcon from  "../assets/calendarIcon.jpeg"
 import Sidebar from './Sidebar';
+import Search from '../pages/Search.jsx';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -40,7 +41,9 @@ export default function Dashboard() {
 
   const [specialistModal, setSpecialistModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -83,9 +86,6 @@ export default function Dashboard() {
   const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
   const swiperRef = useRef(null);
-  
-
- 
   
   const handlePrev = () => {
     if (swiperRef.current) {
@@ -181,7 +181,7 @@ function makePaymentToast(message){
         className="w-full max-w-md p-2 rounded-lg border focus:outline-none focus:ring focus:border-blue-500"
       />
     </div>
-
+   
     <div className="flex items-center gap-4">
       <img src={bell} alt="notifications" className="w-4 md:w-4 sm:w-4" />
       <span className="font-bold text-[#020E7C] hidden lg:block">
