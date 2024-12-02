@@ -20,7 +20,6 @@ const DoctorProfile = () => {
   const [userData] = useState(() => JSON.parse(localStorage.getItem('userData')));
   const [token] = useState(() => JSON.parse(localStorage.getItem('authToken'))?.token);
 
- 
   useEffect(() => {
     const fetchStats = async () => {
       if (userData && token) {
@@ -39,10 +38,10 @@ const DoctorProfile = () => {
         
           const data = response.data;
           setStats({
-            appointment: data.appointment || 0,
-            consultations: data.consultations || 0,
-            returnPatient: data.returnPatient || 0,
-            totalPatient: data.totalPatients || data.consultations || 0,
+            appointment: data.appointment || data,
+            consultations: data.consultations || data,
+            returnPatient: data.returnPatient || data,
+            totalPatient: data.totalPatients || data,
           });
         } catch (error) {
           console.error("Error fetching consultation and patient data:", error);
@@ -51,8 +50,7 @@ const DoctorProfile = () => {
     };
 
     fetchStats(); 
-  }, [userData, token]); 
-
+  }, [userData, token]);
 
   useEffect(() => {
     const fetchMissedCallsAndMessages = async () => {
@@ -70,9 +68,8 @@ const DoctorProfile = () => {
           );
           console.log("API Response for Missed Calls and Messages:", response.data);
 
-          
-          setMissedCalls(response.data.missedCalls || 0);
-          setMessages(response.data.message || 0);
+          setMissedCalls(response.data);
+          setMessages(response.data);
         } catch (error) {
           console.error("Error fetching missed calls and messages data:", error);
         }
@@ -80,7 +77,7 @@ const DoctorProfile = () => {
     };
 
     fetchMissedCallsAndMessages(); 
-  }, [userData, token]); 
+  }, [userData, token]);
 
   return (
     <div className='bg-white rounded-3xl shadow-lg p-6 max-w-md mx-auto mt-14'>
@@ -143,3 +140,4 @@ const DoctorProfile = () => {
 };
 
 export default DoctorProfile;
+

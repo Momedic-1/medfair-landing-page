@@ -9,6 +9,8 @@ const Search = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+  const userData = JSON.parse(localStorage.getItem('userData'));
   const [selectedNote, setSelectedNote] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
@@ -21,6 +23,7 @@ const Search = () => {
    const [plan, setPlan] = useState("");
    const [finalDiagnosis, setFinalDiagnosis] = useState("");
    const [soapComment, setSoapComment] = useState("");
+  
    const [drugs, setDrugs] = useState("");
  
   const handleSearch = async (e) => {
@@ -67,7 +70,7 @@ const Search = () => {
     e.preventDefault();
 
     const newNote = {
-      doctorName,
+      doctor: `${userData.firstName} ${userData.lastName}`,
       visitDate,
       subjective: "", 
       objective: "",
@@ -77,10 +80,22 @@ const Search = () => {
       soapComment: "",
       drugs: [], 
     };
+    
+    setNotes([...notes, newNote]);
 
+    
+    setVisitDate('');
+    setSubjective('');
+    setObjective('');
+    setAssessment('');
+    setPlan('');
+    setFinalDiagnosis('');
+    setSoapComment('');
+    setDrugs('');
+    
     try {
-      const response = await fetch(`${baseUrl}/api/notes`, {
-        method: "Get",
+      const response = await fetch(`${baseUrl}/api/notes/search`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
@@ -267,27 +282,13 @@ const Search = () => {
       {isAddNoteModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-auto">
-            <button
-              onClick={closeAddNoteModal}
-              className="absolute top-2 right-2 text-black font-bold"
-            >
-              ✖
-            </button>
+       
             <h2 className="text-xl font-semibold mb-4">Add New Note</h2>
             <form onSubmit={handleAddNote} className="space-y-4">
-              <div className="border rounded p-4">
-                <label htmlFor="doctorName" className="block font-medium">
-                  Doctor Name:
-                </label>
-                <input
-                  type="text"
-                  id="doctorName"
-                  className="border p-2 w-full"
-                  value={doctorName}
-                  onChange={(e) => setDoctorName(e.target.value)}
-                  placeholder="Enter doctor's name"
-                  required
-                />
+            <div className="border rounded p-4">
+                <span className="font-bold text-[#020E7C] mb-4 max-w-md text-xl text-center items-center justify-center pr-[3rem] sm:pr-[12rem] lg:pr-[7rem] md:pr-[13rem]">
+                  Doctor {userData.firstName} {userData.lastName}
+                </span>
               </div>
               <div className="border rounded p-4">
                 <label htmlFor="visitDate" className="block font-medium">
@@ -312,7 +313,6 @@ const Search = () => {
                    className="border rounded p-2 w-full"
                  />
                </div>
-
                <div>
                <label htmlFor="objective" className="block text-sm font-medium">Objective</label>
                 <textarea
@@ -323,8 +323,6 @@ const Search = () => {
                    className="border rounded p-2 w-full"
                  />
               </div>
-
-
               <div>
                 <label htmlFor="assessment" className="block text-sm font-medium">Assessment</label>
                 <textarea
@@ -358,8 +356,6 @@ const Search = () => {
                   className="border rounded p-2 w-full"
                 />
               </div>
-
-
                <div>
                  <label htmlFor="soapComment" className="block text-sm font-medium">SOAP Comment</label>
                  <textarea
@@ -373,7 +369,7 @@ const Search = () => {
 
                <div>
                 <label htmlFor="drugs" className="block text-sm font-medium">Drugs</label>
-                 <input
+                 <textarea
                    id="drugs"
                    type="text"
                   value={drugs}
@@ -394,17 +390,17 @@ const Search = () => {
                    type="submit"
                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                  >
-                  Add Note
+                  Save Note
                 </button>
                </div>
             </form>
           </div>
         </div>
       )}
+     
     </div>
   );
 };
-
 export default Search;
 
 

@@ -5,7 +5,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'; 
 import { FaChevronRight, FaChevronLeft } from 'react-icons/fa'; 
 import '../dashboard/Custompage.css'; 
-import Modal from './SetTime'; 
+// import Modal from './SetTime'; 
 import AppointmentRequests from './AppointmentRequests';
 
 const CalendarPage = () => {
@@ -106,7 +106,7 @@ const CalendarPage = () => {
         </div>
 
        
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} onConfirm={handleTimeConfirm} />
+        {/* <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} onConfirm={handleTimeConfirm} /> */}
       </div>
     </div>
   );
