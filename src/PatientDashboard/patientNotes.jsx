@@ -43,10 +43,10 @@ const PatientNotes = () => {
   }, []); 
 
   return (
-    <div className="h-screen flex overflow-x-hidden">
+    <div className="h-screen flex ">
       <Sidebar />
       <div className="p-8">
-        <div className="overflow-x-auto space-y-4">
+        <div className=" overflow-x-auto md:space-x-4 space-y-4 md:space-y-0 ">
           <table className="table-auto border-collapse border border-gray-300 w-full text-left">
             <thead>
               <tr className="bg-gray-100">
