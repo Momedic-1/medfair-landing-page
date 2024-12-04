@@ -38,7 +38,12 @@ export default function PatientSignupForm({ formData, setFormData }) {
     }
 
   };
-
+  const handlePhoneChange = (phone) => {
+    setFormData({
+      ...formData,
+      phoneNumber: phone, 
+    });
+  };
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -102,9 +107,9 @@ export default function PatientSignupForm({ formData, setFormData }) {
           country={'ng'}
           inputStyle={{ width: '100%', height: "53px"}}
           containerStyle={{ width: '98%' }}
-          name="PhoneInput"
-          value={formData.PhoneInput}
-          onChange={handleChange}
+          value={formData.phoneNumber}
+          onChange={handlePhoneChange}
+          
         />
       </div>
     </div>

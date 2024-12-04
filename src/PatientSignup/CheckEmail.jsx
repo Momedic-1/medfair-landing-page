@@ -20,11 +20,12 @@ const CheckEmail = ({ onAnimationComplete, email }) => {
         <h1 className='text-2xl font-bold text-gray-800 mb-2'>
           Check your email!
         </h1>
-        <p className='text-gray-500'>
-          A verification code was sent to you
+        <p className="text-gray-500">
+           A verification code was sent to you
           <br />
-          <p>({email ? email: 'solomonmoregood97@gmail.com'}).</p>
-        </p>
+          <span>({email ? email : 'solomonmoregood97@gmail.com'}).</span>
+            </p>
+
       </div>
     </div>
   )
