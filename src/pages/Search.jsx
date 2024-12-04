@@ -17,7 +17,8 @@ const Search = () => {
   const [selectedNote, setSelectedNote] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -25,9 +26,10 @@ const Search = () => {
     setError(null);
     try {
       const response = await axios.get(
-        `${baseUrl}/api/notes/notes/doctor/${doctorId}?firstName=${firstName}&lastName=${lastName}` // Dynamic doctorId in URL
+        `${baseUrl}/api/notes/search?firstName=${firstName}&lastName=${lastName}` 
       );
       setResults(response.data);
+      setCurrentPage(1);
     } catch (err) {
       setError("Failed to fetch data. Please try again later.");
     } finally {
@@ -47,15 +49,14 @@ const Search = () => {
           },
         }
       );
-      // After adding a note, refetch the notes to update the UI
+      
       fetchNotes();
-      setIsAddNoteModalOpen(false); // Close the add note modal after adding the note
+      setIsAddNoteModalOpen(false); 
     } catch (err) {
       console.error("Failed to add note", err);
     }
   };
 
-  // Fetch notes after adding a new one
   const fetchNotes = async () => {
     try {
       const response = await axios.get(
@@ -67,7 +68,7 @@ const Search = () => {
     }
   };
 
-  // View Note Modal
+  
   const handleView = (note) => {
     setSelectedNote(note);
     setIsModalOpen(true);
@@ -85,23 +86,30 @@ const Search = () => {
   const closeAddNoteModal = () => {
     setIsAddNoteModalOpen(false);
   };
-
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
   useEffect(() => {
     fetchNotes();
   }, []);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentResults = results.slice(indexOfFirstItem, indexOfLastItem);
 
+  const totalPages = Math.ceil(results.length / itemsPerPage);
+  
   return (
     <div className="p-4">
       <div className="flex justify-end mb-4">
         <button
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          className="bg-green-500 text-white px-4 py-2 rounded  hover:bg-green-600"
           onClick={openAddNoteModal}
         >
           Add New Note
         </button>
       </div>
 
-      <form onSubmit={handleSearch} className="space-y-4 relative lg:-top-[77px] md:-top-0 sm:-top-0">
+      <form onSubmit={handleSearch} className="space-y-4 relative  lg:-top-[28px] md:-top-0 sm:-top-0">
         <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 lg:pl-56">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium">
@@ -140,7 +148,7 @@ const Search = () => {
         </div>
       </form>
 
-      <div className="overflow-x-auto lg:pl-56 relative lg:-top-[49px]">
+      <div className="overflow-x-auto whitespace-nowrap lg:pl-56 relative lg:-top-[20px] ">
         <table className="border-collapse border border-gray-300 w-full text-left table-auto">
           <thead>
             <tr className="bg-gray-100">
@@ -158,7 +166,7 @@ const Search = () => {
             </tr>
           </thead>
           <tbody>
-            {results.map((note, index) => (
+            {currentResults.map((note, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2">{note.doctorFirstName}</td>
                 <td className="border border-gray-300 px-4 py-2">{note.doctorLastName}</td>
@@ -176,7 +184,7 @@ const Search = () => {
                     ))}
                   </ul>
                 </td>
-                <td className="border border-gray-300 px-4 py-2">
+                <td className="border border-gray-300 px-4 ">
                   <button
                     onClick={() => handleView(note)}
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -189,8 +197,20 @@ const Search = () => {
           </tbody>
         </table>
       </div>
+      <div className="flex justify-center mt-4 space-x-2">
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index}
+            onClick={() => paginate(index + 1)}
+            className={`px-4 py-2 rounded ${
+              currentPage === index + 1 ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+          >
+            {index + 1}
+          </button>
+        ))}
+      </div>
 
-      {/* View Note Modal */}
       {isModalOpen && selectedNote && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-11/12 md:w-1/2">
