@@ -38,9 +38,9 @@ const DoctorProfile = () => {
         
           const data = response.data;
           setStats({
-            appointment: data.appointment || data,
+            appointment: data.appointment || 0,
             consultations: data.consultations || data,
-            returnPatient: data.returnPatient || data,
+            returnPatient: data.returnPatient || 0,
             totalPatient: data.totalPatients || data,
           });
         } catch (error) {
@@ -69,7 +69,7 @@ const DoctorProfile = () => {
           console.log("API Response for Missed Calls and Messages:", response.data);
 
           setMissedCalls(response.data);
-          setMessages(response.data);
+          setMessages(response.messages );
         } catch (error) {
           console.error("Error fetching missed calls and messages data:", error);
         }

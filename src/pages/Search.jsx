@@ -1,6 +1,8 @@
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import AddNoteModal from "./AddNote";
 import { baseUrl } from "../env";
 
 const Search = () => {
@@ -11,32 +13,21 @@ const Search = () => {
   const [error, setError] = useState(null);
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData'));
+  const doctorId = userData?.id; 
   const [selectedNote, setSelectedNote] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
 
-  const [doctorName, setDoctorName] = useState("");
-  const [visitDate, setVisitDate] = useState("");
-  const [subjective, setSubjective] = useState("");
-   const [objective, setObjective] = useState("");
-   const [assessment, setAssessment] = useState("");
-   const [plan, setPlan] = useState("");
-   const [finalDiagnosis, setFinalDiagnosis] = useState("");
-   const [soapComment, setSoapComment] = useState("");
-  
-   const [drugs, setDrugs] = useState("");
- 
+
   const handleSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `${baseUrl}/api/notes/search?firstName=${firstName}&lastName=${lastName}`
+      const response = await axios.get(
+        `${baseUrl}/api/notes/notes/doctor/${doctorId}?firstName=${firstName}&lastName=${lastName}` // Dynamic doctorId in URL
       );
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-      const data = await response.json();
-      setResults(data);
+      setResults(response.data);
     } catch (err) {
       setError("Failed to fetch data. Please try again later.");
     } finally {
@@ -44,18 +35,48 @@ const Search = () => {
     }
   };
 
-   
+
+  const handleAddNote = async (newNote) => {
+    try {
+      await axios.post(
+        `${baseUrl}/api/notes/notes/doctor/${doctorId}`,
+        newNote,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // After adding a note, refetch the notes to update the UI
+      fetchNotes();
+      setIsAddNoteModalOpen(false); // Close the add note modal after adding the note
+    } catch (err) {
+      console.error("Failed to add note", err);
+    }
+  };
+
+  // Fetch notes after adding a new one
+  const fetchNotes = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/notes/notes/doctor/${doctorId}`
+      );
+      setResults(response.data);
+    } catch (err) {
+      console.error("Failed to fetch notes", err);
+    }
+  };
+
+  // View Note Modal
   const handleView = (note) => {
     setSelectedNote(note);
     setIsModalOpen(true);
   };
 
-  
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedNote(null);
   };
-
 
   const openAddNoteModal = () => {
     setIsAddNoteModalOpen(true);
@@ -65,62 +86,12 @@ const Search = () => {
     setIsAddNoteModalOpen(false);
   };
 
-
-  const handleAddNote = async (e) => {
-    e.preventDefault();
-
-    const newNote = {
-      doctor: `${userData.firstName} ${userData.lastName}`,
-      visitDate,
-      subjective: "", 
-      objective: "",
-      assessment: "",
-      plan: "",
-      finalDiagnosis: "",
-      soapComment: "",
-      drugs: [], 
-    };
-    
-    setNotes([...notes, newNote]);
-
-    
-    setVisitDate('');
-    setSubjective('');
-    setObjective('');
-    setAssessment('');
-    setPlan('');
-    setFinalDiagnosis('');
-    setSoapComment('');
-    setDrugs('');
-    
-    try {
-      const response = await fetch(`${baseUrl}/api/notes/search`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newNote),
-      });
-
-      if (!response.ok) throw new Error("Failed to add note");
-
-      const addedNote = await response.json();
-
-     
-      setResults([...results, addedNote]);
-
-     
-      setDoctorName("");
-      setVisitDate("");
-      closeAddNoteModal(); 
-    } catch (err) {
-      setError("Failed to add note. Please try again later.");
-    }
-  };
+  useEffect(() => {
+    fetchNotes();
+  }, []);
 
   return (
-    <div className="p-6">
-     
+    <div className="p-4">
       <div className="flex justify-end mb-4">
         <button
           className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -130,8 +101,8 @@ const Search = () => {
         </button>
       </div>
 
-      <form onSubmit={handleSearch} className="mb-6 space-y-4">
-        <div className="flex flex-col  md:flex-row md:space-x-4 space-y-4 md:space-y-0 lg:pl-56">
+      <form onSubmit={handleSearch} className="space-y-4 relative lg:-top-[77px] md:-top-0 sm:-top-0">
+        <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 lg:pl-56">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium">
               First Name
@@ -169,19 +140,19 @@ const Search = () => {
         </div>
       </form>
 
-      <div className="overflow-x-auto md:space-x-4 space-y-4 md:space-y-0 lg:pl-56">
-        <table className="table-auto border-collapse border border-gray-300 w-full text-left">
+      <div className="overflow-x-auto lg:pl-56 relative lg:-top-[49px]">
+        <table className="border-collapse border border-gray-300 w-full text-left table-auto">
           <thead>
             <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">Doctor First Name</th>
+              <th className="border border-gray-300 px-4 py-2">Doctor First Name</th>
               <th className="border border-gray-300 px-4 py-2">Doctor Last Name</th>
               <th className="border border-gray-300 px-4 py-2">Visit Date</th>
               <th className="border border-gray-300 px-4 py-2">Subjective</th>
-               <th className="border border-gray-300 px-4 py-2">Objective</th>
-               <th className="border border-gray-300 px-4 py-2">Assessment</th>
-               <th className="border border-gray-300 px-4 py-2">Plan</th>
-               <th className="border border-gray-300 px-4 py-2">Final Diagnosis</th>
-               <th className="border border-gray-300 px-4 py-2">SOAP Comment</th>
+              <th className="border border-gray-300 px-4 py-2">Objective</th>
+              <th className="border border-gray-300 px-4 py-2">Assessment</th>
+              <th className="border border-gray-300 px-4 py-2">Plan</th>
+              <th className="border border-gray-300 px-4 py-2">Final Diagnosis</th>
+              <th className="border border-gray-300 px-4 py-2">SOAP Comment</th>
               <th className="border border-gray-300 px-4 py-2">Drugs</th>
               <th className="border border-gray-300 px-4 py-2">Actions</th>
             </tr>
@@ -189,219 +160,100 @@ const Search = () => {
           <tbody>
             {results.map((note, index) => (
               <tr key={index} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-4 py-2">{note.doctorFirstName}</td>
-                 <td className="border border-gray-300 px-4 py-2">{note.doctorLastName}</td>
-                <td className="border border-gray-300 px-4 py-2">
-                   {new Date(note.visitDate).toLocaleString()}
-                 </td>
-                 <td className="border border-gray-300 px-4 py-2">{note.subjective}</td>
+                <td className="border border-gray-300 px-4 py-2">{note.doctorFirstName}</td>
+                <td className="border border-gray-300 px-4 py-2">{note.doctorLastName}</td>
+                <td className="border border-gray-300 px-4 py-2">{new Date(note.visitDate).toLocaleString()}</td>
+                <td className="border border-gray-300 px-4 py-2">{note.subjective}</td>
                 <td className="border border-gray-300 px-4 py-2">{note.objective}</td>
                 <td className="border border-gray-300 px-4 py-2">{note.assessment}</td>
-                 <td className="border border-gray-300 px-4 py-2">{note.plan}</td>
-                 <td className="border border-gray-300 px-4 py-2">{note.finalDiagnosis}</td>
-                 <td className="border border-gray-300 px-4 py-2">{note.soapComment}</td>
-               
-               
-                 <td className="border border-gray-300 px-4 py-2">
-                 <ul>
-              {note.drugs.map((drug, index) => (
-             <li key={index}>{drug.name} - {drug.dosage}</li>
-          ))}
-        </ul>
-          </td>
-        <td className="border border-gray-300 px-4 py-2">
-       <button
-       onClick={() => handleView(note)}
-     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-green-600"
-      >
-         View
-       </button>
-          </td>  
+                <td className="border border-gray-300 px-4 py-2">{note.plan}</td>
+                <td className="border border-gray-300 px-4 py-2">{note.finalDiagnosis}</td>
+                <td className="border border-gray-300 px-4 py-2">{note.soapComment}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <ul>
+                    {note.drugs.map((drug, idx) => (
+                      <li key={idx}>{drug.name} - {drug.dosage}</li>
+                    ))}
+                  </ul>
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <button
+                    onClick={() => handleView(note)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                  >
+                    View
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {isModalOpen && (
+
+      {/* View Note Modal */}
+      {isModalOpen && selectedNote && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-           <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6  max-h-[80vh] overflow-y-auto">
-             <h2 className="text-xl font-semibold mb-4">View Note</h2>
-             <div className="space-y-4">
-               <div className="border py-2 px-2">
-                <label className="font-medium">Doctor Name:</label>
-                 <p>{selectedNote?.doctorFirstName} {selectedNote?.doctorLastName}</p>
-               </div>
-               <div className="border py-2 px-2">
+          <div className="bg-white p-6 rounded-lg w-11/12 md:w-1/2">
+            <h2 className="text-xl font-bold mb-4">View Note</h2>
+            <div className="space-y-4">
+              <div className="border py-2 px-2">
                 <label className="font-medium">Visit Date:</label>
-                <p>{new Date(selectedNote?.visitDate).toLocaleDateString()}</p>
+                <p>{new Date(selectedNote.visitDate).toLocaleString()}</p>
               </div>
-              <div className=" border py-2 px-2">
+              <div className="border py-2 px-2">
                 <label className="font-medium">Subjective:</label>
-                <p>{selectedNote?.subjective}</p>
-               </div>
-               <div className="border py-2 px-2">
-                 <label className="font-medium">Objective:</label>
-                 <p>{selectedNote?.objective}</p>
-               </div>
-              <div className="border">
-                 <label className="font-medium">Assessment:</label>
-                <p>{selectedNote?.assessment}</p>
-               </div>
-               <div className="border py-2 px-2">
-                 <label className="font-medium">Plan:</label>
-                 <p>{selectedNote?.plan}</p>
-               </div>
-               <div className="border py-2 px-2">
-                 <label className="font-medium">Final Diagnosis:</label>
-                 <p>{selectedNote?.finalDiagnosis}</p>
-               </div>
-               <div className="border py-2 px-2">
-                 <label className="font-medium">SOAP Comment:</label>
-                 <p>{selectedNote?.soapComment}</p>
-               </div>
-               <div className="border py-2 px-2">
-                 <label className="font-medium">Drugs:</label>
-                 <ul>
-                   {selectedNote?.drugs.map((drug, index) => (
-                     <li key={index}>{drug.name} - {drug.dosage}</li>
-                   ))}
-                 </ul>
-               </div>
+                <p>{selectedNote.subjective}</p>
               </div>
-                <button
-                   type="button"
-                   onClick={closeModal}
-                   className="bg-gray-500 text-white mt-4 px-4 py-2 rounded hover:bg-gray-600"
-                >
-                   Cancel
-                </button>
-           </div>
-        </div>
-       )}
-    
-      {isAddNoteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-auto">
-       
-            <h2 className="text-xl font-semibold mb-4">Add New Note</h2>
-            <form onSubmit={handleAddNote} className="space-y-4">
-            <div className="border rounded p-4">
-                <span className="font-bold text-[#020E7C] mb-4 max-w-md text-xl text-center items-center justify-center pr-[3rem] sm:pr-[12rem] lg:pr-[7rem] md:pr-[13rem]">
-                  Doctor {userData.firstName} {userData.lastName}
-                </span>
+              <div className="border py-2 px-2">
+                <label className="font-medium">Objective:</label>
+                <p>{selectedNote.objective}</p>
               </div>
-              <div className="border rounded p-4">
-                <label htmlFor="visitDate" className="block font-medium">
-                  Visit Date:
-                </label>
-                <input
-                  type="date"
-                  id="visitDate"
-                  className="border p-2 w-full"
-                  value={visitDate}
-                  onChange={(e) => setVisitDate(e.target.value)}
-                  required
-                />
+              <div className="border py-2 px-2">
+                <label className="font-medium">Assessment:</label>
+                <p>{selectedNote.assessment}</p>
               </div>
-              <div>
-                 <label htmlFor="subjective" className="block text-sm font-medium">Subjective</label>
-                <textarea
-                  id="subjective"
-                   value={subjective}
-                   onChange={(e) => setSubjective(e.target.value)}
-                   placeholder="Enter subjective information"
-                   className="border rounded p-2 w-full"
-                 />
-               </div>
-               <div>
-               <label htmlFor="objective" className="block text-sm font-medium">Objective</label>
-                <textarea
-                  id="objective"
-                  value={objective}
-                  onChange={(e) => setObjective(e.target.value)}
-                   placeholder="Enter objective information"
-                   className="border rounded p-2 w-full"
-                 />
+              <div className="border py-2 px-2">
+                <label className="font-medium">Plan:</label>
+                <p>{selectedNote.plan}</p>
               </div>
-              <div>
-                <label htmlFor="assessment" className="block text-sm font-medium">Assessment</label>
-                <textarea
-                  id="assessment"
-                  value={assessment}
-                   onChange={(e) => setAssessment(e.target.value)}
-                  placeholder="Enter assessment information"
-                  className="border rounded p-2 w-full"
-                 />
-               </div>
-
-               
-               <div>
-                 <label htmlFor="plan" className="block text-sm font-medium">Plan</label>
-                 <textarea
-                   id="plan"
-                  value={plan}
-                  onChange={(e) => setPlan(e.target.value)}
-                  placeholder="Enter plan information"
-                   className="border rounded p-2 w-full"
-                />
+              <div className="border py-2 px-2">
+                <label className="font-medium">Final Diagnosis:</label>
+                <p>{selectedNote.finalDiagnosis}</p>
               </div>
-              <div>
-                 <label htmlFor="finalDiagnosis" className="block text-sm font-medium">Final Diagnosis</label>
-                 <input
-                   id="finalDiagnosis"
-                   type="text"
-                  value={finalDiagnosis}
-                  onChange={(e) => setFinalDiagnosis(e.target.value)}
-                   placeholder="Enter final diagnosis"
-                  className="border rounded p-2 w-full"
-                />
+              <div className="border py-2 px-2">
+                <label className="font-medium">SOAP Comment:</label>
+                <p>{selectedNote.soapComment}</p>
               </div>
-               <div>
-                 <label htmlFor="soapComment" className="block text-sm font-medium">SOAP Comment</label>
-                 <textarea
-                  id="soapComment"
-                  value={soapComment}
-                   onChange={(e) => setSoapComment(e.target.value)}
-                   placeholder="Enter SOAP comment"
-                  className="border rounded p-2 w-full"
-                />
+              <div className="border py-2 px-2">
+                <label className="font-medium">Drugs:</label>
+                <ul>
+                  {selectedNote.drugs.map((drug, idx) => (
+                    <li key={idx}>{drug.name} - {drug.dosage}</li>
+                  ))}
+                </ul>
               </div>
-
-               <div>
-                <label htmlFor="drugs" className="block text-sm font-medium">Drugs</label>
-                 <textarea
-                   id="drugs"
-                   type="text"
-                  value={drugs}
-                  onChange={(e) => setDrugs(e.target.value)}
-                  placeholder="Enter drugs "
-                  className="border rounded p-2 w-full"
-                />
-              </div>
-              <div className="flex justify-end space-x-4">
-                <button
-                   type="button"
-                   onClick={closeAddNoteModal}
-                   className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                >
-                   Cancel
-                </button>
-                 <button
-                   type="submit"
-                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                 >
-                  Save Note
-                </button>
-               </div>
-            </form>
+            </div>
+            <div className="mt-4 text-right">
+              <button
+                onClick={closeModal}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
-     
+
+  
+      <AddNoteModal 
+      isOpen={isAddNoteModalOpen}
+       onClose={closeAddNoteModal}
+        onNoteAdded={handleAddNote} 
+        />
+        
     </div>
   );
 };
+
 export default Search;
-
-
-
