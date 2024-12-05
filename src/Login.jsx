@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login } from './features/authSlice';
+import {login, setError} from './features/authSlice';
 import ErrorModal from './components/ErrorModal';
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
