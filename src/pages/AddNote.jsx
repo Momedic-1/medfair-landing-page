@@ -27,8 +27,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   }, [userData]);
 
   
-  
-
 
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -91,7 +89,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-auto">
+      <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll">
         <h2 className="text-xl font-semibold mb-4">Add New Note</h2>
         <form onSubmit={handleAddNote} className="space-y-4">
         

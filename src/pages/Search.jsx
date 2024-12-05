@@ -108,9 +108,11 @@ const Search = () => {
           Add New Note
         </button>
       </div>
-
+      <h2>Patient Note</h2>
       <form onSubmit={handleSearch} className="space-y-4 relative  lg:-top-[28px] md:-top-0 sm:-top-0">
+     
         <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 lg:pl-56">
+         
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium">
               First Name
@@ -148,12 +150,12 @@ const Search = () => {
         </div>
       </form>
 
-      <div className="overflow-x-auto whitespace-nowrap lg:pl-56 relative lg:-top-[20px] ">
+      <div className=" overflow-y-auto  max-w-full lg:pl-56 relative lg:-top-[20px] ">
         <table className="border-collapse border border-gray-300 w-full text-left table-auto">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-4 py-2">Doctor First Name</th>
-              <th className="border border-gray-300 px-4 py-2">Doctor Last Name</th>
+              <th className="border border-gray-300 px-4 py-2">Patient First Name</th>
+              <th className="border border-gray-300 px-4 py-2">Patient Last Name</th>
               <th className="border border-gray-300 px-4 py-2">Visit Date</th>
               <th className="border border-gray-300 px-4 py-2">Subjective</th>
               <th className="border border-gray-300 px-4 py-2">Objective</th>
@@ -168,8 +170,8 @@ const Search = () => {
           <tbody>
             {currentResults.map((note, index) => (
               <tr key={index} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">{note.doctorFirstName}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.doctorLastName}</td>
+                <td className="border border-gray-300 px-4 py-2">{note.patientFirstName}</td>
+                <td className="border border-gray-300 px-4 py-2">{note.patientLastName}</td>
                 <td className="border border-gray-300 px-4 py-2">{new Date(note.visitDate).toLocaleString()}</td>
                 <td className="border border-gray-300 px-4 py-2">{note.subjective}</td>
                 <td className="border border-gray-300 px-4 py-2">{note.objective}</td>
@@ -212,7 +214,7 @@ const Search = () => {
       </div>
 
       {isModalOpen && selectedNote && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto  flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-11/12 md:w-1/2">
             <h2 className="text-xl font-bold mb-4">View Note</h2>
             <div className="space-y-4">

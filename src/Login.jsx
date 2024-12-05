@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login } from './features/authSlice';
+import {login, setError} from './features/authSlice';
 import ErrorModal from './components/ErrorModal';
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
@@ -11,7 +11,7 @@ import close from "./assets/eye-close-svgrepo-com.svg";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    email: '',
+    emailOrPhone: '',
     password: '',
   });
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -61,20 +61,20 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="p-8 w-3/4 max-w-md">
           {error && <p className="text-red-600 mb-4">{error}</p>}
           <div className="lg:mb-10 mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="border rounded-md w-full p-3 text-gray-700"
-            />
-          </div>
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="emailOrPhone">
+          Email / PhoneNumber
+        </label>
+        <input
+          type="text"
+          name="emailOrPhone"
+          id="emailOrPhone"
+          placeholder="Enter your email or phone number"
+          value={formData.emailOrPhone}
+          onChange={handleChange}
+          required
+          className="border rounded-md w-full p-3 text-gray-700"
+        />
+      </div>
 
           <div className="mb-4 lg:mt-8">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
