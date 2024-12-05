@@ -47,7 +47,9 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+        console.log('Login response payload:', action.payload);
         state.isLoading = false;
+       
         state.token = action.payload.message;
         state.userData = action.payload.data;
         sessionStorage.setItem('id', action.payload.data.id);
