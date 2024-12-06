@@ -37,7 +37,7 @@ export default function LoginPage() {
   };
 
   const handleCloseModal = () => {
-    setError('');
+    dispatch(setError ('')) ;
   };
 
   useEffect(() => {

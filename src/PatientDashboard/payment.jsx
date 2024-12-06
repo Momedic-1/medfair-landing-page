@@ -64,13 +64,21 @@ export default function PaymentPage() {
     e.preventDefault();
     formData.plan = selectedPlan;
     formData.amount = `${selectedPrice}.00`;
-
-    const userData = JSON.parse(localStorage.getItem('authToken'));
-    const token = userData.token;
-    formData.email = userData.user.emailAddress;
+   
+    
+    const token = JSON.parse(localStorage.getItem('authToken'));
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    console.log("userData",userData);
+    
+    formData.email = userData.emailAddress;
+    
+    const data = {
+      "email": "sopamid173@pokeline.com",
+       "amount": 45000.00
+     }
 
     try {
-      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, formData, {
+      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

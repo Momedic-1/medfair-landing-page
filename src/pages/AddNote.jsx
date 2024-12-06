@@ -4,6 +4,8 @@ import axios from "axios";
 import { baseUrl } from "../env";
 
 const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [subjective, setSubjective] = useState('');
   const [objective, setObjective] = useState('');
@@ -23,11 +25,13 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     if (userData.id) {
       setPatientId(userData.id);
       setDoctorId(userData.id);
+      setFirstName(userData.firstName);  
+      setLastName(userData.lastName);
     }
   }, [userData]);
 
   
-
+ 
   const handleAddNote = async (e) => {
     e.preventDefault();
 
@@ -40,6 +44,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     const formData = {
       doctorId,
       patientId,
+      firstName,
+      lastName,
       visitDate,
       subjective,
       objective,
@@ -49,7 +55,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       soapComment,
       drugs,
     };
-
+   
     try {
       const response = await axios.post(`${baseUrl}/api/notes/create`, formData, {
         headers: {

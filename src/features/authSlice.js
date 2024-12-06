@@ -48,7 +48,6 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        console.log('Login response payload:', action.payload);
         state.isLoading = false;
        
         state.token = action.payload?.message;
@@ -60,7 +59,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload.message || 'An error occurred. Please try again.';
+        state.error = action.payload.message || 'Invalid details. Please try again.';
       });
   },
 });
