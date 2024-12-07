@@ -214,8 +214,8 @@ const Search = () => {
       </div>
 
       {isModalOpen && selectedNote && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto  flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-11/12 md:w-1/2">
+        <div className="fixed inset-0 bg-black bg-opacity-50   flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-11/12 md:w-1/2 overflow-y-auto max-h-[60vh]">
             <h2 className="text-xl font-bold mb-4">View Note</h2>
             <div className="space-y-4">
               <div className="border py-2 px-2">
