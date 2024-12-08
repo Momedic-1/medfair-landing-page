@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { baseUrl } from "../env";
 import Sidebar from '../PatientDashboard/Sidebar';
+import axios from 'axios';
 
 const PatientNotes = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -14,8 +15,9 @@ const PatientNotes = () => {
     const fetchPatientNotes = async () => {
       setLoading(true);
       try {
-        const id = sessionStorage.getItem("id"); 
-        const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+         const id = sessionStorage.getItem("id"); 
+         const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+        console.log(token);
 
         if (!id || !token) {
           setError("No ID or token found, unable to fetch patient notes.");
@@ -23,7 +25,7 @@ const PatientNotes = () => {
           return;
         }
 
-        const response = await fetch(`${baseUrl}/api/notes/patient/${id}`, {
+        const response = await axios.get(`${baseUrl}/api/notes/file/medfair5314`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -31,6 +33,7 @@ const PatientNotes = () => {
 
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
         const data = await response.json();
+        console.log(data);
         setResults(data);
       } catch (err) {
         setError("Failed to fetch patient notes. Please try again later.");

@@ -57,6 +57,24 @@ const IncomingCall = () => {
     return () => clearInterval(timer);
   }, []);
 
+
+  useEffect(() => {
+    let timeoutId;
+
+    if (incomingCalls.length > 0) {
+      // Set timeout to execute after two minutes (120,000 milliseconds)
+      timeoutId = setTimeout(() => {
+        // Only show the last call in the array after 2 minutes
+        setIncomingCalls([incomingCalls[incomingCalls.length - 1]]);
+      }, 120000); // 2 minutes
+    }
+
+    // Cleanup timeout if the component unmounts or incomingCalls changes
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [incomingCalls]);
+
   const pickCall = async (callId) => {
     try {
       const response = await axios.post(
