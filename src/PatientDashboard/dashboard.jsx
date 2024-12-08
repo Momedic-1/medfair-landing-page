@@ -162,7 +162,7 @@ function makePaymentToast(message){
     }
   
     // Ensure subtitle is valid as number and corresponds to the expected values
-    const validAmounts = [1500, 5000, 45000]; // Valid amounts based on backend
+    const validAmounts = [100, 5000, 45000]; // Valid amounts based on backend
     const amountInKobo = parseFloat(subtitle);
   
     // Check if the input is valid
