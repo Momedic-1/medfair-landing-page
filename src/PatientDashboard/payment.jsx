@@ -64,17 +64,16 @@ export default function PaymentPage() {
     e.preventDefault();
     formData.plan = selectedPlan;
     formData.amount = `${selectedPrice}.00`;
-
-    const userData = JSON.parse(localStorage.getItem('authToken'));
-    const token = userData.token;
-    formData.email = userData.user.emailAddress;
+   
+    
+    // const token = JSON.parse(localStorage.getItem('authToken'));
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    console.log("userData",userData);
+    
+    formData.email = userData.emailAddress;
 
     try {
-      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, formData);
       console.log(response);
       setPaymentSuccess(true);
     } catch (error) {

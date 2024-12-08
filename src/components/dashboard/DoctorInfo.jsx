@@ -34,8 +34,7 @@ const DoctorProfile = () => {
               },
             }
           );
-          console.log("API Response for Stats:", response.data);
-        
+          
           const data = response.data;
           setStats({
             appointment: data.appointment || 0,
@@ -66,7 +65,6 @@ const DoctorProfile = () => {
               },
             }
           );
-          console.log("API Response for Missed Calls and Messages:", response.data);
 
           setMissedCalls(response.data);
           setMessages(response.messages );

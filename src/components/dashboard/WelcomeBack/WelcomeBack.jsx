@@ -41,7 +41,6 @@ function WelcomeBack({ status }) {
           },
         }
       );
-      console.log("The active calls are:", response.data.data);
       setActiveCalling(response.data.data || []);
     } catch (error) {
       console.error(error);

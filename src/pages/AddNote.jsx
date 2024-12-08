@@ -4,6 +4,8 @@ import axios from "axios";
 import { baseUrl } from "../env";
 
 const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [subjective, setSubjective] = useState('');
   const [objective, setObjective] = useState('');
@@ -15,19 +17,40 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
   const [patientId, setPatientId] = useState('');
   const [doctorId, setDoctorId] = useState('');
+  const [existingNotes, setExistingNotes] = useState([]);
 
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData')) || {};
 
   useEffect(() => {
-    if (userData.id) {
+    if (userData.id && isOpen && !existingNotes.length) {
+    // if (userData.id) {
       setPatientId(userData.id);
       setDoctorId(userData.id);
+      setFirstName(userData.firstName);  
+      setLastName(userData.lastName);
+      fetchPatientNotes(userData.id);
+     
     }
-  }, [userData]);
+  }, [userData,isOpen]);
 
-  
-
+  const fetchPatientNotes = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${baseUrl}/api/notes/get-all-patient-note/${userData.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setExistingNotes(response.data); 
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching patient notes:", err);
+      setError("Failed to fetch patient notes.");
+      setLoading(false);
+    }
+  };
+ 
   const handleAddNote = async (e) => {
     e.preventDefault();
 
@@ -37,9 +60,19 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         return;
       }
     }
+
+    if (existingNotes.length > 0) {
+      const confirmProceed = window.confirm(
+        "This patient already has existing notes. Do you want to proceed with adding a new note?"
+      );
+      if (!confirmProceed) return;
+    }
+
     const formData = {
       doctorId,
       patientId,
+      firstName,
+      lastName,
       visitDate,
       subjective,
       objective,
@@ -49,7 +82,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       soapComment,
       drugs,
     };
-
+   
     try {
       const response = await axios.post(`${baseUrl}/api/notes/create`, formData, {
         headers: {
@@ -91,6 +124,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll">
         <h2 className="text-xl font-semibold mb-4">Add New Note</h2>
+        
+
         <form onSubmit={handleAddNote} className="space-y-4">
         
           <div className="border rounded p-4">
