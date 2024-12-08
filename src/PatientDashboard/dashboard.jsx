@@ -133,12 +133,10 @@ function makePaymentToast(message){
                   userId: patientId
               }
           })
-          console.log(response.data)
           const responseData = response.data
               window.open(responseData.start_url, '_blank', 'noopener,noreferrer');
 
       }catch (error){
-          console.log(error)
 
           if (error.message === "Network Error") {
               makePaymentToast(error.message)
@@ -147,7 +145,6 @@ function makePaymentToast(message){
           if (responseData.error ) {
               makePaymentToast(responseData.error)
               setTimeout(() => {
-                      navigate('/payment');
               }, 4000)
           }else{
               console.log("Call not initiated ");
@@ -155,6 +152,44 @@ function makePaymentToast(message){
       }
   }
 
+  const handleSubmit = async (e, subtitle) => {
+    e.preventDefault();
+  
+    // Retrieve user data from localStorage
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (!userData || !userData.emailAddress) {
+      return;
+    }
+  
+    // Ensure subtitle is valid as number and corresponds to the expected values
+    const validAmounts = [1500, 5000, 45000]; // Valid amounts based on backend
+    const amountInKobo = parseFloat(subtitle);
+  
+    // Check if the input is valid
+    if (!validAmounts.includes(amountInKobo)) {
+      return;
+    }
+  
+    const data = {
+      email: userData.emailAddress,
+      amount: amountInKobo,
+    };
+  
+    console.log('Payload:', data);
+  
+    try {
+      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, data);
+  
+      if (response.data) {
+        window.location.href = response.data;
+      }
+    } catch (error) {
+      alert('Payment failed: ' + (error.response?.data || error.message));
+    }
+  };
+  
+  
+  
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -252,7 +287,7 @@ function makePaymentToast(message){
       >
         <span className="text-blue-600 text-lg font-bold">{swipe.title}</span>
         <div className="text-4xl font-bold text-[#020E7C] mt-2">{swipe.subTitle}</div>
-        <button className="mt-7 w-32  border text-white bg-[#020E7C] py-2 px-4 rounded-3xl"  onClick={() => navigate('/payment', { state: { selectedPlan: swipe.title.toLowerCase() } })}>
+        <button className="mt-7 w-32  border text-white bg-[#020E7C] py-2 px-4 rounded-3xl" onClick={(e) => handleSubmit(e, swipe.subTitle)}>
           Subscribe
         </button>
         <div className="border-y-2 mt-3" />

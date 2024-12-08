@@ -1,7 +1,7 @@
 export const ActiveSlide = [
     {
         title:"Instant",
-        subTitle:"₦1,500",
+        subTitle: 1500.00,
         content: [
             "One-time consultation for immediate advice",
             "Access to certified doctors",
@@ -12,7 +12,7 @@ export const ActiveSlide = [
     },
     {
         title: "Monthly",
-        subTitle: "₦5,000",
+        subTitle: 5000.00,
         content: [
           "Up to 4 consultations per month",
           "Ongoing health support",
@@ -23,7 +23,7 @@ export const ActiveSlide = [
       },
       {
         title: "Yearly",
-        subTitle: "₦45,000",
+        subTitle: 45000.00,
         content: [
           "Up to 10 consultations per year",
           "Expert care anytime",
