@@ -26,7 +26,7 @@ const Search = () => {
     setError(null);
     try {
       const response = await axios.get(
-        `${baseUrl}/api/notes/search?firstName=${firstName}&lastName=${lastName}` 
+         `${baseUrl}/api/notes/file/${fileNumber}` 
       );
       setResults(response.data);
       setCurrentPage(1);
@@ -109,46 +109,7 @@ const Search = () => {
         </button>
       </div>
       <h2>Patient Note</h2>
-      <form onSubmit={handleSearch} className="space-y-4 relative  lg:-top-[28px] md:-top-0 sm:-top-0">
      
-        <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 lg:pl-56">
-         
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium">
-              First Name
-            </label>
-            <input
-              id="firstName"
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Enter first name"
-              className="border rounded p-2 w-full md:w-[200px]"
-            />
-          </div>
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium">
-              Last Name
-            </label>
-            <input
-              id="lastName"
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Enter last name"
-              className="border rounded p-2 w-full md:w-[200px]"
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full md:w-auto"
-            >
-              Search
-            </button>
-          </div>
-        </div>
-      </form>
 
       <div className=" overflow-y-auto  max-w-full lg:pl-56 relative lg:-top-[20px] ">
         <table className="border-collapse border border-gray-300 w-full text-left table-auto">
