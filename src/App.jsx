@@ -15,6 +15,7 @@ import ProtectedRoute from './ProtectedRoute.jsx';
 import IncomingCalls from './components/dashboard/WelcomeBack/IncomingCall.jsx';
 import PatientNotes from './PatientDashboard/patientNotes.jsx';
 import VerifyPayment from './VerifyPayment.jsx';
+import VideoCall from './components/VideoCall.jsx';
 
 
 
@@ -30,6 +31,7 @@ const App = () => {
         <Route path="/verification-success" element={<VerificationSuccessful />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path='/incoming-call'element={<IncomingCalls/>}/>
+        <Route path='/video-call'element={<VideoCall/>}/>
         <Route path="/verify-payment" element={<VerifyPayment />} />
         {/* <Route path='/search'element={<Search/>}/> */}
         <Route element={<ProtectedRoute role="PATIENT" />}>
