@@ -385,9 +385,16 @@ export default function Dashboard() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(responseData,"response is:")
+     
       const responseData = response.data;
-      window.open(responseData.start_url, '_blank', 'noopener,noreferrer');
+      const roomUrl = responseData.roomUrl;
+
+      if(roomUrl){
+        window.open(roomUrl, '_blank', 'noopener,noreferrer');
+      }else{
+        console.log("Room URL not found in response");
+      }
+     
     } catch (error) {
       console.log(error,"error mssg")
       if (error.message === "Network Error") {
@@ -411,7 +418,7 @@ export default function Dashboard() {
       return;
     }
 
-    const validAmounts = [1500, 5000, 45000];
+    const validAmounts = [1500, 5000, 100];
     const amountInKobo = parseFloat(subtitle);
 
     if (!validAmounts.includes(amountInKobo)) {
@@ -471,7 +478,7 @@ export default function Dashboard() {
     </div>
     
          <main className="p-4 overflow-auto h-full">
-      
+        
       <div className="quick-tools mt-6 grid grid-cols-2 gap-2 md:grid-cols-4">
         <div className="flex flex-col items-center  text-center">
           <img

@@ -8,7 +8,7 @@ import {baseUrl} from "../env.jsx";
 
 export default function PaymentPage() {
   const subscriptionPlans = {
-    yearly: { name: 'Yearly', price: 45000 },
+    yearly: { name: 'Yearly', price: 100 },
     monthly: { name: 'Monthly', price: 5000 },
     instant: { name: 'Instant', price: 1500 },
   };

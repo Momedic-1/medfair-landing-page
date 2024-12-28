@@ -23,7 +23,7 @@ export const ActiveSlide = [
       },
       {
         title: "Yearly",
-        subTitle: 45000.00,
+        subTitle: 100,
         content: [
           "Up to 10 consultations per year",
           "Expert care anytime",
