@@ -156,7 +156,7 @@ const VerificationInput = () => {
     const verificationData = { token, email: userEmail };
     console.log(verificationData);
     try {
-      const response = await fetch(`https://momedic.onrender.com/api/v1/registration/verify-email`, {
+      const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

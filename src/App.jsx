@@ -34,11 +34,13 @@ const App = () => {
         <Route path='/video-call'element={<VideoCall/>}/>
         <Route path="/verify-payment" element={<VerifyPayment />} />
         {/* <Route path='/search'element={<Search/>}/> */}
+
         <Route element={<ProtectedRoute role="PATIENT" />}>
           <Route path="/patient-dashboard" element={<Dashboard />} />
           <Route path="/patient_profile" element={<Profile />} />
           <Route path='/patient-notes' element={<PatientNotes/>}/>
           <Route path="/payment" element={<PaymentPage />} />
+         
         </Route>
         <Route element={<ProtectedRoute role="DOCTOR" />}>
           <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />

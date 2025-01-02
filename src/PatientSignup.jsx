@@ -102,7 +102,7 @@ const PatientSignup = () => {
     setLoading(true);
     try {
       // const response = await fetch(`${baseUrl}/api/v1/registration/patients-registrations`, {
-      const response = await fetch(`https://momedic.onrender.com/api/v1/registration/patients-registrations`, {
+      const response = await fetch(`${baseUrl}/api/v1/registration/patients-registrations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ const PatientSignup = () => {
         </div>
 
         {!showCheckEmail && (
-          <div className='mt-5 flex justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
+          <div className=' mb-8 flex justify-between items-center gap-x-2 lg:mx-[12rem] mx-[2rem]'>
             {
                 currentStep !== 1 && <button
                     type='button'
