@@ -1,7 +1,7 @@
 export const ActiveSlide = [
     {
         title:"Instant",
-        subTitle: 1500.00,
+        subTitle: 100,
         content: [
             "One-time consultation for immediate advice",
             "Access to certified doctors",
@@ -23,7 +23,7 @@ export const ActiveSlide = [
       },
       {
         title: "Yearly",
-        subTitle: 100,
+        subTitle: 4500.00,
         content: [
           "Up to 10 consultations per year",
           "Expert care anytime",

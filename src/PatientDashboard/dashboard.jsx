@@ -332,10 +332,11 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-
+import Specialist from '../pages/Specialist.jsx';
 import { baseUrl } from "../env.jsx";
 
 export default function Dashboard() {
+  
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
@@ -346,6 +347,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const swiperRef = useRef(null);
 
+
+  
   const token = localStorage.getItem('authToken');
   const userData = JSON.parse(localStorage.getItem('userData'));
 
@@ -374,6 +377,26 @@ export default function Dashboard() {
     });
   }
 
+  const handleServiceClick = (serviceName) => {
+   
+        const serviceUnavailable = true;
+    
+         if (serviceUnavailable) {
+          setModalTitle(serviceName);
+           setModalMessage(`Sorry, ${serviceName} is currently not available.`);
+          setModalOpen(true);
+        }
+       };
+    
+
+    const openSpecialistModal = () => {
+      setSpecialistModal(true);
+    };
+  
+    
+    const closeSpecialistModal = () => {
+      setSpecialistModal(false);
+    };
   async function handleCall() {
     const userDataString = localStorage.getItem('userData');
     const userData = JSON.parse(userDataString);
@@ -418,7 +441,7 @@ export default function Dashboard() {
       return;
     }
 
-    const validAmounts = [1500, 5000, 100];
+    const validAmounts = [100, 5000, 4500];
     const amountInKobo = parseFloat(subtitle);
 
     if (!validAmounts.includes(amountInKobo)) {
@@ -497,13 +520,15 @@ export default function Dashboard() {
     
         <div className="flex flex-col items-center  text-center">
           <div className="border-2 border-[#020E7C] rounded-full w-20 h-20 md:w-20 md:h-20 flex items-center justify-center">
-            <img
-              onClick={() => handleServiceClick('See a specialist')}
-              src={specialistIcon}
-              alt="specialist"
-              className="w-8 h-8 cursor-pointer"
-            />
+          <img
+                onClick={openSpecialistModal}
+                 src={specialistIcon}
+               alt="specialist"
+               className="w-8 h-8 cursor-pointer"
+             />
+
           </div>
+        
           <p className="text-[#020E7C] mt-1 text-sm md:text-xs">See a specialist</p>
         </div>
     
@@ -518,10 +543,8 @@ export default function Dashboard() {
             title={modalTitle}
             message={modalMessage}
        />
-      {specialistModal && (
-        <SpecialistModal isOpen={specialistModal} onClose={handleSpecialistModal} />
-      )}
-    
+     
+      {specialistModal && <Specialist closeModal={closeSpecialistModal} />}
      
       <h1 className="sm:text-2xl text-[19px] text-[#020E7C] p-3 font-bold mt-5 cursor-pointer ml-2 md:ml-20">
         Choose a Subscription Plan
