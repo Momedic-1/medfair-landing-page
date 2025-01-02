@@ -4,10 +4,10 @@ import React from 'react';
 const Specialist = ({ closeModal }) => {
   
   const specialists = [
-    { name: 'Psychiatrists', image: '/src/assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg' },
-    { name: 'Clinical Psychologists', image: '/src/assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg' },
-    { name: 'Therapists', image: '/src/assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg' },
-    { name: 'Trauma Specialists', image: '/src/assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg' },
+    { name: 'Psychiatrists', image: '/src/assets/psychiatrist .jpg' },
+    { name: 'Clinical Psychologists', image: '/src/assets/psychology .jpg' },
+    { name: 'Therapists', image: '/src/assets/therapisticon.jpg' },
+    { name: 'Trauma Specialists', image: '/src/assets/trumaspecialist.jpg' },
   ];
 
   const handleServiceClick = (serviceName) => {
