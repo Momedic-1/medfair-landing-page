@@ -117,7 +117,6 @@ const MyComponent = () => {
   const [error, setError] = useState(null);
 
   const userData = JSON.parse(localStorage.getItem('userData'));
-
   useEffect(() => {
     const fetchMeetingUrl = async () => {
       try {
