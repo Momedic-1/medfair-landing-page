@@ -40,13 +40,7 @@ const IncomingCall = () => {
     fetchIncomingCalls();
   }, [token, userData?.id]);
 
-  // useEffect(() => {
-  //   const timer = setInterval(() => {
-  //     // Optionally refetch the calls every 30 seconds
-  //   }, 30000);
-
-  //   return () => clearInterval(timer);
-  // }, []);
+ 
 
   const formatTime = (time) => {
     const date = new Date(time);

@@ -14,25 +14,18 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [finalDiagnosis, setFinalDiagnosis] = useState('');
   const [soapComment, setSoapComment] = useState('');
   const [drugs, setDrugs] = useState([{ name: '', dosage: '' }]);
-
-  const [patientId, setPatientId] = useState('');
-  const [doctorId, setDoctorId] = useState('');
   const [existingNotes, setExistingNotes] = useState([]);
-
+  const [loading, setLoading] = useState("");
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData')) || {};
 
   useEffect(() => {
     if (userData.id && isOpen && !existingNotes.length) {
-    // if (userData.id) {
-      setPatientId(userData.id);
-      setDoctorId(userData.id);
-      setFirstName(userData.firstName);  
+      setFirstName(userData.firstName);
       setLastName(userData.lastName);
       fetchPatientNotes(userData.id);
-     
     }
-  }, [userData,isOpen]);
+  }, [userData, isOpen]);
 
   const fetchPatientNotes = async () => {
     setLoading(true);
@@ -42,15 +35,14 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setExistingNotes(response.data); 
+      setExistingNotes(response.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching patient notes:", err);
-      setError("Failed to fetch patient notes.");
       setLoading(false);
     }
   };
- 
+
   const handleAddNote = async (e) => {
     e.preventDefault();
 
@@ -69,8 +61,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     }
 
     const formData = {
-      doctorId,
-      patientId,
+      doctorId: 9, 
+      patientId: 8, 
       firstName,
       lastName,
       visitDate,
@@ -82,16 +74,15 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       soapComment,
       drugs,
     };
-   
+
     try {
       const response = await axios.post(`${baseUrl}/api/notes/create`, formData, {
         headers: {
-          Authorization: `Bearer ${token}`, 
+          Authorization: `Bearer ${token}`,
         },
       });
-
+      console.log("Note added successfully", response.data);
       onNoteAdded(response.data);
-      
       setVisitDate('');
       setSubjective('');
       setObjective('');
@@ -100,11 +91,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       setFinalDiagnosis('');
       setSoapComment('');
       setDrugs([{ name: '', dosage: '' }]);
-     
       onClose();
     } catch (err) {
       console.error("Failed to add note:", err);
-      
     }
   };
 
@@ -124,15 +113,14 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll">
         <h2 className="text-xl font-semibold mb-4">Add New Note</h2>
-        
 
         <form onSubmit={handleAddNote} className="space-y-4">
-        
           <div className="border rounded p-4">
             <span className="font-bold text-[#020E7C] mb-4 text-xl text-center">
               Doctor {userData.firstName} {userData.lastName}
             </span>
           </div>
+
           <div className="border rounded p-4">
             <label htmlFor="visitDate" className="block font-medium">Visit Date:</label>
             <input
@@ -144,6 +132,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
               required
             />
           </div>
+
           <div className="border rounded p-4">
             <label htmlFor="subjective" className="block text-sm font-medium">Subjective</label>
             <textarea
@@ -154,6 +143,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
               className="border rounded p-2 w-full"
             />
           </div>
+
           <div className="border rounded p-4">
             <label htmlFor="objective" className="block text-sm font-medium">Objective</label>
             <textarea
@@ -165,7 +155,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             />
           </div>
 
-          
           <div className="border rounded p-4">
             <label htmlFor="assessment" className="block text-sm font-medium">Assessment</label>
             <textarea
@@ -176,6 +165,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
               className="border rounded p-2 w-full"
             />
           </div>
+
           <div className="border rounded p-4">
             <label htmlFor="plan" className="block text-sm font-medium">Plan</label>
             <textarea
@@ -186,6 +176,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
               className="border rounded p-2 w-full"
             />
           </div>
+
           <div className="border rounded p-4">
             <label htmlFor="finalDiagnosis" className="block text-sm font-medium">Final Diagnosis</label>
             <input
@@ -208,6 +199,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
               className="border rounded p-2 w-full"
             />
           </div>
+
           <div>
             <h3 className="text-sm font-medium mb-2">Drugs</h3>
             {drugs.map((drug, index) => (
@@ -246,8 +238,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             </button>
           </div>
         </form>
-
-       
       </div>
     </div>
   );
