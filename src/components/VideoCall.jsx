@@ -1,206 +1,131 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
+import micOn from "../assets/mic_on_image.png"
+import micOff from "../assets/mic_off_image.png"
+import videoOn from "../assets/video-camera_on.png"
+import videoOff from "../assets/video-camera_off.png"
+import note from "../assets/call_note.png"
 
+const ROOM_URL = "https://medfair.whereby.com/8e4ab525-d645-4e5a-a5e5-abce77f255a6";
+const patientName = "Ned";
+const dob = "";
+const age = "";
 
+const VideoCall = () => {
+  const [isAudioOn, setIsAudioOn] = React.useState(true);
+  const [isVideoOn, setIsVideoOn] = React.useState(true);
+  const messagesBottomRef = React.useRef<HTMLDivElement>(null);
 
-// import React, { useEffect, useState, useRef } from 'react';
-// import axios from 'axios';
-// import { baseUrl } from '../env';
-// import "@whereby.com/browser-sdk/embed"; 
+  const roomConnection = useRoomConnection(ROOM_URL, {
+    localMediaOptions: {
+      audio: true,
+      video: true,
+    },
+  });
 
-// const MyComponent = () => {
-//   const wherebyRef = useRef(null);
-//   const [roomUrl, setRoomUrl] = useState(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-  
-  
-//   const userData = JSON.parse(localStorage.getItem('userData'));
+  const { actions, state } = roomConnection;
+  const {
+    connectionState,
+    localParticipant,
+    remoteParticipants,
+  } = state;
 
-//   useEffect(() => {
-//     const fetchMeetingUrl = async () => {
-//       try {
-//         const id = sessionStorage.getItem("id");
-//         const token = JSON.parse(localStorage.getItem('authToken'))?.token;
-        
-//         if (!id || !token) {
-//           setError("User ID or token is missing.");
-//           setLoading(false);
-//           return;
-//         }
-     
-//         const response = await axios.post(
-//           `${baseUrl}/api/v1/video/create-meeting?patientId=${id}`, 
-//           {},  
-//           {
-//             headers: {
-//               Authorization: `Bearer ${token}`,
-//             },
-//           }
-//         );
-        
-//         if (response.data && response.data.roomUrl) {
-//           console.log("Room URL fetched successfully:", response.data.roomUrl);
-//           setRoomUrl(response.data.roomUrl);  
-//         } else {
-//           throw new Error("No room URL found in the response.");
-//         }
-//       } catch (error) {
-//         console.error("Error fetching meeting URL:", error);
-//         setError("Failed to fetch meeting URL.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-  
-//     fetchMeetingUrl();
-//   }, []);  
-  
-//   useEffect(() => {
-//     if (wherebyRef.current && roomUrl) {
-//       wherebyRef.current.room = roomUrl; 
-//     }
-//   }, [roomUrl]);
-
- 
-//   const userName = userData?.firstName
-//     ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
-//     : "Unknown User";
-//   const dateOfBirth = userData?.dateOfBirth
-
-//   const calculateAge = (dob) => {
-//     if (!dob) return "Unknown age"; 
-//     const birthDate = new Date(dob);
-//     const today = new Date();
-//     let age = today.getFullYear() - birthDate.getFullYear();
-//     const monthDiff = today.getMonth() - birthDate.getMonth();
-
-//     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-//       age--;
-//     }
-//     return age;
-//   };
-
-//   const userAge = calculateAge(dateOfBirth);
-
-//   return (
-//     <div style={{display:"flex"}}>
-//       <span>{userName}</span>
-//       <span>Date of Birth: {dateOfBirth || "Unknown DOB"}</span> <br />
-//       <span>Age: {userAge}</span>
-//       {loading ? (
-//         <p>Loading...</p>
-//       ) : error ? (
-//         <p>{error}</p>
-//       ) : roomUrl ? (
-//         <whereby-embed
-//           ref={wherebyRef}
-//           chat="off"
-//           screenshare="off"
-//           people="off"
-//           room={roomUrl}
-//           style={{ width: '100%', height: '1000px' }}
-//         />
-//       ) : (
-//         <p>Meeting room is not available.</p>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default MyComponent;
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { baseUrl } from '../env';
-
-const MyComponent = () => {
-  const [roomUrl, setRoomUrl] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const userData = JSON.parse(localStorage.getItem('userData'));
+  const {
+    joinRoom,
+    toggleCamera,
+    toggleMicrophone,
+  } = actions;
 
   useEffect(() => {
-    const fetchMeetingUrl = async () => {
-      try {
-        const id = sessionStorage.getItem("id");
-        const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+    joinRoom();
 
-        if (!id || !token) {
-          setError("User ID or token is missing.");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.post(
-          `${baseUrl}/api/v1/video/create-meeting?patientId=${id}`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (response.data && response.data.roomUrl) {
-          console.log("Room URL fetched successfully:", response.data.roomUrl);
-          setRoomUrl(response.data.roomUrl);
-        } else {
-          throw new Error("No room URL found in the response.");
-        }
-      } catch (error) {
-        console.error("Error fetching meeting URL:", error);
-        setError("Failed to fetch meeting URL.");
-      } finally {
-        setLoading(false);
+    return () => {
+      if (connectionState === "connected") {
+        actions.leaveRoom();
       }
     };
+  }, [joinRoom, connectionState]);
 
-    fetchMeetingUrl();
-  }, []);
+  function getDisplayName(id) {
+    return remoteParticipants.find((p) => p.id === id)?.displayName || "Guest";
+  }
+  const takeNote =()=>{
 
-  const userName = userData?.firstName
-    ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
-    : "Unknown User";
-  const dateOfBirth = userData?.dateOfBirth;
-
-  const calculateAge = (dob) => {
-    if (!dob) return "Unknown age";
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+  }
+  const handleToggleAudio = () => {
+    toggleMicrophone();
+    setIsAudioOn((prev) => !prev);
+  };
+  
+  const handleToggleVideo = () => {
+    toggleCamera();
+    setIsVideoOn((prev) => !prev);
   };
 
-  const userAge = calculateAge(dateOfBirth);
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-      <span>{userName}</span>
-      <span>Date of Birth: {dateOfBirth || "Unknown DOB"}</span>
-      <span>Age: {userAge}</span>
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p>{error}</p>
-      ) : roomUrl ? (
-        <div style={{ width: '100%', height: '600px' }}>
-          {/* Embed the video using an iframe */}
-          <iframe
-            src={roomUrl}
-            title="Live Video"
-            allow="camera; microphone; fullscreen"
-            style={{ width: '100%', height: '100%', border: 'none' }}
-          ></iframe>
+    <div className="bg-blue-500 h-screen">
+
+      <div className="h-16 flex items-center justify-between text-white px-52">
+        <p><span className="font-bold">Name: </span>{patientName}</p>
+        <p><span className="font-bold">DOB: </span>{dob ? dob : "N/A"}</p>
+        <p><span className="font-bold">Age: </span>{age ? age : "N/A"}</p>
+      </div>
+
+      <div className="md:flex">
+
+        <div>
+          {remoteParticipants[0]?.stream ? (
+            <div className="md:h-[75vh]">
+              <VideoView stream={remoteParticipants[0].stream} />
+              <p  className="md:h-[45vh] ml-1">{getDisplayName(remoteParticipants[0].id)}</p>
+            </div>
+          ) : null}
         </div>
-      ) : (
-        <p>Meeting room is not available.</p>
-      )}
+
+        <div>
+          {localParticipant?.stream ? (
+            <div className="md:h-[45vh] ml-1">
+              <VideoView muted stream={localParticipant.stream} />
+            </div>
+          ) : null}
+          <p className='font-bold text-white ml-6'>You</p>
+        </div>
+
+      </div>
+
+      <div className="md:flex items-center justify-center">
+        <div
+          className={`md:flex  items-center px-4 py-2 gap-3`}
+        >
+            <div
+          className={`px-4 py-2 rounded-xl cursor-pointer ${
+            isAudioOn ? "bg-gray-400" : "bg-red-500 "
+          } text-white`}
+          onClick={handleToggleAudio}
+        >
+          {isAudioOn ? <img src={micOn} alt='mic on' height={25} width={25}/> : <img src={micOff} alt='mic on' height={25} width={25}/>}
+        </div>
+
+        <div
+          className={`px-4 py-2 rounded-xl cursor-pointer ${
+            isVideoOn ? "bg-gray-400" : "bg-red-500"
+          } text-white`}
+          onClick={handleToggleVideo}
+        >
+          {isVideoOn ? <img src={videoOn} alt='video on' height={25} width={25}/> : <img src={videoOff} alt='video on' height={25} width={25}/>}
+        </div>
+
+        <div
+          className={`px-4 py-2 rounded-xl bg-gray-400 text-white cursor-pointer `}
+          onClick={takeNote}
+        >
+          <img src={note} alt='take note' height={25} width={25}/> 
+        </div>
+        </div>
+      
+      </div>
     </div>
   );
 };
 
-export default MyComponent;
+export default VideoCall;

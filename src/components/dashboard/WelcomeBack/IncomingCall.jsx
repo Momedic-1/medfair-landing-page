@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { baseUrl } from '../../../env';
+import { useNavigate } from 'react-router-dom';
 
 const IncomingCall = () => {
   const [incomingCalls, setIncomingCalls] = useState([]);
@@ -11,6 +12,7 @@ const IncomingCall = () => {
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData'));
   const incomingCallsRef = useRef([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchIncomingCalls = async () => {
@@ -64,15 +66,16 @@ const IncomingCall = () => {
       if (response?.data === 'Another doctor has already joined this call.') {
         toast.error('Another doctor has already joined this call.');
       } else {
-        window.open(response.data, '_blank', 'noopener,noreferrer');
-
+        // window.open(response.data, '_blank', 'noopener,noreferrer');
+        localStorage.setItem('roomUrl', response.data)
        
         const pickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
         pickedCalls.push(callId);
         localStorage.setItem('pickedCalls', JSON.stringify(pickedCalls));
 
-        
-        setIncomingCalls(incomingCalls.filter((call) => call.callId !== callId));
+          
+        setIncomingCalls(incomingCalls.filter((call) => call.callId !== callId)); 
+        navigate('/video-call');
       }
     } catch (error) {
       console.error('Error joining call:', error);

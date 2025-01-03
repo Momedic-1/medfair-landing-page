@@ -14,7 +14,7 @@ import HomePage from './components/Home/HomePage.jsx/HomePage.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import IncomingCalls from './components/dashboard/WelcomeBack/IncomingCall.jsx';
 import PatientNotes from './PatientDashboard/patientNotes.jsx';
-import VerifyPayment from './VerifyPayment.jsx';
+import VerifyPayment from './VerifyPayment.jsx';  
 import VideoCall from './components/VideoCall.jsx';
 
 
