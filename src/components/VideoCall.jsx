@@ -1,3 +1,10 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
+import micOn from "../assets/mic_on_image.png"
+import micOff from "../assets/mic_off_image.png"
+import videoOn from "../assets/video-camera_on.png"
+import videoOff from "../assets/video-camera_off.png"
+import note from "../assets/call_note.png"
 
 import React, { useEffect, useState } from "react";
 import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
