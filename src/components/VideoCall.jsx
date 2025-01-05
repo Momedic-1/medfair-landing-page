@@ -1,13 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
-import micOn from "../assets/mic_on_image.png"
-import micOff from "../assets/mic_off_image.png"
-import videoOn from "../assets/video-camera_on.png"
-import videoOff from "../assets/video-camera_off.png"
-import note from "../assets/call_note.png"
-
-import React, { useEffect, useState } from "react";
-import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
 import micOn from "../assets/mic_on_image.png";
 import micOff from "../assets/mic_off_image.png";
 import videoOn from "../assets/video-camera_on.png";
@@ -26,9 +18,11 @@ const VideoCall = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false); 
-
-
+ 
   const roomUrl = localStorage.getItem("roomUrl"); 
+  const call = JSON.parse(localStorage.getItem("call")); 
+
+  
 
   const roomConnection = useRoomConnection(roomUrl, {
     localMediaOptions: {
@@ -57,8 +51,9 @@ const VideoCall = () => {
   };
 
 
-  const firstName = userData?.firstName || "N/A";
-  const lastName = userData?.lastName || "N/A";
+  const firstName = call?.patientFirstName || "N/A";
+  const lastName =  call?.patientLastName || "N/A";
+
   const dob = userData?.dob || "N/A"; 
 
   const calculateAge = (dob) => {
@@ -105,59 +100,59 @@ const VideoCall = () => {
   };
 
   return (
-    <div className="bg-[#020e7c] h-screen">
+    <div className="bg-[#020e7c] min-h-screen flex flex-col justify-between">
 
       <div className="h-16 flex items-center justify-between text-white px-5">
-        <p><span className="font-bold">Name: </span>{`${firstName} ${lastName}`}</p>
+        <p><span className="font-bold">PatientName: </span>{`${firstName} ${lastName}`}</p>
         <p><span className="font-bold">DOB: </span>{dob}</p>
         <p><span className="font-bold">Age: </span>{age}</p>
       </div>
 
-      <div className="md:flex">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+        <div >
           {remoteParticipants[0]?.stream ? (
-            <div className="md:h-[75vh]">
+            <div className="relative h-full rounded-lg overflow-hidden">
               <VideoView stream={remoteParticipants[0].stream} />
-              <p className="md:h-[45vh] ml-1">{getDisplayName(remoteParticipants[0].id)}</p>
+              <p className="md:h-[40vh] ml-1">{getDisplayName(remoteParticipants[0].id)}</p>
             </div>
           ) : null}
         </div>
 
         <div>
           {localParticipant?.stream ? (
-            <div className="md:h-[45vh] ml-1">
+            <div className="relative h-full rounded-lg overflow-hidden">
               <VideoView muted stream={localParticipant.stream} />
             </div>
           ) : null}
-          <p className='font-bold text-white ml-6'>You</p>
+          <p className='font-bold text-white ml-6 mb-10'>You</p>
         </div>
       </div>
 
      
-      <div className="md:flex items-center justify-center">
-        <div className={`md:flex items-center px-4 py-2 gap-3`}>
-          <div
-            className={`px-4 py-2 rounded-xl cursor-pointer ${isAudioOn ? "bg-gray-400" : "bg-red-500"} text-white`}
-            onClick={handleToggleAudio}
-          >
-            {isAudioOn ? <img src={micOn} alt='mic on' height={25} width={25}/> : <img src={micOff} alt='mic off' height={25} width={25}/>}
-          </div>
+      <div className="w-full py-4  flex justify-center items-center gap-4 md:gap-8">
+        <div
+          className={`rounded-full p-3 cursor-pointer ${isAudioOn ? "bg-gray-400" : "bg-red-500"} text-white`}
+          onClick={handleToggleAudio}
+        >
+          {isAudioOn ? <img src={micOn} alt='mic on' height={25} width={25}/> : <img src={micOff} alt='mic off' height={25} width={25}/>}
+        </div>
 
-          <div
-            className={`px-4 py-2 rounded-xl cursor-pointer ${isVideoOn ? "bg-gray-400" : "bg-red-500"} text-white`}
-            onClick={handleToggleVideo}
-          >
-            {isVideoOn ? <img src={videoOn} alt='video on' height={25} width={25}/> : <img src={videoOff} alt='video off' height={25} width={25}/>}
-          </div>
+        <div
+          className={`rounded-full p-3 cursor-pointer ${isVideoOn ? "bg-gray-400" : "bg-red-500"} text-white`}
+          onClick={handleToggleVideo}
+        >
+          {isVideoOn ? <img src={videoOn} alt='video on' height={25} width={25}/> : <img src={videoOff} alt='video off' height={25} width={25}/>}
+        </div>
 
-          <div className={`px-4 py-2 rounded-xl bg-gray-400 text-white cursor-pointer`} onClick={takeNote}>
-            <img src={note} alt='take note' height={25} width={25}/>
-          </div>
-          <div className={`px-4 py-2 rounded-xl bg-gray-400 text-white cursor-pointer`} onClick={leaveRoom}>
-            <MdCallEnd width={25} height={25}/>
-          </div>
+        <div className="rounded-full p-3 bg-gray-400 cursor-pointer" onClick={takeNote}>
+          <img src={note} alt='take note' height={25} width={25} />
+        </div>
+
+        <div className="rounded-full p-3 bg-red-500 cursor-pointer" onClick={leaveRoom}>
+          <MdCallEnd width={25} height={25} className="text-white" />
         </div>
       </div>
+
       <AddNoteModal
         isOpen={isNoteModalOpen}
         onClose={handleNoteModalClose}
