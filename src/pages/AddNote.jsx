@@ -4,8 +4,8 @@ import axios from "axios";
 import { baseUrl } from "../env";
 
 const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [patientFirstName, setpatientFirstName] = useState('');
+  const [patientLastName, setPatientLastName] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [subjective, setSubjective] = useState('');
   const [objective, setObjective] = useState('');
@@ -15,34 +15,49 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [soapComment, setSoapComment] = useState('');
   const [drugs, setDrugs] = useState([{ name: '', dosage: '' }]);
   const [existingNotes, setExistingNotes] = useState([]);
+  const [isViewNotesOpen, setIsViewNotesOpen] = useState(false);
   const [loading, setLoading] = useState("");
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData')) || {};
+  
+
+  const patientId = localStorage.getItem("patientId"); 
 
   useEffect(() => {
-    if (userData.id && isOpen && !existingNotes.length) {
-      setFirstName(userData.firstName);
-      setLastName(userData.lastName);
-      fetchPatientNotes(userData.id);
+    if (patientId && isOpen && !existingNotes.length) {
+      fetchPatientNotes();
     }
-  }, [userData, isOpen]);
+  }, [isOpen]);
 
   const fetchPatientNotes = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${baseUrl}/api/notes/get-all-patient-note/${userData.id}`, {
+      const response = await axios.get(`${baseUrl}/api/notes/get-all-patient-note/${patientId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setExistingNotes(response.data);
+      const notesData = response.data;
+      if (notesData.length > 0) {
+        const firstNote = notesData[0];
+        setpatientFirstName(firstNote.patientFirstName);
+        setPatientLastName(firstNote.patientLastName);
+      }
+        setExistingNotes(notesData);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching patient notes:", err);
       setLoading(false);
     }
   };
-
+   
+  const handleViewNotes = async () => {
+    if (!isViewNotesOpen) {
+      await fetchPatientNotes();
+    }
+    setIsViewNotesOpen((prev) => !prev);
+  };
+  
   const handleAddNote = async (e) => {
     e.preventDefault();
 
@@ -52,19 +67,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         return;
       }
     }
-
-    if (existingNotes.length > 0) {
-      const confirmProceed = window.confirm(
-        "This patient already has existing notes. Do you want to proceed with adding a new note?"
-      );
-      if (!confirmProceed) return;
-    }
-
     const formData = {
-      doctorId: 9, 
-      patientId: 8, 
-      firstName,
-      lastName,
+      doctorId: userData?.id, 
+      patientId: patientId, 
+      patientFirstName,
+      patientLastName,
       visitDate,
       subjective,
       objective,
@@ -81,22 +88,24 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Note added successfully", response.data);
+      
       onNoteAdded(response.data);
-      setVisitDate('');
-      setSubjective('');
-      setObjective('');
-      setAssessment('');
-      setPlan('');
-      setFinalDiagnosis('');
-      setSoapComment('');
-      setDrugs([{ name: '', dosage: '' }]);
+      resetForm();
       onClose();
     } catch (err) {
       console.error("Failed to add note:", err);
     }
   };
-
+  const resetForm = () => {
+    setVisitDate('');
+    setSubjective('');
+    setObjective('');
+    setAssessment('');
+    setPlan('');
+    setFinalDiagnosis('');
+    setSoapComment('');
+    setDrugs([{ name: '', dosage: '' }]);
+  };
   const handleDrugChange = (e, index, field) => {
     const updatedDrugs = [...drugs];
     updatedDrugs[index][field] = e.target.value;
@@ -112,12 +121,52 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll">
-        <h2 className="text-xl font-semibold mb-4">Add New Note</h2>
-
+      
+     
+      <div className="flex items-center justify-between mb-4">
+      <h2 className="text-xl font-semibold">Add New Note</h2>
+      <button
+        onClick={handleViewNotes}
+        className="bg-blue-500 text-white px-6 py-2 rounded-md"
+      >
+        {isViewNotesOpen ? "Hide Notes" : "View Notes"}
+      </button>
+    </div>
+        {isViewNotesOpen && (
+          <div className="border p-4 mb-4">
+            {loading ? (
+              <p>Loading notes...</p>
+            ) : (
+              <>
+                {existingNotes.length > 0 ? (
+                  existingNotes.map((note, index) => (
+                    <div key={index} className="border-b mb-2">
+                      <p><strong>Date:</strong> {note.visitDate}</p>
+                      <p><strong>Subjective:</strong> {note.subjective}</p>
+                      <p><strong>Objective:</strong> {note.objective}</p>
+                      <p><strong>Assessment:</strong> {note.assessment}</p>
+                      <p><strong>Plan:</strong> {note.plan}</p>
+                      <p><strong>finalDiagnosis:</strong> {note.finalDiagnosis}</p>
+                      <p><strong>soapComment:</strong> {note.soapComment}</p>
+                      <ul>
+                     {note.drugs.map((drug, idx) => (
+                      <li key={idx}>{drug.name} - {drug.dosage}</li>
+                    ))}
+                  </ul>
+                    </div>
+                  ))
+                ) : (
+                  <p>No notes found.</p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+   
         <form onSubmit={handleAddNote} className="space-y-4">
           <div className="border rounded p-4">
             <span className="font-bold text-[#020E7C] mb-4 text-xl text-center">
-              Doctor {userData.firstName} {userData.lastName}
+              PatientName: {patientFirstName} {patientLastName}
             </span>
           </div>
 
@@ -239,6 +288,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           </div>
         </form>
       </div>
+     
     </div>
   );
 };

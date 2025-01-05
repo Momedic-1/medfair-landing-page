@@ -47,7 +47,9 @@ const IncomingCall = () => {
     return date.toLocaleTimeString();
   };
 
-  const joinCall = async (callId) => {
+  
+  const joinCall = async (call) => {
+    const callId = call.callId
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/video/join?callId=${callId}&doctorId=${userData?.id}`,
@@ -57,26 +59,32 @@ const IncomingCall = () => {
           },
         }
       );
-      if (response?.data === 'Another doctor has already joined this call.') {
-        toast.error('Another doctor has already joined this call.');
-      } else {
-        // window.open(response.data, '_blank', 'noopener,noreferrer');
-        localStorage.setItem('roomUrl', response.data)
-       
+      const { patientId, joinRoomUrl } = response.data;
+      
+      if (joinRoomUrl) {
+     
+        localStorage.setItem('roomUrl', joinRoomUrl);
+        localStorage.setItem('patientId', patientId);
+        localStorage.setItem('call', JSON.stringify(call));
+  
+        
         const pickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
         pickedCalls.push(callId);
         localStorage.setItem('pickedCalls', JSON.stringify(pickedCalls));
-
-          
-        setIncomingCalls(incomingCalls.filter((call) => call.callId !== callId)); 
+  
+        setIncomingCalls(incomingCalls.filter((call) => call.callId !== callId));
+  
+      
         navigate('/video-call');
+      } else {
+        toast.error('Another doctor has already joined this call.');
       }
     } catch (error) {
       console.error('Error joining call:', error);
       toast.error('Error joining call. Please try again.');
     }
   };
-
+  
   return (
     <div className='w-[100%] p-6 sm:w-[100%] lg:w-[70%] md:w-[100%]'>
       <ToastContainer />
@@ -100,7 +108,7 @@ const IncomingCall = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => joinCall(call.callId)}
+                  onClick={() => joinCall(call)}
                   className='bg-green-500 text-white p-2 rounded'
                 >
                   Join Call
