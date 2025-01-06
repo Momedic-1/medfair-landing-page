@@ -93,25 +93,25 @@ const VideoCall = () => {
     setIsNoteModalOpen(false); 
   };
 
-  const handleNoteAdded = (newNote) => {
-    console.log("New note added:", newNote);
+  const handleNoteAdded = () => {
+   
    
     setIsNoteModalOpen(false); 
   };
 
   return (
-    <div className="bg-[#020e7c] min-h-screen flex flex-col justify-between">
+    <div className="bg-[#020e7c] h-screen flex flex-col justify-between overflow-hidden ">
 
-      <div className="h-16 flex items-center justify-between text-white px-5">
+      <div className=" flex items-center justify-between text-white px-5">
         <p><span className="font-bold">PatientName: </span>{`${firstName} ${lastName}`}</p>
         <p><span className="font-bold">DOB: </span>{dob}</p>
         <p><span className="font-bold">Age: </span>{age}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4  ">
         <div >
           {remoteParticipants[0]?.stream ? (
-            <div className="relative h-full rounded-lg overflow-hidden">
+            <div className="relative h-full rounded-2xl overflow-hidden">
               <VideoView stream={remoteParticipants[0].stream} />
               <p className="md:h-[40vh] ml-1">{getDisplayName(remoteParticipants[0].id)}</p>
             </div>
