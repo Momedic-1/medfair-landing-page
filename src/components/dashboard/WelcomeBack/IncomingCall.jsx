@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { baseUrl } from '../../../env';
 import { useNavigate } from 'react-router-dom';
+import { Hourglass } from 'react-loader-spinner';
 
 const IncomingCall = () => {
   const [incomingCalls, setIncomingCalls] = useState([]);
@@ -95,7 +96,17 @@ const IncomingCall = () => {
       <ToastContainer />
       {/* <h1 className='text-2xl font-bold text-[#020e7c] mb-4'>Incoming Calls</h1> */}
       {loading ? (
-        <p>Loading calls...</p>
+        <div className='w-full h-[60vh] flex justify-center items-center'>
+        <Hourglass
+  visible={true}
+  height="200"
+  width="200"
+  ariaLabel="hourglass-loading"
+  wrapperStyle={{}}
+  wrapperClass=""
+  colors={['#306cce', '#72a1ed']}
+  />
+  </div>
       ) : (
         <div className='space-y-4'>
           {incomingCalls.length > 0 ? (
