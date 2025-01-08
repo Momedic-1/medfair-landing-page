@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { baseUrl } from '../../../env';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 function WelcomeBack({ status }) {
   const [activeCalls, setActiveCalls] = useState([]);
@@ -23,10 +24,11 @@ function WelcomeBack({ status }) {
   useEffect(() => {
     if (activeCalls.length > 0 && status === online) {
       startCallTimer();
+      setIsActive(true);
     } else {
       clearCallTimer();
     }
-  }, [activeCalls, status]);
+  }, [token, activeCalls, status]);
 
   const viewAllPendingCalls = async () => {
     try {
@@ -73,24 +75,26 @@ function WelcomeBack({ status }) {
   };
 
   return (
-    <div className='w-[100%]'>
+    <div className='w-[100%] relative'>
       <div
         onClick={navigateToIncomingCalls}
-        style={{ cursor: 'pointer' }}
-        className={`image ${isActive ? 'active' : ''} ${
-          activeCalls.length > 0 && status === online ? 'shake bg-green-500' : 'bg-[#020e7c]'
-        } items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto md:mb-10 lg:mb-4 sm:mb-10`}
+        className={`image ${isActive ? 'active' : 'hidden'} ${
+          activeCalls.length > 0 && status === online && 'shake bg-green-500'
+        } absolute top-2 left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
       >
         <p className='text-white font-semibold text-center'>
-          Incoming<br />Calls
+          Incoming Calls
         </p>
-        <img
+        {/* <img
           src={call}
           alt={'call'}
-          className={`image ${isActive ? 'active' : ''} ${
-            activeCalls.length > 0 && status === online ? 'shake bg-green-500' : ''
+          className={`image ${isActive ? 'active' : 'hidden'} ${
+            activeCalls.length > 0 && status === online && 'shake bg-green-500'
           }`}
-        />
+        /> */}
+        <LiaPhoneVolumeSolid className={`${isActive ? 'active' : 'hidden'} ${
+            activeCalls.length > 0 && status === online && 'shake text-green-500'
+          }`} fontSize={28}/>
       </div>
 
       <div className='flex flex-row w-[170%] -mx-14 lg:w-[100%] lg:-mx-1 sm:w-[125%] sm:-mx-14 md:w-[115%] md:-mx-14 overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/40 to-white/40 sm:flex-row shadow-lg border border-[#020e7c]'>

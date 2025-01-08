@@ -100,36 +100,36 @@ const VideoCall = () => {
   };
 
   return (
-    <div className="bg-[#020e7c] h-screen flex flex-col justify-between overflow-hidden ">
+    <div className="flex flex-col overflow-y-hidden">
 
-      <div className=" flex items-center justify-between text-white px-5">
-        <p><span className="font-bold">PatientName: </span>{`${firstName} ${lastName}`}</p>
+      <div className="bg-black h-20 flex items-center justify-between text-white px-5">
+        <p><span className="font-bold">Patient Name: </span>{`${firstName} ${lastName}`}</p>
         <p><span className="font-bold">DOB: </span>{dob}</p>
         <p><span className="font-bold">Age: </span>{age}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4  ">
-        <div >
+      <div className="relative w-full h-[88vh]">
+        <div className='h-full w-full'>
           {remoteParticipants[0]?.stream ? (
-            <div className="relative h-full rounded-2xl overflow-hidden">
+            <div className="h-full w-full">
               <VideoView stream={remoteParticipants[0].stream} />
-              <p className="md:h-[40vh] ml-1">{getDisplayName(remoteParticipants[0].id)}</p>
+              <p className="ml-1">{getDisplayName(remoteParticipants[0].id)}</p>
             </div>
           ) : null}
         </div>
 
-        <div>
+        <div className='absolute -top-40 right-4 h-full w-80 rounded-xl'>
           {localParticipant?.stream ? (
-            <div className="relative h-full rounded-lg overflow-hidden">
+            <div className="w-full h-full rounded-xl">
               <VideoView muted stream={localParticipant.stream} />
             </div>
           ) : null}
-          <p className='font-bold text-white ml-6 mb-10'>You</p>
+          <p className='absolute top-60 right-6 font-bold text-white ml-6 mb-10'>You</p>
         </div>
       </div>
 
      
-      <div className="w-full py-4  flex justify-center items-center gap-4 md:gap-8">
+      <div className="absolute bottom-16 w-full py-4  flex justify-center items-center gap-4 md:gap-8">
         <div
           className={`rounded-full p-3 cursor-pointer ${isAudioOn ? "bg-gray-400" : "bg-red-500"} text-white`}
           onClick={handleToggleAudio}

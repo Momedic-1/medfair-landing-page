@@ -21,15 +21,17 @@ const IncomingCall = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        console.log(incomingResponse, 'incomingResponse');
+
         let incomingCallsData = incomingResponse?.data || [];
-        
+        setIncomingCalls(incomingResponse?.data || []);
         const pickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
         incomingCallsData = incomingCallsData.filter(
           (call) => !pickedCalls.includes(call.callId)
         );
 
         incomingCallsRef.current = incomingCallsData;
-        setIncomingCalls(incomingCallsData);
+        // setIncomingCalls(incomingCallsData);
       } catch (error) {
         console.error('Error fetching calls:', error);
       } finally {
@@ -38,10 +40,13 @@ const IncomingCall = () => {
     };
 
     fetchIncomingCalls();
-  }, [token, userData?.id]);
+  }, [userData?.id]);
 
+  const navigateToDashboard = ()=> {
+    navigate('/doctor-dashboard');
+  }
  
-
+  console.log(incomingCalls, 'incomingCalls');
   const formatTime = (time) => {
     const date = new Date(time);
     return date.toLocaleTimeString();
@@ -88,7 +93,7 @@ const IncomingCall = () => {
   return (
     <div className='w-[100%] p-6 sm:w-[100%] lg:w-[70%] md:w-[100%]'>
       <ToastContainer />
-      <h1 className='text-2xl font-bold text-[#020e7c] mb-4'>Incoming Calls</h1>
+      {/* <h1 className='text-2xl font-bold text-[#020e7c] mb-4'>Incoming Calls</h1> */}
       {loading ? (
         <p>Loading calls...</p>
       ) : (
@@ -116,10 +121,14 @@ const IncomingCall = () => {
               </div>
             ))
           ) : (
+            <div className=''>
             <p>No incoming calls at the moment.</p>
+            </div>
           )}
         </div>
       )}
+        <button onClick={navigateToDashboard} className='w-[400px] h-[40px] bg-blue-600 rounded-lg text-lg text-white mt-10'>Return back to dashboard</button>
+
     </div>
   );
 };
