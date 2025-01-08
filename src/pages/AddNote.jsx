@@ -143,8 +143,10 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         onClick={handleViewNotes}
         className="bg-blue-500 text-white w-[160px] h-10 px-6 py-2 rounded-md flex items-center justify-center"
       >
-        {isViewNotesOpen ? "Hide Notes" : loading ? <ColorRing  visible={true}
-  height="40"
+        {isViewNotesOpen ? "Hide Notes" : loading ? 
+        <ColorRing  
+        visible={true}
+      height="40"
   width="40"
   ariaLabel="color-ring-loading"
   wrapperStyle={{}}
