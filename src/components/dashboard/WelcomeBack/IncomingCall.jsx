@@ -6,6 +6,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import { baseUrl } from '../../../env';
 import { useNavigate } from 'react-router-dom';
 import { Hourglass } from 'react-loader-spinner';
+import { useDispatch } from 'react-redux';
+import { setCall, setRoomUrl } from '../../../features/authSlice';
+import NoCalls from '../../../assets/NoCalls';
 
 const IncomingCall = () => {
   const [incomingCalls, setIncomingCalls] = useState([]);
@@ -14,6 +17,7 @@ const IncomingCall = () => {
   const userData = JSON.parse(localStorage.getItem('userData'));
   const incomingCallsRef = useRef([]);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchIncomingCalls = async () => {
@@ -68,12 +72,11 @@ const IncomingCall = () => {
       const { patientId, joinRoomUrl } = response.data;
       
       if (joinRoomUrl) {
-     
-        localStorage.setItem('roomUrl', joinRoomUrl);
-        localStorage.setItem('patientId', patientId);
-        localStorage.setItem('call', JSON.stringify(call));
-  
         
+        dispatch(setRoomUrl(joinRoomUrl));
+        dispatch(setCall(call));
+        localStorage.setItem('patientId', patientId);
+       
         const pickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
         pickedCalls.push(callId);
         localStorage.setItem('pickedCalls', JSON.stringify(pickedCalls));
@@ -92,20 +95,20 @@ const IncomingCall = () => {
   };
   
   return (
-    <div className='w-[100%] p-6 sm:w-[100%] lg:w-[70%] md:w-[100%]'>
+    <div className='w-full p-6'>
       <ToastContainer />
       {/* <h1 className='text-2xl font-bold text-[#020e7c] mb-4'>Incoming Calls</h1> */}
       {loading ? (
         <div className='w-full h-[60vh] flex justify-center items-center'>
         <Hourglass
-  visible={true}
-  height="200"
-  width="200"
-  ariaLabel="hourglass-loading"
-  wrapperStyle={{}}
-  wrapperClass=""
-  colors={['#306cce', '#72a1ed']}
-  />
+          visible={true}
+          height="60"
+          width="60"
+          ariaLabel="hourglass-loading"
+          wrapperStyle={{}}
+          wrapperClass=""
+          colors={['#306cce', '#72a1ed']}
+        />
   </div>
       ) : (
         <div className='space-y-4'>
@@ -113,7 +116,7 @@ const IncomingCall = () => {
             incomingCalls.map((call) => (
               <div
                 key={call.callId}
-                className='flex justify-between items-center border p-4 rounded '
+                className='w-1/2 flex justify-between items-center border p-4 rounded '
               >
                 <div>
                   <p className='font-bold'>
@@ -132,13 +135,15 @@ const IncomingCall = () => {
               </div>
             ))
           ) : (
-            <div className=''>
-            <p>No incoming calls at the moment.</p>
+            <div className='w-full h-[80vh] flex flex-col justify-center items-center'>
+              <NoCalls/>
+            <p className='text-gray-950/60 text-lg'>No incoming calls at the moment.</p>
+            <button onClick={navigateToDashboard} className='w-[300px] h-[40px] bg-blue-600 rounded-lg text-lg text-white mt-10'>Return back to dashboard</button>
             </div>
           )}
         </div>
       )}
-        <button onClick={navigateToDashboard} className='w-[400px] h-[40px] bg-blue-600 rounded-lg text-lg text-white mt-10'>Return back to dashboard</button>
+      
 
     </div>
   );

@@ -8,6 +8,8 @@ import note from "../assets/call_note.png";
 import { MdCallEnd } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import AddNoteModal from "../pages/AddNote";
+import { useSelector } from 'react-redux';
+import { capitalizeFirstLetter } from '../utils';
 
 const VideoCall = () => {
  
@@ -19,10 +21,10 @@ const VideoCall = () => {
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false); 
  
-  const roomUrl = localStorage.getItem("roomUrl"); 
-  const call = JSON.parse(localStorage.getItem("call")); 
+  const roomUrl = useSelector((state)=> state.auth.roomUrl) 
+  console.log(roomUrl, "room url"); 
+  const call =  useSelector((state)=> state.auth.call)
 
-  
 
   const roomConnection = useRoomConnection(roomUrl, {
     localMediaOptions: {
@@ -34,6 +36,8 @@ const VideoCall = () => {
   const { actions, state } = roomConnection;
   const { connectionState, localParticipant, remoteParticipants } = state;
   const { joinRoom, toggleCamera, toggleMicrophone } = actions;
+
+  console.log("remoteParticipants", remoteParticipants);
 
   useEffect(() => {
     joinRoom();
@@ -51,8 +55,8 @@ const VideoCall = () => {
   };
 
 
-  const firstName = call?.patientFirstName || "N/A";
-  const lastName =  call?.patientLastName || "N/A";
+  const firstName = capitalizeFirstLetter(call?.patientFirstName) || "N/A";
+  const lastName =  capitalizeFirstLetter(call?.patientLastName) || "N/A";
 
   const dob = userData?.dob || "N/A"; 
 
@@ -83,7 +87,7 @@ const VideoCall = () => {
   const getDisplayName = (id) => {
     return remoteParticipants.find((p) => p.id === id)?.displayName || "Guest";
   };
-
+  console.log(remoteParticipants.map((p)=> p.stream), "stream");
   const takeNote = () => {
     
     setIsNoteModalOpen(true)
@@ -110,12 +114,16 @@ const VideoCall = () => {
 
       <div className="relative w-full h-[88vh]">
         <div className='h-full w-full'>
-          {remoteParticipants[0]?.stream ? (
-            <div className="h-full w-full">
-              <VideoView stream={remoteParticipants[0].stream} />
-              <p className="ml-1">{getDisplayName(remoteParticipants[0].id)}</p>
-            </div>
-          ) : null}
+         {
+  remoteParticipants.map((friend) => {
+    if(!friend.stream) return null;
+      return (
+        <div className="w-full h-full" key={friend.id}>
+          <VideoView stream={friend?.stream} />
+        </div>
+      )
+  }) 
+}
         </div>
 
         <div className='absolute -top-40 right-4 h-full w-80 rounded-xl'>

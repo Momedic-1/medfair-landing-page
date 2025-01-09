@@ -102,7 +102,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       
       onNoteAdded(response.data);
       resetForm();
-      onClose();
       setLoading(false)
     } catch (err) {
       setLoading(false)
@@ -131,9 +130,15 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
   if (!isOpen) return null;
 
+  const handleOverlayClick = (e) => {
+  if (e.target === e.currentTarget) {
+     onClose();
+  }
+};
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleOverlayClick}>
+      <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll"  onClick={(e) => e.stopPropagation()}>
       
      
       <div className="flex items-center justify-between mb-4">
