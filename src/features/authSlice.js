@@ -24,6 +24,8 @@ const authSlice = createSlice({
     token: null,
     isLoading: false,
     error: null,
+    roomUrl: null,
+    call: null,
   },
   reducers: {
     logout(state) {
@@ -39,6 +41,12 @@ const authSlice = createSlice({
     },
     setError(state, action) {
       state.error = action.payload;
+    },
+    setRoomUrl : (state, action)=> {
+      state.roomUrl = action.payload
+    }, 
+    setCall: (state, action) => {
+      state.call = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -64,5 +72,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setError } = authSlice.actions;
+export const { logout, clearError, setError, setRoomUrl, setCall } = authSlice.actions;
 export default authSlice.reducer;
