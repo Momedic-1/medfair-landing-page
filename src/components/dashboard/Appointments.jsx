@@ -1,52 +1,92 @@
 
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Calendar from 'react-calendar'; 
 import 'react-calendar/dist/Calendar.css'; 
 import { FaChevronRight, FaChevronLeft } from 'react-icons/fa'; 
 import '../dashboard/Custompage.css'; 
-// import Modal from './SetTime'; 
 import AppointmentRequests from './AppointmentRequests';
+import { Box, Modal } from '@mui/material';
+import TimePicker from '../reuseables/TimePicker';
+import { baseUrl } from '../../env';
+import axios from 'axios';
+import { ColorRing } from 'react-loader-spinner';
+
 
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [modalOpen, setModalOpen] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  const [selectedHour, setSelectedHour] = useState(12);
+    const [selectedMinute, setSelectedMinute] = useState(0);
   const [appointments, setAppointments] = useState([]);
-  const [date, setDate] = useState(new Date()); 
+  const [isLoading, setIsLoading] = useState(false);
+  const doctorsId = JSON.parse(localStorage.getItem('userData'))
+  const token = JSON.parse(localStorage.getItem('authToken'));
+
+
+  const date =new Date(); 
   
 
+  console.log(selectedDate, 'selectedDate');
   const handleDateChange = (date) => {
     setSelectedDate(date);
+    handleOpen()
   };
 
-  const handleApply = () => {
-    setModalOpen(true);
-  };
 
-  const handleCancel = () => {
-    setSelectedDate(new Date()); 
-  };
 
-  const handleTimeConfirm = (time) => {
-    const day = selectedDate.getDate().toString().padStart(2, '0'); 
+
+  const handleApply = async () => {
+    const year = selectedDate.getFullYear();
     const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-    const year = selectedDate.getFullYear().toString().slice(-2);
-
-    const hour = parseInt(time.hours, 10);
-    const minutes = time.minutes.toString().padStart(2, '0');
-    const amPm = time.amPm.toLowerCase();
-
-    const formattedDate = `${day}/${month}/${year} - ${hour}:${minutes}${amPm}`;
-
-    setAppointments([...appointments, {
-      name: 'User Name', 
-      condition: 'Checkup', 
+    const day = selectedDate.getDate().toString().padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    const formattedMinute = selectedMinute.toString().padStart(2, '0');
+    const appointmentData = {
+      doctorId: doctorsId.id,
       date: formattedDate,
-      avatar: 'NewAvatarImageURL'
-    }]);
+      time: `${selectedHour}:${formattedMinute}`,
+    }
+    setIsLoading(true)
+const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}&date=${appointmentData.date}&time=${appointmentData.time}`
 
-    setModalOpen(false); 
+
+   try {
+      const response = await axios.post(SUBSCRIBE_URL, appointmentData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token?.token}`
+
+        },
+      });
+      console.log('Appointment created:', response.data);
+      handleClose()
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      setIsLoading(false)
+    }
+    finally{
+      setIsLoading(false)
+      handleClose()
+    }
+
+    console.log(appointmentData, 'appointmentData');
   };
+
+
+  const isDateInPast = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  const formatAppointmentData = selectedDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 
   return (
     <div className='flex flex-row gap-4 rounded-xl w-[255%] justify-center items-center'>
@@ -54,18 +94,19 @@ const CalendarPage = () => {
       
       <div className='bg-white rounded-lg shadow-lg relative w-[100%] h-[620px]  p-24 md:w-[25%] md:h-[490px] md:-left-2 md:p-8 sm:w-[350px]  lg:w-[42%] lg:h-[450px] lg:p-4 ]'>
         <div className='flex-grow'>
-          <div className='flex justify-between items-center mb-6'>
+          <div className='flex flex-col mb-4'>
             <h2 className='text-lg font-bold text-blue-900 ml-[20%] md:ml-0 lg:ml-0 '>Appointments</h2>
+            <p className="text-gray-950/60 text-sm">you can schedule a date and time for your appointment</p>
             
-            <select className='text-blue-900 bg-transparent mr-[17%] lg:mr-2 border-none text-xl font-semibold focus:outline-none'>
+            {/* <select className='text-blue-900 bg-transparent mr-[17%] lg:mr-2 border-none text-xl font-semibold focus:outline-none'>
               <option>Today</option>
-            </select>
+            </select> */}
           </div>
      
           <div className='flex justify-center w-full lg:w-[90%] md:w-[90%] sm:w-[90%] ml-0 lg:ml-0 md:ml-0 '>
             <Calendar
               onChange={handleDateChange} 
-              value={date} 
+              value={date}
               nextLabel={<FaChevronRight />}
               prevLabel={<FaChevronLeft />}
               navigationLabel={({ date }) =>
@@ -84,15 +125,48 @@ const CalendarPage = () => {
                 }
                 return '';
               }}
+              tileDisabled={({ date }) => isDateInPast(date)}
               className='custom-calendar' 
             />
           </div>
         </div>
 
-        <div className='absolute bottom-4 left-0 right-0 px-4 flex justify-between space-x-3 sm:space-x-4 lg:mr-9'>
+      </div>
+      <div className=''>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box 
+        sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <p id="modal-modal-title" className='text-lg font-semibold text-gray-900'>
+            You are about to schedule an appointment on <span className='text-gray-900n font-extrabold text-lg'>
+              {formatAppointmentData}
+              </span>
+          </p>
+          <div>
+          
+      <TimePicker selectedHour={selectedHour} setSelectedHour={setSelectedHour} selectedMinute={selectedMinute} setSelectedMinute={setSelectedMinute}/>
+   
+          </div>
+          
+        <div className='px-4 flex justify-between space-x-3 sm:space-x-4 lg:mr-9'>
           <button
             className='border-gray-500 border ml-[25%] md:ml-[10%] lg:ml-0  text-gray-700 w-[120px] h-[45px] font-semibold rounded-md hover:bg-gray-200 transition duration-300 ease-in-out'
-            onClick={handleCancel}
+            onClick={handleClose}
           >
             Cancel
           </button>
@@ -101,13 +175,21 @@ const CalendarPage = () => {
             className='bg-blue-900 text-white w-[120px] h-[45px] relative -left-[25%]  lg:-left-0  md:-left-[20%] lg:-right-0  font-semibold rounded-lg hover:bg-blue-800 transition duration-300 ease-in-out'
             onClick={handleApply}
           >
-            Apply
+            {isLoading ?  
+            <ColorRing  visible={true}
+              height="40"
+              width="40"
+              ariaLabel="color-ring-loading"
+              wrapperStyle={{}}
+              wrapperClass="color-ring-wrapper"
+              colors={['white', 'white', 'white', 'white', 'white']}
+              /> : 
+              'Schedule'}
           </button>
         </div>
-
-       
-        {/* <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} onConfirm={handleTimeConfirm} /> */}
-      </div>
+        </Box>
+      </Modal>
+    </div>
     </div>
   );
 };

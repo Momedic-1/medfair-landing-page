@@ -46,6 +46,8 @@ function WelcomeBack({ status }) {
     }
   };
 
+  console.log(activeCalls, 'activeCalls');
+
   const navigateToIncomingCalls = () => {
     navigate('/incoming-call');
   };

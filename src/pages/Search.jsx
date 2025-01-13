@@ -111,7 +111,7 @@ const Search = () => {
       <h2>Patient Note</h2>
      
 
-      <div className=" overflow-y-auto  max-w-full lg:pl-56 relative lg:-top-[20px] ">
+      <div className="h-96 overflow-y-auto  max-w-full lg:pl-56">
         <table className="border-collapse border border-gray-300 w-full text-left table-auto">
           <thead>
             <tr className="bg-gray-100">
@@ -129,7 +129,8 @@ const Search = () => {
             </tr>
           </thead>
           <tbody>
-            {currentResults.map((note, index) => (
+            {results.length > 0 ? 
+            currentResults.map((note, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2">{note.patientFirstName}</td>
                 <td className="border border-gray-300 px-4 py-2">{note.patientLastName}</td>
@@ -156,7 +157,12 @@ const Search = () => {
                   </button>
                 </td>
               </tr>
-            ))}
+            )): (
+              <div>
+
+                {/* <p>You haven't taken any notes for a patient yet</p> */}
+              </div>
+            )}
           </tbody>
         </table>
       </div>
