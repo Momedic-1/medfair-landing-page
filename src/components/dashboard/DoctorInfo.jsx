@@ -1,141 +1,90 @@
-
-
-import React, { useEffect, useState } from 'react';
-import messages from "../../assets/mail-add-02.png";
-import missedCall from "../../assets/call-missed-02.png";
 import axios from 'axios';
-import profile from "../../assets/Ícone de perfil de usuário em estilo plano Ilustração em vetor avatar membro em fundo isolado Conceito de negócio de sinal de permissão humana _ Vetor Premium.jpeg";
-import { baseUrl } from "../../env.jsx";
+import React, { useEffect, useState } from 'react'
+import { baseUrl } from '../../env';
+import { MdDelete } from 'react-icons/md';
 
-const DoctorProfile = () => {
-  const [stats, setStats] = useState({
-    appointment: 0,
-    totalPatient: 0,
-    consultations: 0,
-    returnPatient: 0,
-  });
-  const [missedCalls, setMissedCalls] = useState(0);
-  const [message, setMessages] = useState(0);
 
-  const [userData] = useState(() => JSON.parse(localStorage.getItem('userData')));
-  const [token] = useState(() => JSON.parse(localStorage.getItem('authToken'))?.token);
+const DoctorInfo = () => {
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (userData && token) {
-        const id = userData.id;
+  const [appointments, setAppointments] = useState([]);
+  const doctorsId = JSON.parse(localStorage.getItem('userData'))
+  const token = JSON.parse(localStorage.getItem('authToken'));
 
-        try {
-          const response = await axios.get(
-            `${baseUrl}/api/call/${id}/total-patients-consultation`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          
-          const data = response.data;
-          setStats({
-            appointment: data.appointment || 0,
-            consultations: data.consultations || data,
-            returnPatient: data.returnPatient || 0,
-            totalPatient: data.totalPatients || data,
-          });
-        } catch (error) {
-          console.error("Error fetching consultation and patient data:", error);
-        }
-      }
-    };
+  const getAppointments = async () => {
+  //  try {
+  //     const response = await axios.get(`${baseUrl}/api/appointments?doctorId=${doctorsId.id}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //       },
+  //     });
+  //     const sortedAppointments = response.data.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+  //     setAppointments(sortedAppointments);
+  //   } catch (error) {
+  //     console.error('Error fetching appointments:', error);
+  //   }
+  try {
+      const response = await axios.get(`${baseUrl}/api/appointments?doctorId=${doctorsId.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const sortedAppointments = response.data.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+      setAppointments(sortedAppointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
 
-    fetchStats(); 
-  }, [userData, token]);
+  useEffect(()=> {
+    getAppointments()
+  }, [])
 
-  useEffect(() => {
-    const fetchMissedCallsAndMessages = async () => {
-      if (userData && token) {
-        const id = userData.id;
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = date.toLocaleDateString('en-US', options);
+    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return { formattedDate, time };
+  };
 
-        try {
-          const response = await axios.get(
-            `${baseUrl}/api/call/missed/count?doctorId=${id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          setMissedCalls(response.data);
-          setMessages(response.messages );
-        } catch (error) {
-          console.error("Error fetching missed calls and messages data:", error);
-        }
-      }
-    };
-
-    fetchMissedCallsAndMessages(); 
-  }, [userData, token]);
+  console.log(appointments, 'appointments');
 
   return (
-    <div className='bg-white rounded-3xl shadow-lg p-6 max-w-md mx-auto mt-14'>
-      <div className='flex flex-col items-center mb-6'>
-        <img
-          src={profile}
-          alt='user avatar'
-          className='w-40 h-40 rounded-2xl mb-4'
-        />
-        <span className="font-bold text-[#020E7C] mb-4 max-w-md text-xl text-center items-center justify-center">
-          Doctor{' '}
-          {userData
-            ? userData.firstName.charAt(0).toUpperCase() +
-              userData.firstName.slice(1).toLowerCase()
-            : ''}
-        </span>
-      </div>
+    <div className="w-full bg-white rounded-lg h-[480px]">
+      <div className="w-full h-full overflow-y-auto px-16 py-8">
+        <p className='text-lg text-gray-950/60 underline leading-8 font-bold'>Your scheduled appointments</p>
 
-      <hr className='my-8' />
+        {appointments.length > 0 ? 
+        appointments.map((appointment) => {
+          const { formattedDate, time } = formatDate(appointment.dateTime);
+          return (
+            <div key={appointment.id} className="mb-4 flex items-center justify-between border-b border-gray-200 py-2 mt-4">
+              <div className='flex items-center gap-x-4'>
+                <p className="text-gray-800 font-semibold">{formattedDate}</p>
+              <p className="text-gray-600 font-semibold">{time}</p>
+              </div>
+           
+              <div className="relative group">
+                <button
+                  className='text-gray-500/80 text-lg hover:text-red-500'
+                >
+                  <MdDelete />
+                </button>
+                <span className="absolute bottom-full left-0 transform -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Delete appointment
+                </span>
+              </div>
+            </div>
+          );
+        }): 
+<div className='w-full h-full flex items-center justify-center'>
+        <p className="text-gray-800/60 font-semibold text-xl">You have no appointments scheduled</p>
 
-      <div className='mb-6'>
-        <h3 className='text-sm font-semibold text-blue-900 mb-2'>Status</h3>
-        <p className='text-xs text-gray-600 mb-1'>Progress</p>
-        <div className='w-full bg-gray-200 rounded-full h-2'>
-          <div className='bg-blue-900 h-2 rounded-full w-3/4'></div>
-        </div>
-      </div>
+</div>        }
 
-      <hr className='my-8' />
-
-      <div className='grid grid-cols-2 gap-4 mb-6'>
-        {[
-          { label: 'Appointment', value: stats.appointment },
-          { label: 'Total Patient', value: stats.totalPatient },
-          { label: 'Consultations', value: stats.consultations },
-          { label: 'Return Patient', value: stats.returnPatient },
-        ].map((item, index) => (
-          <div key={index} className='text-center'>
-            <p className='text-2xl font-bold text-blue-900'>{item.value}</p>
-            <p className='text-xs text-gray-600'>{item.label}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className='flex justify-between'>
-        <button className='bg-blue-900 text-white whitespace-nowrap rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
-          <span className='text-2xl font-bold mb-1'>{missedCalls}</span>
-          <span className='text-sm mb-2'>Missed calls</span>
-          <img src={missedCall} alt='missed calls' className='w-6 h-6' />
-        </button>
-
-        <button className='border border-blue-900 whitespace-nowrap text-blue-900 rounded-lg py-3 px-4 flex flex-col items-center justify-center w-[48%]'>
-          <span className='text-2xl font-bold mb-1'>{message}</span>
-          <span className='text-sm mb-2'>Messages</span>
-          <img src={messages} alt='messages' className='w-6 h-6' />
-        </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DoctorProfile;
-
+export default DoctorInfo

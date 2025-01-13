@@ -14,6 +14,7 @@ import { FaUser } from "react-icons/fa";
 import HelpIcon from '../assets/HelpIcon.jsx';
 import CloseIcon from '../assets/CloseIcon.jsx';
 import Logout from '../Logout.jsx';
+import {capitalizeFirstLetter} from "../utils";
 
 const Sidebar = () => {
  
@@ -81,17 +82,17 @@ const Sidebar = () => {
 
       <span className="font-bold text-[#020E7C]">
         {userData
-          ? userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase()
+          ? capitalizeFirstLetter(userData.firstName) + ' ' + capitalizeFirstLetter(userData.lastName)
           : null}
       </span>
       <button
         type='button'
-        className='size-[38px] relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
+        className='relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
       >
         <NotificationBell/>
-        <span className='sr-only'>Notifications</span>
+        {/* <span className='sr-only'>Notifications</span> */}
       </button>
-      <button className='bg-blue-800 text-white py-4 w-32 h-16 pe-16 font-bold sm:px-4 sm:py-4 rounded-2xl sm:text-sm px-2'>
+      <button className='bg-blue-800 text-white py-4 w-[240px] flex justify-center items-center h-10 pe-16 font-bold sm:px-4 sm:py-4 rounded-2xl sm:text-sm px-2'>
         Create appointment
       </button>
     </div>
@@ -115,7 +116,7 @@ const Sidebar = () => {
         <div className='relative flex flex-col h-full max-h-full'>
           <div className='px-6 pt-4 flex justify-between items-center'>
             <a
-              className='flex items-center space-x-2 flex-none rounded-md text-sm inline-block font-semibold focus:outline-none focus:opacity-80'
+              className='flex items-center space-x-2 flex-none rounded-md text-sm font-semibold focus:outline-none focus:opacity-80'
               href='#'
               aria-label='Dashboard'
             >
@@ -225,7 +226,7 @@ const Sidebar = () => {
                 <li>
                 
                 <NavLink
-                    to='search'
+                    to='notes'
                     className={({ isActive }) =>
                       `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
                         isActive
