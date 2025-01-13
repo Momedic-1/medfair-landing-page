@@ -54,7 +54,8 @@ const DoctorInfo = () => {
       <div className="w-full h-full overflow-y-auto px-16 py-8">
         <p className='text-lg text-gray-950/60 underline leading-8 font-bold'>Your scheduled appointments</p>
 
-        {appointments.map((appointment) => {
+        {appointments.length > 0 ? 
+        appointments.map((appointment) => {
           const { formattedDate, time } = formatDate(appointment.dateTime);
           return (
             <div key={appointment.id} className="mb-4 flex items-center justify-between border-b border-gray-200 py-2 mt-4">
@@ -75,7 +76,11 @@ const DoctorInfo = () => {
               </div>
             </div>
           );
-        })}
+        }): 
+<div className='w-full h-full flex items-center justify-center'>
+        <p className="text-gray-800/60 font-semibold text-xl">You have no appointments scheduled</p>
+
+</div>        }
 
       </div>
     </div>
