@@ -40,6 +40,10 @@ export default function LoginPage() {
     dispatch(setError ('')) ;
   };
 
+  // const goToLogin = ()=> {
+  //   navigate('/signup');
+  // }
+
   useEffect(() => {
     if (userData) {
       const role = userData.role;
@@ -105,7 +109,7 @@ export default function LoginPage() {
               Forgot password?
             </a>
           </div>
-          <footer className="flex items-center justify-between mt-4 lg:mt-8">
+          <div className="flex items-center justify-between mt-4 lg:mt-8">
             <button
               type="submit"
               className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-5 w-full h-12 rounded-md flex items-center justify-center ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -113,7 +117,9 @@ export default function LoginPage() {
             >
               {isLoading ? <img src={SpinnerImg} className="w-7" alt="Loading" /> : 'Login'}
             </button>
-          </footer>
+            
+          </div>
+          {/* <button className="text-blue-500 text-sm font-medium mt-2" onClick={goToLogin}>Don't have an account?</button> */}
         </form>
       </div>
 
