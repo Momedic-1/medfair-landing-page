@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import AddNoteModal from "./AddNote";
 import { baseUrl } from "../env";
+import PatientTable from "../components/reuseables/PatientsTable";
 
 const Search = () => {
   const [firstName, setFirstName] = useState("");
@@ -99,73 +100,22 @@ const Search = () => {
   const totalPages = Math.ceil(results.length / itemsPerPage);
   
   return (
-    <div className="p-4">
+    <div className="w-full lg:px-8">
       <div className="flex justify-end mb-4">
         <button
-          className="bg-green-500 text-white px-4 py-2 rounded  hover:bg-green-600"
-          onClick={openAddNoteModal}
+          // className="bg-green-500 text-white px-4 py-2 rounded  hover:bg-green-600 disabled:bg-gray-700"
+          className="bg-gray-700 text-white px-4 py-2 rounded cursor-not-allowed"
+          // onClick={openAddNoteModal}
         >
           Add New Note
         </button>
       </div>
-      <h2>Patient Note</h2>
      
+    <div className="w-full pl-56">
 
-      <div className="h-96 overflow-y-auto  max-w-full lg:pl-56">
-        <table className="border-collapse border border-gray-300 w-full text-left table-auto">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-4 py-2">Patient First Name</th>
-              <th className="border border-gray-300 px-4 py-2">Patient Last Name</th>
-              <th className="border border-gray-300 px-4 py-2">Visit Date</th>
-              <th className="border border-gray-300 px-4 py-2">Subjective</th>
-              <th className="border border-gray-300 px-4 py-2">Objective</th>
-              <th className="border border-gray-300 px-4 py-2">Assessment</th>
-              <th className="border border-gray-300 px-4 py-2">Plan</th>
-              <th className="border border-gray-300 px-4 py-2">Final Diagnosis</th>
-              <th className="border border-gray-300 px-4 py-2">SOAP Comment</th>
-              <th className="border border-gray-300 px-4 py-2">Drugs</th>
-              <th className="border border-gray-300 px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.length > 0 ? 
-            currentResults.map((note, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">{note.patientFirstName}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.patientLastName}</td>
-                <td className="border border-gray-300 px-4 py-2">{new Date(note.visitDate).toLocaleString()}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.subjective}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.objective}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.assessment}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.plan}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.finalDiagnosis}</td>
-                <td className="border border-gray-300 px-4 py-2">{note.soapComment}</td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <ul>
-                    {note.drugs.map((drug, idx) => (
-                      <li key={idx}>{drug.name} - {drug.dosage}</li>
-                    ))}
-                  </ul>
-                </td>
-                <td className="border border-gray-300 px-4 ">
-                  <button
-                    onClick={() => handleView(note)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
-            )): (
-              <div>
-
-                {/* <p>You haven't taken any notes for a patient yet</p> */}
-              </div>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <PatientTable emptyMessage={"No Patients data"}/>
+    </div>
+    
       <div className="flex justify-center mt-4 space-x-2">
         {Array.from({ length: totalPages }, (_, index) => (
           <button

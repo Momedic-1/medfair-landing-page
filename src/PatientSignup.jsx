@@ -49,19 +49,20 @@ const PatientSignup = () => {
   };
 
   const handleNextClick = async () => {
-    if (currentStep === 1) {
-      const formIsValid = await validateForm();
-      if (formIsValid) {
-        setShowCheckEmail(true);
-        setCurrentStep(2);
-        console.log("first step");
-      }
-    } else if (currentStep === 2) {
-       await verifyEmail()
+    // if (currentStep === 1) {
+    //   const formIsValid = await validateForm();
+    //   if (formIsValid) {
+    //     setShowCheckEmail(true);
+    //     setCurrentStep(2);
+    //     console.log("first step");
+    //   }
+    // } else if (currentStep === 2) {
+    //    await verifyEmail()
 
-    } else if (currentStep === 3) {
-      navigate('/login');
-    }
+    // } else if (currentStep === 3) {
+    //   navigate('/login');
+    // }
+    console.log("formdata ", formData);
   };
 
   async function verifyEmail(){
@@ -232,7 +233,6 @@ const PatientSignup = () => {
           </div>
         )}
 
-        {/* Error Modal */}
         <ErrorModal message={errorMessage} onClose={() => setErrorMessage('')} />
       </div>
     </div>

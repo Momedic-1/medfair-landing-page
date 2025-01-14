@@ -23,7 +23,7 @@ function Income() {
 
         const response = await axios.get(`${baseUrl}/api/earnings/${id}/earnings`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            // 'Authorization': `Bearer ${token}`
           }
         });
 
@@ -49,7 +49,7 @@ function Income() {
   }
 
   return (
-    <div className='space-y-4 bg-white p-6 rounded-lg'>
+    <div className='w-full bg-white p-6 rounded-lg h-52'>
       <div className='flex justify-between items-center'>
         <h3 className='font-semibold text-[#020e7c]'>Income</h3>
       </div>
@@ -57,19 +57,13 @@ function Income() {
       <div className='flex justify-between'>
         <div>
           <p className='text-xl font-bold text-[#020e7c]'>
-            {incomeData ? JSON.stringify(incomeData, null, 2) : "No data available"}
+            ₦{incomeData ? JSON.stringify(incomeData, null, 2) : "No data available"}
           </p>
           <p className='font-semibold text-[#020e7c] mt-14'>Total Income</p>
         </div>
-        <div className=''>
-        <p className={`text-md font-bold text-white bg-[#020e7c] w-20 px-4 py-1 rounded-md`}>
-            +56%
-          </p>    
-           <p className='font-semibold text-[#020e7c] mt-12'>From last month</p>
-        </div>
       </div>
 
-      <button className='w-full bg-[#020e7c] text-white py-2 rounded-lg'>
+      <button className='w-56 h-10 bg-[#020e7c] text-white py-2 rounded-lg'>
         Request for Withdrawal
       </button>
     </div>

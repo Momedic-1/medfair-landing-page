@@ -56,7 +56,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
 
           <div className='w-full flex flex-col lg:flex-row lg:items-center justify-between mb-6'>
             <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
-              <h1 className='text-gray-600 font-medium text-sm'>First Name</h1>
+              <h1 className='text-gray-600 font-medium text-sm'>First name</h1>
               <input
                 required
                 type='text'
@@ -69,7 +69,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
             </div>
 
             <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
-              <h1 className='text-gray-600 font-medium text-sm'>Last Name</h1>
+              <h1 className='text-gray-600 font-medium text-sm'>Last name</h1>
               <input
                 required
                 type='text'
@@ -86,7 +86,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
 
 
 <div className='flex flex-col w-full mt-7'>
-  <h1 className='text-gray-600 font-medium text-sm'>Email</h1>
+  <h1 className='text-gray-600 font-medium text-sm'>Email address</h1>
   <input
     required
     type='email'
@@ -100,7 +100,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
 
 
     <div className='flex flex-col mt-7'>
-      <h1 className='text-gray-600 font-medium text-sm'>Mobile Number</h1>
+      <h1 className='text-gray-600 font-medium text-sm'>Mobile number</h1>
       <div className='flex items-center mt-3 ' style={{ width: '100%' }}>
       <div style={{ width: '100%' }}>
         <PhoneInput
@@ -118,7 +118,9 @@ export default function PatientSignupForm({ formData, setFormData }) {
        </div>
           <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
           <div className='flex items-center justify-between w-full mb-6'>
-            <div className='flex items-center w-1/2 px-2'>
+            <div className='flex items-center gap-x-4 px-2'>
+            <div className='flex items-center'>
+
               <p className='mr-2'>Male</p>
               <input
                 required
@@ -130,7 +132,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
                 className='rounded-md'
               />
             </div>
-            <div className='flex items-center w-1/2 px-2'>
+              <div className='flex items-center'>
               <p className='mr-2'>Female</p>
               <input
                 required
@@ -140,6 +142,21 @@ export default function PatientSignupForm({ formData, setFormData }) {
                 checked={formData.gender === 'Female'}
                 onChange={handleChange}
                 className='rounded-md'
+              />
+            </div>
+            </div>
+            <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
+              <h1 className='text-gray-600 font-medium text-sm'>
+               Referral code (Optional)
+              </h1>
+              <input
+                
+                type='text'
+                name='referralCode'
+                value={formData.referralCode}
+                onChange={handleChange}
+                placeholder='Enter your referral code'
+                className='border rounded-md p-3 mt-2 w-full bg-gray-100'
               />
             </div>
           </div>
@@ -163,7 +180,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
             </div>
 
             <div className='flex flex-col w-full lg:w-1/2 px-2 mb-6'>
-              <h1 className='text-gray-600 font-medium text-sm'>Confirm Password</h1>
+              <h1 className='text-gray-600 font-medium text-sm'>Confirm password</h1>
               <input
                 required
                 type='password'
