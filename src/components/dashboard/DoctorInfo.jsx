@@ -3,11 +3,20 @@ import axios from 'axios';
 import { MdDelete } from 'react-icons/md';
 import { baseUrl } from '../../env';
 import AppointmentsSkeleton from '../reuseables/AppointmentSkeleton';
+import ConfirmationMenu from '../reuseables/ConfirmationMenu';
 
 const DoctorInfo = () => {
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
   
   const getDoctorData = () => ({
     doctorsId: JSON.parse(localStorage.getItem('userData')),
@@ -60,10 +69,6 @@ const DoctorInfo = () => {
   useEffect(() => {
  
     getAppointments();
-
-    // const pollInterval = setInterval(getAppointments, 30000);
-
-    // return () => clearInterval(pollInterval);
   }, []); 
 
   const formatDate = (dateString) => {
@@ -83,7 +88,7 @@ const DoctorInfo = () => {
 
   return (
     <div className="w-full bg-white rounded-lg h-[480px]">
-      <div className="w-full h-full overflow-y-auto px-16 py-8">
+      <div className="w-full h-full overflow-y-auto px-8 xl:px-16 py-8">
         <p className="text-lg text-gray-950/60 underline leading-8 font-bold">
           Your scheduled appointments
         </p>
@@ -116,7 +121,7 @@ const DoctorInfo = () => {
 
               <div className="relative group">
                 <button
-                  onClick={() => handleDeleteAppointment(appointment.id)}
+                  onClick={handleClick}
                   className="text-gray-500/80 text-lg hover:text-red-500 transition-colors duration-200"
                   aria-label="Delete appointment"
                 >
@@ -125,6 +130,7 @@ const DoctorInfo = () => {
                 <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   Delete appointment
                 </span>
+                <ConfirmationMenu anchorEl={anchorEl} handleClose={handleClose} open={open}/>
               </div>
             </div>
           );

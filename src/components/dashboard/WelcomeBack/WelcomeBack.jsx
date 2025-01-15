@@ -77,7 +77,7 @@ function WelcomeBack({ status }) {
   };
 
   return (
-    <div className='w-[100%] relative'>
+    <div className='w-full relative px-2'>
       <div
         onClick={navigateToIncomingCalls}
         className={`image ${isActive ? 'active' : 'hidden'} ${
@@ -87,19 +87,13 @@ function WelcomeBack({ status }) {
         <p className='text-white font-semibold text-center'>
           Incoming Calls
         </p>
-        {/* <img
-          src={call}
-          alt={'call'}
-          className={`image ${isActive ? 'active' : 'hidden'} ${
-            activeCalls.length > 0 && status === online && 'shake bg-green-500'
-          }`}
-        /> */}
+        
         <LiaPhoneVolumeSolid className={`${isActive ? 'active' : 'hidden'} ${
             activeCalls.length > 0 && status === online && 'shake text-green-500'
           }`} fontSize={28}/>
       </div>
 
-      <div className='flex flex-row w-[170%] -mx-14 lg:w-[100%] lg:-mx-1 sm:w-[125%] sm:-mx-14 md:w-[115%] md:-mx-14 overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/40 to-white/40 sm:flex-row shadow-lg border border-[#020e7c]'>
+      <div className='flex flex-row w-full -mx-14 lg:w-[100%] lg:-mx-1 sm:w-[125%] sm:-mx-14 md:w-[115%] md:-mx-14 overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/40 to-white/40 sm:flex-row shadow-lg border border-[#020e7c]'>
         <div className='flex flex-1 flex-col p-4 sm:w-2/3 sm:p-3 lg:w-3/4'>
           <h2 className='mb-1 text-xl font-bold text-[#020e7c] pl-3 md:text-2xl lg:text-3xl lg:pl-5'>
             Welcome Back!
@@ -112,12 +106,12 @@ function WelcomeBack({ status }) {
               : ''}
           </span>
         </div>
-        <div className='h-44 flex-1 w-full sm:h-[13rem] sm:w-1/2 lg:w-2/5'>
+        <div className='w-full h-44 flex-1 sm:h-[13rem] sm:w-1/2 lg:w-2/5'>
           <img
             src={DoctorImg}
             loading='lazy'
             alt='Doctor A. Buchi'
-            className='h-full w-full object-cover object-center rounded-lg'
+            className='w-full object-cover h-full'
           />
         </div>
       </div>

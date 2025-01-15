@@ -89,21 +89,21 @@ const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}
   });
 
   return (
-    <div className='flex flex-row gap-4 rounded-xl w-[255%] justify-center items-center'>
+    <div className='flex flex-col md:flex-row gap-4 rounded-xl w-full justify-center items-center'>
       <AppointmentRequests appointments={appointments} className="" />
       
-      <div className='bg-white rounded-lg shadow-lg relative w-[100%] h-[620px]  p-24 md:w-[25%] md:h-[490px] md:-left-2 md:p-8 sm:w-[350px]  lg:w-[42%] lg:h-[450px] lg:p-4 ]'>
-        <div className='flex-grow'>
-          <div className='flex flex-col mb-4'>
-            <h2 className='text-lg font-bold text-blue-900 ml-[20%] md:ml-0 lg:ml-0 '>Appointments</h2>
-            <p className="text-gray-950/60 text-sm">you can schedule a date and time for your appointment</p>
+      <div className='bg-white rounded-lg shadow-lg relative w-full h-[490px] p-4 md:w-[600px] md:-left-2 md:p-8 sm:w-[350px]  lg:w-[42%] lg:h-[450px] lg:p-4 ]'>
+        <div className='w-full px-2'>
+          <div className='flex flex-col mb-4 w-full'>
+            <h2 className='text-lg font-bold text-blue-900'>Appointments</h2>
+            <p className="text-gray-950/60 text-sm md:ml-0">you can schedule a date and time for your appointment</p>
             
             {/* <select className='text-blue-900 bg-transparent mr-[17%] lg:mr-2 border-none text-xl font-semibold focus:outline-none'>
               <option>Today</option>
             </select> */}
-          </div>
+          </div>  
      
-          <div className='flex justify-center w-full lg:w-[90%] md:w-[90%] sm:w-[90%] ml-0 lg:ml-0 md:ml-0 '>
+          <div className='flex justify-center w-full'>
             <Calendar
               onChange={handleDateChange} 
               value={date}

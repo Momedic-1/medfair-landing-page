@@ -55,21 +55,21 @@ const Sidebar = () => {
         {isSidebarOpen ? '✕' : '☰'}
       </button>
          <div className='relative flex-grow w-[10rem] mr-2'>
-        <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none ps-3.5'>
+        {/* <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none ps-3.5'>
           <MagnifyingGlass/>
-        </div>
-        <input
+        </div> */}
+        {/* <input
           type='text'
           className='py-4 pl-10 pr-8 w-[9rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
           placeholder='Search anything'
-        />
+        /> */}
       </div>
-      <button className='bg-blue-800 text-white py-2 w-[8rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
+      {/* <button className='bg-blue-800 text-white py-2 w-[8rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
         Create appointment
-      </button>
+      </button> */}
     </div>
     <div className='hidden md:flex md:flex-row items-center justify-between gap-1 md:gap-x-3 w-full'>
-      <div className='relative w-[40rem]'>
+      {/* <div className='relative w-[40rem]'>
         <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none z-20 ps-3.5'>
           <MagnifyingGlass/>
         </div>
@@ -78,23 +78,23 @@ const Sidebar = () => {
           className='py-4 ps-10 pe-16 block w-[34rem] bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
           placeholder='Search anything'
         />
-      </div>
+      </div> */}
 
       <span className="font-bold text-[#020E7C]">
         {userData
           ? capitalizeFirstLetter(userData.firstName) + ' ' + capitalizeFirstLetter(userData.lastName)
           : null}
       </span>
-      <button
+      {/* <button
         type='button'
         className='relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
       >
         <NotificationBell/>
-        {/* <span className='sr-only'>Notifications</span> */}
+        <span className='sr-only'>Notifications</span>
       </button>
       <button className='bg-blue-800 text-white py-4 w-[240px] flex justify-center items-center h-10 pe-16 font-bold sm:px-4 sm:py-4 rounded-2xl sm:text-sm px-2'>
         Create appointment
-      </button>
+      </button> */}
     </div>
   </nav>
 </header>

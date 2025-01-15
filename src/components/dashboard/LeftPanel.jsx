@@ -8,7 +8,7 @@ function LeftPanel({status}) {
   return (
     <div className='w-full lg:w-2/3  p-4 space-y-4 mb-20 '>
       <WelcomeBack status={status} />
-      <div className='flex flex-col lg:flex-row justify-center items-center'>
+      <div className='w-full flex flex-col lg:flex-row justify-center items-center'>
         <Appointments />
       </div>
       {/* <div className='hidden lg:block  '>
