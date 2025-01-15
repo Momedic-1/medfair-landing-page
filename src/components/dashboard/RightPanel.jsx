@@ -4,7 +4,7 @@ import Income from './Income'
 
 function RightPanel () {
   return (
-    <div className=' hidden lg:block  w-full lg:w-1/2 p-4 space-y-6   '>
+    <div className='w-full lg:w-1/2 p-4 space-y-6   '>
       <DoctorInfo />
       {/* <Stats /> */}
       <Income />

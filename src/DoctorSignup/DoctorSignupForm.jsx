@@ -10,7 +10,15 @@ import Modal from './Modal';
 import 'react-phone-input-2/lib/style.css';
 import { baseUrl } from '../env.jsx';
 
+const specialization = ["Select specialization",'GENERAL_PRACTITIONER', 'PSYCHIATRIST', 'CLINICAL_PSYCHOLOGIST', 'THERAPIST', 'SEX_THERAPIST']
 export default function DoctorSignupForm() {
+
+  const formatSpecialization = (specialization) => {
+  return specialization
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -170,14 +178,21 @@ export default function DoctorSignupForm() {
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20'>
         <div className='mb-4'>
           <label className='block text-sm font-medium text-gray-700 mb-1'>Medical specialization</label>
-          <input
+          <select
             type='text'
             name='specialization'
             value={formData.specialization}
             onChange={handleChange}
             className='w-full mt-2 p-4 border border-gray-300 rounded text-sm'
             placeholder='Enter here'
-          />
+          >
+           {
+                specialization.map((specialization, index) => (
+                  <option key={index} value={specialization} className='w-full border-none outline-none cursor-pointer'>{formatSpecialization(specialization)}</option>
+                ))
+           }
+           
+            </select>
         </div>
         <div className='mb-4'>
           <label className='block text-sm font-medium text-gray-700 mb-1'>Name of Hospital</label>

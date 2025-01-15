@@ -48,7 +48,7 @@ const DoctorSignup = () => {
     if (currentStep === 2) {
       setCurrentStep(3)
     } else if (currentStep === 3) {
-      navigate('/doctor-dashboard') // Navigate to the dashboard
+      navigate('/doctor-dashboard')
     }
   }
 
