@@ -28,7 +28,14 @@ const CalendarPage = () => {
 
   const date =new Date(); 
   
-
+  const calendarStyle = {
+  width: '100%', 
+  maxWidth: '100%',
+  height: '100%',
+  backgroundColor: 'white',
+  border: 'none', 
+  fontFamily: 'inherit'
+};
   console.log(selectedDate, 'selectedDate');
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -90,20 +97,17 @@ const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}
 
   return (
     <div className='flex flex-col md:flex-row gap-4 rounded-xl w-full justify-center items-center'>
-      <AppointmentRequests appointments={appointments} className="" />
-      
-      <div className='bg-white rounded-lg shadow-lg relative w-full h-[490px] p-4 md:w-[600px] md:-left-2 md:p-8 sm:w-[350px]  lg:w-[42%] lg:h-[450px] lg:p-4 ]'>
-        <div className='w-full px-2'>
-          <div className='flex flex-col mb-4 w-full'>
-            <h2 className='text-lg font-bold text-blue-900'>Appointments</h2>
-            <p className="text-gray-950/60 text-sm md:ml-0">you can schedule a date and time for your appointment</p>
+
+      <div className='bg-white rounded-lg shadow-lg relative w-full h-[490px]'>
+        <div className='w-[100%] px-2'>
+          <div className='flex flex-col mb-4 w-full py-2 px-1 md:py-4 md:px-4'>
+            <h2 className='text-lg font-bold text-blue-900 md:text-xl'>Appointments</h2>
+            <p className="text-gray-950/60 text-sm md:text-lg">you can schedule a date and time for your appointment</p>
             
-            {/* <select className='text-blue-900 bg-transparent mr-[17%] lg:mr-2 border-none text-xl font-semibold focus:outline-none'>
-              <option>Today</option>
-            </select> */}
+      
           </div>  
      
-          <div className='flex justify-center w-full'>
+          <div className='flex justify-center w-full h-full'>
             <Calendar
               onChange={handleDateChange} 
               value={date}
@@ -126,7 +130,8 @@ const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}
                 return '';
               }}
               tileDisabled={({ date }) => isDateInPast(date)}
-              className='custom-calendar' 
+              className="custom-calendar"
+              style={calendarStyle} 
             />
           </div>
         </div>

@@ -28,7 +28,7 @@ const Dashboard = () => {
     <div className='lg:ml-[15rem] relative'>
     
         <div
-            className='flex flex-col px-2 lg:flex-row min-h-screen items-stretch lg:items-start lg:gap-x-8 justify-center bg-gray-100 p-2'>
+            className='flex flex-col lg:flex-row h-full items-stretch lg:items-start lg:gap-x-8 justify-center bg-gray-100'>
             <LeftPanel status={status}  />
             <RightPanel/>
             
