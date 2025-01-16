@@ -56,8 +56,8 @@ const DoctorInfo = () => {
   const handleDeleteAppointment = async (appointmentId) => {
     const { token } = getDoctorData();
     try {
-      await axios.delete(`${baseUrl}/api/appointments/${appointmentId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+      await axios.delete(`${baseUrl}/api/appointments/${doctorId}/slots/${slotId}`, {
+        // headers: { 'Authorization': `Bearer ${token}` },
       });
       setAppointments(appointments.filter(apt => apt.id !== appointmentId));
     } catch (error) {

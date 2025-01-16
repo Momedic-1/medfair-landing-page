@@ -45,7 +45,7 @@ const Sidebar = () => {
   return (
     <>
         
-      <header className='sticky top-0 inset-x-0 px-2 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px] overflow-x-hidden'>
+      <header className='sticky top-0 inset-x-0 px-2 h-12 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px] overflow-x-hidden md:h-16'>
           <nav className='px-4 sm:px-6 flex basis-full items-center w-full mx-auto flex-col'>
          <div className='flex items-center px-4 justify-between w-full md:hidden'>
          <button

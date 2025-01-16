@@ -25,3 +25,21 @@
   scrollbar-width: thin; 
   scrollbar-color: #dfdada #f1f1f1; 
 }
+
+.react-calendar {
+  width: 100% !important;
+  padding: 1rem;
+  border: none;
+}
+
+.react-calendar__month-view__days {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr);
+  width: 100%;
+}
+
+.react-calendar__tile {
+  padding: 1em 0.5em;
+  text-align: center;
+  line-height: 1.5;
+}
