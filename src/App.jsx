@@ -16,6 +16,7 @@ import IncomingCalls from './components/dashboard/WelcomeBack/IncomingCall.jsx';
 import PatientNotes from './PatientDashboard/patientNotes.jsx';
 import VerifyPayment from './VerifyPayment.jsx';  
 import VideoCall from './components/VideoCall.jsx';
+import Subscription from './PatientDashboard/Subscription.jsx';
 
 
 
@@ -35,12 +36,12 @@ const App = () => {
         <Route path="/verify-payment" element={<VerifyPayment />} />
         {/* <Route path='/search'element={<Search/>}/> */}
 
-        <Route element={<ProtectedRoute role="PATIENT" />}>
-          <Route path="/patient-dashboard" element={<Dashboard />} />
-          <Route path="/patient_profile" element={<Profile />} />
-          <Route path='/patient-notes' element={<PatientNotes/>}/>
-          <Route path="/payment" element={<PaymentPage />} />
-         
+        <Route path='/patient-dashboard' element={<ProtectedRoute role="PATIENT" />}>
+          <Route path='' element={<Dashboard />} />
+          <Route path='patient_profile' element={<Profile />} />
+          <Route path='patient-notes' element={<PatientNotes />} />
+          <Route path='subscription' element={<Subscription />} />
+          <Route path='payment' element={<PaymentPage />} />
         </Route>
         <Route element={<ProtectedRoute role="DOCTOR" />}>
           <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />

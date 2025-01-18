@@ -43,3 +43,21 @@
   text-align: center;
   line-height: 1.5;
 }
+
+.highlight {
+  background-color: #ffeb3b; 
+  border-radius: 50%;
+}
+
+.appointment {
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.appointment-title {
+  font-weight: bold;
+}
+
+.appointment-time {
+  font-style: italic;
+}

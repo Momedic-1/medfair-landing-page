@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
+import PatientLayout from './PatientDashboard/PatientLayout';
 
 const ProtectedRoute = ({ role }) => {
   const userData = localStorage.getItem('userData');
@@ -16,7 +17,11 @@ const ProtectedRoute = ({ role }) => {
     return <Navigate to={`/${userRole.toLowerCase()}-dashboard`} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <PatientLayout>
+    <Outlet />
+  </PatientLayout>
+  )
 };
 
 export default ProtectedRoute;

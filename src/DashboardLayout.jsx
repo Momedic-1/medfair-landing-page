@@ -17,6 +17,7 @@ const DashboardLayout = () => {
           {/* <Route path="/dashboard/messages" element={<Messages />} /> */}
           <Route path='/notes' element={<Search/>}/>
           
+          
         </Routes>
       </div>
     </div>
