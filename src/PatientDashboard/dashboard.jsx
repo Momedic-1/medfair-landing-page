@@ -100,25 +100,25 @@ const modalStyle = {
 
 const specialists = {
   1: [
-    { id: 1, name: 'Dr. Sarah Smith', specialty: 'Family Medicine',time: '2:00 PM' },
-    { id: 2, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: '2:00 PM' },
-    { id: 3, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: '2:00 PM' },
-    { id: 4, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: '2:00 PM' },
-    { id: 5, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: '2:00 PM' },
-    { id: 6, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: '2:00 PM' },
-    { id: 7, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: '2:00 PM' },
+    { id: 1, name: 'Dr. Sarah Smith', specialty: 'Family Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
+    { id: 2, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
+    { id: 3, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
+    { id: 4, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
+    { id: 5, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
+    { id: 6, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
+    { id: 7, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
   ],
   2: [
-    { id: 1, name: 'Dr. Michael Brown', specialty: 'Interventional Cardiology',time: '2:00 PM' },
-    { id: 2, name: 'Dr. Emily Davis', specialty: 'Clinical Cardiology',time: '2:00 PM' },
+    { id: 1, name: 'Dr. Michael Brown', specialty: 'Interventional Cardiology',time: ['2:00 PM'] },
+    { id: 2, name: 'Dr. Emily Davis', specialty: 'Clinical Cardiology',time: ['2:00 PM'] },
   ],
   3: [
-    { id: 1, name: 'Dr. Lisa Wilson', specialty: 'Medical Dermatology',time: '2:00 PM' },
-    { id: 2, name: 'Dr. Robert Taylor', specialty: 'Surgical Dermatology',time: '2:00 PM' },
+    { id: 1, name: 'Dr. Lisa Wilson', specialty: 'Medical Dermatology',time: ['2:00 PM'] },
+    { id: 2, name: 'Dr. Robert Taylor', specialty: 'Surgical Dermatology',time: ['2:00 PM'] },
   ],
   4: [
-    { id: 1, name: 'Dr. David Miller', specialty: 'Sports Medicine',time: '2:00 PM' },
-    { id: 2, name: 'Dr. Jennifer Lee', specialty: 'Joint Reconstruction',time: '2:00 PM' },
+    { id: 1, name: 'Dr. David Miller', specialty: 'Sports Medicine',time: ['2:00 PM'] },
+    { id: 2, name: 'Dr. Jennifer Lee', specialty: 'Joint Reconstruction',time: ['2:00 PM' ]},
   ],
 };
 
@@ -127,8 +127,8 @@ const Dashboard = () => {
   const [isSpecialistsModalOpen, setIsSpecialistsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [appointments, setAppointments] = useState({
-    '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment' },
-    '2025-01-20': { time: '11:00 AM', description: 'Meeting' },
+    '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
+    '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
   });
 
   const myEventsList = [
@@ -207,13 +207,12 @@ const Dashboard = () => {
                 <p className="font-medium">{date}</p>
                 <p className="text-sm text-gray-600">{details.time}</p>
                 <p className="text-sm">{details.description}</p>
+                <p className="text-sm">{details.doctors}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
-
-      {/* Category Modal */}
       <Modal
         open={isMainModalOpen}
         onClose={() => setIsMainModalOpen(false)}
@@ -251,8 +250,6 @@ const Dashboard = () => {
 
         </Box>
       </Modal>
-
-      {/* Specialists Modal */}
       <Modal
         open={isSpecialistsModalOpen}
         onClose={() => setIsSpecialistsModalOpen(false)}
@@ -277,15 +274,17 @@ const Dashboard = () => {
               <ListItem key={specialist.id} disablePadding>
                 <ListItemButton >
                 <div className='flex items-center justify-between w-full'>
-                
+                  <div className="w-[60%]">
+
                   <ListItemText 
-                  sx={{width: "70%"}}
+                 
                     primary={specialist.name}
                     secondary={specialist.specialty}
                   />
-                  <div className='w-[30%] flex flex-col items-center'>
+                  </div>
+                  <div className='w-[40%] flex items-center gap-x-2'>
 
-                  <ListItemText primary={specialist.time} sx={{color: "grey"}}/>
+                  <ListItemText primary={specialist.time.map((t)=> {return t + " | "})} sx={{color: "grey"}}/>
                   <button className='text-blue-800 text-sm'>Book</button>
                   </div>
                   </div>
