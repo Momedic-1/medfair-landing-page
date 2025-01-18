@@ -12,12 +12,12 @@ import Logout from '../Logout';
 
 function Sidebar({ isSidebarOpen, toggleSidebar }) {
   return (
-    <aside
-      className={`fixed lg:static top-0 left-0 h-full bg-[#020E7C] text-white flex flex-col lg:w-1/5 w-2/3 z-20 transform transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+    <div
+      className={`fixed lg:static w-full top-0 left-0 h-full bg-[#020E7C] text-white flex flex-col z-20 transform transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
     >
      
-      <div className="p-4 text-2xl font-bold flex justify-between items-center">
-        <span>Patient Dashboard</span>
+      <div className="w-full p-4 text-2xl font-bold flex justify-between items-center">
+        <p>Patient Dashboard</p>
         <button
            onClick={toggleSidebar}
           className="lg:hidden text-white text-2xl focus:outline-none"
@@ -46,10 +46,10 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
         <NavLink to="/help" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
           <img src={help} alt="Help" /> <span className='ml-3 '>Help</span>
         </NavLink>
-        <NavLink to="/subscription" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
+        <NavLink to="/patient-dashboard/subscription" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
           <img src={subscription} alt="Subscription" /> <span className='ml-3 '>Subscriptions</span>
         </NavLink>
-        <NavLink to="/patient-notes" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
+        <NavLink to="/patient-dashboard/patient-notes" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
           <FaUser /> 
            <span className='ml-3 '>Notes</span>
         </NavLink>
@@ -57,7 +57,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
           <Logout/>
         </NavLink>
       </nav>
-    </aside>
+    </div>
   );
 }
 
