@@ -6,6 +6,7 @@ import VerificationInput from './DoctorSignup/VerificationInput'
 import VerificationSuccessful from './DoctorSignup/VerificationSuccessful'
 import CheckEmail from './DoctorSignup/CheckEmail'
 import { baseUrl } from './env'
+import DesignedSideBar from './components/reuseables/DesignedSideBar'
 
 const DoctorSignup = () => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -110,7 +111,8 @@ const DoctorSignup = () => {
   const stepLabels = ['Account', 'Verification', 'Login']
 
   return (
-    <div className='min-h-screen min-w-[90vw] flex items-center justify-center bg-gray-50'>
+    <div className='w-full flex items-center justify-center bg-gray-50'>
+     
       <div className='w-full bg-white rounded-md'>
         <div className='p-8 bg-white rounded-md'>
           <h2 className='text-2xl font-bold mb-6 text-center text-violet-950'>

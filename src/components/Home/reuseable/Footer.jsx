@@ -8,10 +8,11 @@ import Apple from "../assets/apple.png";
 import Play from "../assets/fa6-brands_google-play.png";
 import Message from "../assets/message.png";
 import Call from "../assets/call.png";
+import { FaLinkedin } from "react-icons/fa";
 export default function Footer() {
     return (
-      <footer className="  ">
-        <div className="container bg-[#020E7C] text-white mx-auto px-4 p-8">
+      <footer className="w-full  bg-[#020E7C]">
+        <div className="container text-white mx-auto px-4 p-8">
           <div className="sm:flex flex-wrap justify-around grid grid-cols-2 pb-4">
       
             <div className="w-full md:w-1/4 mb-6 md:mb-0">
@@ -104,6 +105,7 @@ export default function Footer() {
         
       </span>
       <p>medfairtechnologies@gmail.com</p>
+      
         </div>
           </div>
        
@@ -111,58 +113,48 @@ export default function Footer() {
         </div>
         
       </div>
-        <div className="sm:grid sm:ml-4 sm:mb-3  grid-cols-3 gap-10 flex ml-3  pb-4 mt-5 cursor-pointer">
-        <div className="sm:flex gap-3 items-center">
-        <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-10 h-10"  >
-        <img src={Facebook} alt="facebook" className="w-7 h-7"/>
+        <div className="flex items-center gap-x-5 mt-5 cursor-pointer">
         
-      </span>
-      
-        </div>
-        <div className="flex gap-3 items-center cursor-pointer">
-      <li className="mb-2 list-none"> 
+        <img src={Facebook} alt="facebook" className=""/>
+        
+       
      <a href="https://www.instagram.com/the_medfair?igsh=YzljYTk1ODg3Zg==" target="_blank" rel="noopener noreferrer" className="hover:underline">
-      <span className="bg-white border text-red-500 border-gray-300 rounded-full flex items-center justify-center w-7 h-7">
+     
         <img src={Instagram} alt="instagram" className="w-7 h-7"/>
-      </span>
     </a>
-  </li>
-</div>
+ 
 
-        <div className="flex gap-3 items-center cursor-pointer">
-        <li className="mb-2 list-none">
+       
         <a href="https://x.com/The_Medfair?t=LHZb7Y1ZtZf8D6APbHel2g&s=09">
-        <span className="bg-white border text-black border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
+        
         <img src={Twitter} alt="X" className="w-7 h-7"/>
-      </span>
+      
         </a>
-        </li>
-        </div>
-        <div className="flex gap-3 items-center cursor-pointer">
-        <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
+       
+        
         <img src={Whatapp} className=""/>
      
-      </span>
-  
-        </div>
-        <div className="flex gap-3 items-center cursor-pointer">
-        <li className="mb-2 list-none">
+     
+        
           <a href="https://www.linkedin.com/company/the-medfair">
-          <span className="bg-white border border-gray-300 rounded-full flex items-center justify-center w-7 h-7"  >
-           <img src={Linkedin} alt="linkedin" className=""/>
+         
+         <FaLinkedin size={30}/>
+
     
-      </span>
+    
           </a>
-        </li>
-        </div>
+       
         </div>
       </div>
-     
+      <div className="mt-6">
+
+        <p className="text-sm text-white">&copy; {new Date().getFullYear()} <span className="text-white">MEDFAIR</span>  DEVELOPED BY MEDFAIR HEALTH TEAM</p>
+
+     </div>
           
         </div>
-        <div className="bg-white p-2 flex justify-center items-center">
-        <p className="text-sm text-[#136CFB]">&copy; {new Date().getFullYear()} <span className="text-[#020E7C]">MEDFAIR</span>  DEVELOPED BY MEDFAIR HEALTH TEAM</p>
-        </div>
+        
+     
       </footer>
     );
   }

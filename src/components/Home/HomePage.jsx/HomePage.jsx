@@ -6,17 +6,23 @@ import Offer from '../offer/Offer'
 import HowItWorks from '../HowItWorks/HowItWorks'
 import Works from '../works/Works'
 import Benefit from '../benefits/Benefit'
+import ContactUs from '../Contact/ContactUs'
+import FAQs from '../FAQs/FAQs'
+import Testimonials from '../Tesimonials/Testimonials'
 
 const HomePage = () => {
   return (
-    <div className=''>
+    <div className='w-full'>
         <Navbar/>
         <Hero/>
           <Offer/> 
         <HowItWorks/>   
         <Works/>
-        <Benefit/>
+        <Testimonials/>
+        <ContactUs/>
+        <FAQs/>
        <Footer/>  
+    
     </div>
   )
 }

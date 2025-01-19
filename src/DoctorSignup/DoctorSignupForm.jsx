@@ -96,7 +96,7 @@ export default function DoctorSignupForm() {
     <>
       <SignUpTop />
        <Steps stepLabels={stepLabels} currentStep={1} />
-    <form onSubmit={handleSubmit} className="mx-auto px-4 sm:px-6 lg:px-10 max-w-full md:max-w-3xl lg:max-w-5xl lg:p-4">
+    <form onSubmit={handleSubmit} className="mx-auto px-6 lg:px-10 md:w-5/6 lg:w-3/6 lg:p-4 md:border md:border-gray-950/20 md:rounded-xl">
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20'>
         <div className='mt-4'>
           <h1 className='text-gray-600 font-medium text-sm'>First Name</h1>

@@ -7,7 +7,7 @@ const SignUpTop = () => {
                     Doctor Signup
                 </h2>
                 <p className='text-center mb-8 text-violet-950'>
-                    Input correct details to signup
+                    We're pleased to have you on board
                 </p>
             </div>
         </div>
