@@ -11,7 +11,7 @@ const MobileNavbar = () => {
   };
 
   return (
-    <nav className="md:hidden flex items-center justify-between px-6 py-2 bg-white shadow-lg">
+    <nav className="w-full fixed top-0 z-50 md:hidden flex items-center justify-between px-6 py-2 bg-white shadow-lg">
       <div className="items-center text-[#020E7C] font-bold text-2xl">
         <img src={logo} alt="MedFair Logo" className="h-8 ml-8" />
         <span>MedFair</span>
@@ -40,11 +40,7 @@ const MobileNavbar = () => {
 
           <ul className="flex flex-col items-center space-y-4 py-4 w-full">
             <li><a href="#home" className="text-white">Home</a></li>
-            <li>
-              <div className="flex items-center space-x-1">
-                <a href="#services" className="text-white hover:text-blue-300">Services</a>
-              </div>
-            </li>
+            <li><a href="#contact-us" className="text-white">Contact us</a></li>
             <li><a href='/login' className="text-white">Login</a></li>
             <div className="flex flex-col space-y-4 w-full items-center">
               <div className="relative">

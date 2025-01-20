@@ -18,6 +18,7 @@
     "@preline/stepper": "^2.3.0",
     "@reduxjs/toolkit": "^2.3.0",
     "@whereby.com/browser-sdk": "^3.10.9",
+    "aos": "^2.3.4",
     "axios": "^1.7.7",
     "dayjs": "^1.11.13",
     "formik": "^2.4.6",

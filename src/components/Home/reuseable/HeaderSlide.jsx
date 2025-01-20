@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import nurse1 from "../assets/african-american-woman-with-doctor-job-holding-bottle-medicine 1.png";
-import nurse2 from "../assets/medium-shot-doctor-working-with-laptop 1.png";
-import nurse3 from "../assets/bgimg.png"; // Fixed typo (was nurser3)
+import nurse1 from "../assets/medium-shot-doctor-working-with-laptop 1.png";
+import nurse2 from "../assets/bgimg.png";
 
 const HeaderSlider = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Array of imported images
-  const images = [nurse1, nurse2, nurse3];
+  const images = [nurse1, nurse2];
 
   useEffect(() => {
     // Preload images
