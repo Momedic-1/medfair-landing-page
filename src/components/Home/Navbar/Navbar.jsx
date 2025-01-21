@@ -6,7 +6,7 @@ import MobileNavbar from './MobileNavbar';
 
 const Navbar = () => {
   return (
-    <div>
+    <div className='w-full'>
       <div className="hidden md:block">
         <DesktopNavbar />
       </div>

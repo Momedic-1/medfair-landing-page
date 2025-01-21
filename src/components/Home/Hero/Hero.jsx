@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const Hero = () => {
   return (
     <div
-      className="w-full relative bg-cover mt-28 md:mt-24 bg-center flex items-center justify-center overflow-hidden px-8"
+      className="w-full bg-cover mt-28 md:mt-24 bg-center flex items-center justify-center overflow-hidden px-8"
       id='home'
     >
       

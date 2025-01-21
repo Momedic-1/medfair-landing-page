@@ -41,17 +41,15 @@ const Offer = () => {
   }, [activeTab])
   return (
     <div className="w-full mt-4 bg-blue-50/20 px-2 py-8" id="offer"
-     data-aos="zoom-out"
-        data-aos-easing="ease-in-sine"
-        data-aos-duration="1000"
+    //  data-aos="zoom-out"
+    //     data-aos-easing="ease-in-sine"
+    //     data-aos-duration="1000"
     >
-      <div className='w-full'>
+   
       <div className='w-full flex justify-center'>
-
       <p className="mt-4 text-2xl text-[#475467] font-bold leading-8 font-sans md:text-center md:w-[768px]">
         Why Choose Us?
       </p>
-      </div>
       </div>
       <div className='w-full flex flex-col py-6 md:py-20 md:px-6 lg:px-20 md:flex-row'>
       <div className="w-full md:w-1/2">
@@ -97,7 +95,7 @@ const Offer = () => {
           ))
         }
       </div>
-       <div className='w-full md:w-1/2 flex justify-center items-start md:px-8'>
+       <div className='w-full px-4 md:w-1/2 flex justify-center items-start md:px-8'>
           <img src={activeImage} className='' alt={`image${activeTab}`}/>
           </div>
       </div>

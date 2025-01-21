@@ -22,7 +22,7 @@ const HeaderSlider = () => {
   }, [images]);
 
   return (
-    <div className="relative image-slider">
+    <div className="w-full relative image-slider">
       <img
         src={images[currentImageIndex]}
         className="object-contain w-full max-h-full transition-opacity duration-1000 ease-in-out"
