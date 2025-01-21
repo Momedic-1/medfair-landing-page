@@ -72,10 +72,12 @@ import { Calendar, dayjsLocalizer } from 'react-big-calendar';
 import dayjs from 'dayjs';
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Modal, Box, Typography, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
+import { baseUrl } from '../env';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 const localizer = dayjsLocalizer(dayjs);
 
-// Modal style
 const modalStyle = {
   position: 'absolute',
   top: '50%',
@@ -122,15 +124,25 @@ const specialists = {
   ],
 };
 
+
+
 const Dashboard = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [isMainModalOpen, setIsMainModalOpen] = useState(false);
   const [isSpecialistsModalOpen, setIsSpecialistsModalOpen] = useState(false);
+  const [isCallADoctorModalOpen, setIsCallADoctorModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [videoLink, setVideoLink] = useState(null);
   const [appointments, setAppointments] = useState({
     '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
     '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
   });
 
+  const patientId = JSON.parse(localStorage.getItem('userData')).id;
+  const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting?patientId=${patientId}`;
+
+  console.log(patientId)
   const myEventsList = [
     {
       title: 'Doctor Appointment',
@@ -150,10 +162,40 @@ const Dashboard = () => {
     }
   };
 
+  const handleCallADoctorClick = async() => {
+    setIsCallADoctorModalOpen(true);
+    
+    };
+
   const handleCategoryClick = (categoryId) => {
     setSelectedCategory(categoryId);
     setIsSpecialistsModalOpen(true);
   };
+
+  const createMeeting = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      
+      if (!patientId) {
+        throw new Error('Patient ID not found');
+      }
+      
+      const response = await axios.post(CREATE_MEETING);
+      
+  
+      setVideoLink(response.data);
+      
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create meeting');
+      console.error('Error creating meeting:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
   const handleSpecialistClick = (specialist) => {
     const newAppointment = {
@@ -178,7 +220,7 @@ const Dashboard = () => {
     <div className='w-full'>
       <div className='w-full px-4 py-8 overflow-hidden'>
         <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 lg:grid-cols-3 md:gap-8 mt-4">
-          <div onClick={() => handleCardClick("Call a Doctor")}>
+          <div onClick={handleCallADoctorClick}>
             <Cards title="Call a Doctor" img={call} />
           </div>
           <div onClick={() => handleCardClick("Schedule an Appointment with a Specialist")}>
@@ -292,6 +334,34 @@ const Dashboard = () => {
               </ListItem>
             ))}
           </List>
+        </Box>
+      </Modal>
+      <Modal
+        open={isCallADoctorModalOpen}
+        onClose={() => setIsCallADoctorModalOpen(false)}
+        aria-labelledby="specialists-modal-title"
+      >
+        <Box sx={{width: 400, height: 200, overflowY: 'auto', bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2, position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)'}}>
+          <div className="w-full h-full flex flex-col gap-y-8 px-4">
+          {videoLink === null ? <>
+            <p className='text-xl text-center font-medium'>Click to create a meeting</p>
+          <button className="bg-blue-500 w-full h-14 text-white rounded-full" onClick={createMeeting}>
+            Create a meeting
+          </button>
+          </>
+           : <div className='w-full h-full flex flex-col gap-y-4'>
+            <p className='text-xl font-medium'>Your meeting link is:</p>
+            <a href={videoLink?.roomUrl} className='text-[12px] cursor-pointer font-medium text-blue-800'>{videoLink?.roomUrl}</a>
+            <Link to={videoLink?.roomUrl}>
+             <button className="bg-blue-500 w-full h-10 text-white rounded-full">
+              
+              Click to join a call
+            </button>
+            </Link>
+           
+
+           </div> }
+          </div>
         </Box>
       </Modal>
     </div>

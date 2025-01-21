@@ -52,6 +52,7 @@ const faqsData = [
 ];
 const FAQs = () => {
   const [expanded, setExpanded] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState(0);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -59,6 +60,9 @@ const FAQs = () => {
 
   return (
     <div className="w-full px-4 py-8 md:px-16 lg:px-32" data-aos="fade-up" data-aos-duration="1000" data-aos-easing="ease-in-sine">
+      <div className="block w-full lg:hidden">
+
+   
       <p
         className="font-semibold text-[#020E7C] text-[32px] md:text-[36px] font-sans text-center"
         id="faqs"
@@ -112,6 +116,43 @@ const FAQs = () => {
           </Accordion>
         ))}
       </div>
+    </div>
+    <div className="hidden lg:block">
+        <div className="min-h-full bg-gray-100 p-8">
+      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="flex flex-col md:flex-row h-[600px]">
+
+          <div className="md:w-1/2 bg-white p-8">
+            <h2 className="text-4xl font-bold text-green-800 mb-8">FAQs.</h2>
+            <div className="overflow-y-auto h-[450px] pr-4">
+              {faqsData.map((faq, index) => (
+                <div
+                  key={index}
+                  className={`p-4 mb-4 rounded-lg cursor-pointer transition-colors duration-200 ${
+                    selectedQuestion === index
+                      ? 'bg-black text-white'
+                      : 'bg-white hover:bg-gray-100'
+                  }`}
+                  onClick={() => setSelectedQuestion(index)}
+                >
+                  <h3 className="font-semibold text-lg">{faq.title}</h3>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:w-1/2 bg-yellow-300 p-8">
+            <h2 className="text-4xl font-bold text-green-800 mb-8">Ans.</h2>
+            <div className="mt-4">
+              <p className="text-xl leading-relaxed">
+                {faqsData[selectedQuestion].content}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
     </div>
   );
 };
