@@ -34,17 +34,17 @@ const DesktopNavbar = () => {
       </div>
 
       <ul className="hidden md:flex items-center space-x-6 text-gray-800 font-medium">
-        <li><a href="#home" className="text-[#020E7C] font-bold text-[12px]">Home</a></li>
+        <li><a href="#home" className="text-[#020E7C] font-bold text-[14px]">Home</a></li>
         <li>
           <div className="flex items-center space-x-1">
-            <a href="#company" className="text-[#50555C] font-bold text-[12px] hover:text-blue-500">Company</a>
+            <a href="#company" className="text-[#50555C] font-bold text-[14px] hover:text-blue-500">Company</a>
           </div>
         </li>
-        <li><a href="#contact-us" className="text-[#50555C] font-bold text-[12px] hover:text-blue-500">Contact Us</a></li>
+        <li><a href="#contact-us" className="text-[#50555C] font-bold text-[14px] hover:text-blue-500">Contact Us</a></li>
       </ul>
 
       <div className="hidden md:flex items-center space-x-5">
-        <button className="px-3 py-1 border border-[#020E7C] text-[#020E7C] text-[12px] rounded-full hover:bg-blue-100">
+        <button className="px-3 py-1 border border-[#020E7C] text-[#020E7C] text-[14px] rounded-full hover:bg-blue-100">
           <a href="/login" >
             Login
           </a>
@@ -52,7 +52,7 @@ const DesktopNavbar = () => {
 
         <div className="relative" ref={dropdownRef}>
           <button
-            className="px-3 py-1 bg-[#020E7C] text-[12px] text-white rounded-full hover:bg-blue-600"
+            className="px-3 py-1 bg-[#020E7C] text-[14px] text-white rounded-full hover:bg-blue-600"
             onClick={toggleDropdown}
           >
             Sign Up

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import nurse1 from "../assets/medium-shot-doctor-working-with-laptop 1.png";
 import nurse2 from "../assets/bgimg.png";
 
 const HeaderSlider = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Array of imported images
-  const images = [nurse1, nurse2];
+  const images = [nurse2];
 
   useEffect(() => {
     // Preload images

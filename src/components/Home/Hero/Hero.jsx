@@ -12,7 +12,7 @@ const Hero = () => {
       <HeaderSlider />
 
      
-      <div className="w-full px-10 absolute flex flex-col items-center justify-center text-center">
+      {/* <div className="w-full px-10 absolute flex flex-col items-center justify-center text-center">
         <h1 className="text-3xl md:font-bold md:text-[50px] md:text-4xl font-roboto text-white">
           Transform Your Physical Presence With{" "}
           <span className="text-[#020E7C] md:font-bold md:text-[45px] font-bold text-[20px]">
@@ -20,7 +20,7 @@ const Hero = () => {
           </span>{" "}
           in Medfair Limited
         </h1>
-      </div>
+      </div> */}
     </div>
   );
 };
