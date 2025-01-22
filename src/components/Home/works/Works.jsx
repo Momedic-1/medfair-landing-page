@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 const Works = () => {
   const teamMembers = [
   { name: 'Joshua Jordan-Akintoye', image: 'https://res.cloudinary.com/da79pzyla/image/upload/v1737313706/thoye_lo6dy0.jpg', role: 'CEO' },
-  { name: 'Adeniji Ifeoluwa Adesewa', image: 'https://res.cloudinary.com/da79pzyla/image/upload/v1737301421/ife_image_eosbcl.jpg', role: 'Social Media Manager' },
-  { name: 'Solomon Moregood', image: 'https://res.cloudinary.com/da79pzyla/image/upload/v1737301757/solo_image_isiyn9.jpg', role: 'Head of Marketing' },
   { name: 'Enubiak Joseph', image: 'https://res.cloudinary.com/da79pzyla/image/upload/v1737313430/joe_vxz4xs.jpg', role: 'Head of Engineering' },
+  { name: 'Solomon Moregood', image: 'https://res.cloudinary.com/da79pzyla/image/upload/v1737301757/solo_image_isiyn9.jpg', role: 'Head of Marketing' },
+  { name: 'Adeniji Ifeoluwa Adesewa', image: 'https://res.cloudinary.com/da79pzyla/image/upload/v1737301421/ife_image_eosbcl.jpg', role: 'Social Media Manager' },
+
 ];
  const [selectedMember, setSelectedMember] = useState(teamMembers[0]);
-  const [hoveredMember, setHoveredMember] = useState(null);
 
    const handleMemberClick = (member) => {
     setSelectedMember(member);

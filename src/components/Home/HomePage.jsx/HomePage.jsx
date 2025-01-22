@@ -9,13 +9,13 @@ import FAQs from '../FAQs/FAQs'
 import Testimonials from '../Tesimonials/Testimonials'
 import Offer from '../Offer/Offer'
 
-const HomePage = () => {
+const HomePage = () => {  
   return (
     <div className='max-w-full'>
         <Navbar/>
         <Hero/>
         <Offer/>
-        {/* <HowItWorks/>    */}
+        <HowItWorks/>   
         <Works/>
         <Testimonials/>
         <ContactUs/>
