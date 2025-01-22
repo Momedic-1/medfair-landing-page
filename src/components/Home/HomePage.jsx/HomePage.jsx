@@ -1,22 +1,21 @@
 import React from 'react'
 import Navbar from '../Navbar/Navbar'
 import Hero from '../Hero/Hero'
- import Footer from '../reuseable/Footer'
-import Offer from '../offer/Offer'
+import Footer from '../reuseable/Footer'
 import HowItWorks from '../HowItWorks/HowItWorks'
+import Offer from '../Offer/Offer'
 import Works from '../works/Works'
-import Benefit from '../benefits/Benefit'
 import ContactUs from '../Contact/ContactUs'
 import FAQs from '../FAQs/FAQs'
 import Testimonials from '../Tesimonials/Testimonials'
 
 const HomePage = () => {
   return (
-    <div className='w-full'>
+    <div className='max-w-full'>
         <Navbar/>
         <Hero/>
           <Offer/> 
-        <HowItWorks/>   
+        {/* <HowItWorks/>    */}
         <Works/>
         <Testimonials/>
         <ContactUs/>
