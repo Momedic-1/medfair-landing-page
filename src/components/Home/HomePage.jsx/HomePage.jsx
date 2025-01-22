@@ -7,7 +7,7 @@ import Works from '../works/Works'
 import ContactUs from '../Contact/ContactUs'
 import FAQs from '../FAQs/FAQs'
 import Testimonials from '../Tesimonials/Testimonials'
-import Offer from '../Offer/Offer'
+import Offer from '../offer/Offer'
 
 const HomePage = () => {  
   return (
