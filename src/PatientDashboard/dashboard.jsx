@@ -63,7 +63,7 @@
 // }
 
 // export default dashboard
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Cards from '../components/reuseables/Cards';
 import call from './assets/call (2).svg';
 import calendarIcon from "../assets/calendarIcon.jpeg";
@@ -71,10 +71,14 @@ import testTube from "../assets/test.jpeg";
 import { Calendar, dayjsLocalizer } from 'react-big-calendar';
 import dayjs from 'dayjs';
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Modal, Box, Typography, List, ListItem, ListItemButton, ListItemText } from '@mui/material';
+import { Modal, Box, Typography, List, ListItem, ListItemButton, ListItemText, Avatar } from '@mui/material';
 import { baseUrl } from '../env';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { ColorRing } from 'react-loader-spinner';
+import { formatAppointments, formatDate, formatSpecialization, transformName } from '../utils';
+import Skeleton from 'react-loading-skeleton';
+import "react-loading-skeleton/dist/skeleton.css"; 
 
 const localizer = dayjsLocalizer(dayjs);
 
@@ -93,11 +97,11 @@ const modalStyle = {
 };
 
 
- const specialistCategories = [
-    { id: 1, name: 'Psychiatrist', count: 7, icon: '🧠' },
-    { id: 2, name: 'Clinical Psychologist', count: 4, icon: '🎯' },
-    { id: 3, name: 'Therapist', count: 5, icon: '💭' },
-    { id: 4, name: 'Sex Therapist', count: 3, icon: '❤️' },
+ const specialistCategory = [
+    { id: 1, name: 'Psychiatrist', count: 0, icon: '🧠', specialization: 'PSYCHIATRIST' },
+    { id: 2, name: 'Clinical Psychologist', count: 0, icon: '🎯', specialization: 'CLINICAL_PSYCHOLOGIST' },
+    { id: 3, name: 'Therapist', count: 0, icon: '💭', specialization: 'THERAPIST' },
+    { id: 4, name: 'Sex Therapist', count: 0, icon: '❤️', specialization: 'SEX_THERAPIST' },
   ];
 
 const specialists = {
@@ -129,11 +133,15 @@ const specialists = {
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [specialist, setSpecialist] = useState([]);
+  const[specialistCategories, setSpecialistCategories] = useState(specialistCategory);
   const [isMainModalOpen, setIsMainModalOpen] = useState(false);
   const [isSpecialistsModalOpen, setIsSpecialistsModalOpen] = useState(false);
   const [isCallADoctorModalOpen, setIsCallADoctorModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
+const [specialistDetails, setSpecialistDetails] = useState([]);
   const [appointments, setAppointments] = useState({
     '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
     '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
@@ -141,8 +149,9 @@ const Dashboard = () => {
 
   const patientId = JSON.parse(localStorage.getItem('userData')).id;
   const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting?patientId=${patientId}`;
-
-  console.log(patientId)
+  const GETSPECIALISTCOUNTURL = `${baseUrl}/api/appointments/specialists/appointments-count`;
+  const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
+  const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const myEventsList = [
     {
       title: 'Doctor Appointment',
@@ -167,10 +176,73 @@ const Dashboard = () => {
     
     };
 
-  const handleCategoryClick = (categoryId) => {
-    setSelectedCategory(categoryId);
-    setIsSpecialistsModalOpen(true);
-  };
+ const handleCategoryClick = (categoryId) => {
+  const category = specialistCategories.find(cat => cat.id === categoryId);
+  setSelectedCategory(categoryId);
+  getSpecialistsDetails(category.name);
+  setIsSpecialistsModalOpen(true);
+};
+
+ const getSpecialistCount = async () => {
+  try {
+    setIsLoading(true);
+    const response = await axios.get(GETSPECIALISTCOUNTURL);
+    console.log("Specialist count response:", response?.data);
+
+    const countData = response?.data || {};
+
+    const normalizedCountData = Object.keys(countData).reduce((acc, key) => {
+      acc[key.toUpperCase()] = countData[key];
+      return acc;
+    }, {});
+
+    console.log("Normalized count data:", normalizedCountData);
+
+    const updatedCategories = specialistCategories.map(category => ({
+      ...category,
+      count: normalizedCountData[category.specialization] || 0,
+    }));
+
+    setSpecialistCategories(updatedCategories);
+    console.log("Updated categories:", updatedCategories);
+  } catch (error) {
+    console.error("Error fetching specialist count:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+const getSpecialistsDetails = async (categoryName) => {
+   setIsLoading(true);
+  try {
+    const transformedName = transformName(categoryName);
+    const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`);
+    const parsedResponse = response?.data || {}; 
+    const specialists = Object.values(parsedResponse).flat(); 
+
+    setSpecialistDetails(specialists);
+
+   
+    setIsLoading(false);
+  } catch (error) {
+    console.error('Error fetching specialists:', error);
+    setIsLoading(false);
+  }
+};
+
+const getUpcomingAppointments = async () => {
+  setIsLoading(true);
+  try {
+    const response = await axios.get(`${GETUPCOMINGAPPOINTMENTS}/${patientId}`);
+    const formattedData = formatAppointments(response.data);
+    setUpcomingAppointments(formattedData);
+    setIsLoading(false);
+  } catch (error) {
+    console.log('Error fetching upcoming appointments:', error);
+    setIsLoading(false);
+  }
+}
 
   const createMeeting = async () => {
     setIsLoading(true);
@@ -216,6 +288,19 @@ const Dashboard = () => {
     setIsMainModalOpen(false);
   };
 
+  useEffect(()=> {
+    getSpecialistCount()
+  
+  }, [])
+  useEffect(()=> {
+    setSpecialist(specialists)
+  
+  }, [])
+  useEffect(()=> {
+    getUpcomingAppointments()
+  
+  }, [])
+
   return (
     <div className='w-full'>
       <div className='w-full px-4 py-8 overflow-hidden'>
@@ -244,14 +329,30 @@ const Dashboard = () => {
           <div className='w-full lg:w-[24%] h-[400px] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4'>
             <h2 className='text-lg font-bold text-blue-900 md:text-xl'>Appointments</h2>
             <p className='text-gray-950/60 text-sm'>View your upcoming appointments</p>
-            {Object.entries(appointments).map(([date, details]) => (
+            {
+            isLoading ? (
+              Array(3).fill(0).map((_, index) => (
+              <div className="mt-4 p-3 border rounded-lg animate-pulse" key={index}>
+      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+    </div>))
+            )
+            :
+            upcomingAppointments.length > 0 ? (
+            Object.entries(upcomingAppointments).map(([date, details]) => (
               <div key={date} className="mt-4 p-3 border rounded-lg">
                 <p className="font-medium">{date}</p>
                 <p className="text-sm text-gray-600">{details.time}</p>
-                <p className="text-sm">{details.description}</p>
+                {/* <p className="text-sm">{details.description}</p> */}
                 <p className="text-sm">{details.doctors}</p>
               </div>
-            ))}
+            ))): (
+              <div className="text-center text-gray-600 text-sm p-4">
+                No upcoming appointments
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -272,6 +373,7 @@ const Dashboard = () => {
             </button>
           </div>
           {specialistCategories.map((category) => (
+
             <button
               key={category.id}
               onClick={() => handleCategoryClick(category.id)}
@@ -289,7 +391,6 @@ const Dashboard = () => {
               </div>
             </button>
           ))}
-
         </Box>
       </Modal>
       <Modal
@@ -311,28 +412,84 @@ const Dashboard = () => {
             </button>
           </div>
          
-          <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-            {selectedCategory && specialists[selectedCategory].map((specialist) => (
-              <ListItem key={specialist.id} disablePadding>
+          <List sx={{ width: '100%', height:200, bgcolor: 'background.paper' }}>
+            {isLoading ? (
+   Array(5).fill(0).map((_, index) => (
+      <ListItem key={index} disablePadding>
+        <ListItemButton>
+          <div className="flex items-center justify-between w-full">
+            <div className="w-[10%]">
+              <Skeleton circle={true} height={50} width={50} />
+            </div>
+            <div className="w-[50%]">
+              <Skeleton height={20} width="80%" />
+              <Skeleton height={14} width="60%" style={{ marginTop: 6 }} />
+            </div>
+            <div className="w-[40%]">
+              <Skeleton height={20} width="100%" />
+            </div>
+          </div>
+        </ListItemButton>
+      </ListItem>
+    ))
+  ) : 
+             
+              specialistDetails?.length > 0 ? (
+            specialistDetails.map((specialist) => (
+              <ListItem key={specialist} disablePadding>
                 <ListItemButton >
                 <div className='flex items-center justify-between w-full'>
-                  <div className="w-[60%]">
+                  <div className='w-[10%]'>
+                    {
+                      specialist.image != null ? (
+                        <Avatar src={specialist?.image} />
+                      ) : (
+                        <Avatar src="/broken-image.jpg"  />
+                      )
+                    }
+                  </div>
+                  <div className="w-[50%]">
 
                   <ListItemText 
                  
-                    primary={specialist.name}
-                    secondary={specialist.specialty}
+                    primary={specialist?.doctorName}
+                    secondary={formatSpecialization(specialist?.specialization)}
                   />
                   </div>
                   <div className='w-[40%] flex items-center gap-x-2'>
 
-                  <ListItemText primary={specialist.time.map((t)=> {return t + " | "})} sx={{color: "grey"}}/>
+                  {/* <ListItemText primary={specialist?.slot.map((t)=> {return formatDate(t) + " | "})} sx={{color: "grey"}}/> */}
+                  <ListItemText primary={
+                  specialist.slots?.length > 0 ? (
+                    specialist.slots.map((slot, index) => (
+                      <span key={index}>
+                        {new Date(slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{" "}
+                        {index < specialist.slots.length - 1 ? " | " : ""}
+                      </span>
+                    ))
+                  ) : (
+                    "No slots available"
+                  )
+                }
+               sx={{color: "grey"}}/>
                   <button className='text-blue-800 text-sm'>Book</button>
                   </div>
                   </div>
                 </ListItemButton>
               </ListItem>
-            ))}
+            )) 
+          
+            
+          ) 
+          : (
+            <div className='w-full h-[300px] flex justify-center items-center'>
+
+                <p className='text-2xl text-gray-950/60'>
+                  No specialists available
+                </p>
+              </div>
+          )
+            }
           </List>
         </Box>
       </Modal>
@@ -344,9 +501,17 @@ const Dashboard = () => {
         <Box sx={{width: 400, height: 200, overflowY: 'auto', bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2, position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)'}}>
           <div className="w-full h-full flex flex-col gap-y-8 px-4">
           {videoLink === null ? <>
-            <p className='text-xl text-center font-medium'>Click to create a meeting</p>
-          <button className="bg-blue-500 w-full h-14 text-white rounded-full" onClick={createMeeting}>
-            Create a meeting
+            <p className='text-sm text-center font-medium'>Click to create a meeting with a doctor</p>
+          <button className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full" onClick={createMeeting}>
+            {isLoading ? 
+            <ColorRing height="40"
+            width="40"
+            ariaLabel="color-ring-loading"
+            wrapperStyle={{}}
+            wrapperClass="color-ring-wrapper"
+            colors={['white', 'white', 'white', 'white', 'white']} 
+              /> 
+  : 'Create Meeting'}
           </button>
           </>
            : <div className='w-full h-full flex flex-col gap-y-4'>
