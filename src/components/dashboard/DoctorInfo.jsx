@@ -88,8 +88,8 @@ const DoctorInfo = () => {
 
   return (
     <div className="w-full bg-white rounded-lg h-[480px]">
-      <div className="w-full h-full overflow-y-auto px-8 xl:px-16 py-8">
-        <p className="text-lg text-gray-950/60 underline leading-8 font-bold">
+      <div className="w-full h-full overflow-y-auto px-8 xl:px-10 py-8">
+        <p className="text-sm text-gray-950/60 underline leading-8 font-bold">
           Your scheduled appointments
         </p>
 
@@ -115,8 +115,8 @@ const DoctorInfo = () => {
               className="mb-4 flex items-center justify-between border-b border-gray-200 py-2 mt-4"
             >
               <div className="flex items-center gap-x-4">
-                <p className="text-gray-800 font-semibold">{formattedDate}</p>
-                <p className="text-gray-600 font-semibold">{time}</p>
+                <p className="text-gray-800 text-sm font-semibold">{formattedDate}</p>
+                <p className="text-gray-600 text-sm font-semibold">{time}</p>
               </div>
 
               <div className="relative group">

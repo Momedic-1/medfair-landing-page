@@ -46,11 +46,8 @@ function WelcomeBack({ status }) {
     }
   };
 
-  console.log(activeCalls, 'activeCalls');
 
-  const navigateToIncomingCalls = () => {
-    navigate('/incoming-call');
-  };
+ 
 
   const startCallTimer = () => {
     clearCallTimer();
@@ -77,23 +74,8 @@ function WelcomeBack({ status }) {
   };
 
   return (
-    <div className='w-full relative px-2'>
-      <div
-        onClick={navigateToIncomingCalls}
-        className={`image ${isActive ? 'active' : 'hidden'} ${
-          activeCalls.length > 0 && status === online && 'shake bg-green-500'
-        } absolute top-2 left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
-      >
-        <p className='text-white font-semibold text-center'>
-          Incoming Calls
-        </p>
-        
-        <LiaPhoneVolumeSolid className={`${isActive ? 'active' : 'hidden'} ${
-            activeCalls.length > 0 && status === online && 'shake text-green-500'
-          }`} fontSize={28}/>
-      </div>
-
-      <div className='w-full flex flex-row bg-white rounded-lg border border-gray-950/20'>
+    <div className='w-full px-2 lg:py-6'>
+      <div className='w-full mt-6 flex flex-row bg-white rounded-lg border border-gray-950/20'>
         <div className='flex flex-1 flex-col justify-center px-8 gap-y-4 w-1/2'>
           <h2 className='mb-1 text-xl font-bold text-[#020e7c] md:text-2xl lg:text-3xl'>
             Welcome Back!

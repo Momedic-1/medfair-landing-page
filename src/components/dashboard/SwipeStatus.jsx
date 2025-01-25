@@ -22,7 +22,7 @@ const SwipeStatus = ({status, setStatus}) => {
   return (
     <div
       {...handlers}
-      className={`w-full p-2 rounded-sm shadow-lg flex justify-center items-center text-lg font-semibold transition-colors duration-300 md:rounded-full md:px-4 ${
+      className={`w-full lg:ml-20 p-2 rounded-sm shadow-lg flex justify-center items-center text-lg font-semibold transition-colors duration-300 md:rounded-full md:px-4 ${
         status === 'Online'
           ? 'bg-[#020e7c] text-white'
           : 'bg-gray-500 text-gray-200'

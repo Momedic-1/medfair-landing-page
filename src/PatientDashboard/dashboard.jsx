@@ -1,68 +1,3 @@
-// import React, { useState } from 'react'
-// import Cards from '../components/reuseables/Cards'
-// import call from './assets/call (2).svg';
-// import calendarIcon from "../assets/calendarIcon.jpeg";
-// import testTube from "../assets/test.jpeg"
-// import { Calendar, dayjsLocalizer,  } from 'react-big-calendar'
-// import dayjs from 'dayjs';
-// import "react-big-calendar/lib/css/react-big-calendar.css"
-
-// const localizer = dayjsLocalizer(dayjs)
-// const dashboard = () => {
-//   const date =new Date(); 
-//   const [selectedDate, setSelectedDate] = useState(new Date());
-//   const [appointments, setAppointments] = useState({
-
-//     '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment' },
-//     '2025-01-20': { time: '11:00 AM', description: 'Meeting' },
-//   });
-
-  
-//   const myEventsList = [
-//     {
-//       title: 'Doctor Appointment',
-//       start: new Date(2025, 0, 15, 14, 0),
-//       end: new Date(2025, 0, 15, 15, 0),
-//     },
-//     {
-//       title: 'Meeting',
-//       start: new Date(2025, 0, 20, 11, 0),
-//       end: new Date(2025, 0, 20, 12, 0),
-//     },
-//     ]
-
-//   return (
-//     <div className='w-full'>
-//       <div className='w-full px-4 py-8 overflow-hidden'>
-//               <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 lg:grid-cols-3 md:gap-8 mt-4">
-
-//         <Cards title={"Call a Doctor" } img={call} />
-//         <Cards title={"Schedule an Appointment with a Specialist" } img={calendarIcon} />
-//         <Cards title={"Get your test done" } img={testTube} />
-//               </div>
-
-//           <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-y-6 lg:gap-y-0 lg:flex-row items-start gap-x-8 px-1">
-//             <div className='w-full lg:w-[76%] rounded-lg border bg-white border-gray-200 p-4'> 
-
-//     <Calendar
-//       localizer={localizer}
-//       events={myEventsList}
-//       startAccessor="start"
-//       endAccessor="end"
-//       style={{ height: 400, color: 'gray', fontSize: 18, textAlign: 'center' }}
-//     />
-//             </div>
-//             <div className='w-full lg:w-[24%] h-[400px] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4'>
-//               <h2 className='text-lg font-bold text-blue-900 md:text-xl'>Appointments</h2>
-//               <p className='text-gray-950/60 text-sm'>View your upcoming appointments</p>
-//             </div>
-//   </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default dashboard
 import React, { useEffect, useState } from 'react';
 import Cards from '../components/reuseables/Cards';
 import call from './assets/call (2).svg';
@@ -71,13 +6,15 @@ import testTube from "../assets/test.jpeg";
 import { Calendar, dayjsLocalizer } from 'react-big-calendar';
 import dayjs from 'dayjs';
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Modal, Box, Typography, List, ListItem, ListItemButton, ListItemText, Avatar } from '@mui/material';
+import { Modal, Box, List, ListItem, ListItemButton, ListItemText, Avatar, Button, Popover } from '@mui/material';
 import { baseUrl } from '../env';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ColorRing } from 'react-loader-spinner';
-import { formatAppointments, formatDate, formatSpecialization, transformName } from '../utils';
+import { formatSpecialization, formatTime, transformName } from '../utils';
 import Skeleton from 'react-loading-skeleton';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "react-loading-skeleton/dist/skeleton.css"; 
 
 const localizer = dayjsLocalizer(dayjs);
@@ -142,16 +79,29 @@ const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
 const [specialistDetails, setSpecialistDetails] = useState([]);
-  const [appointments, setAppointments] = useState({
-    '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
-    '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
-  });
+  
+const [selectedTime, setSelectedTime] = useState(null);
+const [selectedDoctor, setSelectedDoctor] = useState(null);
+const [selectedSlotId, setSelectedSlotId] = useState(null);
+const [isBooking, setIsBooking] = useState(false);
+const [anchorEl, setAnchorEl] = useState(null);
+
+
+  // const [appointments, setAppointments] = useState({
+  //   '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
+  //   '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
+  // });
 
   const patientId = JSON.parse(localStorage.getItem('userData')).id;
+
+
   const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting?patientId=${patientId}`;
   const GETSPECIALISTCOUNTURL = `${baseUrl}/api/appointments/specialists/appointments-count`;
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
+  const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
+
+
   const myEventsList = [
     {
       title: 'Doctor Appointment',
@@ -176,11 +126,59 @@ const [specialistDetails, setSpecialistDetails] = useState([]);
     
     };
 
+   const handleOpenPopover = (event, doctor, slotTime, slotId) => {
+  setAnchorEl(event.currentTarget);
+  setSelectedTime(slotTime);
+  setSelectedDoctor(doctor);
+  setSelectedSlotId(slotId); 
+};
+
+const handleClosePopover = () => {
+  setAnchorEl(null);
+  setSelectedTime(null);
+  setSelectedDoctor(null);
+};
+
  const handleCategoryClick = (categoryId) => {
   const category = specialistCategories.find(cat => cat.id === categoryId);
   setSelectedCategory(categoryId);
   getSpecialistsDetails(category.name);
   setIsSpecialistsModalOpen(true);
+};
+
+
+const handleBookAppointment = async (e, slotId, patientId) => {
+  e.preventDefault()
+  setIsBooking(true);
+  try {
+    
+
+    await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`);
+    
+    toast.success('Appointment booked successfully!');
+
+    handleClosePopover();
+    setIsSpecialistsModalOpen(false);
+    setIsMainModalOpen(false);
+    getUpcomingAppointments();
+
+    setSpecialistDetails(prev => prev.map(doctor => {
+      if (doctor.id === selectedDoctor.id) {
+        return {
+          ...doctor,
+          slots: doctor.slots.filter(slot => slot !== selectedTime)
+        };
+      }
+      return doctor;
+    }));
+
+  } catch (error) {
+    toast.error('Failed to book appointment');
+    console.error('Booking error:', error);
+  } finally {
+    setIsBooking(false);
+  }
+
 };
 
  const getSpecialistCount = async () => {
@@ -195,16 +193,12 @@ const [specialistDetails, setSpecialistDetails] = useState([]);
       acc[key.toUpperCase()] = countData[key];
       return acc;
     }, {});
-
-    console.log("Normalized count data:", normalizedCountData);
-
     const updatedCategories = specialistCategories.map(category => ({
       ...category,
       count: normalizedCountData[category.specialization] || 0,
     }));
 
     setSpecialistCategories(updatedCategories);
-    console.log("Updated categories:", updatedCategories);
   } catch (error) {
     console.error("Error fetching specialist count:", error);
   } finally {
@@ -235,7 +229,7 @@ const getUpcomingAppointments = async () => {
   setIsLoading(true);
   try {
     const response = await axios.get(`${GETUPCOMINGAPPOINTMENTS}/${patientId}`);
-    const formattedData = formatAppointments(response.data);
+    const formattedData = response.data;
     setUpcomingAppointments(formattedData);
     setIsLoading(false);
   } catch (error) {
@@ -267,27 +261,6 @@ const getUpcomingAppointments = async () => {
       setIsLoading(false);
     }
   };
-  
-
-  const handleSpecialistClick = (specialist) => {
-    const newAppointment = {
-      title: `Appointment with ${specialist.name}`,
-      start: new Date(),  
-      end: new Date(new Date().setHours(new Date().getHours() + 1)),
-    };
-    
-    setAppointments(prev => ({
-      ...prev,
-      [dayjs(newAppointment.start).format('YYYY-MM-DD')]: {
-        time: dayjs(newAppointment.start).format('h:mm A'),
-        description: `Appointment with ${specialist.name}`,
-      },
-    }));
-    
-    setIsSpecialistsModalOpen(false);
-    setIsMainModalOpen(false);
-  };
-
   useEffect(()=> {
     getSpecialistCount()
   
@@ -300,6 +273,7 @@ const getUpcomingAppointments = async () => {
     getUpcomingAppointments()
   
   }, [])
+
 
   return (
     <div className='w-full'>
@@ -341,11 +315,11 @@ const getUpcomingAppointments = async () => {
             )
             :
             upcomingAppointments.length > 0 ? (
-            Object.entries(upcomingAppointments).map(([date, details]) => (
-              <div key={date} className="mt-4 p-3 border rounded-lg">
-                <p className="font-medium">{date}</p>
-                <p className="text-sm text-gray-600">{details.time}</p>
-                {/* <p className="text-sm">{details.description}</p> */}
+            upcomingAppointments.map((details, index) => (
+              <div key={index} className="mt-4 p-3 border rounded-lg">
+                <p className="font-medium">{details.date}</p>
+                <p className="text-sm text-gray-600">{formatTime(details.time)}</p>
+                
                 <p className="text-sm">{details.doctors}</p>
               </div>
             ))): (
@@ -436,7 +410,7 @@ const getUpcomingAppointments = async () => {
              
               specialistDetails?.length > 0 ? (
             specialistDetails.map((specialist) => (
-              <ListItem key={specialist} disablePadding>
+              <ListItem key={specialist.slotId} disablePadding>
                 <ListItemButton >
                 <div className='flex items-center justify-between w-full'>
                   <div className='w-[10%]'>
@@ -457,22 +431,33 @@ const getUpcomingAppointments = async () => {
                   />
                   </div>
                   <div className='w-[40%] flex items-center gap-x-2'>
-
-                  {/* <ListItemText primary={specialist?.slot.map((t)=> {return formatDate(t) + " | "})} sx={{color: "grey"}}/> */}
                   <ListItemText primary={
-                  specialist.slots?.length > 0 ? (
-                    specialist.slots.map((slot, index) => (
-                      <span key={index}>
-                        {new Date(slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{" "}
-                        {index < specialist.slots.length - 1 ? " | " : ""}
-                      </span>
-                    ))
-                  ) : (
-                    "No slots available"
-                  )
+                 specialist.slots?.length > 0 ? (
+  specialist.slots
+    .slice()
+
+    .filter(slot => dayjs(slot).isSame(dayjs(), 'day'))
+
+    .sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf())
+    .map((slot, index, filteredSlots) => (
+      <React.Fragment key={index}>
+        <button 
+          className='text-blue-800 text-sm ml-2 cursor-pointer'
+          onClick={(e) => handleOpenPopover(e, specialist, slot, specialist.slotId)}
+        >
+          <span>
+            {dayjs(slot).format('h:mm A')}
+          </span>
+        </button>
+        {index < filteredSlots.length - 1 ? " | " : ""}
+      </React.Fragment>
+    ))
+) : (
+  "No slots available today"
+)
                 }
                sx={{color: "grey"}}/>
-                  <button className='text-blue-800 text-sm'>Book</button>
+                 
                   </div>
                   </div>
                 </ListItemButton>
@@ -529,6 +514,55 @@ const getUpcomingAppointments = async () => {
           </div>
         </Box>
       </Modal>
+      <Popover
+  open={Boolean(anchorEl)}
+  anchorEl={anchorEl}
+  onClose={handleClosePopover}
+  anchorOrigin={{
+    vertical: 'bottom',
+    horizontal: 'center',
+  }}
+  transformOrigin={{
+    vertical: 'top',
+    horizontal: 'center',
+  }}
+>
+  <div className="p-4">
+    <p>
+      Confirm booking with <span className='font-bold'>
+        {selectedDoctor?.doctorName}
+        </span>
+    </p>
+    <p className='font-bold' >
+      {selectedTime && dayjs(selectedTime).format('MMMM D, YYYY [at] h:mm A')}
+    </p>
+    <div className="flex justify-end gap-2 mt-3">
+      <Button 
+        variant="outlined" 
+        size="small"
+        onClick={handleClosePopover}
+      >
+        Cancel
+      </Button>
+      <Button
+        variant="contained"
+        color="primary"
+        size="small"
+        onClick={(e)=>handleBookAppointment(e, selectedSlotId, patientId)}
+        disabled={isBooking}
+      >
+        {isBooking ? <ColorRing height="20"
+            width="20"
+            ariaLabel="color-ring-loading"
+            wrapperStyle={{}}
+            wrapperClass="color-ring-wrapper"
+            colors={['white', 'white', 'white', 'white', 'white']} 
+              />  : 'Confirm'}
+              
+      </Button>
+    </div>
+  </div>
+      </Popover>
     </div>
   );
 };

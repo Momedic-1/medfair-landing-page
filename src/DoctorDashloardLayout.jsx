@@ -1,15 +1,15 @@
 import { useState, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import Sidebar from './Sidebar';
 
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { baseUrl } from "../env.jsx";
+import { baseUrl } from './env.jsx';
+import Sidebar from './components/Sidebar.jsx';
 
-export default function PatientLayout() {
+export default function DoctorDashloardLayout() {
   
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -143,37 +143,14 @@ export default function PatientLayout() {
   const userName = userData?.firstName.charAt(0).toUpperCase() + userData?.firstName.slice(1).toLowerCase();
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full overflow-auto">
       <ToastContainer />
-      <div className='w-full h-screen lg:overflow-hidden flex flex-col lg:flex-row lg:justify-between'>
-      <div className='lg:w-[20%]'>
-      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      </div>
-     
-      <div className="w-full lg:w-[80%] bg-gray-100">
-         <div className='w-full'>
-            <div className={`flex flex-col bg-white transition-all ${isSidebarOpen ? '' : 'ml-0'}`}>
-        <header className="w-full p-2 h-16 bg-white flex justify-between items-center shadow px-4">
-         <button className="lg:hidden text-2xl p-2 focus:outline-none" onClick={toggleSidebar}>
-           ☰
-        </button>
+      <div className=''>
+      <Sidebar />
+        <div className='lg:ml-[25%]'>
 
-       
-        <div className="flex items-center gap-4">
-          
-          <span className="font-bold text-[#020E7C] hidden lg:block">
-           Welcome,
-            {userName}
-          </span>
-        </div>
-         {isSidebarOpen && (
-      <div className="fixed inset-0 bg-black opacity-50 z-10 lg:hidden" onClick={toggleSidebar}></div>
-    )}
-      </header>
-      </div>
-      </div>
       <Outlet/>
-      </div>
+        </div>
       </div>
     </div>
     )};

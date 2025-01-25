@@ -17,6 +17,8 @@ import PatientNotes from './PatientDashboard/patientNotes.jsx';
 import VerifyPayment from './VerifyPayment.jsx';  
 import VideoCall from './components/VideoCall.jsx';
 import Subscription from './PatientDashboard/Subscription.jsx';
+import DoctorProtectedRoute from './DoctorProtectedRoute.jsx';
+import DoctorDashloardLayout from './DoctorDashloardLayout.jsx';
 
 
 
@@ -43,8 +45,8 @@ const App = () => {
           <Route path='subscription' element={<Subscription />} />
           <Route path='payment' element={<PaymentPage />} />
         </Route>
-        <Route element={<ProtectedRoute role="DOCTOR" />}>
-          <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />
+        <Route path="/doctor-dashboard" element={<DoctorProtectedRoute role="DOCTOR" />}>
+          <Route path='' element={<DashboardLayout />} />
         </Route>
       </Routes>
     </Router>

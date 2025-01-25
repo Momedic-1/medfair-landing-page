@@ -4,7 +4,7 @@ import AvatarImage from '../../assets/avatar.png';
 import ArrowIcon from "../../assets/ArrowIcon"
 function AppointmentRequests({ appointments }) {
   return (
-    <div className='w-full h-[420px]  bg-white rounded-[10px] shadow-lg'>
+    <div className='w-full h-[420px] bg-white rounded-[10px] shadow-lg'>
       <div className='px-4 py-4'>
         <div className='flex justify-between text-[#020e7c]'>
           <span className="text-base font-semibold font-['Roboto'] leading-[25px]">

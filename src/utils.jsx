@@ -15,6 +15,14 @@ export const formatDate = (date )=> {
   return formattedDate
 }
 
+export const formatTime = (time) => {
+  const [hours, minutes, seconds] = time.split(':');
+  const date = new Date();
+  date.setHours(hours, minutes, seconds);
+
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+};
+
 export const transformName = (name) => {
   return name?.toUpperCase().replace(/\s+/g, '_');
 };
