@@ -27,7 +27,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
     <div
       className={`fixed lg:static w-full top-0 left-0 h-full bg-[#020E7C] text-white flex flex-col z-20 transform transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
     >
-     {role === "Patient" ? <div className='w-full'>
+     {role === "PATIENT" ? <div className='w-full'>
 
       <div className="w-full p-4 text-2xl font-bold flex justify-between items-center">
         <p>Patient Dashboard</p>
