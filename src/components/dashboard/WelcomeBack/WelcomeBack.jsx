@@ -2,7 +2,7 @@
 import DoctorImg from '../../../assets/doctor.png';
 import call from '../../../assets/call.svg';
 import './WelcomeBack.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { baseUrl } from '../../../env';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -10,45 +10,118 @@ import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 function WelcomeBack({ status }) {
   const [activeCalls, setActiveCalls] = useState([]);
+  const [isRinging, setIsRinging] = useState(false);
+    const [audioInitialized, setAudioInitialized] = useState(false);
+
+
   const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null); 
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem('userData'));
   const online = "Online";
   const navigate = useNavigate();
+  const audioRef = useRef(null);
+  const pollingInterval = useRef(null);
+  const ringtone = "https://res.cloudinary.com/da79pzyla/video/upload/v1737819241/galaxy_bells_s25_ywq7j0.mp3"
+
 
   useEffect(() => {
     viewAllPendingCalls();
+    enableAudio()
+    pollingInterval.current = setInterval(() => {
+      viewAllPendingCalls();
+      console.log(isRinging, "isRinging");
+    }, 5000); 
+
+    return () => {
+      clearInterval(pollingInterval.current);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      clearCallTimer();
+    };
   }, []);
 
   useEffect(() => {
     if (activeCalls.length > 0 && status === online) {
       startCallTimer();
       setIsActive(true);
+      playRingtone();
     } else {
       clearCallTimer();
+      stopRingtone();
     }
-  }, [token, activeCalls, status]);
+  }, [activeCalls, status]);
+
+
+
+  // Add this function
+  const initializeAudio = () => {
+    if (audioRef.current) {
+      // Play/pause immediately to prime the audio element
+      audioRef.current.play()
+        .then(() => {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          setAudioInitialized(true);
+        })
+        .catch(error => console.error('Audio initialization failed:', error));
+    }
+  };
+
+
+   const playRingtone = () => {
+     if (!audioInitialized) {
+    console.warn('Audio not initialized - requiring user interaction');
+    return;
+  }
+
+  if (audioRef.current) {
+    audioRef.current.currentTime = 0;
+    audioRef.current.play()
+      .catch(error => {
+        if (error.name === 'NotAllowedError') {
+          setAudioInitialized(false);
+          alert('Please click the "Enable Notifications" button to allow call sounds');
+        }
+      });
+  }
+  };
 
   const viewAllPendingCalls = async () => {
-    try {
+  try {
       const response = await axios.get(
         `${baseUrl}/api/v1/video/broadcast-calls/${userData.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+      
       setActiveCalls(response?.data || []);
+      setIsActive(response?.data?.length > 0);
+      
+      if (response?.data?.length > 0 && status === online) {
+        playRingtone();
+      } else {
+        stopRingtone();
+      }
     } catch (error) {
       console.error(error);
+      stopRingtone();
     }
   };
 
   console.log(activeCalls, 'activeCalls');
 
+  const stopRingtone = () => {
+  if (audioRef.current) {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    setIsRinging(false);
+  }
+};
+
   const navigateToIncomingCalls = () => {
+    stopRingtone()
     navigate('/incoming-call');
   };
 
@@ -75,13 +148,42 @@ function WelcomeBack({ status }) {
       console.error('Error dropping the call:', error.message);
     }
   };
+  useEffect(() => {
+  return () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  };
+}, []);
+const enableAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(error => {
+        console.error('Error playing audio:', error);
+      });
+    }
+  };
 
   return (
     <div className='w-full relative px-2'>
+      <audio ref={audioRef} src={ringtone} preload="auto" loop/>
+      {!audioInitialized && (
+        <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-lg">
+          <button 
+            onClick={initializeAudio}
+            className="underline cursor-pointer"
+          >
+            Click here to enable sound
+          </button>
+        </div>
+      )}
+
+      {
+        activeCalls?.length > 0 && (
       <div
         onClick={navigateToIncomingCalls}
         className={`image ${isActive ? 'active' : 'hidden'} ${
-          activeCalls.length > 0 && status === online && 'shake bg-green-500'
+          activeCalls.length > 0 && status === online && 'shake bg-red-500'
         } absolute top-2 left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
       >
         <p className='text-white font-semibold text-center'>
@@ -89,9 +191,11 @@ function WelcomeBack({ status }) {
         </p>
         
         <LiaPhoneVolumeSolid className={`${isActive ? 'active' : 'hidden'} ${
-            activeCalls.length > 0 && status === online && 'shake text-green-500'
+            activeCalls.length > 0 && status === online && 'shake text-yellow-500'
           }`} fontSize={28}/>
       </div>
+        )
+      }
 
       <div className='w-full flex flex-row bg-white rounded-lg border border-gray-950/20'>
         <div className='flex flex-1 flex-col justify-center px-8 gap-y-4 w-1/2'>
