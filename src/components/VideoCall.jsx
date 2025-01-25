@@ -159,9 +159,9 @@ const VideoCall = () => {
         <div className="rounded-full p-3 bg-red-500 cursor-pointer" onClick={leaveRoom}>
           <MdCallEnd width={25} height={25} className="text-white" />
         </div>
-        <button className="bg-blue-600 text-white flex items-center justify-center text-lg w-28 h-10 rounded-lg px-2" onClick={takeNote}>
+        {/* <button className="bg-blue-600 text-white flex items-center justify-center text-lg w-28 h-10 rounded-lg px-2" onClick={takeNote}>
           Add a Note
-        </button>
+        </button> */}
       </div>
 
       <AddNoteModal

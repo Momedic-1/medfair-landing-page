@@ -25,7 +25,7 @@ const Dashboard = () => {
         }
     }, [status, value]);
   return (
-    <div className='lg:ml-[15rem] relative'>
+    <div className='relative'>
     
         <div
             className='flex flex-col lg:flex-row h-full items-stretch lg:items-start lg:gap-x-8 justify-center bg-gray-100'>
@@ -34,10 +34,10 @@ const Dashboard = () => {
             
         </div>
 
-        <div
+        {/* <div
             className='w-full fixed left-0 bottom-0 md:w-[90%] md:left-4 lg:w-[48%] lg:left-80 md:bottom-4'>
             <SwipeStatus status={status} setStatus={setStatus} />
-        </div>
+        </div> */}
     
     </div>
   );
