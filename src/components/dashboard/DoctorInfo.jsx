@@ -88,7 +88,7 @@ const DoctorInfo = () => {
 
   return (
     <div className="w-full bg-white rounded-lg h-[480px]">
-      <div className="w-full h-full overflow-y-auto px-8 xl:px-16 py-8">
+      <div className="w-full h-full overflow-y-auto px-8 xl:px-6 py-8">
         <p className="text-lg text-gray-950/60 underline leading-8 font-bold">
           Your scheduled appointments
         </p>

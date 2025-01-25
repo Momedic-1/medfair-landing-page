@@ -3,6 +3,7 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { baseUrl } from "../../env.jsx";
+import { formatNumber } from "../../utils.jsx";
 
 function Income() {
   const [incomeData, setIncomeData] = useState(null);  
@@ -57,7 +58,7 @@ function Income() {
       <div className='flex justify-between mb-8'>
         <div>
           <p className='text-xl font-bold text-[#020e7c]'>
-            ₦{incomeData ? JSON.stringify(incomeData, null, 2) : "No data available"}
+            ₦{incomeData ? formatNumber(incomeData) : "No data available"}
           </p>
          
         </div>

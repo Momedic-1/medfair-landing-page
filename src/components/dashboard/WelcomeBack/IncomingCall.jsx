@@ -116,7 +116,7 @@ const IncomingCall = () => {
             incomingCalls.map((call) => (
               <div
                 key={call.callId}
-                className='w-1/2 flex justify-between items-center border p-4 rounded '
+                className='w-full flex justify-between items-center border p-4 rounded lg:w-1/2'
               >
                 <div>
                   <p className='font-bold'>
