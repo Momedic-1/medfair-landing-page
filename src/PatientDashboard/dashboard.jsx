@@ -11,7 +11,7 @@ import { baseUrl } from '../env';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ColorRing } from 'react-loader-spinner';
-import { formatSpecialization, formatTime, transformName } from '../utils';
+import { formatSpecialization, formatTime, getToken, transformName } from '../utils';
 import Skeleton from 'react-loading-skeleton';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -153,7 +153,12 @@ const handleBookAppointment = async (e, slotId, patientId) => {
   try {
     
 
-    await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`);
+    await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`, {
+       headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
     
     toast.success('Appointment booked successfully!');
 
@@ -184,7 +189,12 @@ const handleBookAppointment = async (e, slotId, patientId) => {
  const getSpecialistCount = async () => {
   try {
     setIsLoading(true);
-    const response = await axios.get(GETSPECIALISTCOUNTURL);
+    const response = await axios.get(GETSPECIALISTCOUNTURL, {
+       headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
     console.log("Specialist count response:", response?.data);
 
     const countData = response?.data || {};
@@ -205,13 +215,18 @@ const handleBookAppointment = async (e, slotId, patientId) => {
     setIsLoading(false);
   }
 };
-
+const token = getToken()
 
 const getSpecialistsDetails = async (categoryName) => {
    setIsLoading(true);
   try {
     const transformedName = transformName(categoryName);
-    const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`);
+    const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`, {
+       headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
     const parsedResponse = response?.data || {}; 
     const specialists = Object.values(parsedResponse).flat(); 
 
@@ -228,7 +243,12 @@ const getSpecialistsDetails = async (categoryName) => {
 const getUpcomingAppointments = async () => {
   setIsLoading(true);
   try {
-    const response = await axios.get(`${GETUPCOMINGAPPOINTMENTS}/${patientId}`);
+    const response = await axios.get(`${GETUPCOMINGAPPOINTMENTS}/${patientId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
     const formattedData = response.data;
     setUpcomingAppointments(formattedData);
     setIsLoading(false);
@@ -436,17 +456,17 @@ const getUpcomingAppointments = async () => {
   specialist.slots
     .slice()
 
-    .filter(slot => dayjs(slot).isSame(dayjs(), 'day'))
+    .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
 
-    .sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf())
+    .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b).valueOf())
     .map((slot, index, filteredSlots) => (
-      <React.Fragment key={index}>
+      <React.Fragment key={slot.slotId}>
         <button 
           className='text-blue-800 text-sm ml-2 cursor-pointer'
-          onClick={(e) => handleOpenPopover(e, specialist, slot, specialist.slotId)}
+          onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
         >
           <span>
-            {dayjs(slot).format('h:mm A')}
+            {dayjs(slot?.time).format('h:mm A')}
           </span>
         </button>
         {index < filteredSlots.length - 1 ? " | " : ""}
