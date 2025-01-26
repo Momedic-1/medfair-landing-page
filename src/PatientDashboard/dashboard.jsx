@@ -1,68 +1,3 @@
-// import React, { useState } from 'react'
-// import Cards from '../components/reuseables/Cards'
-// import call from './assets/call (2).svg';
-// import calendarIcon from "../assets/calendarIcon.jpeg";
-// import testTube from "../assets/test.jpeg"
-// import { Calendar, dayjsLocalizer,  } from 'react-big-calendar'
-// import dayjs from 'dayjs';
-// import "react-big-calendar/lib/css/react-big-calendar.css"
-
-// const localizer = dayjsLocalizer(dayjs)
-// const dashboard = () => {
-//   const date =new Date(); 
-//   const [selectedDate, setSelectedDate] = useState(new Date());
-//   const [appointments, setAppointments] = useState({
-
-//     '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment' },
-//     '2025-01-20': { time: '11:00 AM', description: 'Meeting' },
-//   });
-
-  
-//   const myEventsList = [
-//     {
-//       title: 'Doctor Appointment',
-//       start: new Date(2025, 0, 15, 14, 0),
-//       end: new Date(2025, 0, 15, 15, 0),
-//     },
-//     {
-//       title: 'Meeting',
-//       start: new Date(2025, 0, 20, 11, 0),
-//       end: new Date(2025, 0, 20, 12, 0),
-//     },
-//     ]
-
-//   return (
-//     <div className='w-full'>
-//       <div className='w-full px-4 py-8 overflow-hidden'>
-//               <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 lg:grid-cols-3 md:gap-8 mt-4">
-
-//         <Cards title={"Call a Doctor" } img={call} />
-//         <Cards title={"Schedule an Appointment with a Specialist" } img={calendarIcon} />
-//         <Cards title={"Get your test done" } img={testTube} />
-//               </div>
-
-//           <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-y-6 lg:gap-y-0 lg:flex-row items-start gap-x-8 px-1">
-//             <div className='w-full lg:w-[76%] rounded-lg border bg-white border-gray-200 p-4'> 
-
-//     <Calendar
-//       localizer={localizer}
-//       events={myEventsList}
-//       startAccessor="start"
-//       endAccessor="end"
-//       style={{ height: 400, color: 'gray', fontSize: 18, textAlign: 'center' }}
-//     />
-//             </div>
-//             <div className='w-full lg:w-[24%] h-[400px] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4'>
-//               <h2 className='text-lg font-bold text-blue-900 md:text-xl'>Appointments</h2>
-//               <p className='text-gray-950/60 text-sm'>View your upcoming appointments</p>
-//             </div>
-//   </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default dashboard
 import React, { useEffect, useState } from 'react';
 import Cards from '../components/reuseables/Cards';
 import call from './assets/call (2).svg';
@@ -76,7 +11,7 @@ import { baseUrl } from '../env';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ColorRing } from 'react-loader-spinner';
-import { formatAppointments, formatDate, formatSpecialization, transformName } from '../utils';
+import { formatAppointments, formatDate, formatSpecialization, getToken, transformName } from '../utils';
 import Skeleton from 'react-loading-skeleton';
 import "react-loading-skeleton/dist/skeleton.css"; 
 
@@ -142,6 +77,7 @@ const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
 const [specialistDetails, setSpecialistDetails] = useState([]);
+const token = getToken()
   const [appointments, setAppointments] = useState({
     '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
     '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
@@ -186,8 +122,12 @@ const [specialistDetails, setSpecialistDetails] = useState([]);
  const getSpecialistCount = async () => {
   try {
     setIsLoading(true);
-    const response = await axios.get(GETSPECIALISTCOUNTURL);
-    console.log("Specialist count response:", response?.data);
+    const response = await axios.get(GETSPECIALISTCOUNTURL, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
 
     const countData = response?.data || {};
 
@@ -217,7 +157,12 @@ const getSpecialistsDetails = async (categoryName) => {
    setIsLoading(true);
   try {
     const transformedName = transformName(categoryName);
-    const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`);
+    const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
     const parsedResponse = response?.data || {}; 
     const specialists = Object.values(parsedResponse).flat(); 
 
@@ -234,7 +179,12 @@ const getSpecialistsDetails = async (categoryName) => {
 const getUpcomingAppointments = async () => {
   setIsLoading(true);
   try {
-    const response = await axios.get(`${GETUPCOMINGAPPOINTMENTS}/${patientId}`);
+    const response = await axios.get(`${GETUPCOMINGAPPOINTMENTS}/${patientId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
     const formattedData = formatAppointments(response.data);
     setUpcomingAppointments(formattedData);
     setIsLoading(false);
@@ -254,7 +204,12 @@ const getUpcomingAppointments = async () => {
         throw new Error('Patient ID not found');
       }
       
-      const response = await axios.post(CREATE_MEETING);
+      const response = await axios.post(CREATE_MEETING, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
       
   
       setVideoLink(response.data);
@@ -501,7 +456,7 @@ const getUpcomingAppointments = async () => {
         <Box sx={{width: 400, height: 200, overflowY: 'auto', bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2, position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)'}}>
           <div className="w-full h-full flex flex-col gap-y-8 px-4">
           {videoLink === null ? <>
-            <p className='text-sm text-center font-medium'>Click to create a meeting with a doctor</p>
+            <p className='text-sm text-center lg:text-lg font-medium'>Click to create a meeting with a doctor</p>
           <button className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full" onClick={createMeeting}>
             {isLoading ? 
             <ColorRing height="40"

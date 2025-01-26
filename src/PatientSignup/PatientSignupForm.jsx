@@ -54,7 +54,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
       <div className='w-full flex items-center justify-center'>
         <form className='bg-white shadow-md w-full lg:w-3/4 p-6' onSubmit={handleSubmit}>
 
-          <div className='w-full flex flex-col lg:flex-row lg:items-center justify-between mb-6'>
+          <div className='w-full mb-4 flex flex-col lg:flex-row lg:items-center justify-between md:-mb-6'>
             <div className='flex flex-col w-full lg:w-1/2 px-2 mb-4 md:mb-6'>
               <h1 className='text-gray-600 font-medium text-sm'>First name</h1>
               <input
@@ -116,9 +116,10 @@ export default function PatientSignupForm({ formData, setFormData }) {
 
     </div>
        </div>
-          <h1 className='mt-3 mb-1 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
-          <div className='flex flex-col items-start md:flex-row md:items-center justify-between w-full mb-6'>
-            <div className='flex items-center gap-x-4 px-2 mb-2 md:mb-0'>
+       <div className='flex flex-col gap-y-1'>
+          <h1 className='mt-3 -mb-2 md:-mb-12 p-2 text-gray-600 font-medium text-sm'>Sex</h1>
+          <div className='flex flex-col items-start gap-y-6 md:flex-row md:items-center justify-between w-full mb-6'>
+            <div className='flex items-center gap-x-4 px-2 md:mb-0'>
             <div className='flex items-center'>
 
               <p className='mr-2'>Male</p>
@@ -160,7 +161,7 @@ export default function PatientSignupForm({ formData, setFormData }) {
               />
             </div>
           </div>
-
+         </div>
           
 
           <div className='w-full flex flex-col lg:flex-row lg:items-center justify-between mb-6'>
