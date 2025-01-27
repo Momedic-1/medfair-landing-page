@@ -68,3 +68,7 @@ export const getToken = ()=> {
 export const getUserData = () => {
   return JSON.parse(localStorage.getItem('userData'));
 }
+
+export const getPatientId = () => {
+  return JSON.parse(localStorage.getItem('userData'))?.id;
+}

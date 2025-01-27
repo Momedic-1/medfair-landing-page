@@ -11,9 +11,9 @@ import { baseUrl } from '../env';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ColorRing } from 'react-loader-spinner';
-import { formatSpecialization, formatTime, getToken, transformName } from '../utils';
+import { formatSpecialization, formatTime, getPatientId, getToken, transformName } from '../utils';
 import Skeleton from 'react-loading-skeleton';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "react-loading-skeleton/dist/skeleton.css"; 
 
@@ -79,7 +79,7 @@ const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
 const [specialistDetails, setSpecialistDetails] = useState([]);
-  
+ const token = getToken() 
 const [selectedTime, setSelectedTime] = useState(null);
 const [selectedDoctor, setSelectedDoctor] = useState(null);
 const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -92,10 +92,10 @@ const [anchorEl, setAnchorEl] = useState(null);
   //   '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
   // });
 
-  const patientId = JSON.parse(localStorage.getItem('userData')).id;
+  const patientId = getPatientId()
 
 
-  const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting?patientId=${patientId}`;
+  const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting`;
   const GETSPECIALISTCOUNTURL = `${baseUrl}/api/appointments/specialists/appointments-count`;
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
@@ -215,7 +215,7 @@ const handleBookAppointment = async (e, slotId, patientId) => {
     setIsLoading(false);
   }
 };
-const token = getToken()
+
 
 const getSpecialistsDetails = async (categoryName) => {
    setIsLoading(true);
@@ -268,15 +268,20 @@ const getUpcomingAppointments = async () => {
         throw new Error('Patient ID not found');
       }
       
-      const response = await axios.post(CREATE_MEETING);
+      const response = await axios.post(`${CREATE_MEETING}?patientId=${patientId}`, {}, {
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
       
   
       setVideoLink(response.data);
       
       return response.data;
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create meeting');
-      console.error('Error creating meeting:', err);
+      setError(err.response?.data?.error || 'Failed to create meeting');
+      toast.error(err.response?.data?.error);
     } finally {
       setIsLoading(false);
     }
@@ -297,6 +302,7 @@ const getUpcomingAppointments = async () => {
 
   return (
     <div className='w-full'>
+      <ToastContainer />
       <div className='w-full px-4 py-8 overflow-hidden'>
         <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 lg:grid-cols-3 md:gap-8 mt-4">
           <div onClick={handleCallADoctorClick}>
@@ -506,7 +512,7 @@ const getUpcomingAppointments = async () => {
         <Box sx={{width: 400, height: 200, overflowY: 'auto', bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2, position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)'}}>
           <div className="w-full h-full flex flex-col gap-y-8 px-4">
           {videoLink === null ? <>
-            <p className='text-sm text-center font-medium'>Click to create a meeting with a doctor</p>
+            <p className='text-lg text-center font-medium'>Want to call a doctor?</p>
           <button className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full" onClick={createMeeting}>
             {isLoading ? 
             <ColorRing height="40"
