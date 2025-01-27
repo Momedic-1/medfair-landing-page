@@ -4,6 +4,7 @@ import { MdDelete } from 'react-icons/md';
 import { baseUrl } from '../../env';
 import AppointmentsSkeleton from '../reuseables/AppointmentSkeleton';
 import ConfirmationMenu from '../reuseables/ConfirmationMenu';
+import { getToken } from '../../utils';
 
 const DoctorInfo = () => {
   const [appointments, setAppointments] = useState([]);
@@ -20,7 +21,7 @@ const DoctorInfo = () => {
   
   const getDoctorData = () => ({
     doctorsId: JSON.parse(localStorage.getItem('userData')),
-    token: JSON.parse(localStorage.getItem('authToken'))
+    token: getToken()
   });
 
   const getAppointments = async () => {
@@ -33,7 +34,7 @@ const DoctorInfo = () => {
       const response = await axios.get(`${baseUrl}/api/appointments/available`, {
         params: { doctorId: doctorsId?.id },
         headers: { 
-          // 'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
       });
@@ -57,7 +58,7 @@ const DoctorInfo = () => {
     const { token } = getDoctorData();
     try {
       await axios.delete(`${baseUrl}/api/appointments/${doctorId}/slots/${slotId}`, {
-        // headers: { 'Authorization': `Bearer ${token}` },
+       headers: { 'Authorization': `Bearer ${token}` },
       });
       setAppointments(appointments.filter(apt => apt.id !== appointmentId));
     } catch (error) {

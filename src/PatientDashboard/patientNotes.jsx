@@ -25,6 +25,7 @@ const PatientNotes = () => {
       });
    
       const data = response?.data
+      console.log(data, "data");
      
       setResults(data);
       } catch (error) {
@@ -43,7 +44,7 @@ const PatientNotes = () => {
   return (
     <div className="h-screen flex ">
       <div className="p-8 w-full">
-        <Table data={results} emptyMessage={"No Patients data"}/>
+        <Table data={results} isLoading={loading} emptyMessage={"No Patients data"}/>
       </div>
     </div>
   );

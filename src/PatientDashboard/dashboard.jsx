@@ -9,7 +9,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Modal, Box, List, ListItem, ListItemButton, ListItemText, Avatar, Button, Popover } from '@mui/material';
 import { baseUrl } from '../env';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ColorRing } from 'react-loader-spinner';
 import { formatSpecialization, formatTime, getPatientId, getToken, transformName } from '../utils';
 import Skeleton from 'react-loading-skeleton';
@@ -85,6 +85,8 @@ const [selectedDoctor, setSelectedDoctor] = useState(null);
 const [selectedSlotId, setSelectedSlotId] = useState(null);
 const [isBooking, setIsBooking] = useState(false);
 const [anchorEl, setAnchorEl] = useState(null);
+
+const navigate = useNavigate();
 
 
   // const [appointments, setAppointments] = useState({
@@ -282,6 +284,7 @@ const getUpcomingAppointments = async () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create meeting');
       toast.error(err.response?.data?.error);
+      
     } finally {
       setIsLoading(false);
     }

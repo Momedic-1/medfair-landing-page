@@ -3,6 +3,7 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { baseUrl } from "../../env.jsx";
+import { getToken } from "../../utils.jsx";
 
 function Income() {
   const [incomeData, setIncomeData] = useState(null);  
@@ -13,7 +14,7 @@ function Income() {
     const fetchIncome = async () => {
       try {
         const id = sessionStorage.getItem("id");
-        const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+        const token = getToken()
 
         if (!id || !token) {
           setError("No ID or token found, unable to fetch earnings.");
@@ -23,12 +24,15 @@ function Income() {
 
         const response = await axios.get(`${baseUrl}/api/earnings/${id}/earnings`, {
           headers: {
-            // 'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json"
+          
           }
         });
 
         
         setIncomeData(response.data);  
+        console.log(response.data, "response.data");
         setLoading(false);
       } catch (error) {
 
@@ -41,7 +45,10 @@ function Income() {
   }, []);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return 
+    <div className="w-full bg-white p-6 rounded-lg h-52">
+
+    </div>
   }
 
   if (error) {
