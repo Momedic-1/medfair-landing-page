@@ -3,7 +3,6 @@ import { formatDate } from '../../utils';
 import { Hourglass } from 'react-loader-spinner';
 
 const Table = ({ data = [], isLoading = false, emptyMessage }) => {
-  console.log(data)
   return (
     <div className="relative w-full h-screen overflow-x-auto">
       <div className="min-w-full bg-white shadow-md rounded-lg overflow-auto">
