@@ -1,4 +1,3 @@
-
 import DoctorImg from '../../../assets/doctor.png';
 import call from '../../../assets/call.svg';
 import './WelcomeBack.css';
@@ -10,10 +9,9 @@ import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 function WelcomeBack({ status }) {
   const [activeCalls, setActiveCalls] = useState([]);
+  const [pickedCalls, setPickedCalls] = useState(new Set()); // Track picked calls
   const [isRinging, setIsRinging] = useState(false);
-    const [audioInitialized, setAudioInitialized] = useState(false);
-
-
+  const [audioInitialized, setAudioInitialized] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null); 
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
@@ -24,13 +22,11 @@ function WelcomeBack({ status }) {
   const pollingInterval = useRef(null);
   const ringtone = "https://res.cloudinary.com/da79pzyla/video/upload/v1737819241/galaxy_bells_s25_ywq7j0.mp3"
 
-
   useEffect(() => {
     viewAllPendingCalls();
     enableAudio()
     pollingInterval.current = setInterval(() => {
       viewAllPendingCalls();
-      console.log(isRinging, "isRinging");
     }, 5000); 
 
     return () => {
@@ -54,12 +50,8 @@ function WelcomeBack({ status }) {
     }
   }, [activeCalls, status]);
 
-
-
-  // Add this function
   const initializeAudio = () => {
     if (audioRef.current) {
-      // Play/pause immediately to prime the audio element
       audioRef.current.play()
         .then(() => {
           audioRef.current.pause();
@@ -70,36 +62,37 @@ function WelcomeBack({ status }) {
     }
   };
 
+  const playRingtone = () => {
+    if (!audioInitialized) {
+      console.warn('Audio not initialized - requiring user interaction');
+      return;
+    }
 
-   const playRingtone = () => {
-     if (!audioInitialized) {
-    console.warn('Audio not initialized - requiring user interaction');
-    return;
-  }
-
-  if (audioRef.current) {
-    audioRef.current.currentTime = 0;
-    audioRef.current.play()
-      .catch(error => {
-        if (error.name === 'NotAllowedError') {
-          setAudioInitialized(false);
-          alert('Please click the "Enable Notifications" button to allow call sounds');
-        }
-      });
-  }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play()
+        .catch(error => {
+          if (error.name === 'NotAllowedError') {
+            setAudioInitialized(false);
+            alert('Please click the "Enable Notifications" button to allow call sounds');
+          }
+        });
+    }
   };
 
   const viewAllPendingCalls = async () => {
-  try {
+    try {
       const response = await axios.get(
         `${baseUrl}/api/v1/video/broadcast-calls/${userData.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      setActiveCalls(response?.data || []);
-      setIsActive(response?.data?.length > 0);
+      // Filter out picked calls
+      const filteredCalls = response?.data.filter(call => !pickedCalls.has(call.id)) || [];
+      setActiveCalls(filteredCalls);
+      setIsActive(filteredCalls.length > 0);
       
-      if (response?.data?.length > 0 && status === online) {
+      if (filteredCalls.length > 0 && status === online) {
         playRingtone();
       } else {
         stopRingtone();
@@ -110,18 +103,17 @@ function WelcomeBack({ status }) {
     }
   };
 
-  console.log(activeCalls, 'activeCalls');
-
   const stopRingtone = () => {
-  if (audioRef.current) {
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-    setIsRinging(false);
-  }
-};
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsRinging(false);
+    }
+  };
 
-  const navigateToIncomingCalls = () => {
-    stopRingtone()
+  const navigateToIncomingCalls = (callId) => {
+    stopRingtone();
+    setPickedCalls(prev => new Set(prev).add(callId)); // Add the call to picked calls
     navigate('/incoming-call');
   };
 
@@ -142,21 +134,22 @@ function WelcomeBack({ status }) {
 
   const dropCall = async () => {
     try {
-      console.log('Call dropped due to timeout');
       setActiveCalls([]);
     } catch (error) {
       console.error('Error dropping the call:', error.message);
     }
   };
+
   useEffect(() => {
-  return () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  };
-}, []);
-const enableAudio = () => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+
+  const enableAudio = () => {
     if (audioRef.current) {
       audioRef.current.play().catch(error => {
         console.error('Error playing audio:', error);
@@ -178,24 +171,25 @@ const enableAudio = () => {
         </div>
       )}
 
-      {
-        activeCalls?.length > 0 && (
-      <div
-        onClick={navigateToIncomingCalls}
-        className={`image ${isActive ? 'active' : 'hidden'} ${
-          activeCalls.length > 0 && status === online && 'shake bg-red-500'
-        } absolute top-2 left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
-      >
-        <p className='text-white font-semibold text-center'>
-          Incoming Calls
-        </p>
-        
-        <LiaPhoneVolumeSolid className={`${isActive ? 'active' : 'hidden'} ${
-            activeCalls.length > 0 && status === online && 'shake text-yellow-500'
-          }`} fontSize={28}/>
-      </div>
-        )
-      }
+      {activeCalls?.length > 0 && (
+        activeCalls.map(call => (
+          <div
+            key={call.id}
+            onClick={() => navigateToIncomingCalls(call.id)}
+            className={`image ${isActive ? 'active' : 'hidden'} ${
+              activeCalls.length > 0 && status === online && 'shake bg-red-500'
+            } absolute top-2 left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
+          >
+            <p className='text-white font-semibold text-center'>
+              Incoming Call
+            </p>
+            
+            <LiaPhoneVolumeSolid className={`${isActive ? 'active' : 'hidden'} ${
+                activeCalls.length > 0 && status === online && 'shake text-yellow-500'
+              }`} fontSize={28}/>
+          </div>
+        ))
+      )}
 
       <div className='w-full flex flex-row bg-white rounded-lg border border-gray-950/20'>
         <div className='flex flex-1 flex-col justify-center px-8 gap-y-4 w-1/2'>
