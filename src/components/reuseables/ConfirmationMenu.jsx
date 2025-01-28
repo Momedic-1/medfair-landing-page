@@ -1,7 +1,7 @@
 import { Fade, Menu, MenuItem } from '@mui/material';
 import React from 'react'
 
-const ConfirmationMenu = ({anchorEl, handleClose, open}) => {
+const ConfirmationMenu = ({anchorEl, handleClose, open, handleDelete}) => {
      
   return (
     <div>
@@ -20,7 +20,7 @@ const ConfirmationMenu = ({anchorEl, handleClose, open}) => {
         onClose={handleClose}
         TransitionComponent={Fade}
       >
-        <MenuItem onClick={handleClose}>Delete</MenuItem>
+        <MenuItem onClick={handleDelete}>Delete</MenuItem>
         <MenuItem onClick={handleClose}>Cancel</MenuItem>
         
       </Menu>

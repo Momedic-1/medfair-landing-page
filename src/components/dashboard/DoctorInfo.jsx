@@ -4,23 +4,28 @@ import { MdDelete } from 'react-icons/md';
 import { baseUrl } from '../../env';
 import AppointmentsSkeleton from '../reuseables/AppointmentSkeleton';
 import ConfirmationMenu from '../reuseables/ConfirmationMenu';
+import { getId, getToken } from '../../utils';
 
 const DoctorInfo = () => {
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [anchorEl, setAnchorEl] = React.useState(null);
+   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const open = Boolean(anchorEl);
-  const handleClick = (event) => {
+  const handleClick = (event, appointment) => {
     setAnchorEl(event.currentTarget);
+    setSelectedAppointment(appointment);
+    console.log(appointment, " appointment")
   };
   const handleClose = () => {
     setAnchorEl(null);
+    setSelectedAppointment(null);
   };
   
   const getDoctorData = () => ({
-    doctorsId: JSON.parse(localStorage.getItem('userData')),
-    token: JSON.parse(localStorage.getItem('authToken'))
+    doctorsId: getId(),
+    token: getToken()
   });
 
   const getAppointments = async () => {
@@ -33,7 +38,7 @@ const DoctorInfo = () => {
       const response = await axios.get(`${baseUrl}/api/appointments/available`, {
         params: { doctorId: doctorsId?.id },
         headers: { 
-          // 'Authorization': `Bearer ${token}`,
+         'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
       });
@@ -53,18 +58,32 @@ const DoctorInfo = () => {
     }
   };
 
-  const handleDeleteAppointment = async (appointmentId) => {
-    const { token } = getDoctorData();
-    try {
-      await axios.delete(`${baseUrl}/api/appointments/${doctorId}/slots/${slotId}`, {
-        // headers: { 'Authorization': `Bearer ${token}` },
+  const handleDeleteAppointment = async () => {
+    const { doctorsId, token } = getDoctorData();
+    if (selectedAppointment) {
+      try {
+        await axios.delete(`${baseUrl}/api/appointments/${doctorsId}/slots/${selectedAppointment}`, {
+       headers: { 'Authorization': `Bearer ${token}` },
       });
-      setAppointments(appointments.filter(apt => apt.id !== appointmentId));
-    } catch (error) {
-      setError('Failed to delete appointment. Please try again.');
-      console.error('Error deleting appointment:', error);
+        setAppointments(appointments.filter(apt => apt.slotId !== selectedAppointment));
+        handleClose();
+      } catch (error) {
+        console.error('Error deleting appointment:', error);
+      }
     }
   };
+  // const handleDeleteAppointment = async (slotId) => {
+  //   const { token } = getDoctorData();
+  //   try {
+  //     await axios.delete(`${baseUrl}/api/appointments/${doctorId}/slots/${slotId}`, {
+  //      headers: { 'Authorization': `Bearer ${token}` },
+  //     });
+  //     setAppointments(appointments.filter(apt => apt.id !== slotId));
+  //   } catch (error) {
+  //     setError('Failed to delete appointment. Please try again.');
+  //     console.error('Error deleting appointment:', error);
+  //   }
+  // };
 
   useEffect(() => {
  
@@ -121,7 +140,7 @@ const DoctorInfo = () => {
 
               <div className="relative group">
                 <button
-                  onClick={handleClick}
+                  onClick={(event)=>handleClick(event, appointment?.slotId)}
                   className="text-gray-500/80 text-lg hover:text-red-500 transition-colors duration-200"
                   aria-label="Delete appointment"
                 >
@@ -130,7 +149,7 @@ const DoctorInfo = () => {
                 <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max px-2 py-1 text-xs text-white bg-blue-400 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   Delete appointment
                 </span>
-                <ConfirmationMenu anchorEl={anchorEl} handleClose={handleClose} open={open}/>
+                <ConfirmationMenu handleDelete={handleDeleteAppointment} anchorEl={anchorEl} handleClose={handleClose} open={open}/>
               </div>
             </div>
           );

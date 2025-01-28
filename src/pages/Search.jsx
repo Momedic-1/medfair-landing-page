@@ -61,7 +61,12 @@ const Search = () => {
   const fetchNotes = async () => {
     try {
       const response = await axios.get(
-        `${baseUrl}/api/notes/notes/doctor/${doctorId}`
+        `${baseUrl}/api/notes/notes/doctor/${doctorId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }
+        }
       );
       setResults(response.data);
     } catch (err) {
@@ -111,12 +116,12 @@ const Search = () => {
         </button>
       </div>
      
-    <div className="w-full pl-56">
+    <div className="w-full">
 
-      <PatientTable emptyMessage={"No Patients data"}/>
+      <PatientTable data={results} emptyMessage={"No Patients data"}/>
     </div>
     
-      <div className="flex justify-center mt-4 space-x-2">
+      {/* <div className="flex justify-center mt-4 space-x-2">
         {Array.from({ length: totalPages }, (_, index) => (
           <button
             key={index}
@@ -128,7 +133,7 @@ const Search = () => {
             {index + 1}
           </button>
         ))}
-      </div>
+      </div> */}
 
       {isModalOpen && selectedNote && (
         <div className="fixed inset-0 bg-black bg-opacity-50   flex items-center justify-center z-50">

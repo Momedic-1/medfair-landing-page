@@ -186,7 +186,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 <li>
                 
                 <NavLink
-                    to='notes'
+                    to='/doctor-dashboard/notes'
                     className={({ isActive }) =>
                       `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
                         isActive
