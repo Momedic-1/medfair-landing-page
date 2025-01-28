@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import PatientLayout from './PatientDashboard/PatientLayout';
-import jwtDecode from 'jwt-decode'; 
+import {jwtDecode} from "jwt-decode"
 
 const ProtectedRoute = ({ role }) => {
   const [isTokenValid, setIsTokenValid] = useState(true);
