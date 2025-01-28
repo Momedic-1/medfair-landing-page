@@ -1,71 +1,59 @@
 import React from 'react';
+import { formatDate } from '../../utils';
+import { Hourglass } from 'react-loader-spinner';
 
 const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   return (
-    <div className="w-full flex flex-col">
-      <div className="flex-grow overflow-auto bg-white h-[700px]">
-        <table className="min-w-full h-full">
-          <thead className="bg-gray-50 sticky top-0 z-10">
-            <tr className="border-b border-gray-300">
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                Patient First Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                Patient Last Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                Visit Date
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[200px]">
-                Subjective
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[200px]">
-                Objective
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[200px]">
-                Assessment
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[200px]">
-                Plan
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[200px]">
-                Final Diagnosis
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[200px]">
-                SOAP Comment
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[150px]">
-                Drugs
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                Actions
-              </th>
+    <div className="relative w-full h-screen overflow-x-auto">
+      <div className="min-w-full bg-white shadow-md rounded-lg overflow-auto">
+        <table className="min-w-full leading-normal text-center">
+          <thead className="bg-gray-50 sticky top-0 z-10 py-4">
+            <tr>
+              <th className="px-4 py-2 w-64 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor's Full Name</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visit Date</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subjective</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Objective</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assessment</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Final diagnosis</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SOAP comment</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drugs</th>
             </tr>
           </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan="7" className="text-center py-4">
-                  Loading...
-                </td>
-              </tr>
-            ) : data.length === 0 ? (
-              <tr>
+
+            <tbody className='text-center'>
+           {isLoading ? (
+            <div className='absolute top-20 w-full h-[400px] flex items-center justify-center'>
+                  <Hourglass
+                              visible={true}
+                              height="40"
+                              width="40"
+                              ariaLabel="hourglass-loading"
+                              wrapperStyle={{}}
+                              wrapperClass=""
+                              colors={['#306cce', '#72a1ed']}
+                            /> 
+            </div>
+            ) : (
+              data?.length < 0 ? 
+              (<tr>
                 <td colSpan="7" className="text-center py-4">
                   {emptyMessage || 'No data available'}
                 </td>
-              </tr>
-            ) : (
+              </tr> ) :
               data.map((patient, index) => (
                 <tr key={index} className="border-b border-gray-200">
-                  <td className="px-4 py-3 text-sm text-gray-700">{patient.firstName}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{patient.lastName}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{patient.visitDate}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{patient.subjective}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{patient.objective}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{patient.assessment}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{patient.plan}</td>
-                  {/* Add more table cells as needed */}
+                  <td className="px-2 py-2 text-sm text-gray-700">{`${patient.doctorLastName}, ${patient.doctorFirstName}`}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">{formatDate(patient.visitDate)}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700 ">{patient.subjective}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700 ">{patient.objective}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700 ">{patient.assessment}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">{patient.plan}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">{patient.finalDiagnosis}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">{patient.soapComment}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">{patient.drugs.map((drug)=> {
+                    return drug.name + " " + drug.dosage
+                  })}</td>
                 </tr>
               ))
             )}

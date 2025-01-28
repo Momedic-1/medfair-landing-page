@@ -58,6 +58,14 @@ export const getToken = ()=> {
   return JSON.parse(localStorage.getItem('authToken'))?.token;
 }
 
+export const formatTime = (time) => {
+  const [hours, minutes, seconds] = time.split(':');
+  const date = new Date();
+  date.setHours(hours, minutes, seconds);
+
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+};
+
 export const getUserData = () => {
   return JSON.parse(localStorage.getItem('userData'));
 }
