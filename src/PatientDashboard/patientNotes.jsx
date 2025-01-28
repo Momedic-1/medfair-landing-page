@@ -13,7 +13,6 @@ const PatientNotes = () => {
   const patientId = getId();
   const token = getToken();
 
-   console.log(results, "result");
   const fetchPatients = async () => {
     setLoading(true);
     try {
