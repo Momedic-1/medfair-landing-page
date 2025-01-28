@@ -6,13 +6,15 @@ import testTube from "../assets/test.jpeg";
 import { Calendar, dayjsLocalizer } from 'react-big-calendar';
 import dayjs from 'dayjs';
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Modal, Box, Typography, List, ListItem, ListItemButton, ListItemText, Avatar } from '@mui/material';
+import { Modal, Box, List, ListItem, ListItemButton, ListItemText, Avatar, Button, Popover } from '@mui/material';
 import { baseUrl } from '../env';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ColorRing } from 'react-loader-spinner';
-import { formatAppointments, formatDate, formatSpecialization, getId, getToken, transformName } from '../utils';
+import { formatSpecialization, formatTime, getPatientId, getToken, transformName } from '../utils';
 import Skeleton from 'react-loading-skeleton';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "react-loading-skeleton/dist/skeleton.css"; 
 
 const localizer = dayjsLocalizer(dayjs);
@@ -77,17 +79,31 @@ const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
 const [specialistDetails, setSpecialistDetails] = useState([]);
-  const [appointments, setAppointments] = useState({
-    '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
-    '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
-  });
+ const token = getToken() 
+const [selectedTime, setSelectedTime] = useState(null);
+const [selectedDoctor, setSelectedDoctor] = useState(null);
+const [selectedSlotId, setSelectedSlotId] = useState(null);
+const [isBooking, setIsBooking] = useState(false);
+const [anchorEl, setAnchorEl] = useState(null);
 
-  const patientId = getId()
-  const token = getToken()
-  const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting?patientId=${patientId}`;
+const navigate = useNavigate();
+
+
+  // const [appointments, setAppointments] = useState({
+  //   '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
+  //   '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
+  // });
+
+  const patientId = getPatientId()
+
+
+  const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting`;
   const GETSPECIALISTCOUNTURL = `${baseUrl}/api/appointments/specialists/appointments-count`;
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
+  const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
+
+
   const myEventsList = [
     {
       title: 'Doctor Appointment',
@@ -112,6 +128,19 @@ const [specialistDetails, setSpecialistDetails] = useState([]);
     
     };
 
+   const handleOpenPopover = (event, doctor, slotTime, slotId) => {
+  setAnchorEl(event.currentTarget);
+  setSelectedTime(slotTime);
+  setSelectedDoctor(doctor);
+  setSelectedSlotId(slotId); 
+};
+
+const handleClosePopover = () => {
+  setAnchorEl(null);
+  setSelectedTime(null);
+  setSelectedDoctor(null);
+};
+
  const handleCategoryClick = (categoryId) => {
   const category = specialistCategories.find(cat => cat.id === categoryId);
   setSelectedCategory(categoryId);
@@ -119,13 +148,53 @@ const [specialistDetails, setSpecialistDetails] = useState([]);
   setIsSpecialistsModalOpen(true);
 };
 
+
+const handleBookAppointment = async (e, slotId, patientId) => {
+  e.preventDefault()
+  setIsBooking(true);
+  try {
+    
+
+    await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`, {
+       headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    toast.success('Appointment booked successfully!');
+
+    handleClosePopover();
+    setIsSpecialistsModalOpen(false);
+    setIsMainModalOpen(false);
+    getUpcomingAppointments();
+
+    setSpecialistDetails(prev => prev.map(doctor => {
+      if (doctor.id === selectedDoctor.id) {
+        return {
+          ...doctor,
+          slots: doctor.slots.filter(slot => slot !== selectedTime)
+        };
+      }
+      return doctor;
+    }));
+
+  } catch (error) {
+    toast.error('Failed to book appointment');
+    console.error('Booking error:', error);
+  } finally {
+    setIsBooking(false);
+  }
+
+};
+
  const getSpecialistCount = async () => {
   try {
     setIsLoading(true);
     const response = await axios.get(GETSPECIALISTCOUNTURL, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+       headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
       }
     });
     console.log("Specialist count response:", response?.data);
@@ -136,16 +205,12 @@ const [specialistDetails, setSpecialistDetails] = useState([]);
       acc[key.toUpperCase()] = countData[key];
       return acc;
     }, {});
-
-    console.log("Normalized count data:", normalizedCountData);
-
     const updatedCategories = specialistCategories.map(category => ({
       ...category,
       count: normalizedCountData[category.specialization] || 0,
     }));
 
     setSpecialistCategories(updatedCategories);
-    console.log("Updated categories:", updatedCategories);
   } catch (error) {
     console.error("Error fetching specialist count:", error);
   } finally {
@@ -159,9 +224,9 @@ const getSpecialistsDetails = async (categoryName) => {
   try {
     const transformedName = transformName(categoryName);
     const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+       headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
       }
     });
     const parsedResponse = response?.data || {}; 
@@ -182,11 +247,11 @@ const getUpcomingAppointments = async () => {
   try {
     const response = await axios.get(`${GETUPCOMINGAPPOINTMENTS}/${patientId}`, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
       }
     });
-    const formattedData = formatAppointments(response.data);
+    const formattedData = response.data;
     setUpcomingAppointments(formattedData);
     setIsLoading(false);
   } catch (error) {
@@ -205,40 +270,25 @@ const getUpcomingAppointments = async () => {
         throw new Error('Patient ID not found');
       }
       
-      const response = await axios.post(CREATE_MEETING);
+      const response = await axios.post(`${CREATE_MEETING}?patientId=${patientId}`, {}, {
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
       
   
       setVideoLink(response.data);
       
       return response.data;
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create meeting');
-      console.error('Error creating meeting:', err);
+      setError(err.response?.data?.error || 'Failed to create meeting');
+      toast.error(err.response?.data?.error);
+      
     } finally {
       setIsLoading(false);
     }
   };
-  
-
-  const handleSpecialistClick = (specialist) => {
-    const newAppointment = {
-      title: `Appointment with ${specialist.name}`,
-      start: new Date(),  
-      end: new Date(new Date().setHours(new Date().getHours() + 1)),
-    };
-    
-    setAppointments(prev => ({
-      ...prev,
-      [dayjs(newAppointment.start).format('YYYY-MM-DD')]: {
-        time: dayjs(newAppointment.start).format('h:mm A'),
-        description: `Appointment with ${specialist.name}`,
-      },
-    }));
-    
-    setIsSpecialistsModalOpen(false);
-    setIsMainModalOpen(false);
-  };
-
   useEffect(()=> {
     getSpecialistCount()
   
@@ -252,8 +302,10 @@ const getUpcomingAppointments = async () => {
   
   }, [])
 
+
   return (
     <div className='w-full'>
+      <ToastContainer />
       <div className='w-full px-4 py-8 overflow-hidden'>
         <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 lg:grid-cols-3 md:gap-8 mt-4">
           <div onClick={handleCallADoctorClick}>
@@ -292,11 +344,11 @@ const getUpcomingAppointments = async () => {
             )
             :
             upcomingAppointments.length > 0 ? (
-            Object.entries(upcomingAppointments).map(([date, details]) => (
-              <div key={date} className="mt-4 p-3 border rounded-lg">
-                <p className="font-medium">{date}</p>
-                <p className="text-sm text-gray-600">{details.time}</p>
-                {/* <p className="text-sm">{details.description}</p> */}
+            upcomingAppointments.map((details, index) => (
+              <div key={index} className="mt-4 p-3 border rounded-lg">
+                <p className="font-medium">{details.date}</p>
+                <p className="text-sm text-gray-600">{formatTime(details.time)}</p>
+                
                 <p className="text-sm">{details.doctors}</p>
               </div>
             ))): (
@@ -387,7 +439,7 @@ const getUpcomingAppointments = async () => {
              
               specialistDetails?.length > 0 ? (
             specialistDetails.map((specialist) => (
-              <ListItem key={specialist} disablePadding>
+              <ListItem key={specialist.slotId} disablePadding>
                 <ListItemButton >
                 <div className='flex items-center justify-between w-full'>
                   <div className='w-[10%]'>
@@ -408,22 +460,33 @@ const getUpcomingAppointments = async () => {
                   />
                   </div>
                   <div className='w-[40%] flex items-center gap-x-2'>
-
-                  {/* <ListItemText primary={specialist?.slot.map((t)=> {return formatDate(t) + " | "})} sx={{color: "grey"}}/> */}
                   <ListItemText primary={
-                  specialist.slots?.length > 0 ? (
-                    specialist.slots.map((slot, index) => (
-                      <span key={index}>
-                        {new Date(slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{" "}
-                        {index < specialist.slots.length - 1 ? " | " : ""}
-                      </span>
-                    ))
-                  ) : (
-                    "No slots available"
-                  )
+                 specialist.slots?.length > 0 ? (
+  specialist.slots
+    .slice()
+
+    .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
+
+    .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b).valueOf())
+    .map((slot, index, filteredSlots) => (
+      <React.Fragment key={slot.slotId}>
+        <button 
+          className='text-blue-800 text-sm ml-2 cursor-pointer'
+          onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
+        >
+          <span>
+            {dayjs(slot?.time).format('h:mm A')}
+          </span>
+        </button>
+        {index < filteredSlots.length - 1 ? " | " : ""}
+      </React.Fragment>
+    ))
+) : (
+  "No slots available today"
+)
                 }
                sx={{color: "grey"}}/>
-                  <button className='text-blue-800 text-sm'>Book</button>
+                 
                   </div>
                   </div>
                 </ListItemButton>
@@ -452,7 +515,7 @@ const getUpcomingAppointments = async () => {
         <Box sx={{width: 400, height: 200, overflowY: 'auto', bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2, position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)'}}>
           <div className="w-full h-full flex flex-col gap-y-8 px-4">
           {videoLink === null ? <>
-            <p className='text-sm text-center font-medium'>Click to create a meeting with a doctor</p>
+            <p className='text-lg text-center font-medium'>Want to call a doctor?</p>
           <button className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full" onClick={createMeeting}>
             {isLoading ? 
             <ColorRing height="40"
@@ -480,6 +543,55 @@ const getUpcomingAppointments = async () => {
           </div>
         </Box>
       </Modal>
+      <Popover
+  open={Boolean(anchorEl)}
+  anchorEl={anchorEl}
+  onClose={handleClosePopover}
+  anchorOrigin={{
+    vertical: 'bottom',
+    horizontal: 'center',
+  }}
+  transformOrigin={{
+    vertical: 'top',
+    horizontal: 'center',
+  }}
+>
+  <div className="p-4">
+    <p>
+      Confirm booking with <span className='font-bold'>
+        {selectedDoctor?.doctorName}
+        </span>
+    </p>
+    <p className='font-bold' >
+      {selectedTime && dayjs(selectedTime).format('MMMM D, YYYY [at] h:mm A')}
+    </p>
+    <div className="flex justify-end gap-2 mt-3">
+      <Button 
+        variant="outlined" 
+        size="small"
+        onClick={handleClosePopover}
+      >
+        Cancel
+      </Button>
+      <Button
+        variant="contained"
+        color="primary"
+        size="small"
+        onClick={(e)=>handleBookAppointment(e, selectedSlotId, patientId)}
+        disabled={isBooking}
+      >
+        {isBooking ? <ColorRing height="20"
+            width="20"
+            ariaLabel="color-ring-loading"
+            wrapperStyle={{}}
+            wrapperClass="color-ring-wrapper"
+            colors={['white', 'white', 'white', 'white', 'white']} 
+              />  : 'Confirm'}
+              
+      </Button>
+    </div>
+  </div>
+      </Popover>
     </div>
   );
 };
