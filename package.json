@@ -23,6 +23,7 @@
     "dayjs": "^1.11.13",
     "formik": "^2.4.6",
     "framer-motion": "^11.3.15",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.471.0",
     "preline": "^2.4.1",
     "react": "^18.3.1",
