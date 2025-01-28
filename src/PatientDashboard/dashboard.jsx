@@ -11,7 +11,7 @@ import { baseUrl } from '../env';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColorRing } from 'react-loader-spinner';
-import { formatSpecialization, formatTime, getPatientId, getToken, transformName } from '../utils';
+import { formatSpecialization, formatTime, getId, getToken, transformName } from '../utils';
 import Skeleton from 'react-loading-skeleton';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -94,7 +94,7 @@ const navigate = useNavigate();
   //   '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
   // });
 
-  const patientId = getPatientId()
+  const patientId = getId()
 
 
   const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting`;
