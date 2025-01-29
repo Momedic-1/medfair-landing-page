@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import paymentImage from './PatientDashboard/assets/payment.svg';
 import axios from 'axios';
 import {baseUrl} from "./env.jsx";
+import { getToken } from './utils.jsx';
 
 const VerifyPayment = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState(null);
+  const token = getToken()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -24,7 +26,12 @@ const VerifyPayment = () => {
 
   const verifyPayment = async (reference) => {
     try {
-      const response = await axios.get(`${baseUrl}/api/payment/verify/${reference}`)
+      const response = await axios.get(`${baseUrl}/api/payment/verify/${reference}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      })
       setMessage(response.data)
     } catch (error) {
       setMessage(error.message);
