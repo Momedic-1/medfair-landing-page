@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from 'react';
 import Calendar from 'react-calendar'; 
 import 'react-calendar/dist/Calendar.css'; 
@@ -20,7 +18,6 @@ const CalendarPage = () => {
   const handleClose = () => setOpen(false);
   const [selectedHour, setSelectedHour] = useState(12);
     const [selectedMinute, setSelectedMinute] = useState(0);
-  const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const doctorsId = JSON.parse(localStorage.getItem('userData'))
   const token = JSON.parse(localStorage.getItem('authToken'));

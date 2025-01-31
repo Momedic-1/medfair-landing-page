@@ -103,6 +103,7 @@ const Search = () => {
   const currentResults = results.slice(indexOfFirstItem, indexOfLastItem);
 
   const totalPages = Math.ceil(results.length / itemsPerPage);
+  console.log(results)
   
   return (
     <div className="w-full lg:px-8">

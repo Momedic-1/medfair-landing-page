@@ -323,7 +323,7 @@ const getUpcomingAppointments = async () => {
           <div className='w-full lg:w-[76%] rounded-lg border bg-white border-gray-200 p-4'>
             <Calendar
               localizer={localizer}
-              events={myEventsList}
+              // events={myEventsList}
               startAccessor="start"
               endAccessor="end"
               style={{ height: 400, color: 'gray', fontSize: 18, textAlign: 'center' }}

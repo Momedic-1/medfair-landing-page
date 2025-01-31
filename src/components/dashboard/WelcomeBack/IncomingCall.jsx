@@ -9,15 +9,18 @@ import { Hourglass } from 'react-loader-spinner';
 import { useDispatch } from 'react-redux';
 import { setCall, setRoomUrl } from '../../../features/authSlice';
 import NoCalls from '../../../assets/NoCalls';
+import { getToken } from '../../../utils';
 
 const IncomingCall = () => {
   const [incomingCalls, setIncomingCalls] = useState([]);
   const [loading, setLoading] = useState(true);
-  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+  const token = getToken();
   const userData = JSON.parse(localStorage.getItem('userData'));
   const incomingCallsRef = useRef([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  console.log(incomingCalls, 'incomingCalls');
 
   useEffect(() => {
     const fetchIncomingCalls = async () => {
@@ -63,8 +66,10 @@ const IncomingCall = () => {
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/video/join?callId=${callId}&doctorId=${userData?.id}`,
+         {},
         {
           headers: {
+            "Content-Type": 'application/json',
             Authorization: `Bearer ${token}`,
           },
         }
