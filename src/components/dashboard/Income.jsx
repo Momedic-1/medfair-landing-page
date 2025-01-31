@@ -58,7 +58,7 @@ function Income() {
       <div className='flex justify-between mb-8'>
         <div>
           <p className='text-xl font-bold text-[#020e7c]'>
-            ₦{incomeData ? formatNumber(incomeData) : "No data available"}
+            ₦{incomeData ? formatNumber(incomeData) : 0}
           </p>
          
         </div>
