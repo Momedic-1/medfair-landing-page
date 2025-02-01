@@ -74,7 +74,7 @@ const Search = () => {
     }
   };
 
-  
+  console.log("doctors note ", results)
   const handleView = (note) => {
     setSelectedNote(note);
     setIsModalOpen(true);

@@ -41,6 +41,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       const response = await axios.get(`${baseUrl}/api/notes/get-all-patient-note/${patientId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
       const notesData = response.data;
@@ -97,6 +98,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       const response = await axios.post(`${baseUrl}/api/notes/create`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
       
