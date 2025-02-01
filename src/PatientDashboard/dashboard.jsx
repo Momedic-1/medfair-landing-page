@@ -19,18 +19,32 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 const localizer = dayjsLocalizer(dayjs);
 
+// const modalStyle = {
+//   position: 'absolute',
+//   top: '50%',
+//   left: '50%',
+//   transform: 'translate(-50%, -50%)',
+//   width: 600,
+//   height: 500,
+//   overflowY: 'auto',
+//   bgcolor: 'background.paper',
+//   boxShadow: 24,
+//   p: 4,
+//   borderRadius: 2,
+// };
 const modalStyle = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 600,
-  height: 500,
-  overflowY: 'auto',
+  width: '90%', 
+  maxWidth: '500px', 
   bgcolor: 'background.paper',
   boxShadow: 24,
   p: 4,
-  borderRadius: 2,
+  borderRadius: '8px',
+  overflowY: 'auto',
+  maxHeight: '90vh', 
 };
 
 
