@@ -5,7 +5,7 @@ export default function ErrorModal({ message, onClose }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-1/3">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-[280px]">
         <h2 className="text-xl font-bold text-red-600 mb-4">Error</h2>
         <p className="text-gray-700 mb-6">{message}</p>
         <button

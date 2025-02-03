@@ -9,6 +9,9 @@ import PhoneInput from 'react-phone-input-2';
 import Modal from './Modal';
 import 'react-phone-input-2/lib/style.css';
 import { baseUrl } from '../env.jsx';
+import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import { ColorRing } from 'react-loader-spinner';
 
 const specialization = ["Select specialization",'GENERAL_PRACTITIONER', 'PSYCHIATRIST', 'CLINICAL_PSYCHOLOGIST', 'THERAPIST', 'SEX_THERAPIST']
 export default function DoctorSignupForm() {
@@ -26,15 +29,16 @@ export default function DoctorSignupForm() {
     emailAddress: '',
     phoneNumber: '',
     gender: '',
-    specialization: '',
+    medicalSpecialization: '',
     hospital: '',
     password: '',
     confirmedPassword: '',
     howDidYouHearAboutUs: 'NEWSPAPER',
-    acceptTerms: false,
+    // acceptTerms: false,
     userRole: 'DOCTOR',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,36 +68,44 @@ export default function DoctorSignupForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     if (formData.password !== formData.confirmedPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (!formData.acceptTerms) {
-      setError('You must accept the terms and conditions');
-      return;
+    // if (!formData.acceptTerms) {
+    //   setError('You must accept the terms and conditions');
+    //   return;
+    // }
+
+ try {
+    const response = await axios.post(`${baseUrl}/api/v1/registration/doctors-registration`, formData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    toast.success(response.data.message);
+    console.log('Registration successful:', response.data);
+    localStorage.setItem('email', JSON.stringify(formData.emailAddress));
+    setLoading(false);
+    navigate('/check-email');
+
+  } catch (error) {
+    setLoading(false);
+    let exceptionMessage = "";
+    if (error.response) {
+      exceptionMessage = error.response.data.exceptionMessage;
+      toast.error(exceptionMessage);
     }
 
-    try {
-      const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      const result = await response.json();
-      console.log('Registration successful:', result);
-      localStorage.setItem('email', JSON.stringify(formData.emailAddress));
-      navigate('/check-email');
-    } catch (error) {
-      console.error('Registration failed:', error);
-    }
+    console.error('Registration failed:', exceptionMessage);
+  }
   };
     const stepLabels = ['Account', 'Verification', 'Login']
   return (
     <>
+      <ToastContainer />
       <SignUpTop />
        <Steps stepLabels={stepLabels} currentStep={1} />
     <form onSubmit={handleSubmit} className="mx-auto px-6 lg:px-10 md:w-5/6 lg:w-3/6 lg:p-4 md:border md:border-gray-950/20 md:rounded-xl">
@@ -156,8 +168,8 @@ export default function DoctorSignupForm() {
           <input
             type='radio'
             name='gender'
-            value='Male'
-            checked={formData.gender === 'Male'}
+            value='MALE'
+            checked={formData.gender === 'MALE'}
             onChange={handleChange}
             required
           />
@@ -167,8 +179,8 @@ export default function DoctorSignupForm() {
           <input
             type='radio'
             name='gender'
-            value='Female'
-            checked={formData.gender === 'Female'}
+            value='FEMALE'
+            checked={formData.gender === 'FEMALE'}
             onChange={handleChange}
             required
           />
@@ -180,8 +192,8 @@ export default function DoctorSignupForm() {
           <label className='block text-sm font-medium text-gray-700 mb-1'>Medical specialization</label>
           <select
             type='text'
-            name='specialization'
-            value={formData.specialization}
+            name='medicalSpecialization'
+            value={formData.medicalSpecialization}
             onChange={handleChange}
             className='w-full mt-2 p-4 border border-gray-300 rounded text-sm'
             placeholder='Enter here'
@@ -257,7 +269,7 @@ export default function DoctorSignupForm() {
        Already have an account? <span className='text-[#020E7C] cursor-pointer'>Login here</span>
      </a>
       </div>
-      <div className='mt-4 flex items-center font-bold'>
+      {/* <div className='mt-4 flex items-center font-bold'>
         <input
           type='checkbox'
           name='acceptTerms'
@@ -272,13 +284,17 @@ export default function DoctorSignupForm() {
           </a>
         </span>
         {error && !formData.acceptTerms && <p className='text-red-500 text-sm'>{error}</p>}
-      </div>
+      </div> */}
 
       <button
         type='submit'
         className='w-[300px] mt-4 lg:w-[97%] md:w-[95%] p-4 py-2 px-3 inline-flex items-center justify-center text-sm font-semibold rounded-lg border border-transparent bg-[#020E7C] text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none'
       >
-        Next
+        {
+          loading ? (
+            <ColorRing color='#fff' height={20} width={20} />) : (
+              "Next")
+        }
       </button>
     </form>
     <div className='text-center mt-4 mb-12'>
