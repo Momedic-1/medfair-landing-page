@@ -54,49 +54,41 @@ const DoctorSignup = () => {
     } else if (currentStep === 2) {
       setCurrentStep(3)
     } else if (currentStep === 3) {
-      navigate('/dashboard') // Navigate to the dashboard
+      navigate('/dashboard') 
     }
   }
-  const signUpBackend = async()=>{
-    try {
-      const response = await fetch(`${baseUrl}/api/v1/registration/doctors-registration`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      const responseText = await response.text();
-      let result = {};
+ const signUpBackend = async () => {
+  setLoading(true);
+  try {
+    const response = await axios.post(`${baseUrl}/api/v1/registration/doctors-registration`, formData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-      if (responseText) {
-        try {
-          result = JSON.parse(responseText);
-        } catch (error) {
-          setLoading(false);
-          setErrorMessage('Error parsing server response.');
-          return false;
-        }
-      } else {
-        setLoading(false);
-        setErrorMessage('Empty response from the server.');
-        return false;
-      }
-
-      if (response.ok) {
-        setLoading(false);
-        return true;
-      } else {
-        setLoading(false);
-        setErrorMessage(result.message || 'Form submission failed.');
-        return false;
-      }
-    } catch (error) {
+    if (response.data) {
       setLoading(false);
-      setErrorMessage('Error submitting form. Please try again.');
+      return true;
+    } else {
+      setLoading(false);
+      setErrorMessage(response.data.message || 'Form submission failed.');
       return false;
     }
+  } catch (error) {
+    setLoading(false);
+    if (error.response) {
+
+      setErrorMessage(error.response.data.message || 'Form submission failed.');
+    } else if (error.request) {
+
+      setErrorMessage('No response received from server.');
+    } else {
+  
+      setErrorMessage('Error submitting form. Please try again.');
+    }
+    return false;
   }
+};
 
   const validateForm = () => {
     // Add your form validation logic here

@@ -67,7 +67,8 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload.message || 'Invalid details. Please try again.';
+        state.error = action.payload
+        
       });
   },
 });
