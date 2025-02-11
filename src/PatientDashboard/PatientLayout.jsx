@@ -115,7 +115,7 @@ export default function PatientLayout() {
       return;
     }
 
-    const validAmounts = [100, 5000, 4500];
+    const validAmounts = [1500, 5000, 4500];
     const amountInKobo = parseFloat(subtitle);
 
     if (!validAmounts.includes(amountInKobo)) {
