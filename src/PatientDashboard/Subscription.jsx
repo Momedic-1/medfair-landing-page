@@ -30,10 +30,8 @@ const Subscription = () => {
   const handleSubscription = async (e, amount) => {
     e.preventDefault();
     setIsLoading(true);
-
-    const formattedAmount = formatPrice(amount);
     const dataToSend = {
-      amount: formattedAmount,
+      amount,
       email: user?.emailAddress,
     };
 
