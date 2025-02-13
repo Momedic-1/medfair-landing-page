@@ -12,7 +12,7 @@ export const ActiveSlide = [
     },
     {
         title: "Monthly",
-        subTitle: 5000.00,
+        subTitle: 5000,
         content: [
           "Up to 4 consultations per month",
           "Ongoing health support",
@@ -23,7 +23,7 @@ export const ActiveSlide = [
       },
       {
         title: "Yearly",
-        subTitle: 4500.00,
+        subTitle: 45000,
         content: [
           "Up to 10 consultations per year",
           "Expert care anytime",
