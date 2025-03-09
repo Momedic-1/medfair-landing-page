@@ -1,7 +1,7 @@
 export const ActiveSlide = [
     {
         title:"Instant",
-        subTitle: 1500,
+        subTitle: 100,
         content: [
             "One-time consultation for immediate advice",
             "Access to certified doctors",
