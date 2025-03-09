@@ -18,20 +18,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import "react-loading-skeleton/dist/skeleton.css"; 
 
 const localizer = dayjsLocalizer(dayjs);
-
-// const modalStyle = {
-//   position: 'absolute',
-//   top: '50%',
-//   left: '50%',
-//   transform: 'translate(-50%, -50%)',
-//   width: 600,
-//   height: 500,
-//   overflowY: 'auto',
-//   bgcolor: 'background.paper',
-//   boxShadow: 24,
-//   p: 4,
-//   borderRadius: 2,
-// };
 const modalStyle = {
   position: 'absolute',
   top: '50%',
@@ -47,6 +33,10 @@ const modalStyle = {
   maxHeight: '90vh', 
 };
 
+const avatarStyle = {
+  width: 68,
+  height: 68,
+}
 
  const specialistCategory = [
     { id: 1, name: 'Psychiatrist', count: 0, icon: '🧠', specialization: 'PSYCHIATRIST' },
@@ -57,13 +47,13 @@ const modalStyle = {
 
 const specialists = {
   1: [
-    { id: 1, name: 'Dr. Sarah Smith', specialty: 'Family Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
-    { id: 2, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
-    { id: 3, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
-    { id: 4, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
-    { id: 5, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
-    { id: 6, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
-    { id: 7, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'] },
+    { id: 1, name: 'Dr. Sarah Smith', specialty: 'Family Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'], image: "https://lh3.googleusercontent.com/IwySwfZKJ7ngPvmUA01ygl3CR3L19jzByN6K6HuG5TuOkZMvaNEJYqrguI2RjIpkl0SLC0ls621uiFTEnO4cRG2VNWw_X-DiOuI=e365-pa-nu-rw-w739" },
+    { id: 2, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'], image: "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar"},
+    { id: 3, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'], image: "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar" },
+    { id: 4, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'], image: "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar" },
+    { id: 5, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'], image: "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar" },
+    { id: 6, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'], image: "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar" },
+    { id: 7, name: 'Dr. James Johnson', specialty: 'Internal Medicine',time: ['2:00 PM', '3:00 PM', '4:00 PM'], image: "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar" },
   ],
   2: [
     { id: 1, name: 'Dr. Michael Brown', specialty: 'Interventional Cardiology',time: ['2:00 PM'] },
@@ -92,7 +82,8 @@ const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
-const [specialistDetails, setSpecialistDetails] = useState([]);
+const [specialistDetails, setSpecialistDetails] = useState(specialists);
+console.log("specialist details", specialistDetails)
  const token = getToken() 
 const [selectedTime, setSelectedTime] = useState(null);
 const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -101,12 +92,6 @@ const [isBooking, setIsBooking] = useState(false);
 const [anchorEl, setAnchorEl] = useState(null);
 
 const navigate = useNavigate();
-
-
-  // const [appointments, setAppointments] = useState({
-  //   '2025-01-15': { time: '2:00 PM', description: 'Doctor Appointment',doctors: 'Dr. Sarah Smith' },
-  //   '2025-01-20': { time: '11:00 AM', description: 'Meeting', doctors: 'Dr. James Johnson' },
-  // });
 
   const patientId = getId()
 
@@ -234,26 +219,27 @@ const handleBookAppointment = async (e, slotId, patientId) => {
 
 
 const getSpecialistsDetails = async (categoryName) => {
-   setIsLoading(true);
-  try {
-    const transformedName = transformName(categoryName);
-    const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`, {
-       headers: {
-        "Content-Type": "application/json",
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    const parsedResponse = response?.data || {}; 
-    const specialists = Object.values(parsedResponse).flat(); 
+//    setIsLoading(true);
+//   try {
+//     const transformedName = transformName(categoryName);
+//     const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`, {
+//        headers: {
+//         "Content-Type": "application/json",
+//         'Authorization': `Bearer ${token}`
+//       }
+//     });
+//     const parsedResponse = response?.data || {}; 
+//     const specialists = Object.values(parsedResponse).flat(); 
 
-    setSpecialistDetails(specialists);
+//     setSpecialistDetails(specialists);
 
    
-    setIsLoading(false);
-  } catch (error) {
-    console.error('Error fetching specialists:', error);
-    setIsLoading(false);
-  }
+//     setIsLoading(false);
+//   } catch (error) {
+//     console.error('Error fetching specialists:', error);
+//     setIsLoading(false);
+//   }
+setSpecialistDetails(specialists[1]);
 };
 
 const getUpcomingAppointments = async () => {
@@ -455,25 +441,33 @@ const getUpcomingAppointments = async () => {
             specialistDetails.map((specialist) => (
               <ListItem key={specialist.slotId} disablePadding>
                 <ListItemButton >
-                <div className='flex items-center justify-between w-full'>
-                  <div className='w-[10%]'>
-                    {
-                      specialist.image != null ? (
-                        <Avatar src={specialist?.image} />
-                      ) : (
-                        <Avatar src="/broken-image.jpg"  />
-                      )
-                    }
-                  </div>
-                  <div className="w-[50%]">
+                <div className='px-4 py-6 border h-40 shadow-xl rounded-lg flex items-start justify-between w-full'>
+                  <div className='w-1/2 flex flex-col gap-y-4'>
+                    <div className="w-full">
 
                   <ListItemText 
                  
+                    primary={specialist?.name}
+                    secondary={formatSpecialization(specialist?.specialization)}
+                    sx={{fontSize: '0.5rem', fontWeight: 'bold'}}
+                  />
+                  {/* <ListItemText 
+                 
                     primary={specialist?.doctorName}
                     secondary={formatSpecialization(specialist?.specialization)}
-                  />
+                    sx={{fontSize: '0.5rem', fontWeight: 'bold'}}
+                  /> */}
                   </div>
-                  <div className='w-[40%] flex items-center gap-x-2'>
+                    {
+                specialist.image ? (
+                  <Avatar src={specialist.image} sx={avatarStyle} />
+                ) : (
+                  <Avatar src="/broken-image.jpg" sx={avatarStyle} />
+                )
+              }
+                  </div>
+                  
+                  {/* <div className='w-[40%] flex items-center gap-x-2'>
                   <ListItemText primary={
                  specialist.slots?.length > 0 ? (
   specialist.slots
@@ -485,7 +479,8 @@ const getUpcomingAppointments = async () => {
     .map((slot, index, filteredSlots) => (
       <React.Fragment key={slot.slotId}>
         <button 
-          className='text-blue-800 text-sm ml-2 cursor-pointer'
+        className='text-white text-[9px] px-1 py-1 my-1 rounded-full bg-blue-800 text-sm ml-2 cursor-pointer'
+
           onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
         >
           <span>
@@ -501,7 +496,33 @@ const getUpcomingAppointments = async () => {
                 }
                sx={{color: "grey"}}/>
                  
-                  </div>
+                  </div> */}
+                           <div className='w-1/2 flex items-start gap-x-2'>
+            <ListItemText primary={
+              specialist.time?.length > 0 ? (
+                specialist.time
+                  .slice()
+                  .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
+                  .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf())
+                  .map((slot, index, filteredSlots) => (
+                    <React.Fragment key={slot.slotId}>
+                      <button 
+                        className='text-white text-[9px] px-1 py-1 my-1 rounded-full bg-blue-800 text-sm ml-2 cursor-pointer'
+                        onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
+                      >
+                        <span>
+                          {dayjs(slot?.time).format('h:mm A')}
+                        </span>
+                      </button>
+                      {/* {index < filteredSlots.length - 1 ? " | " : ""} */}
+                    </React.Fragment>
+                  ))
+              ) : (
+                "No slots available today"
+              )
+            }
+            sx={{color: "grey", display: "flex"}}/>
+          </div>
                   </div>
                 </ListItemButton>
               </ListItem>
