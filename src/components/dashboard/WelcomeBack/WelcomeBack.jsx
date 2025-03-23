@@ -178,7 +178,7 @@ function WelcomeBack({ status }) {
             onClick={() => navigateToIncomingCalls(call.id)}
             className={`image ${isActive ? 'active' : 'hidden'} ${
               activeCalls.length > 0 && status === online && 'shake bg-red-500'
-            } absolute top-2 left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
+            } absolute top-2 left-32 md:left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
           >
             <p className='text-white font-semibold text-center'>
               Incoming Call

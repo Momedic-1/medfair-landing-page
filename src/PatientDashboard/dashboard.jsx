@@ -82,7 +82,7 @@ const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
-const [specialistDetails, setSpecialistDetails] = useState(specialists);
+const [specialistDetails, setSpecialistDetails] = useState([]);
 console.log("specialist details", specialistDetails)
  const token = getToken() 
 const [selectedTime, setSelectedTime] = useState(null);
@@ -196,7 +196,6 @@ const handleBookAppointment = async (e, slotId, patientId) => {
         'Authorization': `Bearer ${token}`
       }
     });
-    console.log("Specialist count response:", response?.data);
 
     const countData = response?.data || {};
 
@@ -219,27 +218,27 @@ const handleBookAppointment = async (e, slotId, patientId) => {
 
 
 const getSpecialistsDetails = async (categoryName) => {
-//    setIsLoading(true);
-//   try {
-//     const transformedName = transformName(categoryName);
-//     const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`, {
-//        headers: {
-//         "Content-Type": "application/json",
-//         'Authorization': `Bearer ${token}`
-//       }
-//     });
-//     const parsedResponse = response?.data || {}; 
-//     const specialists = Object.values(parsedResponse).flat(); 
+   setIsLoading(true);
+  try {
+    const transformedName = transformName(categoryName);
+    const response = await axios.get(`${GETSPECIALISTDATA}?specialization=${transformedName}`, {
+       headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    const parsedResponse = response?.data || {}; 
+    const specialists = Object.values(parsedResponse).flat(); 
 
-//     setSpecialistDetails(specialists);
+    setSpecialistDetails(specialists);
 
    
-//     setIsLoading(false);
-//   } catch (error) {
-//     console.error('Error fetching specialists:', error);
-//     setIsLoading(false);
-//   }
-setSpecialistDetails(specialists[1]);
+    setIsLoading(false);
+  } catch (error) {
+    console.error('Error fetching specialists:', error);
+    setIsLoading(false);
+  }
+// setSpecialistDetails(specialists[1]);
 };
 
 const getUpcomingAppointments = async () => {
@@ -259,6 +258,8 @@ const getUpcomingAppointments = async () => {
     setIsLoading(false);
   }
 }
+
+console.log("specialist details slots", specialistDetails.map((specialist) => specialist.slots.map(slot => dayjs(slot.time).format('h:mm A'))))
 
   const createMeeting = async () => {
     setIsLoading(true);
@@ -441,13 +442,13 @@ const getUpcomingAppointments = async () => {
             specialistDetails.map((specialist) => (
               <ListItem key={specialist.slotId} disablePadding>
                 <ListItemButton >
-                <div className='px-4 py-6 border h-40 shadow-xl rounded-lg flex items-start justify-between w-full'>
+                <div className='px-4 py-2 border h-40 shadow-xl rounded-lg flex items-start justify-between w-full'>
                   <div className='w-1/2 flex flex-col gap-y-4'>
                     <div className="w-full">
 
                   <ListItemText 
                  
-                    primary={specialist?.name}
+                    primary={specialist?.doctorName}
                     secondary={formatSpecialization(specialist?.specialization)}
                     sx={{fontSize: '0.5rem', fontWeight: 'bold'}}
                   />
@@ -466,62 +467,56 @@ const getUpcomingAppointments = async () => {
                 )
               }
                   </div>
-                  
-                  {/* <div className='w-[40%] flex items-center gap-x-2'>
-                  <ListItemText primary={
-                 specialist.slots?.length > 0 ? (
-  specialist.slots
-    .slice()
-
-    .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
-
-    .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b).valueOf())
-    .map((slot, index, filteredSlots) => (
-      <React.Fragment key={slot.slotId}>
-        <button 
-        className='text-white text-[9px] px-1 py-1 my-1 rounded-full bg-blue-800 text-sm ml-2 cursor-pointer'
-
-          onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
-        >
-          <span>
-            {dayjs(slot?.time).format('h:mm A')}
-          </span>
-        </button>
-        {index < filteredSlots.length - 1 ? " | " : ""}
-      </React.Fragment>
-    ))
-) : (
-  "No slots available today"
-)
-                }
-               sx={{color: "grey"}}/>
-                 
-                  </div> */}
+        
                            <div className='w-1/2 flex items-start gap-x-2'>
-            <ListItemText primary={
-              specialist.time?.length > 0 ? (
-                specialist.time
+          {/* <ListItemText primary={
+              specialist.slots?.length > 0 ? (
+                specialist.slots
                   .slice()
                   .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
                   .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf())
-                  .map((slot, index, filteredSlots) => (
+                  .map((slot) => (
                     <React.Fragment key={slot.slotId}>
+                    
                       <button 
-                        className='text-white text-[9px] px-1 py-1 my-1 rounded-full bg-blue-800 text-sm ml-2 cursor-pointer'
+                        className='text-blue-800 text-sm ml-2 cursor-pointer'
                         onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
                       >
-                        <span>
+                        <span className='bg-green-500'>
                           {dayjs(slot?.time).format('h:mm A')}
                         </span>
                       </button>
-                      {/* {index < filteredSlots.length - 1 ? " | " : ""} */}
+                  
                     </React.Fragment>
                   ))
               ) : (
                 "No slots available today"
               )
             }
-            sx={{color: "grey", display: "flex"}}/>
+            sx={{color: "grey"}}/> */}
+            <ListItemText primary={
+                    specialist.slots?.length > 0 ? (
+                      specialist.slots
+                        .slice()
+                        .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
+                        .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf())
+                        .map((slot) => (
+                          <React.Fragment key={slot.slotId}>
+                            <button 
+                              className='text-blue-800 text-sm ml-2 cursor-pointer'
+                              onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
+                            >
+                              <span className='bg-green-500'>
+                                {dayjs(slot?.time).format('h:mm A')}
+                              </span>
+                            </button>
+                          </React.Fragment>
+                        ))
+                    ) : (
+                      "No slots available today"
+                    )
+                  }
+                  sx={{color: "grey"}}/>
           </div>
                   </div>
                 </ListItemButton>

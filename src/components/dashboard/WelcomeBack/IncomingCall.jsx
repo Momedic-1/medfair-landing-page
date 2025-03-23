@@ -41,7 +41,7 @@ const IncomingCall = () => {
         incomingCallsRef.current = incomingCallsData;
         // setIncomingCalls(incomingCallsData);
       } catch (error) {
-        console.error('Error fetching calls:', error);
+        console.error(error?.response?.data, " response here");
       } finally {
         setLoading(false);
       }
@@ -94,8 +94,8 @@ const IncomingCall = () => {
         toast.error('Another doctor has already joined this call.');
       }
     } catch (error) {
-      console.error('Error joining call:', error);
-      toast.error('Error joining call. Please try again.');
+        console.error(error?.response?.data, " response here");
+      toast.error(error?.response?.data);
     }
   };
   
