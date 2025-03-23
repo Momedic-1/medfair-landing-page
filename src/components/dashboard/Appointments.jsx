@@ -144,7 +144,7 @@ const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}
         <Box 
         sx={{
             position: 'absolute',
-            top: '50%',
+            top: '40%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             width: 400,
@@ -165,16 +165,16 @@ const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}
    
           </div>
           
-        <div className='px-4 flex justify-between space-x-3 sm:space-x-4 lg:mr-9'>
+        <div className='w-full px-4 flex flex-col lg:flex-row justify-between gap-y-4 lg:gap-x-3 lg:mr-9'>
           <button
-            className='border-gray-500 border ml-[25%] md:ml-[10%] lg:ml-0  text-gray-700 w-[120px] h-[45px] font-semibold rounded-md hover:bg-gray-200 transition duration-300 ease-in-out'
+            className='border-gray-500 border lg:ml-0  text-gray-700 w-full lg:w-[120px] h-[45px] font-semibold rounded-md hover:bg-gray-200 transition duration-300 ease-in-out'
             onClick={handleClose}
           >
             Cancel
           </button>
 
           <button
-            className='bg-blue-900 text-white w-[120px] h-[45px] relative -left-[25%]  lg:-left-0  md:-left-[20%] lg:-right-0  font-semibold rounded-lg hover:bg-blue-800 transition duration-300 ease-in-out'
+            className='bg-blue-900 border lg:ml-0 text-white w-full lg:w-[120px] h-[45px] font-semibold rounded-md hover:bg-blue-400 transition duration-300 ease-in-out'
             onClick={handleApply}
           >
             {isLoading ?  
