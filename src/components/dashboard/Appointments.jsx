@@ -33,7 +33,7 @@ const CalendarPage = () => {
   border: 'none', 
   fontFamily: 'inherit'
 };
-  console.log(selectedDate, 'selectedDate');
+
   const handleDateChange = (date) => {
     setSelectedDate(date);
     handleOpen()
@@ -65,7 +65,7 @@ const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}
 
         },
       });
-      console.log('Appointment created:', response.data);
+    
       handleClose()
     } catch (error) {
       console.error('Error creating appointment:', error);
@@ -76,7 +76,7 @@ const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}
       handleClose()
     }
 
-    console.log(appointmentData, 'appointmentData');
+ 
   };
 
 

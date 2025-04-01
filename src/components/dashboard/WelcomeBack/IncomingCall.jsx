@@ -20,8 +20,6 @@ const IncomingCall = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  console.log(incomingCalls, 'incomingCalls');
-
   useEffect(() => {
     const fetchIncomingCalls = async () => {
       try {
@@ -29,7 +27,7 @@ const IncomingCall = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log(incomingResponse, 'incomingResponse');
+
 
         let incomingCallsData = incomingResponse?.data || [];
         setIncomingCalls(incomingResponse?.data || []);
@@ -53,8 +51,7 @@ const IncomingCall = () => {
   const navigateToDashboard = ()=> {
     navigate('/doctor-dashboard');
   }
- 
-  console.log(incomingCalls, 'incomingCalls');
+
   const formatTime = (time) => {
     const date = new Date(time);
     return date.toLocaleTimeString();

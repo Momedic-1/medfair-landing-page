@@ -19,7 +19,7 @@ const Subscription = () => {
   const user = getUserData();
 
   const handleClose = () => {
-    console.log("Dialog closed");
+  
     setOpen(false);
   };
 
@@ -49,7 +49,7 @@ const Subscription = () => {
       );
 
       const result = response.data; 
-      console.log("API Response:", result); 
+   
 
       
       if (result) {

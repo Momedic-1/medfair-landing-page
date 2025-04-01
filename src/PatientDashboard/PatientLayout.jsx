@@ -89,11 +89,11 @@ export default function PatientLayout() {
       if(roomUrl){
         window.open(roomUrl, '_blank', 'noopener,noreferrer');
       }else{
-        console.log("Room URL not found in response");
+      
       }
      
     } catch (error) {
-      console.log(error,"error mssg")
+     
       if (error.message === "Network Error") {
         
         makePaymentToast(error.message);
@@ -102,7 +102,7 @@ export default function PatientLayout() {
       if (responseData?.error) {
         makePaymentToast(responseData.error);
       } else {
-        console.log("Call not initiated");
+       
       }
     }
   }

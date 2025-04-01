@@ -19,7 +19,7 @@ function LeftPanel({status}) {
         `${baseUrl}/api/appointments/upcoming/doctor/${doctorId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-     console.log(response.data, 'response.data')
+   
       setAppointments(response?.data);
     }
     catch (error) {

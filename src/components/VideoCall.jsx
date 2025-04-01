@@ -22,7 +22,6 @@ const VideoCall = () => {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false); 
  
   const roomUrl = useSelector((state)=> state.auth.roomUrl) 
-  console.log(roomUrl, "room url"); 
   const call =  useSelector((state)=> state.auth.call)
 
 
@@ -36,8 +35,6 @@ const VideoCall = () => {
   const { actions, state } = roomConnection;
   const { connectionState, localParticipant, remoteParticipants } = state;
   const { joinRoom, toggleCamera, toggleMicrophone } = actions;
-
-  console.log("remoteParticipants", remoteParticipants);
 
   useEffect(() => {
     joinRoom();
@@ -87,7 +84,6 @@ const VideoCall = () => {
   const getDisplayName = (id) => {
     return remoteParticipants.find((p) => p.id === id)?.displayName || "Guest";
   };
-  console.log(remoteParticipants.map((p)=> p.stream), "stream");
   const takeNote = () => {
     
     setIsNoteModalOpen(true)

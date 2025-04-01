@@ -40,21 +40,21 @@ export default function PaymentPage() {
     }));
   };
   useEffect( () => {
-    console.log("use effect called ... ")
+  
     viewPaymentPrice()
   },[])
   const viewPaymentPrice = async () => {
 
     const userData = JSON.parse(localStorage.getItem('authToken'));
     const token = userData.token;
-    console.log("viewing all payment price...");
+
     try {
       const response = await axios.get(`${baseUrl}/api/payment/payment-price/view`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response);
+     
     } catch (error) {
       console.error('Error viewing payment prices :', error);
     }
@@ -68,13 +68,13 @@ export default function PaymentPage() {
     
     // const token = JSON.parse(localStorage.getItem('authToken'));
     const userData = JSON.parse(localStorage.getItem('userData'));
-    console.log("userData",userData);
+
     
     formData.email = userData.emailAddress;
 
     try {
       const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, formData);
-      console.log(response);
+
       setPaymentSuccess(true);
     } catch (error) {
       console.error('Error submitting form:', error);

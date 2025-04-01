@@ -16,7 +16,6 @@ const VerifyPayment = () => {
     
     if (reference) {
     
-      console.log('Payment Reference:', reference);
 
       verifyPayment(reference);
     } else {

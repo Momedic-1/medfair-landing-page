@@ -30,7 +30,7 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
       setIsOpen(false);
     }
   };
-  console.log(selectedHour, selectedMinute, period);
+
 
   return (
     <div className="p-8">

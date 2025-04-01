@@ -83,7 +83,6 @@ const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
 const [specialistDetails, setSpecialistDetails] = useState([]);
-console.log("specialist details", specialistDetails)
  const token = getToken() 
 const [selectedTime, setSelectedTime] = useState(null);
 const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -148,7 +147,6 @@ const handleClosePopover = () => {
 
 const handleBookAppointment = async (e, slotId, patientId) => {
   e.preventDefault()
-  console.log(slotId, patientId, 'slotId, patientId')
   setIsBooking(true)
     try{
 
@@ -247,17 +245,14 @@ const getUpcomingAppointments = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
-    console.log(response.data, 'response.data')
     const formattedData = response.data;
     setUpcomingAppointments(formattedData);
     setIsLoading(false);
   } catch (error) {
-    console.log('Error fetching upcoming appointments:', error);
+    toast.error("cannot fetch appointments right now")
     setIsLoading(false);
   }
 }
-
-console.log("specialist details slots", specialistDetails.map((specialist) => specialist.slots.map(slot => dayjs(slot.time).format('h:mm A'))))
 
   const createMeeting = async () => {
     setIsLoading(true);
