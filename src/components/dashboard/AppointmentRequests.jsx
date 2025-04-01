@@ -1,7 +1,8 @@
 
 import React from 'react';
 import AvatarImage from '../../assets/avatar.png';
-import ArrowIcon from "../../assets/ArrowIcon"
+import { IoCheckmarkCircle } from "react-icons/io5";
+import { formatAppointmentDate, formatTime } from '../../utils';
 function AppointmentRequests({ appointments }) {
   return (
     <div className='w-full h-[420px]  bg-white rounded-[10px] shadow-lg'>
@@ -32,17 +33,17 @@ function AppointmentRequests({ appointments }) {
                 <div className="text-[#020e7c] text-[10px] font-normal font-['Roboto'] leading-[25px]">
                   {appointment.name}
                 </div>
-                <div className="text-[#020e7c] text-[10px] font-normal font-['Roboto'] leading-[25px]">
-                  {appointment.condition}
-                </div>
               </div>
               <div className="text-[#020e7c] text-[10px] font-normal font-['Roboto'] leading-[25px]">
-                {appointment.date}
+                {formatAppointmentDate(appointment.date)}
               </div>
-              <div className='flex space-x-2 ml-2'>
+              <div className="text-[#020e7c] px-2 text-[10px] font-normal font-['Roboto'] leading-[25px]">
+                {formatTime(appointment.time)}
+              </div>
+              {/* <div className='flex space-x-2 ml-2'>
      
                 <div className='w-5 h-5 bg-white border border-[#020e7c] rounded-full flex justify-center items-center'>
-                 <ArrowIcon/>
+               <IoCheckmarkCircle color='green' className='text-white' size={20}/>
                 </div>
 
                
@@ -57,7 +58,7 @@ function AppointmentRequests({ appointments }) {
                     
                   </svg>
                 </div>
-              </div>
+              </div> */}
             </div>
           ))
         ) : (

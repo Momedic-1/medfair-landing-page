@@ -16,7 +16,7 @@ const DoctorInfo = () => {
   const handleClick = (event, appointment) => {
     setAnchorEl(event.currentTarget);
     setSelectedAppointment(appointment);
-    console.log(appointment, " appointment")
+
   };
   const handleClose = () => {
     setAnchorEl(null);

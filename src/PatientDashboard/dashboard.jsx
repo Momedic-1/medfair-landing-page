@@ -83,7 +83,6 @@ const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
 const [specialistDetails, setSpecialistDetails] = useState([]);
-console.log("specialist details", specialistDetails)
  const token = getToken() 
 const [selectedTime, setSelectedTime] = useState(null);
 const [selectedDoctor, setSelectedDoctor] = useState(null);
@@ -101,7 +100,6 @@ const navigate = useNavigate();
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
-
 
   const myEventsList = [
     {
@@ -147,20 +145,17 @@ const handleClosePopover = () => {
   setIsSpecialistsModalOpen(true);
 };
 
-
 const handleBookAppointment = async (e, slotId, patientId) => {
   e.preventDefault()
-  setIsBooking(true);
-  try {
-    
+  setIsBooking(true)
+    try{
 
-    await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`, {
-       headers: {
+      await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`, {}, {
+        headers: {
         "Content-Type": "application/json",
         'Authorization': `Bearer ${token}`
       }
-    });
-    
+      })
     toast.success('Appointment booked successfully!');
 
     handleClosePopover();
@@ -254,12 +249,10 @@ const getUpcomingAppointments = async () => {
     setUpcomingAppointments(formattedData);
     setIsLoading(false);
   } catch (error) {
-    console.log('Error fetching upcoming appointments:', error);
+    toast.error("cannot fetch appointments right now")
     setIsLoading(false);
   }
 }
-
-console.log("specialist details slots", specialistDetails.map((specialist) => specialist.slots.map(slot => dayjs(slot.time).format('h:mm A'))))
 
   const createMeeting = async () => {
     setIsLoading(true);
@@ -469,31 +462,6 @@ console.log("specialist details slots", specialistDetails.map((specialist) => sp
                   </div>
         
                            <div className='w-1/2 flex items-start gap-x-2'>
-          {/* <ListItemText primary={
-              specialist.slots?.length > 0 ? (
-                specialist.slots
-                  .slice()
-                  .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
-                  .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf())
-                  .map((slot) => (
-                    <React.Fragment key={slot.slotId}>
-                    
-                      <button 
-                        className='text-blue-800 text-sm ml-2 cursor-pointer'
-                        onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
-                      >
-                        <span className='bg-green-500'>
-                          {dayjs(slot?.time).format('h:mm A')}
-                        </span>
-                      </button>
-                  
-                    </React.Fragment>
-                  ))
-              ) : (
-                "No slots available today"
-              )
-            }
-            sx={{color: "grey"}}/> */}
             <ListItemText primary={
                     specialist.slots?.length > 0 ? (
                       specialist.slots
@@ -506,7 +474,7 @@ console.log("specialist details slots", specialistDetails.map((specialist) => sp
                               className='text-blue-800 text-sm ml-2 cursor-pointer'
                               onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
                             >
-                              <span className='bg-green-500'>
+                              <span className='bg-gray-300 text-blue-700 text-sm px-2 rounded-full'>
                                 {dayjs(slot?.time).format('h:mm A')}
                               </span>
                             </button>

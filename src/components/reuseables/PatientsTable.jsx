@@ -13,7 +13,6 @@ const PatientTableSkeleton = () => (
 );
 
 const PatientTable = ({ data = [], isLoading = false, emptyMessage }) => {
-  console.log(data)
   return (
     <div className="w-full border rounded-lg flex flex-col h-[400px]">
       <div className="w-full overflow-x-auto">

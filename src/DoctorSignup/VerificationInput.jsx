@@ -154,7 +154,7 @@ const VerificationInput = () => {
   async function verifyEmail(token) {
     setLoading(true);
     const verificationData = { token, email: userEmail };
-    console.log(verificationData);
+
     try {
       const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
         method: 'POST',

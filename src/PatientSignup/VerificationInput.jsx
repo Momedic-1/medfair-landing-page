@@ -12,7 +12,7 @@ const VerificationInput = ({ setVerificationToken }) => {
     if (index === 4) {
       // When the last input is filled, set the verification token
       setVerificationToken(newCode.join(''));
-      console.log(newCode.join(''))
+  
     } else if (value && index < 4) {
       inputRefs.current[index + 1].focus();
     }

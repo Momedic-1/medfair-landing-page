@@ -30,7 +30,7 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
       setIsOpen(false);
     }
   };
-  console.log(selectedHour, selectedMinute, period);
+
 
   return (
     <div className="p-8">
@@ -40,7 +40,7 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
           className="flex items-center gap-2 w-full p-2 border rounded-md cursor-pointer hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200"
           onClick={() => setIsOpen(true)}
         >
-          <Clock className="w-4 h-4 text-gray-500" />
+          {/* <Clock className="w-4 h-4 text-gray-500" /> */}
           <input
             type="text"
             value={formatTime()}
@@ -50,7 +50,7 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
         </div>
 
         {isOpen && (
-          <div className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+          <div className="absolute mt-2 top-0 md:-top-8 p-4 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
         
             <div className="flex justify-end gap-2 mb-4">
               <button
@@ -81,11 +81,7 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
             >
       
               <div className="absolute left-1/2 top-1/2 w-2 h-2 bg-blue-500 rounded-full -translate-x-1/2 -translate-y-1/2" />
-              
-        
-             
-              
-          
+    
               {(isHourView ? hours : minutes).map((num) => {
                 const angle = (num * (isHourView ? 30 : 6) - 90) * (Math.PI / 180);
                 const radius = 100; // Adjust this value to position numbers
@@ -115,8 +111,6 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
                 );
               })}
             </div>
-
-      
             <div className="mt-4 text-center mb-4">
               <button
                 onClick={() => setIsHourView(!isHourView)}
@@ -125,8 +119,6 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
                 {isHourView ? 'Switch to minutes' : 'Switch to hours'}
               </button>
             </div>
-
-            
             <div className="flex justify-between px-2">
               <button 
                 onClick={() => setIsOpen(false)}

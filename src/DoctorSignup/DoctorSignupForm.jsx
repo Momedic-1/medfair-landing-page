@@ -86,7 +86,7 @@ export default function DoctorSignupForm() {
       },
     });
     toast.success(response.data.message);
-    console.log('Registration successful:', response.data);
+
     localStorage.setItem('email', JSON.stringify(formData.emailAddress));
     setLoading(false);
     navigate('/check-email');

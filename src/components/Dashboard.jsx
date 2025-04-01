@@ -10,7 +10,6 @@ const Dashboard = () => {
     const onlineStatus = "onlineStatus"
     const online = localStorage.getItem(onlineStatus);
     const value = online ? online : "Online";
-    console.log("value ", value);
 
     const [status, setStatus] = useState(value);
     const token = JSON.parse(localStorage.getItem('authToken'))?.token;

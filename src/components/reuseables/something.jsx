@@ -22,7 +22,7 @@ const VideoCall = () => {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false); 
  
   const roomUrl = useSelector((state)=> state.auth.roomUrl) 
-  console.log(roomUrl, "room url"); 
+ 
   const call =  useSelector((state)=> state.auth.call)
 
 
@@ -37,7 +37,7 @@ const VideoCall = () => {
   const { connectionState, localParticipant, remoteParticipants } = state;
   const { joinRoom, toggleCamera, toggleMicrophone } = actions;
 
-  console.log("remoteParticipants", remoteParticipants);
+
 
   useEffect(() => {
     joinRoom();
