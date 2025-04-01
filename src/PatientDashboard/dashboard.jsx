@@ -469,31 +469,6 @@ console.log("specialist details slots", specialistDetails.map((specialist) => sp
                   </div>
         
                            <div className='w-1/2 flex items-start gap-x-2'>
-          {/* <ListItemText primary={
-              specialist.slots?.length > 0 ? (
-                specialist.slots
-                  .slice()
-                  .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
-                  .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf())
-                  .map((slot) => (
-                    <React.Fragment key={slot.slotId}>
-                    
-                      <button 
-                        className='text-blue-800 text-sm ml-2 cursor-pointer'
-                        onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
-                      >
-                        <span className='bg-green-500'>
-                          {dayjs(slot?.time).format('h:mm A')}
-                        </span>
-                      </button>
-                  
-                    </React.Fragment>
-                  ))
-              ) : (
-                "No slots available today"
-              )
-            }
-            sx={{color: "grey"}}/> */}
             <ListItemText primary={
                     specialist.slots?.length > 0 ? (
                       specialist.slots
@@ -506,7 +481,7 @@ console.log("specialist details slots", specialistDetails.map((specialist) => sp
                               className='text-blue-800 text-sm ml-2 cursor-pointer'
                               onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
                             >
-                              <span className='bg-green-500'>
+                              <span className='bg-gray-300 text-blue-700 text-sm px-2 rounded-full'>
                                 {dayjs(slot?.time).format('h:mm A')}
                               </span>
                             </button>

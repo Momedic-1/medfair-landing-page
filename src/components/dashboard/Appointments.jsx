@@ -54,7 +54,7 @@ const CalendarPage = () => {
       time: `${selectedHour}:${formattedMinute}`,
     }
     setIsLoading(true)
-const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}&date=${appointmentData.date}&time=${appointmentData.time}`
+const SUBSCRIBE_URL=`${baseUrl}/api/appointments/create?doctorId=${doctorsId.id}&date=${appointmentData.date}&times=${appointmentData.time}`
 
 
    try {
