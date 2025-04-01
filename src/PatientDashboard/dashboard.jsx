@@ -102,7 +102,6 @@ const navigate = useNavigate();
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
 
-
   const myEventsList = [
     {
       title: 'Doctor Appointment',
@@ -147,20 +146,18 @@ const handleClosePopover = () => {
   setIsSpecialistsModalOpen(true);
 };
 
-
 const handleBookAppointment = async (e, slotId, patientId) => {
   e.preventDefault()
-  setIsBooking(true);
-  try {
-    
+  console.log(slotId, patientId, 'slotId, patientId')
+  setIsBooking(true)
+    try{
 
-    await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`, {
-       headers: {
+      await axios.post(`${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`, {}, {
+        headers: {
         "Content-Type": "application/json",
         'Authorization': `Bearer ${token}`
       }
-    });
-    
+      })
     toast.success('Appointment booked successfully!');
 
     handleClosePopover();
@@ -250,6 +247,7 @@ const getUpcomingAppointments = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
+    console.log(response.data, 'response.data')
     const formattedData = response.data;
     setUpcomingAppointments(formattedData);
     setIsLoading(false);
