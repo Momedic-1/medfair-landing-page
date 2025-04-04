@@ -10,7 +10,7 @@ import { LiaPhoneVolumeSolid } from "react-icons/lia";
 function WelcomeBack({ status }) {
   const [activeCalls, setActiveCalls] = useState([]);
   const [pickedCalls, setPickedCalls] = useState(new Set());
-  const [isRinging, setIsRinging] = useState(false);b
+  const [isRinging, setIsRinging] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null); 
