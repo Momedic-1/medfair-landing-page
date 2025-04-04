@@ -9,8 +9,8 @@ import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 function WelcomeBack({ status }) {
   const [activeCalls, setActiveCalls] = useState([]);
-  const [pickedCalls, setPickedCalls] = useState(new Set()); // Track picked calls
-  const [isRinging, setIsRinging] = useState(false);
+  const [pickedCalls, setPickedCalls] = useState(new Set());
+  const [isRinging, setIsRinging] = useState(false);b
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null); 
@@ -23,8 +23,12 @@ function WelcomeBack({ status }) {
   const ringtone = "https://res.cloudinary.com/da79pzyla/video/upload/v1737819241/galaxy_bells_s25_ywq7j0.mp3"
 
   useEffect(() => {
+    // Initialize pickedCalls from localStorage
+    const storedPickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
+    setPickedCalls(new Set(storedPickedCalls));
+
     viewAllPendingCalls();
-    enableAudio()
+    enableAudio();
     pollingInterval.current = setInterval(() => {
       viewAllPendingCalls();
     }, 5000); 
@@ -87,8 +91,11 @@ function WelcomeBack({ status }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      // Filter out picked calls
-      const filteredCalls = response?.data.filter(call => !pickedCalls.has(call.id)) || [];
+      // Get latest picked calls from localStorage
+      const storedPickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
+      
+      // Filter out picked calls using callId
+      const filteredCalls = response?.data.filter(call => !storedPickedCalls.includes(call.callId)) || [];
       setActiveCalls(filteredCalls);
       setIsActive(filteredCalls.length > 0);
       
@@ -113,7 +120,16 @@ function WelcomeBack({ status }) {
 
   const navigateToIncomingCalls = (callId) => {
     stopRingtone();
-    setPickedCalls(prev => new Set(prev).add(callId)); // Add the call to picked calls
+    // Update both local state and localStorage
+    const newPickedCalls = new Set([...pickedCalls, callId]);
+    setPickedCalls(newPickedCalls);
+    
+    const storedPickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
+    if (!storedPickedCalls.includes(callId)) {
+      storedPickedCalls.push(callId);
+      localStorage.setItem('pickedCalls', JSON.stringify(storedPickedCalls));
+    }
+    
     navigate('/incoming-call');
   };
 
