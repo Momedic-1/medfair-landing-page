@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
 import PatientSignup from './PatientSignup';
@@ -17,7 +16,8 @@ import PatientNotes from './PatientDashboard/patientNotes.jsx';
 import VerifyPayment from './VerifyPayment.jsx';  
 import VideoCall from './components/VideoCall.jsx';
 import Subscription from './PatientDashboard/Subscription.jsx';
-
+import ForgotPassword from './ForgotPassword.jsx';
+import OTPVerification from './OTPVerification.jsx';
 
 
 const App = () => {
@@ -34,6 +34,8 @@ const App = () => {
         <Route path='/incoming-call'element={<IncomingCalls/>}/>
         <Route path='/video-call'element={<VideoCall/>}/>
         <Route path="/verify-payment" element={<VerifyPayment />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
         {/* <Route path='/search'element={<Search/>}/> */}
 
         <Route path='/patient-dashboard' element={<ProtectedRoute role="PATIENT" />}>

@@ -35,7 +35,7 @@ const TimePickerDemo = ({selectedHour, selectedMinute, setSelectedHour, setSelec
   return (
     <div className="p-8">
       <div className="relative inline-block">
-        <p className='mb-2 font-semibold'>Pick a time</p>
+        <p className='mb-2 font-semibold'>Schedule a New Appointment</p>
         <div 
           className="flex items-center gap-2 w-full p-2 border rounded-md cursor-pointer hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200"
           onClick={() => setIsOpen(true)}
