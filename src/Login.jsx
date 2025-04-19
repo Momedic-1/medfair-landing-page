@@ -9,6 +9,11 @@ import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+import { baseUrl } from './env'
+import { getToken } from '../src/utils';
+
+
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -20,6 +25,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { error, isLoading, userData } = useSelector((state) => state.auth);
+  const token = getToken();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,15 +48,26 @@ export default function LoginPage() {
     dispatch(setError ('')) ;
   };
 
+  const fetchDoctorProfile = async () => {
+    const response = await axios.get(`${baseUrl}/api/v1/doctor-profile/profile-info`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    localStorage.setItem('doctorProfile', JSON.stringify(response.data));
+  }
+
   // const goToLogin = ()=> {
   //   navigate('/signup');
   // }
 
   useEffect(() => {
     if (userData) {
+      console.log(userData);
       const role = userData.role;
       if (role === "DOCTOR") {
         navigate('/doctor-dashboard');
+        fetchDoctorProfile();
       } else if (role === "PATIENT") {
         navigate('/patient-dashboard');
       } else {

@@ -112,15 +112,20 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                   </NavLink>
                 </li>
                 <li>
-                  <a
-                    className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'
-                    href='#'
+                  <NavLink
+                    to='/view-profile'
+                    className={({ isActive }) =>
+                      `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'text-gray-100 hover:bg-gray-100'
+                      }`
+                    }
                   >
-                   <CalendarIcon/>
+                    <CalendarIcon />
                     View Profile
-                  </a>
+                  </NavLink>
                 </li>
-                <li>
+                {/* <li>
                   <a
                     className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'
                     href='#'
@@ -128,8 +133,8 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                    <MessagesIcon/>
                     Messages
                   </a>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <a
                     className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'
                     href='#'
@@ -137,8 +142,8 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                    <AudioCallIcon/>
                     Audio calls
                   </a>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <a
                     className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'
                     href='#'
@@ -146,7 +151,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                    <VideoCallIcon/>
                     Video calls
                   </a>
-                </li>
+                </li> */}
                 <li>
                   <a
                     className='w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600'

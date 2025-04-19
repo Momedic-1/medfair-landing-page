@@ -6,16 +6,22 @@ import '../dashboard/Custompage.css';
 import AppointmentRequests from './AppointmentRequests';
 import { Box, Modal } from '@mui/material';
 import TimePicker from '../reuseables/TimePicker';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { baseUrl } from '../../env';
 import axios from 'axios';
 import { ColorRing } from 'react-loader-spinner';
 import { getId, getToken } from '../../utils';
 
-const CalendarPage = () => {
+const  CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [open, setOpen] = React.useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState(null);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  const handleDeleteModalOpen = () => setDeleteModalOpen(true);
+  const handleDeleteModalClose = () => setDeleteModalOpen(false);
   const [selectedHour, setSelectedHour] = useState(12);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,8 +43,8 @@ const CalendarPage = () => {
 
   const fetchAppointments = async () => {
     try {
-      const response = await axios.get(`${baseUrl}/api/appointments/available`, {
-        params: { doctorId: doctorsId?.id },
+      const response = await axios.get(`${baseUrl}/api/appointments/available/${doctorsId}`, {
+        // params: { doctorId: doctorsId },
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -75,7 +81,7 @@ const CalendarPage = () => {
 
   const formatAppointmentTime = (dateTime) => {
     const date = new Date(dateTime);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
   const handleApply = async () => {
@@ -85,17 +91,13 @@ const CalendarPage = () => {
     const formattedDate = `${year}-${month}-${day}`;
     const formattedMinute = selectedMinute.toString().padStart(2, '0');
     const formattedHour = selectedHour.toString().padStart(2, '0');
-    const appointmentData = {
-      doctorId: doctorsId.id,
-      date: formattedDate,
-      time: `${formattedHour}:${formattedMinute}`,
-    };
+    const time = `${formattedHour}:${formattedMinute}`;
     
     setIsLoading(true);
-    const SUBSCRIBE_URL = `${baseUrl}/api/appointments/create`;
+    const SUBSCRIBE_URL = `${baseUrl}/api/appointments/create?doctorId=${doctorsId}&date=${formattedDate}&times=${time}`;
 
     try {
-      const response = await axios.post(SUBSCRIBE_URL, appointmentData, {
+      const response = await axios.post(SUBSCRIBE_URL, {}, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -105,6 +107,7 @@ const CalendarPage = () => {
       if (response.data) {
         await fetchAppointments();
         handleClose();
+        toast.success('Appointment created successfully');
       }
     } catch (error) {
       console.error('Error creating appointment:', error);
@@ -127,19 +130,25 @@ const CalendarPage = () => {
   });
 
   const handleDeleteAppointment = async (appointmentId) => {
-    if (window.confirm('Are you sure you want to delete this appointment?')) {
-      setIsDeleting(true);
-      try {
-        await axios.delete(`${baseUrl}/api/appointments/${doctorsId.id}/slots/${appointmentId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        await fetchAppointments();
-      } catch (error) {
-        console.error('Error deleting appointment:', error);
-        alert('Failed to delete appointment. Please try again.');
-      } finally {
-        setIsDeleting(false);
-      }
+    setAppointmentToDelete(appointmentId);
+    handleDeleteModalOpen();
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await axios.delete(`${baseUrl}/api/appointments/${doctorsId}/slots/${appointmentToDelete}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      await fetchAppointments();
+      toast.info('Appointment deleted successfully');
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      toast.error('Failed to delete appointment. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      handleDeleteModalClose();
+      setAppointmentToDelete(null);
     }
   };
 
@@ -261,6 +270,62 @@ const CalendarPage = () => {
                     /> :
                     'Schedule'
                   }
+                </button>
+              </div>
+            </div>
+          </Box>
+        </Modal>
+
+        <Modal
+          open={deleteModalOpen}
+          onClose={handleDeleteModalClose}
+          aria-labelledby="delete-modal-title"
+          aria-describedby="delete-modal-description"
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '40%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 400,
+              bgcolor: 'background.paper',
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-800">Delete Appointment</h2>
+              <p className="text-gray-600">Are you sure you want to delete this appointment?</p>
+              
+              <div className='w-full px-4 flex flex-col lg:flex-row justify-between gap-y-4 lg:gap-x-3 lg:mr-9'>
+                <button
+                  className='border-gray-500 border lg:ml-0 text-gray-700 w-full lg:w-[120px] h-[45px] font-semibold rounded-md hover:bg-gray-200 transition duration-300 ease-in-out'
+                  onClick={handleDeleteModalClose}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className='bg-red-600 border lg:ml-0 text-white w-full lg:w-[120px] h-[45px] font-semibold rounded-md hover:bg-red-700 transition duration-300 ease-in-out'
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <ColorRing
+                      visible={true}
+                      height="40"
+                      width="40"
+                      ariaLabel="color-ring-loading"
+                      wrapperStyle={{}}
+                      wrapperClass="color-ring-wrapper"
+                      colors={['white', 'white', 'white', 'white', 'white']}
+                    />
+                  ) : (
+                    'Delete'
+                  )}
                 </button>
               </div>
             </div>

@@ -18,6 +18,7 @@ import VideoCall from './components/VideoCall.jsx';
 import Subscription from './PatientDashboard/Subscription.jsx';
 import ForgotPassword from './ForgotPassword.jsx';
 import OTPVerification from './OTPVerification.jsx';
+import ViewProfile from './components/ViewProfile.jsx';
 
 
 const App = () => {
@@ -47,6 +48,7 @@ const App = () => {
         </Route>
         <Route element={<ProtectedRoute role="DOCTOR" />}>
           <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />
+          <Route path="/view-profile" element={<ViewProfile />} />
         </Route>
       </Routes>
     </Router>
