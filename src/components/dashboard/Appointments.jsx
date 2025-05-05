@@ -51,6 +51,7 @@ const  CalendarPage = () => {
         },
       });
       setExistingAppointments(response.data);
+      localStorage.setItem('appointments', JSON.stringify(response.data));
     } catch (error) {
       console.error('Error fetching appointments:', error);
     }
@@ -62,25 +63,28 @@ const  CalendarPage = () => {
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
+    console.log(date);
     handleOpen();
   };
 
   const hasAppointmentOnDate = (date) => {
     return existingAppointments.some(appointment => {
-      const appointmentDate = new Date(appointment.dateTime);
+      const appointmentDate = new Date(appointment.date);
       return appointmentDate.toDateString() === date.toDateString();
     });
   };
 
   const getAppointmentsForSelectedDate = () => {
     return existingAppointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.dateTime);
+      const appointmentDate = new Date(appointment.date);
       return appointmentDate.toDateString() === selectedDate.toDateString();
     });
   };
 
-  const formatAppointmentTime = (dateTime) => {
-    const date = new Date(dateTime);
+  const formatAppointmentTime = (time) => {
+    const [hour, minute] = time.split(':');
+    const date = new Date();
+    date.setHours(hour, minute);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
@@ -223,7 +227,7 @@ const  CalendarPage = () => {
                         key={index} 
                         className="appointment-time-button"
                       >
-                        <span>{formatAppointmentTime(appointment.dateTime)}</span>
+                        <span>{formatAppointmentTime(appointment.time)}</span>
                         <button 
                           onClick={() => handleDeleteAppointment(appointment.slotId)}
                           className="delete-appointment-btn"

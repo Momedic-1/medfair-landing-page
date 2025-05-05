@@ -11,9 +11,7 @@ const Logout = () => {
 
   const handleLogout = () => {
     sessionStorage.clear();
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('roleType');
+    localStorage.clear()
     dispatch(logout());
 
     navigate('/login', { replace: true });

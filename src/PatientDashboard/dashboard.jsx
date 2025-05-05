@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { baseUrl } from "../env";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ColorRing } from "react-loader-spinner";
 import {
   formatSpecialization,
@@ -85,119 +85,13 @@ const specialistCategory = [
   },
 ];
 
-const specialists = {
-  1: [
-    {
-      id: 1,
-      name: "Dr. Sarah Smith",
-      specialty: "Family Medicine",
-      time: ["2:00 PM", "3:00 PM", "4:00 PM"],
-      image:
-        "https://lh3.googleusercontent.com/IwySwfZKJ7ngPvmUA01ygl3CR3L19jzByN6K6HuG5TuOkZMvaNEJYqrguI2RjIpkl0SLC0ls621uiFTEnO4cRG2VNWw_X-DiOuI=e365-pa-nu-rw-w739",
-    },
-    {
-      id: 2,
-      name: "Dr. James Johnson",
-      specialty: "Internal Medicine",
-      time: ["2:00 PM", "3:00 PM", "4:00 PM"],
-      image:
-        "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar",
-    },
-    {
-      id: 3,
-      name: "Dr. James Johnson",
-      specialty: "Internal Medicine",
-      time: ["2:00 PM", "3:00 PM", "4:00 PM"],
-      image:
-        "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar",
-    },
-    {
-      id: 4,
-      name: "Dr. James Johnson",
-      specialty: "Internal Medicine",
-      time: ["2:00 PM", "3:00 PM", "4:00 PM"],
-      image:
-        "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar",
-    },
-    {
-      id: 5,
-      name: "Dr. James Johnson",
-      specialty: "Internal Medicine",
-      time: ["2:00 PM", "3:00 PM", "4:00 PM"],
-      image:
-        "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar",
-    },
-    {
-      id: 6,
-      name: "Dr. James Johnson",
-      specialty: "Internal Medicine",
-      time: ["2:00 PM", "3:00 PM", "4:00 PM"],
-      image:
-        "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar",
-    },
-    {
-      id: 7,
-      name: "Dr. James Johnson",
-      specialty: "Internal Medicine",
-      time: ["2:00 PM", "3:00 PM", "4:00 PM"],
-      image:
-        "https://www.freepik.com/premium-vector/simple-cute-black-boy-ith-beard-icon-vector_102734747.htm#fromView=keyword&page=1&position=48&uuid=650dc9c7-af3e-46a9-bb75-d2ab5d190bbd&query=Avatar",
-    },
-  ],
-  2: [
-    {
-      id: 1,
-      name: "Dr. Michael Brown",
-      specialty: "Interventional Cardiology",
-      time: ["2:00 PM"],
-    },
-    {
-      id: 2,
-      name: "Dr. Emily Davis",
-      specialty: "Clinical Cardiology",
-      time: ["2:00 PM"],
-    },
-  ],
-  3: [
-    {
-      id: 1,
-      name: "Dr. Lisa Wilson",
-      specialty: "Medical Dermatology",
-      time: ["2:00 PM"],
-    },
-    {
-      id: 2,
-      name: "Dr. Robert Taylor",
-      specialty: "Surgical Dermatology",
-      time: ["2:00 PM"],
-    },
-  ],
-  4: [
-    {
-      id: 1,
-      name: "Dr. David Miller",
-      specialty: "Sports Medicine",
-      time: ["2:00 PM"],
-    },
-    {
-      id: 2,
-      name: "Dr. Jennifer Lee",
-      specialty: "Joint Reconstruction",
-      time: ["2:00 PM"],
-    },
-  ],
-};
-
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [specialist, setSpecialist] = useState([]);
   const [specialistCategories, setSpecialistCategories] =
     useState(specialistCategory);
   const [isMainModalOpen, setIsMainModalOpen] = useState(false);
   const [isSpecialistsModalOpen, setIsSpecialistsModalOpen] = useState(false);
   const [isCallADoctorModalOpen, setIsCallADoctorModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
   const [specialistDetails, setSpecialistDetails] = useState([]);
@@ -209,8 +103,6 @@ const Dashboard = () => {
   const [isBooking, setIsBooking] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const navigate = useNavigate();
-
   const patientId = getId();
 
   const CREATE_MEETING = `${baseUrl}/api/v1/video/create-meeting`;
@@ -218,19 +110,6 @@ const Dashboard = () => {
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
-
-  const myEventsList = [
-    {
-      title: "Doctor Appointment",
-      start: new Date(2025, 0, 15, 14, 0),
-      end: new Date(2025, 0, 15, 15, 0),
-    },
-    {
-      title: "Meeting",
-      start: new Date(2025, 0, 20, 11, 0),
-      end: new Date(2025, 0, 20, 12, 0),
-    },
-  ];
 
   const handleCardClick = (title) => {
     if (title === "Schedule an Appointment with a Specialist") {
@@ -257,7 +136,6 @@ const Dashboard = () => {
 
   const handleCategoryClick = (categoryId) => {
     const category = specialistCategories.find((cat) => cat.id === categoryId);
-    setSelectedCategory(categoryId);
     getSpecialistsDetails(category.name);
     setIsSpecialistsModalOpen(true);
   };
@@ -266,16 +144,16 @@ const Dashboard = () => {
     e.preventDefault();
     setIsBooking(true);
     try {
-      await axios.post(
-        `${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`,
+      const response = await axios.post(
+        `${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`,{},
         {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
       );
 
+      console.log(response)
       toast.success("Appointment booked successfully!");
 
       handleClosePopover();
@@ -381,13 +259,12 @@ const Dashboard = () => {
   console.log(
     "specialist details slots",
     specialistDetails.map((specialist) =>
-      specialist.slots.map((slot) => dayjs(slot.time).format("h:mm A"))
+      specialist.slots.map((slot) => slot.time)
     )
   );
 
   const createMeeting = async () => {
     setIsLoading(true);
-    setError(null);
 
     try {
       if (!patientId) {
@@ -409,7 +286,7 @@ const Dashboard = () => {
 
       return response.data;
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to create meeting");
+      toast.error(err.response?.data?.error);
       toast.error(err.response?.data?.error);
     } finally {
       setIsLoading(false);
@@ -417,9 +294,6 @@ const Dashboard = () => {
   };
   useEffect(() => {
     getSpecialistCount();
-  }, []);
-  useEffect(() => {
-    setSpecialist(specialists);
   }, []);
   useEffect(() => {
     getUpcomingAppointments();
@@ -596,91 +470,72 @@ const Dashboard = () => {
                 ))
             ) : specialistDetails?.length > 0 ? (
               specialistDetails.map((specialist) => (
-                <ListItem key={specialist.slotId} disablePadding>
+                <ListItem key={specialist.slots.slotId} disablePadding>
                   <ListItemButton>
                     <div className="px-4 py-2 border h-40 shadow-xl rounded-lg flex items-start justify-between w-full">
                       <div className="w-1/2 flex flex-col gap-y-4">
-                        <div className="w-full">
-                          <ListItemText
-                            primary={specialist?.doctorName}
-                            secondary={formatSpecialization(
-                              specialist?.specialization
-                            )}
-                            sx={{ fontSize: "0.5rem", fontWeight: "bold" }}
+                        {specialist.doctorProfile ? (
+                          <Avatar
+                            src={specialist?.doctorProfile?.imageUrl}
+                            sx={avatarStyle}
                           />
-                          {/* <ListItemText 
-                 
-                    primary={specialist?.doctorName}
-                    secondary={formatSpecialization(specialist?.specialization)}
-                    sx={{fontSize: '0.5rem', fontWeight: 'bold'}}
-                  /> */}
-                        </div>
-                        {specialist.image ? (
-                          <Avatar src={specialist.image} sx={avatarStyle} />
                         ) : (
                           <Avatar src="/broken-image.jpg" sx={avatarStyle} />
                         )}
+
+                        <div className="w-full">
+                          <ListItemText
+                            primary={
+                              specialist?.doctorProfile?.title +
+                              " " +
+                              specialist?.doctorProfile?.firstName +
+                              " " +
+                              specialist?.doctorProfile?.lastName
+                            }
+                            secondary={formatSpecialization(
+                              specialist?.doctorProfile?.medicalSpecialization
+                            )}
+                            sx={{ fontSize: "0.5rem", fontWeight: "bold" }}
+                          />
+                        </div>
                       </div>
 
                       <div className="w-1/2 flex items-start gap-x-2">
-                        {/* <ListItemText primary={
-              specialist.slots?.length > 0 ? (
-                specialist.slots
-                  .slice()
-                  .filter(slot => dayjs(slot.time).isSame(dayjs(), 'day'))
-                  .sort((a, b) => dayjs(a.time).valueOf() - dayjs(b.time).valueOf())
-                  .map((slot) => (
-                    <React.Fragment key={slot.slotId}>
-                    
-                      <button 
-                        className='text-blue-800 text-sm ml-2 cursor-pointer'
-                        onClick={(e) => handleOpenPopover(e, specialist, slot.time, slot.slotId)}
-                      >
-                        <span className='bg-green-500'>
-                          {dayjs(slot?.time).format('h:mm A')}
-                        </span>
-                      </button>
-                  
-                    </React.Fragment>
-                  ))
-              ) : (
-                "No slots available today"
-              )
-            }
-            sx={{color: "grey"}}/> */}
                         <ListItemText
                           primary={
                             specialist.slots?.length > 0
                               ? specialist.slots
-                                  .slice()
-                                  .filter((slot) =>
-                                    dayjs(slot.time).isSame(dayjs(), "day")
-                                  )
-                                  .sort(
-                                    (a, b) =>
-                                      dayjs(a.time).valueOf() -
-                                      dayjs(b.time).valueOf()
-                                  )
                                   .map((slot) => (
                                     <React.Fragment key={slot.slotId}>
                                       <button
-                                        className="text-blue-800 text-sm ml-2 cursor-pointer"
+                                        className="text-blue-800 text-sm ml-2 mb-2 cursor-pointer"
                                         onClick={(e) =>
                                           handleOpenPopover(
                                             e,
                                             specialist,
-                                            slot.time,
+                                            `${slot.date}T${slot.time}`,
                                             slot.slotId
                                           )
                                         }
                                       >
-                                        <span className="bg-green-500">
-                                          {dayjs(slot?.time).format("h:mm A")}
+                                        <span className="bg-blue-800 text-white rounded-full px-2 py-1">
+                                          {dayjs(
+                                            `${slot.date}T${slot.time}`
+                                          ).format("h:mm A")}
                                         </span>
                                       </button>
                                     </React.Fragment>
                                   ))
-                              : "No slots available today"
+                                  .slice()
+                                  .filter((slot) =>
+                                    dayjs(slot.date).isSame(dayjs(), "day")
+                                  )
+                                  .sort(
+                                    (a, b) =>
+                                      dayjs(`${a.date}T${a.time}`).valueOf() -
+                                      dayjs(`${b.date}T${b.time}`).valueOf()
+                                  )
+                              : "No available slots"
                           }
                           sx={{ color: "grey" }}
                         />

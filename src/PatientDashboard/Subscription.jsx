@@ -6,6 +6,7 @@ import { Hourglass } from 'react-loader-spinner';
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Slide } from '@mui/material';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // Import Material Icon
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -19,7 +20,6 @@ const Subscription = () => {
   const user = getUserData();
 
   const handleClose = () => {
-  
     setOpen(false);
   };
 
@@ -36,7 +36,6 @@ const Subscription = () => {
     };
 
     try {
-
       const response = await axios.post(
         `${baseUrl}/api/payment/initialize-payment`,
         dataToSend,
@@ -48,13 +47,11 @@ const Subscription = () => {
         }
       );
 
-      const result = response.data; 
-   
+      const result = response.data;
 
-      
       if (result) {
-        setPaymentLink(result); 
-        setOpen(true); 
+        setPaymentLink(result);
+        setOpen(true);
       } else {
         console.error("Payment URL not found in response:", result);
       }
@@ -66,7 +63,7 @@ const Subscription = () => {
   };
 
   return (
-    <div className='w-full px-4'>
+    <div className="w-full px-4">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 backdrop-blur-sm z-50">
           <Hourglass
@@ -80,26 +77,35 @@ const Subscription = () => {
           />
         </div>
       )}
-      <h1 className="text-2xl text-[#020E7C] font-bold mt-5 cursor-pointer">
+      <h1 className="text-3xl text-[#020E7C] font-extrabold mt-5 cursor-pointer text-center">
         Choose a Subscription Plan
       </h1>
-      <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <p className="text-gray-600 text-center mt-2">
+        Select the plan that best suits your needs and enjoy premium features.
+      </p>
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {ActiveSlide.map((swipe, index) => (
           <div
             key={index}
-            className="flex flex-col w-full min-h-[350px] bg-white p-5 border border-gray-300 rounded-lg shadow-md mb-8"
+            className="flex flex-col w-full min-h-[350px] bg-gradient-to-br from-white to-gray-100 p-6 border border-gray-200 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-2"
           >
             <span className="text-blue-600 text-2xl font-bold">{swipe.title}</span>
-            <div className="text-4xl font-bold text-[#020E7C] mt-2">₦{formatNumber(swipe.subTitle)}</div>
-            <button className="mt-7 w-32 border text-white bg-[#020E7C] py-2 px-4 rounded-3xl" onClick={(e) => handleSubscription(e, swipe.subTitle)}>
+            <div className="text-4xl font-extrabold text-[#020E7C] mt-2">
+              ₦{formatNumber(swipe.subTitle)}
+            </div>
+            <button
+              className="mt-7 w-36 border text-white bg-gradient-to-r from-blue-500 to-blue-700 py-2 px-4 rounded-full hover:from-blue-600 hover:to-blue-800 transition-all duration-300"
+              onClick={(e) => handleSubscription(e, swipe.subTitle)}
+            >
               Subscribe
             </button>
-            <div className="border-y-2 mt-3" />
+            <div className="border-y-2 mt-4" />
             <div className="py-4">
-              <ul className="text-gray-950/60 w-full text-lg mb-5 space-y-2">
+              <ul className="text-gray-700 w-full text-lg mb-5 space-y-3">
                 {swipe.content.map((content, idx) => (
                   <li key={idx} className="flex items-start">
-                    <span className="text-green-600 mr-2">✔</span> {content}
+                    <CheckCircleIcon className="text-green-500 mr-2" />
+                    {content}
                   </li>
                 ))}
               </ul>
@@ -113,20 +119,23 @@ const Subscription = () => {
         keepMounted
         onClose={handleClose}
         aria-describedby="alert-dialog-slide-description"
-        sx={{paddingY: '20px'}}
+        sx={{ paddingY: '20px' }}
       >
         <DialogContent>
           <DialogContentText id="alert-dialog-slide-description">
-            <p className="mb-4 text-gray-950/60 text-lg">Click the button below to proceed with the payment.</p>
+            <p className="mb-4 text-gray-700 text-lg">
+              Click the button below to proceed with the payment.
+            </p>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleClose} variant="outlined" color="secondary">
+            Cancel
+          </Button>
           <Button variant="contained" color="primary">
-            <Link to={paymentLink} className="text-white">
+            <Link to={paymentLink} className="text-white no-underline">
               Make Payment
             </Link>
-            
           </Button>
         </DialogActions>
       </Dialog>
