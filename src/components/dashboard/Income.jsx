@@ -50,7 +50,7 @@ function Income() {
   }
 
   return (
-    <div className='w-full bg-white p-6 rounded-lg h-52'>
+    <div className='w-full bg-white p-6 rounded-lg h-52 mb-8'>
       <div className='flex justify-between items-center'>
         <h3 className='font-semibold text-[#020e7c]'>Total Income</h3>
       </div>

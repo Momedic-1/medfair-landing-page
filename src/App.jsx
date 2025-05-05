@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
 import PatientSignup from './PatientSignup';
@@ -17,8 +16,11 @@ import PatientNotes from './PatientDashboard/patientNotes.jsx';
 import VerifyPayment from './VerifyPayment.jsx';  
 import VideoCall from './components/VideoCall.jsx';
 import Subscription from './PatientDashboard/Subscription.jsx';
-
-
+import ForgotPassword from './ForgotPassword.jsx';
+import OTPVerification from './OTPVerification.jsx';
+import ProfileLayout from './components/ProfileLayout.jsx';
+import ViewProfile from './components/ViewProfile.jsx';
+import DoctorProfile from './components/DoctorProfile.jsx';
 
 const App = () => {
   return (
@@ -34,6 +36,10 @@ const App = () => {
         <Route path='/incoming-call'element={<IncomingCalls/>}/>
         <Route path='/video-call'element={<VideoCall/>}/>
         <Route path="/verify-payment" element={<VerifyPayment />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
+        <Route path='/doctorProfile' element={<DoctorProfile />} />
+        <Route path='/editProfile' element={<ViewProfile />} />
         {/* <Route path='/search'element={<Search/>}/> */}
 
         <Route path='/patient-dashboard' element={<ProtectedRoute role="PATIENT" />}>
@@ -45,6 +51,7 @@ const App = () => {
         </Route>
         <Route element={<ProtectedRoute role="DOCTOR" />}>
           <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />
+          <Route path="/view-profile/*" element={<ProfileLayout />} />
         </Route>
       </Routes>
     </Router>

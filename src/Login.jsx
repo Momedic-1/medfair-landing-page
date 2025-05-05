@@ -1,13 +1,19 @@
-
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {login, setError} from './features/authSlice';
 import ErrorModal from './components/ErrorModal';
 import SpinnerImg from './PatientDashboard/assets/SpinnerSVG.svg';
 import DesignedSideBar from './components/reuseables/DesignedSideBar';
 import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+import { baseUrl } from './env'
+import { getToken } from '../src/utils';
+
+
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -17,7 +23,9 @@ export default function LoginPage() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { error, isLoading, userData } = useSelector((state) => state.auth);
+  const token = getToken();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,15 +48,26 @@ export default function LoginPage() {
     dispatch(setError ('')) ;
   };
 
+  const fetchDoctorProfile = async () => {
+    const response = await axios.get(`${baseUrl}/api/v1/doctor-profile/profile-info`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    localStorage.setItem('doctorProfile', JSON.stringify(response.data));
+  }
+
   // const goToLogin = ()=> {
   //   navigate('/signup');
   // }
 
   useEffect(() => {
     if (userData) {
+      console.log(userData);
       const role = userData.role;
       if (role === "DOCTOR") {
         navigate('/doctor-dashboard');
+        fetchDoctorProfile();
       } else if (role === "PATIENT") {
         navigate('/patient-dashboard');
       } else {
@@ -56,6 +75,17 @@ export default function LoginPage() {
       }
     }
   }, [userData, navigate]);
+
+  useEffect(() => {
+    // Clear form data and show success message if coming from password reset
+    if (location.state?.successMessage) {
+      setFormData({
+        emailOrPhone: '',
+        password: '',
+      });
+      toast.success(location.state.successMessage);
+    }
+  }, [location]);
 
   return (
     <div className="flex flex-col lg:flex-row h-screen">
@@ -104,8 +134,7 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-blue-600 cursor-pointer">Password </p>
-            <a href="#" className="text-sm text-blue-600">
+            <a href="/forgot-password" className="text-sm text-blue-600">
               Forgot password?
             </a>
           </div>
@@ -124,6 +153,7 @@ export default function LoginPage() {
       </div>
 
       <ErrorModal message={error} onClose={handleCloseModal} />
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 }

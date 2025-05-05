@@ -15,9 +15,7 @@ const DashboardLayout = () => {
           {/* Uncomment and add other routes */}
           {/* <Route path="/dashboard/profile" element={<Profile />} /> */}
           {/* <Route path="/dashboard/messages" element={<Messages />} /> */}
-          <Route path='/notes' element={<Search/>}/>
-          
-          
+          <Route path='/notes' element={<Search/>}/>          
         </Routes>
       </div>
     </div>
