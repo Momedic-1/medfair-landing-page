@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Tab } from "@headlessui/react"
 import { toast } from "react-toastify"
