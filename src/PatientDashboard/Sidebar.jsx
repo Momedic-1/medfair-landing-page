@@ -44,7 +44,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
             <img src={dashboard}/> <span className='ml-3 text-black'>Dashboard</span>
           </NavLink>
           
-           <NavLink to="/patient_profile" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
+           <NavLink to="/patient-dashboard/patient_profile" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
              <img src={profile}/> <span className='ml-3'>View Profile</span>
            </NavLink>
          <NavLink to="/calendar" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>

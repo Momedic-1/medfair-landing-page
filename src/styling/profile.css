@@ -1,0 +1,53 @@
+/* Custom styles for the profile page */
+
+/* Improve focus states for accessibility */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #020e7c;
+  outline-offset: 2px;
+}
+
+/* Custom select styling */
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* Improve textarea appearance */
+textarea {
+  line-height: 1.5;
+}
+
+/* Custom file input styling */
+.file-input-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-input-label:hover {
+  background-color: #f9fafb;
+}
+
+/* Improve tab focus indicators */
+[role="tab"]:focus {
+  outline: 2px solid #020e7c;
+  outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .tab-list {
+    flex-wrap: wrap;
+  }
+
+  [role="tab"] {
+    flex: 0 0 calc(50% - 0.5rem);
+  }
+} 
