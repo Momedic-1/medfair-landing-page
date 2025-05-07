@@ -1,12 +1,13 @@
 import React from 'react';
 import { ActiveSlide } from './constants';
-import { formatNumber, getToken, getUserData } from '../utils';
+import { getToken, getUserData } from '../utils';
 import { baseUrl } from '../env';
 import { Hourglass } from 'react-loader-spinner';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Slide } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, Slide, Box, Typography, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // Import Material Icon
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LockIcon from '@mui/icons-material/Lock';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -71,13 +72,11 @@ const Subscription = () => {
             height="40"
             width="40"
             ariaLabel="hourglass-loading"
-            wrapperStyle={{}}
-            wrapperClass=""
             colors={['#306cce', '#72a1ed']}
           />
         </div>
       )}
-      <h1 className="text-3xl text-[#020E7C] font-extrabold mt-5 cursor-pointer text-center">
+      <h1 className="text-3xl text-[#020E7C] font-extrabold mt-5 text-center">
         Choose a Subscription Plan
       </h1>
       <p className="text-gray-600 text-center mt-2">
@@ -91,7 +90,7 @@ const Subscription = () => {
           >
             <span className="text-blue-600 text-2xl font-bold">{swipe.title}</span>
             <div className="text-4xl font-extrabold text-[#020E7C] mt-2">
-              ₦{formatNumber(swipe.subTitle)}
+              ₦{formatPrice(swipe.subTitle)}
             </div>
             <button
               className="mt-7 w-36 border text-white bg-gradient-to-r from-blue-500 to-blue-700 py-2 px-4 rounded-full hover:from-blue-600 hover:to-blue-800 transition-all duration-300"
@@ -118,24 +117,86 @@ const Subscription = () => {
         TransitionComponent={Transition}
         keepMounted
         onClose={handleClose}
-        aria-describedby="alert-dialog-slide-description"
-        sx={{ paddingY: '20px' }}
+        aria-describedby="payment-dialog"
+        sx={{
+          '& .MuiDialog-paper': {
+            background: 'linear-gradient(145deg, #f8f9ff, #ffffff)',
+            borderRadius: '16px',
+            padding: '24px',
+            minWidth: '400px',
+          },
+        }}
       >
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <CheckCircleIcon sx={{ fontSize: 48, color: '#4CAF50', mb: 2 }} />
+          <Typography variant="h5" component="div" sx={{ fontWeight: 600, color: '#1a237e' }}>
+            Secure Payment Gateway
+          </Typography>
+        </Box>
+
         <DialogContent>
-          <DialogContentText id="alert-dialog-slide-description">
-            <p className="mb-4 text-gray-700 text-lg">
-              Click the button below to proceed with the payment.
-            </p>
-          </DialogContentText>
+          <Box
+            sx={{
+              bgcolor: '#f5f5f5',
+              borderRadius: '8px',
+              p: 2,
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <LockIcon color="success" />
+            <Typography variant="body2" sx={{ color: '#616161' }}>
+              SSL encrypted connection - Your payment is secure
+            </Typography>
+          </Box>
+
+          {/* {paymentLink ? (
+            <Box sx={{ textAlign: 'center' }}>
+              <CircularProgress sx={{ mb: 2 }} />
+              <Typography variant="body1" sx={{ mb: 3, color: '#424242' }}>
+                Redirecting to secure payment portal...
+              </Typography>
+              {setTimeout(() => {
+                window.location.href = paymentLink;
+              }, 3000)}
+            </Box>
+          ) : (
+            <Typography variant="body1" sx={{ color: '#d32f2f', textAlign: 'center' }}>
+              Payment link not available. Please try again.
+            </Typography>
+          )} */}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} variant="outlined" color="secondary">
+
+        <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3 }}>
+          <Button
+            onClick={handleClose}
+            variant="outlined"
+            color="secondary"
+            sx={{
+              px: 4,
+              borderRadius: '8px',
+              '&:hover': { bgcolor: '#f5f5f5' },
+            }}
+          >
             Cancel
           </Button>
-          <Button variant="contained" color="primary">
-            <Link to={paymentLink} className="text-white no-underline">
-              Make Payment
-            </Link>
+          <Button
+            variant="contained"
+            color="primary"
+            component={paymentLink ? Link : 'button'}
+            to={paymentLink}
+            disabled={!paymentLink}
+            sx={{
+              px: 4,
+              borderRadius: '8px',
+              bgcolor: '#1a237e',
+              '&:hover': { bgcolor: '#303f9f' },
+              '&.Mui-disabled': { bgcolor: '#e0e0e0' },
+            }}
+          >
+            {paymentLink ? 'Proceed to Payment' : 'Loading Payment Gateway...'}
           </Button>
         </DialogActions>
       </Dialog>
