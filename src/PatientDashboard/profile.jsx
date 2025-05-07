@@ -52,7 +52,7 @@ export default function Profile() {
     },
   })
 
-  const userData = JSON.parse(localStorage.getItem("userData") || "{}")
+  // const userData = JSON.parse(localStorage.getItem("userData") || "{}")
   const token = getToken()
 
   useEffect(() => {
