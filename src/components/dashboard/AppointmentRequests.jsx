@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AvatarImage from '../../assets/avatar.png';
 import { IoCheckmarkCircle } from "react-icons/io5";
@@ -23,11 +22,21 @@ function AppointmentRequests({ appointments }) {
               className='flex items-center justify-between px-4 bg-gray-100 rounded-lg mt-4 p-2'
             >
               <div className='flex-shrink-0'>
-                <img
-                  src={AvatarImage}
-                  alt={`${appointment.name}'s avatar`}
-                  className='w-8 h-8 rounded-full'
-                />
+                {appointment.imageUrl ? (
+                  <img
+                    src={appointment.imageUrl}
+                    alt={`${appointment.name}'s avatar`}
+                    className='w-8 h-8 rounded-full'
+                  />
+                ) : (
+                  <div className='w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold'>
+                    {appointment.name
+                      .split(' ')
+                      .map((word) => word[0])
+                      .join('')
+                      .toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className='flex-1 ml-2'>
                 <div className="text-[#020e7c] text-[10px] font-normal font-['Roboto'] leading-[25px]">
