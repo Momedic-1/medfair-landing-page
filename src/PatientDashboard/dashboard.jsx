@@ -32,6 +32,7 @@ import Skeleton from "react-loading-skeleton";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "react-loading-skeleton/dist/skeleton.css";
+import { PiStethoscope } from "react-icons/pi";
 
 const localizer = dayjsLocalizer(dayjs);
 const modalStyle = {
@@ -50,8 +51,13 @@ const modalStyle = {
 };
 
 const avatarStyle = {
-  width: 68,
-  height: 68,
+  width: 100,
+  height: 100,
+};
+
+const avatarStyle2 = {
+  width: 40,
+  height: 40,
 };
 
 const specialistCategory = [
@@ -145,7 +151,8 @@ const Dashboard = () => {
     setIsBooking(true);
     try {
       const response = await axios.post(
-        `${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`,{},
+        `${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -153,7 +160,7 @@ const Dashboard = () => {
         }
       );
 
-      console.log(response)
+      console.log(response);
       toast.success("Appointment booked successfully!");
 
       handleClosePopover();
@@ -163,10 +170,12 @@ const Dashboard = () => {
 
       setSpecialistDetails((prev) =>
         prev.map((doctor) => {
-          if (doctor.id === selectedDoctor.id) {
+          if (doctor.doctorId === selectedDoctor.doctorId) {
             return {
               ...doctor,
-              slots: doctor.slots.filter((slot) => slot !== selectedTime),
+              slots: doctor.slots.filter(
+                (slot) => slot.slotId !== selectedSlotId
+              ),
             };
           }
           return doctor;
@@ -226,6 +235,7 @@ const Dashboard = () => {
       const specialists = Object.values(parsedResponse).flat();
 
       setSpecialistDetails(specialists);
+      console.log(specialists)
 
       setIsLoading(false);
     } catch (error) {
@@ -248,6 +258,7 @@ const Dashboard = () => {
         }
       );
       const formattedData = response.data;
+      console.log("upcoming appointments", formattedData);
       setUpcomingAppointments(formattedData);
       setIsLoading(false);
     } catch (error) {
@@ -323,7 +334,7 @@ const Dashboard = () => {
         </div>
 
         <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-y-6 lg:gap-y-0 lg:flex-row items-start gap-x-8 px-1">
-          <div className="w-full lg:w-[76%] rounded-lg border bg-white border-gray-200 p-4">
+          <div className="w-full lg:w-[68%] rounded-lg border bg-white border-gray-200 p-4">
             <Calendar
               localizer={localizer}
               // events={myEventsList}
@@ -337,7 +348,7 @@ const Dashboard = () => {
               }}
             />
           </div>
-          <div className="w-full lg:w-[24%] h-[400px] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4">
+          <div className="w-full lg:w-[32%] h-[435px] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4">
             <h2 className="text-lg font-bold text-blue-900 md:text-xl">
               Appointments
             </h2>
@@ -349,7 +360,7 @@ const Dashboard = () => {
                 .fill(0)
                 .map((_, index) => (
                   <div
-                    className="mt-4 p-3 border rounded-lg animate-pulse"
+                    className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
                     key={index}
                   >
                     <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
@@ -360,13 +371,21 @@ const Dashboard = () => {
                 ))
             ) : upcomingAppointments.length > 0 ? (
               upcomingAppointments.map((details, index) => (
-                <div key={index} className="mt-4 p-3 border rounded-lg">
-                  <p className="font-medium">{details.date}</p>
-                  <p className="text-sm text-gray-600">
-                    {formatTime(details.time)}
-                  </p>
-
-                  <p className="text-sm">{details.doctors}</p>
+                <div
+                  key={index}
+                  className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
+                >
+                  <Avatar src={details?.imageUrl} sx={avatarStyle2} />
+                  <div className="flex flex-col">
+                    <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>📅 {details.date}</span>
+                      <span>⏰ {formatTime(details.time)}</span>
+                    </div>
+                    {/* <button className="mt-2 text-blue-500 hover:underline text-sm">
+                      View Details
+                    </button> */}
+                  </div>
                 </div>
               ))
             ) : (
@@ -383,16 +402,13 @@ const Dashboard = () => {
         aria-labelledby="category-modal-title"
       >
         <Box sx={modalStyle}>
-          <div className="w-full flex justify-between items-center mb-4">
-            <p className="text-2xl text-gray-950/60 font-semibold">
-              Choose Specialist
-            </p>
-
+          <div className="w-full flex justify-between items-center mb-4 bg-gradient-to-r from-blue-500 to-blue-700 p-4 rounded-t-lg">
+            <p className="text-2xl text-white font-semibold">Choose Specialist</p>
             <button
               onClick={() => setIsMainModalOpen(false)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-blue-600 rounded-full transition-colors"
             >
-              <span className="text-gray-500">✕</span>
+              <span className="text-white">✕</span>
             </button>
           </div>
           {specialistCategories.map((category) => (
@@ -426,12 +442,11 @@ const Dashboard = () => {
         onClose={() => setIsSpecialistsModalOpen(false)}
         aria-labelledby="specialists-modal-title"
       >
-        <Box sx={modalStyle}>
+        <Box sx={{ height: 800, overflowY: "auto", ...modalStyle }}>
           <div className="w-full flex justify-between items-center mb-4">
             <p className="mb-1 text-2xl text-gray-950/60 font-semibold">
               Available Specialists
             </p>
-
             <button
               onClick={() => setIsSpecialistsModalOpen(false)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -440,9 +455,7 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <List
-            sx={{ width: "100%", height: 200, bgcolor: "background.paper" }}
-          >
+          <List sx={{ width: "100%", bgcolor: "background.paper" }}>
             {isLoading ? (
               Array(5)
                 .fill(0)
@@ -472,73 +485,92 @@ const Dashboard = () => {
               specialistDetails.map((specialist) => (
                 <ListItem key={specialist.slots.slotId} disablePadding>
                   <ListItemButton>
-                    <div className="px-4 py-2 border h-40 shadow-xl rounded-lg flex items-start justify-between w-full">
-                      <div className="w-1/2 flex flex-col gap-y-4">
-                        {specialist.doctorProfile ? (
-                          <Avatar
-                            src={specialist?.doctorProfile?.imageUrl}
-                            sx={avatarStyle}
-                          />
-                        ) : (
-                          <Avatar src="/broken-image.jpg" sx={avatarStyle} />
-                        )}
-
-                        <div className="w-full">
-                          <ListItemText
-                            primary={
-                              specialist?.doctorProfile?.title +
+                    <div className="px-4 py-4 border h-96 shadow-xl rounded-lg flex flex-col gap-4 w-full">
+                      <div className="flex flex-col items-start gap-4">
+                        <div className="flex flex-col">
+                          <p className="text-3xl font-sans font-semibold text-gray-900">
+                            {specialist?.doctorProfile?.title +
                               " " +
                               specialist?.doctorProfile?.firstName +
                               " " +
-                              specialist?.doctorProfile?.lastName
-                            }
-                            secondary={formatSpecialization(
-                              specialist?.doctorProfile?.medicalSpecialization
-                            )}
-                            sx={{ fontSize: "0.5rem", fontWeight: "bold" }}
-                          />
+                              specialist?.doctorProfile?.lastName}
+                          </p>
+                          <p className="text-base text-gray-600">
+                            {specialist?.doctorProfile?.practiceName +
+                              " | " +
+                              specialist?.doctorProfile?.qualifications}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-row gap-4 mt-4">
+                          {specialist.doctorProfile ? (
+                            <Avatar
+                              src={specialist?.doctorProfile?.imageUrl}
+                              sx={avatarStyle}
+                            />
+                          ) : (
+                            <Avatar src="/broken-image.jpg" sx={avatarStyle} />
+                          )}
+
+                          <div className="flex flex-col">
+                            <p className="text-lg text-gray-500">
+                              ⭐⭐⭐⭐{" "}
+                              {specialist?.doctorProfile?.rating || "4.7"} (
+                              {specialist?.doctorProfile?.reviews || 10}{" "}
+                              reviews)
+                            </p>
+                            <div className="flex flex-row items-center gap-1">
+                              <PiStethoscope
+                                style={{
+                                  width: "1.3em",
+                                  height: "1.3em",
+                                  color: "gray",
+                                }}
+                              />
+                              <p className="text-lg text-gray-500">
+                                {formatSpecialization(
+                                  specialist?.doctorProfile
+                                    ?.medicalSpecialization
+                                )}
+                              </p>
+                            </div>
+                            <button className="bg-blue-500 text-white text-sm py-1 w-32 rounded-sm hover:bg-blue-600 transition">
+                              Available Today
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      <div className="w-1/2 flex items-start gap-x-2">
-                        <ListItemText
-                          primary={
-                            specialist.slots?.length > 0
-                              ? specialist.slots
-                                  .map((slot) => (
-                                    <React.Fragment key={slot.slotId}>
-                                      <button
-                                        className="text-blue-800 text-sm ml-2 mb-2 cursor-pointer"
-                                        onClick={(e) =>
-                                          handleOpenPopover(
-                                            e,
-                                            specialist,
-                                            `${slot.date}T${slot.time}`,
-                                            slot.slotId
-                                          )
-                                        }
-                                      >
-                                        <span className="bg-blue-800 text-white rounded-full px-2 py-1">
-                                          {dayjs(
-                                            `${slot.date}T${slot.time}`
-                                          ).format("h:mm A")}
-                                        </span>
-                                      </button>
-                                    </React.Fragment>
-                                  ))
-                                  .slice()
-                                  .filter((slot) =>
-                                    dayjs(slot.date).isSame(dayjs(), "day")
-                                  )
-                                  .sort(
-                                    (a, b) =>
-                                      dayjs(`${a.date}T${a.time}`).valueOf() -
-                                      dayjs(`${b.date}T${b.time}`).valueOf()
-                                  )
-                              : "No available slots"
-                          }
-                          sx={{ color: "grey" }}
-                        />
+                      <hr />
+                      <div>
+                        <p className="text-lg font-bold">
+                          {dayjs().format("ddd, MMM D")}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {specialist.slots?.length > 0 ? (
+                          specialist.slots.map((slot) => (
+                            <button
+                              key={slot.slotId}
+                              className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
+                              onClick={(e) =>
+                                handleOpenPopover(
+                                  e,
+                                  specialist,
+                                  `${slot.date}T${slot.time}`,
+                                  slot.slotId
+                                )
+                              }
+                            >
+                              {dayjs(`${slot.date}T${slot.time}`).format(
+                                "h:mm A"
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No available slots today
+                          </p>
+                        )}
                       </div>
                     </div>
                   </ListItemButton>
@@ -643,7 +675,7 @@ const Dashboard = () => {
         <div className="p-4">
           <p>
             Confirm booking with{" "}
-            <span className="font-bold">{selectedDoctor?.doctorName}</span>
+            <span className="font-bold">{selectedDoctor?.doctorProfile.title + " " + selectedDoctor?.doctorProfile.firstName + " " + selectedDoctor?.doctorProfile.lastName }</span>
           </p>
           <p className="font-bold">
             {selectedTime &&
