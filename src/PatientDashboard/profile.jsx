@@ -14,11 +14,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadingDocument, setUploadingDocument] = useState(false)
   const [profileData, setProfileData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
     dateOfBirth: "",
     age: 0,
     weight: 0,
@@ -31,17 +28,11 @@ export default function Profile() {
       phoneNumber: "",
       email: "",
     },
-    nextOfKin: {
-      name: "",
-      relationship: "",
-      phoneNumber: "",
-      email: "",
-    },
     medicalHistory: {
-      allergies: "",
-      chronicConditions: "",
-      previousSurgeries: "",
-      medications: "",
+      condition: "",
+      allergy: "",
+      description: "",
+      diagnosedDate: "",
     },
     address: {
       street: "",
@@ -50,10 +41,13 @@ export default function Profile() {
       country: "",
       postalCode: "",
     },
+    documents: [],
+    documentCategory: "",
   })
 
-  // const userData = JSON.parse(localStorage.getItem("userData") || "{}")
+  const userData = JSON.parse(localStorage.getItem("userData") || "{}")
   const token = getToken()
+  const userId = userData.id
 
   useEffect(() => {
     if (!token) {
@@ -62,21 +56,75 @@ export default function Profile() {
       return
     }
     fetchProfileData()
+    fetchEmergencyContact()
+    fetchAddress()
   }, [token])
 
   const fetchProfileData = async () => {
     try {
-      const response = await axios.get(`${baseUrl}/api/v1/patient-profile`, {
+      const response = await axios.get(`${baseUrl}/api/patient-profile/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       if (response.data) {
-        setProfileData(response.data)
+        setProfileData(prev => ({
+          ...prev,
+          ...response.data,
+        }))
       }
     } catch (error) {
       console.error("Error fetching profile:", error)
       toast.error("Failed to fetch profile data")
+    }
+  }
+
+  const fetchEmergencyContact = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/patient/emergency-contact/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (response.data) {
+        setProfileData(prev => ({
+          ...prev,
+          emergencyContact: {
+            name: response.data.fullName,
+            relationship: response.data.relationship,
+            phoneNumber: response.data.phoneNumber,
+            email: response.data.email,
+          },
+        }))
+      }
+    } catch (error) {
+      console.error("Error fetching emergency contact:", error)
+      toast.error("Failed to fetch emergency contact")
+    }
+  }
+
+  const fetchAddress = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/patient/address/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (response.data) {
+        setProfileData(prev => ({
+          ...prev,
+          address: {
+            street: response.data.streetAddress,
+            city: response.data.city,
+            state: response.data.state,
+            country: response.data.country,
+            postalCode: response.data.zipCode,
+          },
+        }))
+      }
+    } catch (error) {
+      console.error("Error fetching address:", error)
+      toast.error("Failed to fetch address")
     }
   }
 
@@ -96,6 +144,15 @@ export default function Profile() {
     { value: "AS", label: "AS" },
     { value: "SS", label: "SS" },
     { value: "AC", label: "AC" },
+    { value: "SC", label: "SC" },
+    { value: "CC", label: "CC" },
+  ]
+
+  const documentCategoryOptions = [
+    { value: "LAB_RESULT", label: "LAB RESULT" },
+    { value: "RADIOLOGY_RESULT", label: "RADIOLOGY RESULT" },
+    { value: "PRESCRIPTION", label: "PRESCRIPTION" },
+    { value: "OTHER", label: "OTHER" }
   ]
 
   const handleChange = (e) => {
@@ -127,6 +184,11 @@ export default function Profile() {
       return
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB")
+      return
+    }
+
     setUploadingImage(true)
     const formData = new FormData()
     formData.append("file", file)
@@ -153,16 +215,153 @@ export default function Profile() {
     }
   }
 
+  const handleDocumentUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const validTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+    if (!validTypes.includes(file.type)) {
+      toast.error("Please upload only PDF, DOC, or DOCX files")
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size should be less than 10MB")
+      return
+    }
+
+    if (!profileData.documentCategory) {
+      toast.error("Please select a document category")
+      return
+    }
+
+    setUploadingDocument(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      // First upload to cloudinary
+      const cloudinaryResponse = await axios.post(`${baseUrl}/api/v1/patient-profile/upload-image`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (cloudinaryResponse) {
+        // Then send the URL to the backend
+        const response = await axios.post(
+          `${baseUrl}/api/patient/documents/upload/${userId}?category=${profileData.documentCategory}`,
+          { file: cloudinaryResponse.data.data },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+
+        if (response) {
+          setProfileData((prev) => ({
+            ...prev,
+            documents: [...prev.documents, response.data],
+          }))
+          toast.success("Document uploaded successfully")
+        }
+      }
+    } catch (error) {
+      console.error("Error uploading document:", error)
+      toast.error("Failed to upload document")
+    } finally {
+      setUploadingDocument(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const response = await axios.put(`${baseUrl}/api/v1/patient-profile`, profileData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      let response
+      switch (activeTab) {
+        case 0: // Profile
+          response = await axios.put(
+            `${baseUrl}/api/patient-profile/update/${userId}`,
+            {
+              weight: profileData.weight,
+              bloodGroup: profileData.bloodGroup,
+              genotype: profileData.genotype,
+              dateOfBirth: profileData.dateOfBirth,
+              imageUrl: profileData.imageUrl,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          break
+        case 1: // Emergency Contact
+          response = await axios.put(
+            `${baseUrl}/api/patient/emergency-contact/${userId}`,
+            {
+              fullName: profileData.emergencyContact.name,
+              relationship: profileData.emergencyContact.relationship,
+              phoneNumber: profileData.emergencyContact.phoneNumber,
+              email: profileData.emergencyContact.email,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          break
+        case 3: // File Upload
+          response = await axios.post(
+            `${baseUrl}/api/patient/documents/upload/${userId}?category=${profileData.documentCategory}`,
+            { file: profileData.documents[0].url },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          break
+        case 4: // Address
+          response = await axios.put(
+            `${baseUrl}/api/patient/address/${userId}`,
+            {
+              country: profileData.address.country,
+              state: profileData.address.state,
+              city: profileData.address.city,
+              streetAddress: profileData.address.street,
+              zipCode: profileData.address.postalCode,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          break
+        case 2: // Medical History
+          response = await axios.post(
+            `${baseUrl}/api/patient/medical-history/${userId}`,
+            {
+              condition: profileData.medicalHistory.condition,
+              allergy: profileData.medicalHistory.allergy,
+              description: profileData.medicalHistory.description,
+              diagnosedDate: profileData.medicalHistory.diagnosedDate,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          break
+        default:
+          break
+      }
 
       if (response) {
         toast.success("Profile updated successfully")
@@ -178,10 +377,9 @@ export default function Profile() {
   const tabs = [
     { name: "Patient Profile", current: activeTab === 0 },
     { name: "Emergency Contact", current: activeTab === 1 },
-    { name: "Next of Kin", current: activeTab === 2 },
-    { name: "Medical History", current: activeTab === 3 },
-    { name: "File Upload", current: activeTab === 4 },
-    { name: "Address", current: activeTab === 5 },
+    { name: "Medical History", current: activeTab === 2 },
+    { name: "File Upload", current: activeTab === 3 },
+    { name: "Address", current: activeTab === 4 },
   ]
 
   return (
@@ -192,8 +390,6 @@ export default function Profile() {
         <main className="p-4 md:p-6 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-md border border-gray-100">
             <div className="px-4 py-6 md:px-8 md:py-8">
-              <h1 className="text-2xl font-semibold text-[#020E7C] mb-6 md:mb-8">Patient Profile</h1>
-
               <Tab.Group onChange={setActiveTab}>
                 <Tab.List className="flex flex-wrap md:flex-nowrap gap-2 rounded-xl bg-gray-50 p-2.5 overflow-x-auto">
                   {tabs.map((tab) => (
@@ -219,50 +415,6 @@ export default function Profile() {
                   <Tab.Panel>
                     <form onSubmit={handleSubmit} className="space-y-8">
                       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                          <input
-                            type="text"
-                            name="firstName"
-                            value={profileData.firstName}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter your first name"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                          <input
-                            type="text"
-                            name="lastName"
-                            value={profileData.lastName}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter your last name"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={profileData.email}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter your email"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                          <input
-                            type="tel"
-                            name="phoneNumber"
-                            value={profileData.phoneNumber}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter your phone number"
-                          />
-                        </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
                           <input
@@ -429,67 +581,6 @@ export default function Profile() {
                     </form>
                   </Tab.Panel>
 
-                  {/* Next of Kin Tab */}
-                  <Tab.Panel>
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                          <input
-                            type="text"
-                            name="nextOfKin.name"
-                            value={profileData.nextOfKin.name}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter next of kin name"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
-                          <input
-                            type="text"
-                            name="nextOfKin.relationship"
-                            value={profileData.nextOfKin.relationship}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter relationship"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                          <input
-                            type="tel"
-                            name="nextOfKin.phoneNumber"
-                            value={profileData.nextOfKin.phoneNumber}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter phone number"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                          <input
-                            type="email"
-                            name="nextOfKin.email"
-                            value={profileData.nextOfKin.email}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter email"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end pt-4">
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="inline-flex justify-center items-center rounded-lg border border-transparent bg-[#020E7C] h-12 px-6 text-base font-medium text-white shadow-sm hover:bg-[#1a2a9c] focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {loading ? "Saving..." : "Save Changes"}
-                        </button>
-                      </div>
-                    </form>
-                  </Tab.Panel>
-
                   {/* Medical History Tab */}
                   <Tab.Panel>
                     <form onSubmit={handleSubmit} className="space-y-8">
@@ -497,8 +588,8 @@ export default function Profile() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Allergies</label>
                           <textarea
-                            name="medicalHistory.allergies"
-                            value={profileData.medicalHistory.allergies}
+                            name="medicalHistory.allergy"
+                            value={profileData.medicalHistory.allergy}
                             onChange={handleChange}
                             rows={3}
                             className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 min-h-[100px] resize-y"
@@ -508,8 +599,8 @@ export default function Profile() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Chronic Conditions</label>
                           <textarea
-                            name="medicalHistory.chronicConditions"
-                            value={profileData.medicalHistory.chronicConditions}
+                            name="medicalHistory.condition"
+                            value={profileData.medicalHistory.condition}
                             onChange={handleChange}
                             rows={3}
                             className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 min-h-[100px] resize-y"
@@ -517,25 +608,25 @@ export default function Profile() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Previous Surgeries</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                           <textarea
-                            name="medicalHistory.previousSurgeries"
-                            value={profileData.medicalHistory.previousSurgeries}
+                            name="medicalHistory.description"
+                            value={profileData.medicalHistory.description}
                             onChange={handleChange}
                             rows={3}
                             className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 min-h-[100px] resize-y"
-                            placeholder="Enter previous surgeries"
+                            placeholder="Enter description"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Current Medications</label>
-                          <textarea
-                            name="medicalHistory.medications"
-                            value={profileData.medicalHistory.medications}
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Diagnosed Date</label>
+                          <input
+                            type="date"
+                            name="medicalHistory.diagnosedDate"
+                            value={profileData.medicalHistory.diagnosedDate}
                             onChange={handleChange}
-                            rows={3}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 min-h-[100px] resize-y"
-                            placeholder="Enter current medications"
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
+                            placeholder="Enter diagnosed date"
                           />
                         </div>
                       </div>
@@ -553,39 +644,103 @@ export default function Profile() {
 
                   {/* File Upload Tab */}
                   <Tab.Panel>
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">Upload Medical Documents</label>
-                        <div className="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-gray-200 border-dashed rounded-lg hover:border-[#020E7C] transition-colors duration-200 cursor-pointer group">
-                          <div className="space-y-3 text-center">
-                            <svg
-                              className="mx-auto h-14 w-14 text-gray-400 group-hover:text-[#020E7C] transition-colors duration-200"
-                              stroke="currentColor"
-                              fill="none"
-                              viewBox="0 0 48 48"
-                              aria-hidden="true"
-                            >
-                              <path
-                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                strokeWidth={2}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                            <div className="flex text-sm text-gray-600 justify-center">
-                              <label
-                                htmlFor="file-upload"
-                                className="relative cursor-pointer bg-white rounded-md font-medium text-[#020E7C] hover:text-[#1a2a9c] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#020E7C] transition-colors duration-200"
-                              >
-                                <span>Upload a file</span>
-                                <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple />
-                              </label>
-                              <p className="pl-1">or drag and drop</p>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Upload Medical Documents</label>
+                        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Document Category</label>
+                            <select
+                              name="documentCategory"
+                              value={profileData.documentCategory}
+                              onChange={handleChange}
+                              className="block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 focus:ring-opacity-50 transition-colors duration-200 px-3 bg-white">
+                              <option value="">Select Category</option>
+                              {documentCategoryOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex-1">
+                            <div className="mt-1 flex justify-center px-4 py-6 border-2 border-gray-200 border-dashed rounded-md hover:border-blue-600 transition-colors duration-200 cursor-pointer group">
+                              <div className="space-y-2 text-center">
+                                <svg
+                                  className="mx-auto h-12 w-12 text-gray-400 group-hover:text-blue-600 transition-colors duration-200"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  viewBox="0 0 48 48"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                    strokeWidth={2}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                <div className="flex text-sm text-gray-600 justify-center">
+                                  <label
+                                    htmlFor="file-upload"
+                                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-800 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-600 transition-colors duration-200"
+                                  >
+                                    <span>{uploadingDocument ? "Uploading..." : "Upload a file"}</span>
+                                    <input 
+                                      id="file-upload" 
+                                      name="file-upload" 
+                                      type="file" 
+                                      className="sr-only" 
+                                      onChange={handleDocumentUpload}
+                                      disabled={uploadingDocument}
+                                    />
+                                  </label>
+                                  <p className="pl-1">or drag and drop</p>
+                                </div>
+                                <p className="text-xs text-gray-500">PDF, DOC, DOCX up to 10MB</p>
+                              </div>
                             </div>
-                            <p className="text-xs text-gray-500">PDF, DOC, DOCX up to 10MB</p>
                           </div>
                         </div>
                       </div>
+
+                      {/* Display uploaded documents */}
+                      {profileData.documents && profileData.documents.length > 0 && (
+                        <div className="mt-6">
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Uploaded Documents</h3>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {profileData.documents.map((doc, index) => (
+                              <div
+                                key={index}
+                                className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:border-gray-400"
+                              >
+                                <div className="flex-shrink-0">
+                                  <svg
+                                    className="h-10 w-10 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
+                                  </svg>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <a href={doc.file} target="_blank" rel="noopener noreferrer" className="focus:outline-none">
+                                    <span className="absolute inset-0" aria-hidden="true" />
+                                    <p className="text-sm font-medium text-gray-900">{doc.category}</p>
+                                    <p className="truncate text-sm text-gray-500">Click to view</p>
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </Tab.Panel>
 
