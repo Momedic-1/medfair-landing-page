@@ -548,24 +548,28 @@ const Dashboard = () => {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {specialist.slots?.length > 0 ? (
-                          specialist.slots.map((slot) => (
-                            <button
-                              key={slot.slotId}
-                              className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
-                              onClick={(e) =>
-                                handleOpenPopover(
-                                  e,
-                                  specialist,
-                                  `${slot.date}T${slot.time}`,
-                                  slot.slotId
-                                )
-                              }
-                            >
-                              {dayjs(`${slot.date}T${slot.time}`).format(
-                                "h:mm A"
-                              )}
-                            </button>
-                          ))
+                          specialist.slots
+                            .filter((slot) =>
+                              dayjs(slot.date).isSame(dayjs(), "day")
+                            ) // Filter slots for today
+                            .map((slot) => (
+                              <button
+                                key={slot.slotId}
+                                className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
+                                onClick={(e) =>
+                                  handleOpenPopover(
+                                    e,
+                                    specialist,
+                                    `${slot.date}T${slot.time}`,
+                                    slot.slotId
+                                  )
+                                }
+                              >
+                                {dayjs(`${slot.date}T${slot.time}`).format(
+                                  "h:mm A"
+                                )}
+                              </button>
+                            ))
                         ) : (
                           <p className="text-sm text-gray-500">
                             No available slots today
