@@ -485,96 +485,91 @@ const Dashboard = () => {
               specialistDetails.map((specialist) => (
                 <ListItem key={specialist.slots.slotId} disablePadding>
                   <ListItemButton>
-                    <div className="px-4 py-4 border h-96 shadow-xl rounded-lg flex flex-col gap-4 w-full">
-                      <div className="flex flex-col items-start gap-4">
-                        <div className="flex flex-col">
-                          <p className="text-3xl font-sans font-semibold text-gray-900">
-                            {specialist?.doctorProfile?.title +
-                              " " +
-                              specialist?.doctorProfile?.firstName +
-                              " " +
-                              specialist?.doctorProfile?.lastName}
-                          </p>
-                          <p className="text-base text-gray-600">
-                            {specialist?.doctorProfile?.practiceName +
-                              " | " +
-                              specialist?.doctorProfile?.qualifications}
-                          </p>
-                        </div>
+                    <div className="px-4 py-4 border shadow-xl rounded-lg flex flex-col gap-4 w-full md:flex-row md:items-center">
+                      <div className="flex flex-col items-center md:items-start md:w-1/3">
+                        {specialist.doctorProfile ? (
+                          <Avatar
+                            src={specialist?.doctorProfile?.imageUrl}
+                            sx={avatarStyle}
+                            className="mb-4 md:mb-0"
+                          />
+                        ) : (
+                          <Avatar src="/broken-image.jpg" sx={avatarStyle} className="mb-4 md:mb-0" />
+                        )}
+                        {/* <p className="text-lg text-gray-500 text-center md:text-left">
+                          ⭐⭐⭐⭐ {specialist?.doctorProfile?.rating || "4.7"} (
+                          {specialist?.doctorProfile?.reviews || 10} reviews)
+                        </p> */}
+                      </div>
 
-                        <div className="flex flex-row gap-4 mt-4">
-                          {specialist.doctorProfile ? (
-                            <Avatar
-                              src={specialist?.doctorProfile?.imageUrl}
-                              sx={avatarStyle}
+                      <div className="flex flex-col gap-2 md:w-2/3">
+                        <p className="text-xl font-sans font-semibold text-gray-900 text-center md:text-left">
+                          {specialist?.doctorProfile?.title +
+                            " " +
+                            specialist?.doctorProfile?.firstName +
+                            " " +
+                            specialist?.doctorProfile?.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600 text-center md:text-left">
+                          {specialist?.doctorProfile?.practiceName +
+                            " | " +
+                            specialist?.doctorProfile?.qualifications}
+                        </p>
+                        <div className="flex flex-col items-center md:items-start">
+                          <div className="flex flex-row items-center gap-1">
+                            <PiStethoscope
+                              style={{
+                                width: "1.3em",
+                                height: "1.3em",
+                                color: "gray",
+                              }}
                             />
-                          ) : (
-                            <Avatar src="/broken-image.jpg" sx={avatarStyle} />
-                          )}
-
-                          <div className="flex flex-col">
-                            <p className="text-lg text-gray-500">
-                              ⭐⭐⭐⭐{" "}
-                              {specialist?.doctorProfile?.rating || "4.7"} (
-                              {specialist?.doctorProfile?.reviews || 10}{" "}
-                              reviews)
+                            <p className="text-sm text-gray-500">
+                              {formatSpecialization(
+                                specialist?.doctorProfile?.medicalSpecialization
+                              )}
                             </p>
-                            <div className="flex flex-row items-center gap-1">
-                              <PiStethoscope
-                                style={{
-                                  width: "1.3em",
-                                  height: "1.3em",
-                                  color: "gray",
-                                }}
-                              />
-                              <p className="text-lg text-gray-500">
-                                {formatSpecialization(
-                                  specialist?.doctorProfile
-                                    ?.medicalSpecialization
-                                )}
-                              </p>
-                            </div>
-                            <button className="bg-blue-500 text-white text-sm py-1 w-32 rounded-sm hover:bg-blue-600 transition">
-                              Available Today
-                            </button>
                           </div>
+                          <button className="bg-blue-500 text-white text-sm py-1 px-4 rounded-sm hover:bg-blue-600 transition mt-2">
+                            Available Today
+                          </button>
                         </div>
                       </div>
-                      <hr />
-                      <div>
-                        <p className="text-lg font-bold">
+
+                      <div className="mt-4 md:mt-0">
+                        <p className="text-sm font-bold text-center md:text-left">
                           {dayjs().format("ddd, MMM D")}
                         </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {specialist.slots?.length > 0 ? (
-                          specialist.slots
-                            .filter((slot) =>
-                              dayjs(slot.date).isSame(dayjs(), "day")
-                            ) // Filter slots for today
-                            .map((slot) => (
-                              <button
-                                key={slot.slotId}
-                                className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
-                                onClick={(e) =>
-                                  handleOpenPopover(
-                                    e,
-                                    specialist,
-                                    `${slot.date}T${slot.time}`,
-                                    slot.slotId
-                                  )
-                                }
-                              >
-                                {dayjs(`${slot.date}T${slot.time}`).format(
-                                  "h:mm A"
-                                )}
-                              </button>
-                            ))
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            No available slots today
-                          </p>
-                        )}
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
+                          {specialist.slots?.length > 0 ? (
+                            specialist.slots
+                              .filter((slot) =>
+                                dayjs(slot.date).isSame(dayjs(), "day")
+                              )
+                              .map((slot) => (
+                                <button
+                                  key={slot.slotId}
+                                  className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
+                                  onClick={(e) =>
+                                    handleOpenPopover(
+                                      e,
+                                      specialist,
+                                      `${slot.date}T${slot.time}`,
+                                      slot.slotId
+                                    )
+                                  }
+                                >
+                                  {dayjs(`${slot.date}T${slot.time}`).format(
+                                    "h:mm A"
+                                  )}
+                                </button>
+                              ))
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No available slots today
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </ListItemButton>
