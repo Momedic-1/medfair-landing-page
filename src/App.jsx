@@ -44,7 +44,7 @@ const App = () => {
 
         <Route path='/patient-dashboard' element={<ProtectedRoute role="PATIENT" />}>
           <Route path='' element={<Dashboard />} />
-          <Route path='patient_profile' element={<Profile />} />
+          <Route path='profile' element={<Profile />} />
           <Route path='patient-notes' element={<PatientNotes />} />
           <Route path='subscription' element={<Subscription />} />
           <Route path='payment' element={<PaymentPage />} />

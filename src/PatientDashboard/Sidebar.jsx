@@ -13,9 +13,6 @@ import CloseIcon from '../assets/CloseIcon';
 import DashboardIcon from '../assets/DashboardIcon';
 import { CalendarIcon } from 'lucide-react';
 import DocumentsIcon from '../assets/DocumentIcon';
-import MessagesIcon from '../assets/MessageIcon';
-import AudioCallIcon from '../assets/AudioCallIcon';
-import VideoCallIcon from '../assets/VideoCallIcon';
 import FinanceIcon from '../assets/FinanceIcon';
 import SettingsIcon from '../assets/SettingsIcon';
 import HelpIcon from '../assets/HelpIcon';
@@ -44,18 +41,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
             <img src={dashboard}/> <span className='ml-3 text-black'>Dashboard</span>
           </NavLink>
           
-           <NavLink to="/patient-dashboard/patient_profile" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
+           <NavLink to="/patient-dashboard/profile" className=" flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
              <img src={profile}/> <span className='ml-3'>View Profile</span>
            </NavLink>
-         <NavLink to="/calendar" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-          <img src={calendar} alt="Calendar" /> <span className='ml-3 '>Calendar</span>
-        </NavLink>
-        <NavLink to="/message" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-          <img src={message} alt="Message" /> <span className='ml-3 '>Messages</span>
-        </NavLink>
-        <NavLink to="/documents" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
-          <img src={documents} alt="Documents" /> <span className='ml-3 '>Documents</span>
-        </NavLink>
         <NavLink to="/help" className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]" onClick={toggleSidebar}>
           <img src={help} alt="Help" /> <span className='ml-3 '>Help</span>
         </NavLink>
