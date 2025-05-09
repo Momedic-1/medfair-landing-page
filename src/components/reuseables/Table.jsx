@@ -17,7 +17,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Final diagnosis</th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SOAP comment</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drugs</th>
+              {/* <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drugs</th> */}
             </tr>
           </thead>
 
@@ -51,9 +51,9 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   <td className="px-2 py-2 text-sm text-gray-700">{patient.plan}</td>
                   <td className="px-2 py-2 text-sm text-gray-700">{patient.finalDiagnosis}</td>
                   <td className="px-2 py-2 text-sm text-gray-700">{patient.soapComment}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700">{patient.drugs.map((drug)=> {
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">{patient.drugs.map((drug)=> {
                     return drug.name + " " + drug.dosage
-                  })}</td>
+                  })}</td> */}
                 </tr>
               ))
             )}
