@@ -2,44 +2,52 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { baseUrl } from "../env";
 import { IoIosAdd } from "react-icons/io";
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Typography } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Typography,
+} from "@mui/material";
 import { capitalizeFirstLetter, formatDate } from "../utils";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ColorRing } from "react-loader-spinner";
 import { IoMdArrowBack } from "react-icons/io";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
-  const [patientFirstName, setpatientFirstName] = useState('');
-  const [patientLastName, setPatientLastName] = useState('');
-  const [visitDate, setVisitDate] = useState('');
-  const [subjective, setSubjective] = useState('');
-  const [objective, setObjective] = useState('');
-  const [assessment, setAssessment] = useState('');
-  const [plan, setPlan] = useState('');
-  const [finalDiagnosis, setFinalDiagnosis] = useState('');
-  const [soapComment, setSoapComment] = useState('');
-  const [drugs, setDrugs] = useState([{ name: '', dosage: '' }]);
+  const [patientFirstName, setpatientFirstName] = useState("");
+  const [patientLastName, setPatientLastName] = useState("");
+  const [visitDate, setVisitDate] = useState("");
+  const [subjective, setSubjective] = useState("");
+  const [objective, setObjective] = useState("");
+  const [assessment, setAssessment] = useState("");
+  const [plan, setPlan] = useState("");
+  const [finalDiagnosis, setFinalDiagnosis] = useState("");
+  const [soapComment, setSoapComment] = useState("");
+  const [drugs, setDrugs] = useState([{ name: "", dosage: "" }]);
   const [existingNotes, setExistingNotes] = useState([]);
   const [isViewNotesOpen, setIsViewNotesOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
-  const userData = JSON.parse(localStorage.getItem('userData')) || {};
-  
+  const token = JSON.parse(localStorage.getItem("authToken"))?.token;
+  const userData = JSON.parse(localStorage.getItem("userData")) || {};
 
-  const patientId = localStorage.getItem("patientId"); 
+  const patientId = localStorage.getItem("patientId");
 
-  const [activeTab, setActiveTab] = useState('SOAP');
+  const [activeTab, setActiveTab] = useState("SOAP");
 
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [prescriptionForm, setPrescriptionForm] = useState({
-    drugName: '',
-    dosage: '',
-    frequency: '',
-    duration: '',
-    instructions: ''
+    drugName: "",
+    dosage: "",
+    frequency: "",
+    duration: "",
+    instructions: "",
   });
-  const [prescriptionError, setPrescriptionError] = useState('');
+  const [prescriptionError, setPrescriptionError] = useState("");
   const [prescriptionLoading, setPrescriptionLoading] = useState(false);
 
   const [prescriptions, setPrescriptions] = useState([]);
@@ -55,7 +63,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   }, [isOpen]);
 
   useEffect(() => {
-    if (activeTab === 'Medication' && patientId) {
+    if (activeTab === "Medication" && patientId) {
       fetchPatientPrescriptions();
     }
   }, [activeTab, patientId]);
@@ -63,19 +71,22 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const fetchPatientNotes = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${baseUrl}/api/notes/get-all-patient-note/${patientId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.get(
+        `${baseUrl}/api/notes/get-all-patient-note/${patientId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       const notesData = response.data;
       if (notesData.length > 0) {
         const firstNote = notesData[0];
         setpatientFirstName(firstNote.patientFirstName);
         setPatientLastName(firstNote.patientLastName);
       }
-        setExistingNotes(notesData);
+      setExistingNotes(notesData);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching patient notes:", err);
@@ -86,15 +97,18 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const fetchPatientPrescriptions = async () => {
     setFetchingPrescriptions(true);
     try {
-      const response = await axios.get(`${baseUrl}/api/prescriptions/patient/${patientId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.get(
+        `${baseUrl}/api/prescriptions/patient/${patientId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       // Sort prescriptions by createdAt in descending order (newest first)
-      const sortedPrescriptions = response.data.sort((a, b) => 
-        new Date(b.createdAt) - new Date(a.createdAt)
+      const sortedPrescriptions = response.data.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
       setPrescriptions(sortedPrescriptions);
     } catch (err) {
@@ -104,29 +118,29 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     }
   };
 
-  useEffect(()=> {
+  useEffect(() => {
     setError("");
-  }, [drugs])
-   
+  }, [drugs]);
+
   const handleViewNotes = async () => {
     if (!isViewNotesOpen) {
       await fetchPatientNotes();
     }
-     setIsViewNotesOpen((prev) => !prev);
+    setIsViewNotesOpen((prev) => !prev);
   };
-  
+
   const handleAddNote = async (e) => {
     e.preventDefault();
-   
-    for (let drug of drugs) {
-      if (!drug.name || !drug.dosage) {
-        setError("Please provide both drug name and dosage.");
-       return;
-      }
-    }
+
+    // for (let drug of drugs) {
+    //   if (!drug.name || !drug.dosage) {
+    //     setError("Please provide both drug name and dosage.");
+    //    return;
+    //   }
+    // }
     const formData = {
-      doctorId: userData?.id, 
-      patientId: patientId, 
+      doctorId: userData?.id,
+      patientId: patientId,
       patientFirstName,
       patientLastName,
       visitDate,
@@ -136,35 +150,42 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       plan,
       finalDiagnosis,
       soapComment,
-      drugs,
     };
 
     try {
-       setLoading(true)
-      const response = await axios.post(`${baseUrl}/api/notes/create`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
+      setLoading(true);
+      const response = await axios.post(
+        `${baseUrl}/api/notes/create`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      alert("Note added successfully!");
+      toast.success("Note added successfully!");
       onNoteAdded(response.data);
       resetForm();
-      setLoading(false)
+      setLoading(false);
     } catch (err) {
-      setLoading(false)
+      setLoading(false);
       console.error("Failed to add note:", err);
+      toast.error("Failed to add note, please try again.")
+      alert("Failed to add note, please try again.");
     }
   };
   const resetForm = () => {
-    setVisitDate('');
-    setSubjective('');
-    setObjective('');
-    setAssessment('');
-    setPlan('');
-    setFinalDiagnosis('');
-    setSoapComment('');
-    setDrugs([{ name: '', dosage: '' }]);
+    setVisitDate("");
+    setSubjective("");
+    setObjective("");
+    setAssessment("");
+    setPlan("");
+    setFinalDiagnosis("");
+    setSoapComment("");
+    setDrugs([{ name: "", dosage: "" }]);
   };
   const handleDrugChange = (e, index, field) => {
     const updatedDrugs = [...drugs];
@@ -173,29 +194,32 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   };
 
   const handleAddDrug = () => {
-    setDrugs([...drugs, { name: '', dosage: '' }]);
+    setDrugs([...drugs, { name: "", dosage: "" }]);
   };
 
   const handleViewPrescription = async (prescriptionId) => {
     setCurrentPrescriptionId(prescriptionId);
     setIsEditMode(true);
     setPrescriptionLoading(true);
-    
+
     try {
-      const response = await axios.get(`${baseUrl}/api/prescriptions/${prescriptionId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
+      const response = await axios.get(
+        `${baseUrl}/api/prescriptions/${prescriptionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       const prescription = response.data;
       setPrescriptionForm({
         drugName: prescription.drugName,
         dosage: prescription.dosage,
         frequency: prescription.frequency,
         duration: prescription.duration,
-        instructions: prescription.instructions
+        instructions: prescription.instructions,
       });
       setIsPrescriptionModalOpen(true);
     } catch (err) {
@@ -207,25 +231,31 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
   const handleUpdatePrescription = async (e) => {
     e.preventDefault();
-    setPrescriptionError('');
+    setPrescriptionError("");
     setPrescriptionLoading(true);
 
     try {
-      await axios.put(`${baseUrl}/api/prescriptions/${currentPrescriptionId}`, {
-        ...prescriptionForm,
-        patientId
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      await axios.put(
+        `${baseUrl}/api/prescriptions/${currentPrescriptionId}`,
+        {
+          ...prescriptionForm,
+          patientId,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       setIsPrescriptionModalOpen(false);
       resetPrescriptionForm();
       fetchPatientPrescriptions();
     } catch (err) {
-      setPrescriptionError(err.response?.data?.message || 'Failed to update prescription');
+      setPrescriptionError(
+        err.response?.data?.message || "Failed to update prescription"
+      );
     } finally {
       setPrescriptionLoading(false);
     }
@@ -233,11 +263,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
   const resetPrescriptionForm = () => {
     setPrescriptionForm({
-      drugName: '',
-      dosage: '',
-      frequency: '',
-      duration: '',
-      instructions: ''
+      drugName: "",
+      dosage: "",
+      frequency: "",
+      duration: "",
+      instructions: "",
     });
     setIsEditMode(false);
     setCurrentPrescriptionId(null);
@@ -253,25 +283,31 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     if (isEditMode) {
       await handleUpdatePrescription(e);
     } else {
-      setPrescriptionError('');
+      setPrescriptionError("");
       setPrescriptionLoading(true);
 
       try {
-        await axios.post(`${baseUrl}/api/prescriptions`, {
-          ...prescriptionForm,
-          patientId
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+        await axios.post(
+          `${baseUrl}/api/prescriptions`,
+          {
+            ...prescriptionForm,
+            patientId,
           },
-        });
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         setIsPrescriptionModalOpen(false);
         resetPrescriptionForm();
         fetchPatientPrescriptions();
       } catch (err) {
-        setPrescriptionError(err.response?.data?.message || 'Failed to add prescription');
+        setPrescriptionError(
+          err.response?.data?.message || "Failed to add prescription"
+        );
       } finally {
         setPrescriptionLoading(false);
       }
@@ -281,44 +317,68 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const handlePrescriptionChange = (e) => {
     setPrescriptionForm({
       ...prescriptionForm,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   if (!isOpen) return null;
 
   const handleOverlayClick = (e) => {
-  if (e.target === e.currentTarget) {
-     onClose();
-  }
-};
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleOverlayClick}>
-      <div className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={handleOverlayClick}
+    >
+      <div
+        className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-blue-600">Add Notes</h2>
           <button
             onClick={handleViewNotes}
             className="bg-blue-500 text-white w-[160px] h-10 px-6 py-2 rounded-md flex items-center justify-center"
           >
-            {isViewNotesOpen ? "Hide Notes" : loading ? 
-              <ColorRing visible={true} height="40" width="40" ariaLabel="loading" wrapperClass="color-ring-wrapper" colors={['white', 'white', 'white', 'white', 'white']}/> : 
+            {isViewNotesOpen ? (
+              "Hide Notes"
+            ) : loading ? (
+              <ColorRing
+                visible={true}
+                height="40"
+                width="40"
+                ariaLabel="loading"
+                wrapperClass="color-ring-wrapper"
+                colors={["white", "white", "white", "white", "white"]}
+              />
+            ) : (
               "View Notes"
-            }
+            )}
           </button>
         </div>
 
         <div className="flex border-b mb-4">
           <button
-            className={`px-4 py-2 ${activeTab === 'SOAP' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('SOAP')}
+            className={`px-4 py-2 ${
+              activeTab === "SOAP"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("SOAP")}
           >
             SOAP
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === 'Medication' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('Medication')}
+            className={`px-4 py-2 ${
+              activeTab === "Medication"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("Medication")}
           >
             Medication
           </button>
@@ -334,53 +394,86 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   existingNotes.map((note, index) => (
                     <div key={index} className="border-b mb-2">
                       <Accordion>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1-content"
-          id="panel1-header"
-        >
-          <div className="w-full flex justify-between items-center">
-            <p className="text-blue-600 font-medium">Note #{note.id}</p>
-          <p className="text-gray-900/60">{formatDate(note.visitDate)}</p>
-          </div>
-          
-        </AccordionSummary>
-        <AccordionDetails>
-          <div className="w-full flex flex-col">
-            <div className="w-full flex flex-col mb-2 gap-y-2">
-              <p className="text-gray-800 text-lg font-semibold">Subjective</p>
-              <p className="text-gray-800/60 text-sm">{note.subjective || "N/A"}</p>
-            </div>
-            <div className="w-full flex flex-col mb-2 gap-y-2">
-              <p className="text-gray-800 text-lg font-semibold">Objective</p>
-              <p className="text-gray-800/60 text-sm">{note.subjective || "N/A"}</p>
-            </div>
-            <div className="w-full flex flex-col mb-2 gap-y-2">
-              <p className="text-gray-800 text-lg font-semibold">Assessment</p>
-              <p className="text-gray-800/60 text-sm">{note.assessment || "N/A"}</p>
-            </div>
-            <div className="w-full flex flex-col mb-2 gap-y-2">
-              <p className="text-gray-800 text-lg font-semibold">Plan</p>
-              <p className="text-gray-800/60 text-sm">{note.plan || "N/A"}</p>
-            </div>
-            <div className="w-full flex flex-col mb-2 gap-y-2">
-              <p className="text-gray-800 text-lg font-semibold">Fina Diagnosis</p>
-              <p className="text-gray-800/60 text-sm">{note.finalDiagnosis || "N/A"}</p>
-            </div>
-            <div className="w-full flex flex-col mb-2 gap-y-2">
-              <p className="text-gray-800 text-lg font-semibold">SOAP Comment</p>
-              <p className="text-gray-800/60 text-sm">{note.soapComment || "N/A"}</p>
-            </div>
-             <ul>
-              <p className="text-gray-800 text-lg font-semibold">Drug Prescription</p>
-                     {note.drugs.map((drug, idx) => (
-                      <li key={idx} className="text-gray-800/60 text-sm">{drug.name} - {drug.dosage}</li>
-                    ))}
-                  </ul>
-          </div>
-        </AccordionDetails>
-      </Accordion>
-                     
+                        <AccordionSummary
+                          expandIcon={<ExpandMoreIcon />}
+                          aria-controls="panel1-content"
+                          id="panel1-header"
+                        >
+                          <div className="w-full flex justify-between items-center">
+                            <p className="text-blue-600 font-medium">
+                              Note #{note.id}
+                            </p>
+                            <p className="text-gray-900/60">
+                              {formatDate(note.visitDate)}
+                            </p>
+                          </div>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <div className="w-full flex flex-col">
+                            <div className="w-full flex flex-col mb-2 gap-y-2">
+                              <p className="text-gray-800 text-lg font-semibold">
+                                Subjective
+                              </p>
+                              <p className="text-gray-800/60 text-sm">
+                                {note.subjective || "N/A"}
+                              </p>
+                            </div>
+                            <div className="w-full flex flex-col mb-2 gap-y-2">
+                              <p className="text-gray-800 text-lg font-semibold">
+                                Objective
+                              </p>
+                              <p className="text-gray-800/60 text-sm">
+                                {note.subjective || "N/A"}
+                              </p>
+                            </div>
+                            <div className="w-full flex flex-col mb-2 gap-y-2">
+                              <p className="text-gray-800 text-lg font-semibold">
+                                Assessment
+                              </p>
+                              <p className="text-gray-800/60 text-sm">
+                                {note.assessment || "N/A"}
+                              </p>
+                            </div>
+                            <div className="w-full flex flex-col mb-2 gap-y-2">
+                              <p className="text-gray-800 text-lg font-semibold">
+                                Plan
+                              </p>
+                              <p className="text-gray-800/60 text-sm">
+                                {note.plan || "N/A"}
+                              </p>
+                            </div>
+                            <div className="w-full flex flex-col mb-2 gap-y-2">
+                              <p className="text-gray-800 text-lg font-semibold">
+                                Fina Diagnosis
+                              </p>
+                              <p className="text-gray-800/60 text-sm">
+                                {note.finalDiagnosis || "N/A"}
+                              </p>
+                            </div>
+                            <div className="w-full flex flex-col mb-2 gap-y-2">
+                              <p className="text-gray-800 text-lg font-semibold">
+                                SOAP Comment
+                              </p>
+                              <p className="text-gray-800/60 text-sm">
+                                {note.soapComment || "N/A"}
+                              </p>
+                            </div>
+                            {/* <ul>
+                              <p className="text-gray-800 text-lg font-semibold">
+                                Drug Prescription
+                              </p>
+                              {note.drugs.map((drug, idx) => (
+                                <li
+                                  key={idx}
+                                  className="text-gray-800/60 text-sm"
+                                >
+                                  {drug.name} - {drug.dosage}
+                                </li>
+                              ))}
+                            </ul> */}
+                          </div>
+                        </AccordionDetails>
+                      </Accordion>
                     </div>
                   ))
                 ) : (
@@ -390,24 +483,31 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             )}
           </div>
         )}
-   
+
         {!isViewNotesOpen && (
           <>
-            {activeTab === 'SOAP' && (
+            {activeTab === "SOAP" && (
               <>
                 <form className="space-y-4">
                   <div className="border rounded p-4">
                     <p className="font-bold text-[#020E7C] text-xl text-left">
                       Patient Name
                     </p>
-                    <hr className="mt-1"/>
+                    <hr className="mt-1" />
                     <p className="font-bold text-gray-900/50 mt-2 text-xl text-left">
-                      {`${capitalizeFirstLetter(patientFirstName)} ${capitalizeFirstLetter(patientLastName)}`}
+                      {`${capitalizeFirstLetter(
+                        patientFirstName
+                      )} ${capitalizeFirstLetter(patientLastName)}`}
                     </p>
                   </div>
 
                   <div className="border rounded p-4">
-                    <label htmlFor="visitDate" className="block font-medium mb-1 text-[#020E7C]">Visit Date:</label>
+                    <label
+                      htmlFor="visitDate"
+                      className="block font-medium mb-1 text-[#020E7C]"
+                    >
+                      Visit Date:
+                    </label>
                     <input
                       type="date"
                       id="visitDate"
@@ -419,7 +519,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
 
                   <div className="border rounded p-4">
-                    <label htmlFor="subjective" className="block text-sm font-medium mb-1 text-[#020E7C]">Subjective</label>
+                    <label
+                      htmlFor="subjective"
+                      className="block text-sm font-medium mb-1 text-[#020E7C]"
+                    >
+                      Subjective
+                    </label>
                     <textarea
                       id="subjective"
                       value={subjective}
@@ -430,7 +535,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
 
                   <div className="border rounded p-4">
-                    <label htmlFor="objective" className="block mb-1 text-[#020E7C] text-sm font-medium">Objective</label>
+                    <label
+                      htmlFor="objective"
+                      className="block mb-1 text-[#020E7C] text-sm font-medium"
+                    >
+                      Objective
+                    </label>
                     <textarea
                       id="objective"
                       value={objective}
@@ -441,7 +551,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
 
                   <div className="border rounded p-4">
-                    <label htmlFor="assessment" className="block mb-1 text-[#020E7C] text-sm font-medium">Assessment</label>
+                    <label
+                      htmlFor="assessment"
+                      className="block mb-1 text-[#020E7C] text-sm font-medium"
+                    >
+                      Assessment
+                    </label>
                     <textarea
                       id="assessment"
                       value={assessment}
@@ -452,7 +567,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
 
                   <div className="border rounded p-4">
-                    <label htmlFor="plan" className="block mb-1 text-[#020E7C] text-sm font-medium">Plan</label>
+                    <label
+                      htmlFor="plan"
+                      className="block mb-1 text-[#020E7C] text-sm font-medium"
+                    >
+                      Plan
+                    </label>
                     <textarea
                       id="plan"
                       value={plan}
@@ -463,7 +583,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
 
                   <div className="border rounded p-4">
-                    <label htmlFor="finalDiagnosis" className="block mb-1 text-[#020E7C] text-sm font-medium">Final Diagnosis</label>
+                    <label
+                      htmlFor="finalDiagnosis"
+                      className="block mb-1 text-[#020E7C] text-sm font-medium"
+                    >
+                      Final Diagnosis
+                    </label>
                     <input
                       id="finalDiagnosis"
                       type="text"
@@ -475,7 +600,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
 
                   <div className="border rounded p-4">
-                    <label htmlFor="soapComment" className="block mb-1 text-[#020E7C] text-sm font-medium">SOAP Comment</label>
+                    <label
+                      htmlFor="soapComment"
+                      className="block mb-1 text-[#020E7C] text-sm font-medium"
+                    >
+                      SOAP Comment
+                    </label>
                     <textarea
                       id="soapComment"
                       value={soapComment}
@@ -486,23 +616,41 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
                 </form>
                 <div className="flex justify-between mt-6">
-                  <button type="button" onClick={onClose} className="bg-white text-blue-600 px-4 py-2 rounded-md">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="bg-white text-blue-600 px-4 py-2 rounded-md"
+                  >
                     Cancel
                   </button>
-                  <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded-md w-[160px] h-10 flex justify-center items-center" onClick={handleAddNote}>
-                    {loading ? 
-                      <ColorRing visible={true} height="40" width="40" ariaLabel="loading" wrapperClass="color-ring-wrapper" colors={['white', 'white', 'white', 'white', 'white']}/> : 
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-6 py-2 rounded-md w-[160px] h-10 flex justify-center items-center"
+                    onClick={handleAddNote}
+                  >
+                    {loading ? (
+                      <ColorRing
+                        visible={true}
+                        height="40"
+                        width="40"
+                        ariaLabel="loading"
+                        wrapperClass="color-ring-wrapper"
+                        colors={["white", "white", "white", "white", "white"]}
+                      />
+                    ) : (
                       "Add Note"
-                    }
+                    )}
                   </button>
                 </div>
               </>
             )}
 
-            {activeTab === 'Medication' && (
+            {activeTab === "Medication" && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">Current Medication</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Current Medication
+                  </h3>
                   <button
                     className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center gap-2"
                     onClick={handleNewPrescription}
@@ -519,7 +667,13 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                       width="50"
                       ariaLabel="loading"
                       wrapperClass="color-ring-wrapper"
-                      colors={['#3B82F6', '#3B82F6', '#3B82F6', '#3B82F6', '#3B82F6']}
+                      colors={[
+                        "#3B82F6",
+                        "#3B82F6",
+                        "#3B82F6",
+                        "#3B82F6",
+                        "#3B82F6",
+                      ]}
                     />
                   </div>
                 ) : (
@@ -527,24 +681,44 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drug</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Drug
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Dosage
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Frequency
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Start Date
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Action
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {prescriptions.map((prescription) => (
                           <tr key={prescription.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{prescription.drugName}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{prescription.dosage}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{prescription.frequency}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(prescription.createdAt)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {prescription.drugName}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {prescription.dosage}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {prescription.frequency}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {formatDate(prescription.createdAt)}
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                              <button 
+                              <button
                                 className="bg-blue-500 text-white px-4 py-1 rounded-md"
-                                onClick={() => handleViewPrescription(prescription.id)}
+                                onClick={() =>
+                                  handleViewPrescription(prescription.id)
+                                }
                               >
                                 View
                               </button>
@@ -553,7 +727,10 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                         ))}
                         {prescriptions.length === 0 && (
                           <tr>
-                            <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                            <td
+                              colSpan="5"
+                              className="px-6 py-4 text-center text-sm text-gray-500"
+                            >
                               No prescriptions found
                             </td>
                           </tr>
@@ -568,9 +745,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             {/* Prescription Modal */}
             {isPrescriptionModalOpen && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white w-[90%] max-w-md rounded-lg shadow-lg p-6" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="bg-white w-[90%] max-w-md rounded-lg shadow-lg p-6"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex items-center gap-3 mb-6">
-                    <button 
+                    <button
                       onClick={() => {
                         setIsPrescriptionModalOpen(false);
                         resetPrescriptionForm();
@@ -580,13 +760,18 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                       <IoMdArrowBack size={24} />
                     </button>
                     <h2 className="text-xl font-semibold">
-                      {isEditMode ? 'Update Prescription' : 'New Prescription'}
+                      {isEditMode ? "Update Prescription" : "New Prescription"}
                     </h2>
                   </div>
 
-                  <form onSubmit={handlePrescriptionSubmit} className="space-y-4">
+                  <form
+                    onSubmit={handlePrescriptionSubmit}
+                    className="space-y-4"
+                  >
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Drug Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Drug Name
+                      </label>
                       <input
                         type="text"
                         name="drugName"
@@ -599,7 +784,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Dosage</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Dosage
+                        </label>
                         <input
                           type="text"
                           name="dosage"
@@ -611,7 +798,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Frequency
+                        </label>
                         <select
                           name="frequency"
                           value={prescriptionForm.frequency}
@@ -622,15 +811,21 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                           <option value="">Select frequency</option>
                           <option value="Once Daily">Once Daily</option>
                           <option value="Twice Daily">Twice Daily</option>
-                          <option value="Three Times Daily">Three Times Daily</option>
-                          <option value="Four Times Daily">Four Times Daily</option>
+                          <option value="Three Times Daily">
+                            Three Times Daily
+                          </option>
+                          <option value="Four Times Daily">
+                            Four Times Daily
+                          </option>
                           <option value="As Needed">As Needed</option>
                         </select>
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Duration
+                      </label>
                       <input
                         type="text"
                         name="duration"
@@ -643,7 +838,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Instructions
+                      </label>
                       <textarea
                         name="instructions"
                         value={prescriptionForm.instructions}
@@ -673,10 +870,18 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                             width="30"
                             ariaLabel="loading"
                             wrapperClass="color-ring-wrapper"
-                            colors={['white', 'white', 'white', 'white', 'white']}
+                            colors={[
+                              "white",
+                              "white",
+                              "white",
+                              "white",
+                              "white",
+                            ]}
                           />
+                        ) : isEditMode ? (
+                          "Update Prescription"
                         ) : (
-                          isEditMode ? 'Update Prescription' : 'Add Prescription'
+                          "Add Prescription"
                         )}
                       </button>
                     </div>
@@ -687,6 +892,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           </>
         )}
       </div>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };
