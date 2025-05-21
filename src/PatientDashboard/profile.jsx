@@ -3,7 +3,7 @@ import { Tab } from "@headlessui/react"
 import { toast } from "react-toastify"
 import axios from "axios"
 import { baseUrl } from "../env"
-import { getToken } from "../utils"
+import { capitalizeFirstLetter, getToken } from "../utils"
 import "../styling/profile.css"
 
 function classNames(...classes) {
@@ -174,6 +174,9 @@ export default function Profile() {
     }
   }
 
+  useEffect(()=> {
+    console.log(profileData.imageUrl, " image url")
+  }, [profileData])
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -194,7 +197,7 @@ export default function Profile() {
     formData.append("file", file)
 
     try {
-      const response = await axios.post(`${baseUrl}/api/v1/patient-profile/upload-image`, formData, {
+      const response = await axios.post(`${baseUrl}/api/v1/registration/upload`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -203,8 +206,9 @@ export default function Profile() {
       if (response) {
         setProfileData((prev) => ({
           ...prev,
-          imageUrl: response.data.data,
+          imageUrl: response.data,
         }))
+        console.log(response, " image response")
         toast.success("Image uploaded successfully")
       }
     } catch (error) {
@@ -241,7 +245,7 @@ export default function Profile() {
 
     try {
       // First upload to cloudinary
-      const cloudinaryResponse = await axios.post(`${baseUrl}/api/v1/patient-profile/upload-image`, formData, {
+      const cloudinaryResponse = await axios.post(`${baseUrl}/api/v1/registration/upload`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -274,6 +278,8 @@ export default function Profile() {
       setUploadingDocument(false)
     }
   }
+
+  const fullName = userData.lastName +" "+ userData.firstName
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -416,6 +422,26 @@ export default function Profile() {
                     <form onSubmit={handleSubmit} className="space-y-8">
                       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Full name</label>
+                          <input
+                            type="text"
+                            name="fullName"
+                            readOnly
+                            value={fullName}
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:ring-opacity-50 transition-colors duration-200 px-4"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Email address</label>
+                          <input
+                            type="text"
+                            name="email"
+                            readOnly
+                            value={userData.emailAddress}
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
+                          />
+                        </div>
+                        <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
                           <input
                             type="date"
@@ -540,7 +566,7 @@ export default function Profile() {
                           <input
                             type="text"
                             name="emergencyContact.relationship"
-                            value={profileData.emergencyContact.relationship}
+                            value={capitalizeFirstLetter(profileData.emergencyContact.relationship)}
                             onChange={handleChange}
                             className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
                             placeholder="Enter relationship"
@@ -658,7 +684,7 @@ export default function Profile() {
                               <option value="">Select Category</option>
                               {documentCategoryOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
-                                  {option.label}
+                                  {capitalizeFirstLetter(option.label)}
                                 </option>
                               ))}
                             </select>
