@@ -118,7 +118,7 @@ const VideoCall = () => {
         age: calculateAge(userData?.dob)
       });
     }
-  }, [userData, call]);
+  }, [call]);
 
   const handleToggleAudio = () => {
     toggleMicrophone();

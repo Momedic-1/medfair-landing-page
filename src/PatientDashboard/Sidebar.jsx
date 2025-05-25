@@ -105,7 +105,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     className={({ isActive }) =>
                       `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
                         ? 'bg-blue-100 text-blue-800'
-                        : 'text-gray-100 hover:bg-gray-100'
+                        : 'text-gray-100 hover:bg-gray-100 hover:text-blue-800'
                       }`
                     }
                   >
