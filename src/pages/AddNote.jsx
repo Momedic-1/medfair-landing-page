@@ -129,6 +129,10 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     setIsViewNotesOpen((prev) => !prev);
   };
 
+  const moveToMedication = () => {
+    setActiveTab("Medication");
+    setIsViewNotesOpen(false);
+  }
   const handleAddNote = async (e) => {
     e.preventDefault();
 
@@ -150,9 +154,22 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       plan,
       finalDiagnosis,
       soapComment,
+      prescriptions:
+    {
+      drugName: prescriptionForm.drugName,
+      dosage: prescriptionForm.dosage,
+      frequency: prescriptionForm.frequency,
+      duration: prescriptionForm.duration,
+      instructions: prescriptionForm.instructions,
+      patientId: patientId
+    }
     };
 
     try {
+       if (isEditMode) {
+      await handleUpdatePrescription(e);
+    }
+    else {
       setLoading(true);
       const response = await axios.post(
         `${baseUrl}/api/notes/create`,
@@ -169,7 +186,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       toast.success("Note added successfully!");
       onNoteAdded(response.data);
       resetForm();
-      setLoading(false);
+      setLoading(false);}
     } catch (err) {
       setLoading(false);
       console.error("Failed to add note:", err);
@@ -278,41 +295,41 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     setIsPrescriptionModalOpen(true);
   };
 
-  const handlePrescriptionSubmit = async (e) => {
-    e.preventDefault();
-    if (isEditMode) {
-      await handleUpdatePrescription(e);
-    } else {
-      setPrescriptionError("");
-      setPrescriptionLoading(true);
+  // const handlePrescriptionSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (isEditMode) {
+  //     await handleUpdatePrescription(e);
+  //   } else {
+  //     setPrescriptionError("");
+  //     setPrescriptionLoading(true);
 
-      try {
-        await axios.post(
-          `${baseUrl}/api/prescriptions`,
-          {
-            ...prescriptionForm,
-            patientId,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+  //     try {
+  //       await axios.post(
+  //         `${baseUrl}/api/prescriptions`,
+  //         {
+  //           ...prescriptionForm,
+  //           patientId,
+  //         },
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "Content-Type": "application/json",
+  //           },
+  //         }
+  //       );
 
-        setIsPrescriptionModalOpen(false);
-        resetPrescriptionForm();
-        fetchPatientPrescriptions();
-      } catch (err) {
-        setPrescriptionError(
-          err.response?.data?.message || "Failed to add prescription"
-        );
-      } finally {
-        setPrescriptionLoading(false);
-      }
-    }
-  };
+  //       setIsPrescriptionModalOpen(false);
+  //       resetPrescriptionForm();
+  //       fetchPatientPrescriptions();
+  //     } catch (err) {
+  //       setPrescriptionError(
+  //         err.response?.data?.message || "Failed to add prescription"
+  //       );
+  //     } finally {
+  //       setPrescriptionLoading(false);
+  //     }
+  //   }
+  // };
 
   const handlePrescriptionChange = (e) => {
     setPrescriptionForm({
@@ -626,9 +643,10 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   <button
                     type="submit"
                     className="bg-blue-500 text-white px-6 py-2 rounded-md w-[160px] h-10 flex justify-center items-center"
-                    onClick={handleAddNote}
+                    // onClick={handleAddNote}
+                    onClick={moveToMedication}
                   >
-                    {loading ? (
+                    {/* {loading ? (
                       <ColorRing
                         visible={true}
                         height="40"
@@ -639,7 +657,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                       />
                     ) : (
                       "Add Note"
-                    )}
+                    )} */}
+                    Next
                   </button>
                 </div>
               </>
@@ -765,7 +784,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </div>
 
                   <form
-                    onSubmit={handlePrescriptionSubmit}
+                    // onSubmit={handlePrescriptionSubmit}
+                    onSubmit={handleAddNote}
                     className="space-y-4"
                   >
                     <div>
@@ -859,25 +879,20 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
                     <div className="flex justify-end mt-6">
                       <button
+                    
                         type="submit"
                         className="bg-blue-500 text-white px-6 py-2 rounded-md w-full flex items-center justify-center"
-                        disabled={prescriptionLoading}
+                        disabled={loading}
                       >
-                        {prescriptionLoading ? (
-                          <ColorRing
-                            visible={true}
-                            height="30"
-                            width="30"
-                            ariaLabel="loading"
-                            wrapperClass="color-ring-wrapper"
-                            colors={[
-                              "white",
-                              "white",
-                              "white",
-                              "white",
-                              "white",
-                            ]}
-                          />
+                      {loading ? (
+                      <ColorRing
+                        visible={true}
+                        height="40"
+                        width="40"
+                        ariaLabel="loading"
+                        wrapperClass="color-ring-wrapper"
+                        colors={["white", "white", "white", "white", "white"]}
+                      /> 
                         ) : isEditMode ? (
                           "Update Prescription"
                         ) : (
