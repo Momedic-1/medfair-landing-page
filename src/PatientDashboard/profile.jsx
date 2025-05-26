@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Tab } from "@headlessui/react"
+import React,{ useState, useEffect } from "react"
+import { Tab, Transition, Dialog } from "@headlessui/react"
 import { toast } from "react-toastify"
 import axios from "axios"
 import { baseUrl } from "../env"
@@ -14,6 +14,19 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+
+  const openModal = (doc) => {
+    setSelectedDocument(doc);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedDocument(null);
+    setIsModalOpen(false);
+  };
+
   const [uploadingDocument, setUploadingDocument] = useState(false)
   const [profileData, setProfileData] = useState({
     dateOfBirth: "",
@@ -174,6 +187,7 @@ export default function Profile() {
     }
   }
 
+  console.log()
   useEffect(()=> {
     console.log(profileData.imageUrl, " image url")
   }, [profileData])
@@ -245,32 +259,44 @@ export default function Profile() {
 
     try {
       // First upload to cloudinary
-      const cloudinaryResponse = await axios.post(`${baseUrl}/api/v1/registration/upload`, formData, {
+      const cloudinaryResponse = await axios.post(`${baseUrl}/api/patient/documents/upload/${userId}?category=${profileData.documentCategory}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
-
-      if (cloudinaryResponse) {
-        // Then send the URL to the backend
-        const response = await axios.post(
-          `${baseUrl}/api/patient/documents/upload/${userId}?category=${profileData.documentCategory}`,
-          { file: cloudinaryResponse.data.data },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-
-        if (response) {
+       if (cloudinaryResponse) {
           setProfileData((prev) => ({
             ...prev,
-            documents: [...prev.documents, response.data],
+            documents: [...prev.documents, cloudinaryResponse.data],
           }))
+      
           toast.success("Document uploaded successfully")
         }
-      }
+      console.log(cloudinaryResponse?.data?.url, " cloudinary response")
+
+
+      // if (cloudinaryResponse) {
+      //   // Then send the URL to the backend
+      //   const response = await axios.post(
+      //     `${baseUrl}/api/patient/documents/upload/${userId}?category=${profileData.documentCategory}`,
+      //     { file: cloudinaryResponse?.data },
+      //     {
+      //       headers: {
+      //         Authorization: `Bearer ${token}`,
+      //       },
+      //     }
+      //   )
+
+      //   console.log(response, " document upload response")
+
+      //   if (response) {
+      //     setProfileData((prev) => ({
+      //       ...prev,
+      //       documents: [...prev.documents, response.data],
+      //     }))
+      //     toast.success("Document uploaded successfully")
+      //   }
+      // }
     } catch (error) {
       console.error("Error uploading document:", error)
       toast.error("Failed to upload document")
@@ -731,7 +757,7 @@ export default function Profile() {
                       </div>
 
                       {/* Display uploaded documents */}
-                      {profileData.documents && profileData.documents.length > 0 && (
+                      {/* {profileData.documents && profileData.documents.length > 0 && (
                         <div className="mt-6">
                           <h3 className="text-lg font-medium text-gray-900 mb-4">Uploaded Documents</h3>
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -766,7 +792,42 @@ export default function Profile() {
                             ))}
                           </div>
                         </div>
-                      )}
+                      )} */}
+                        {profileData.documents && profileData.documents.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Uploaded Documents</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {profileData.documents.map((doc, index) => (
+              <div
+                key={index}
+                className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:border-gray-400 cursor-pointer"
+                onClick={() => openModal(doc)}
+              >
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-10 w-10 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900">{doc.category}</p>
+                  <p className="text-sm font-medium text-gray-900">{doc.fileName}</p>
+                  <p className="truncate text-sm text-gray-500">Click to view</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
                     </div>
                   </Tab.Panel>
 
@@ -843,6 +904,61 @@ export default function Profile() {
                   </Tab.Panel>
                 </Tab.Panels>
               </Tab.Group>
+              <Transition show={isModalOpen} as={React.Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+          <Transition.Child
+            as={React.Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-50" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-full p-4 text-center">
+              <Transition.Child
+                as={React.Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                    Document Viewer
+                  </Dialog.Title>
+                  <div className="mt-4">
+                    
+                    {selectedDocument && (
+                      <iframe
+                        src={selectedDocument.url}
+                        title="Document Viewer"
+                        className="w-full h-[500px] border"
+                      />
+                   
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={closeModal}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
             </div>
           </div>
         </main>
