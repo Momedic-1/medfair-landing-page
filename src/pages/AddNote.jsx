@@ -14,8 +14,15 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ColorRing } from "react-loader-spinner";
 import { IoMdArrowBack } from "react-icons/io";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
-
+import "react-toastify/dist/ReactToastify.css";
+import {
+  Calendar,
+  Pill,
+  Clock,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [patientFirstName, setpatientFirstName] = useState("");
@@ -34,6 +41,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [error, setError] = useState("");
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
   const userData = JSON.parse(localStorage.getItem("userData")) || {};
+  const [expandedDates, setExpandedDates] = useState(new Set());
 
   const patientId = localStorage.getItem("patientId");
 
@@ -132,7 +140,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const moveToMedication = () => {
     setActiveTab("Medication");
     setIsViewNotesOpen(false);
-  }
+  };
+  console.log(patientId, "patientId");
   const handleAddNote = async (e) => {
     e.preventDefault();
 
@@ -142,56 +151,75 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     //    return;
     //   }
     // }
+    // const formData = {
+    //   doctorId: userData?.id,
+    //   patientId: Number(patientId),
+    //   // patientFirstName,
+    //   // patientLastName,
+    //   visitDate,
+    //   subjective,
+    //   objective,
+    //   assessment,
+    //   plan,
+    //   finalDiagnosis,
+    //   soapComment,
+    //   prescriptions: {
+    //     drugName: prescriptionForm.drugName,
+    //     dosage: prescriptionForm.dosage,
+    //     frequency: prescriptionForm.frequency,
+    //     duration: prescriptionForm.duration,
+    //     instructions: prescriptionForm.instructions,
+    //     patientId: Number(patientId),
+    //   },
+    // };
     const formData = {
       doctorId: userData?.id,
-      patientId: patientId,
-      patientFirstName,
-      patientLastName,
-      visitDate,
+      patientId: Number(patientId),
+      visitDate: visitDate,
       subjective,
       objective,
       assessment,
       plan,
       finalDiagnosis,
       soapComment,
-      prescriptions:
-    {
-      drugName: prescriptionForm.drugName,
-      dosage: prescriptionForm.dosage,
-      frequency: prescriptionForm.frequency,
-      duration: prescriptionForm.duration,
-      instructions: prescriptionForm.instructions,
-      patientId: patientId
-    }
-    };
-
-    try {
-       if (isEditMode) {
-      await handleUpdatePrescription(e);
-    }
-    else {
-      setLoading(true);
-      const response = await axios.post(
-        `${baseUrl}/api/notes/create`,
-        formData,
+      prescriptions: [
+        // Wrap in an array
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+          drugName: prescriptionForm.drugName,
+          dosage: prescriptionForm.dosage,
+          frequency: prescriptionForm.frequency,
+          duration: prescriptionForm.duration,
+          instructions: prescriptionForm.instructions,
+          patientId: Number(patientId),
+        },
+      ],
+    };
+    try {
+      if (isEditMode) {
+        await handleUpdatePrescription(e);
+      } else {
+        setLoading(true);
+        const response = await axios.post(
+          `${baseUrl}/api/notes/create`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      alert("Note added successfully!");
-      toast.success("Note added successfully!");
-      onNoteAdded(response.data);
-      resetForm();
-      setLoading(false);}
+        toast.success("Note added successfully!");
+        onNoteAdded(response.data);
+        resetForm();
+        setLoading(false);
+      }
     } catch (err) {
       setLoading(false);
       console.error("Failed to add note:", err);
-      toast.error("Failed to add note, please try again.")
-      alert("Failed to add note, please try again.");
+      toast.error("Failed to add note, please try again.");
+      // alert("Failed to add note, please try again.");
     }
   };
   const resetForm = () => {
@@ -344,6 +372,65 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const groupPrescriptionsByDate = (prescriptions) => {
+    const grouped = prescriptions.reduce((acc, prescription) => {
+      const date = new Date(prescription.createdAt).toDateString();
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(prescription);
+      return acc;
+    }, {});
+
+    const sortedDates = Object.keys(grouped).sort(
+      (a, b) => new Date(b) - new Date(a)
+    );
+
+    return sortedDates.map((date) => ({
+      date,
+      prescriptions: grouped[date].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      ),
+    }));
+  };
+
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatDateLabel = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+  };
+
+  const toggleDateExpansion = (date) => {
+    const newExpanded = new Set(expandedDates);
+    if (newExpanded.has(date)) {
+      newExpanded.delete(date);
+    } else {
+      newExpanded.add(date);
+    }
+    setExpandedDates(newExpanded);
   };
 
   return (
@@ -678,7 +765,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </button>
                 </div>
 
-                {fetchingPrescriptions ? (
+                {/* {fetchingPrescriptions ? (
                   <div className="flex justify-center py-8">
                     <ColorRing
                       visible={true}
@@ -753,13 +840,195 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                               No prescriptions found
                             </td>
                           </tr>
-                        )}
-                      </tbody>
-                    </table>
+                        )} */}
+                {fetchingPrescriptions ? (
+                  <div className="flex justify-center py-8">
+                    <ColorRing
+                      visible={true}
+                      height="50"
+                      width="50"
+                      ariaLabel="loading"
+                      wrapperClass="color-ring-wrapper"
+                      colors={[
+                        "#3B82F6",
+                        "#3B82F6",
+                        "#3B82F6",
+                        "#3B82F6",
+                        "#3B82F6",
+                      ]}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {groupPrescriptionsByDate(prescriptions).map(
+                      ({ date, prescriptions }) => {
+                        const isExpanded = expandedDates.has(date);
+                        const displayDate = formatDateLabel(
+                          prescriptions[0].createdAt
+                        );
+
+                        return (
+                          <div
+                            key={date}
+                            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                          >
+                            <div
+                              className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-colors"
+                              onClick={() => toggleDateExpansion(date)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <Calendar className="h-4 w-4 text-blue-600" />
+                                  <div>
+                                    <h3 className="text-sm font-semibold text-gray-900">
+                                      {displayDate}
+                                    </h3>
+                                    <p className="text-xs text-gray-500">
+                                      {prescriptions.length} prescription
+                                      {prescriptions.length !== 1 ? "s" : ""}
+                                    </p>
+                                  </div>
+                                </div>
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4 text-gray-400" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                                )}
+                              </div>
+                            </div>
+
+                            {isExpanded && (
+                              <div className="divide-y divide-gray-100">
+                                {prescriptions.map((prescription) => (
+                                  <div
+                                    key={prescription.id}
+                                    className="p-4 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <div className="flex items-start space-x-3">
+                                          <div className="flex-shrink-0">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                              <Pill className="h-4 w-4 text-blue-600" />
+                                            </div>
+                                          </div>
+
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center space-x-2 mb-1">
+                                              <h4 className="text-sm font-semibold text-gray-900">
+                                                {prescription.drugName}
+                                              </h4>
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Active
+                                              </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                                              <div className="flex items-center space-x-1">
+                                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                                                <span className="text-xs text-gray-600">
+                                                  Dosage:
+                                                </span>
+                                                <span className="text-xs font-medium text-gray-900">
+                                                  {prescription.dosage}
+                                                </span>
+                                              </div>
+
+                                              <div className="flex items-center space-x-1">
+                                                <div className="flex items-center space-x-1">
+                                                  <Clock className="h-3 w-3 text-gray-400" />
+                                                  <span className="text-xs text-gray-600">
+                                                    Frequency:
+                                                  </span>{" "}
+                                                </div>
+                                                <span className="text-xs font-medium text-gray-900">
+                                                  {prescription.frequency}
+                                                </span>
+                                              </div>
+                                            </div>
+
+                                            <div className="flex items-center space-x-1">
+                                              <span className="text-xs text-gray-500">
+                                                Prescribed at{" "}
+                                                {formatTime(
+                                                  prescription.createdAt
+                                                )}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex-shrink-0 ml-3">
+                                        <button
+                                          onClick={() =>
+                                            handleViewPrescription(
+                                              prescription.id
+                                            )
+                                          }
+                                          className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                        >
+                                          <Eye className="h-3 w-3 mr-1" />
+                                          View
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {!isExpanded && (
+                              <div className="px-4 py-3">
+                                <div className="flex items-center space-x-3">
+                                  {prescriptions
+                                    .slice(0, 2)
+                                    .map((prescription, index) => (
+                                      <div
+                                        key={prescription.id}
+                                        className="flex items-center space-x-2"
+                                      >
+                                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                          <Pill className="h-3 w-3 text-blue-600" />
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-700">
+                                          {prescription.drugName}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  {prescriptions.length > 2 && (
+                                    <span className="text-xs text-gray-500">
+                                      +{prescriptions.length - 2} more
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                    )}
+
+                    {prescriptions.length === 0 && (
+                      <div className="text-center py-8">
+                        <Pill className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                        <h3 className="text-sm font-medium text-gray-900 mb-1">
+                          No prescriptions found
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Prescriptions will appear here once added.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
+                {/* </tbody>
+                    </table>
+                  </div>
+                )} */}
               </div>
             )}
+            {console.log(prescriptions, "prescriptions")}
 
             {/* Prescription Modal */}
             {isPrescriptionModalOpen && (
@@ -879,20 +1148,25 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
                     <div className="flex justify-end mt-6">
                       <button
-                    
                         type="submit"
                         className="bg-blue-500 text-white px-6 py-2 rounded-md w-full flex items-center justify-center"
                         disabled={loading}
                       >
-                      {loading ? (
-                      <ColorRing
-                        visible={true}
-                        height="40"
-                        width="40"
-                        ariaLabel="loading"
-                        wrapperClass="color-ring-wrapper"
-                        colors={["white", "white", "white", "white", "white"]}
-                      /> 
+                        {loading ? (
+                          <ColorRing
+                            visible={true}
+                            height="40"
+                            width="40"
+                            ariaLabel="loading"
+                            wrapperClass="color-ring-wrapper"
+                            colors={[
+                              "white",
+                              "white",
+                              "white",
+                              "white",
+                              "white",
+                            ]}
+                          />
                         ) : isEditMode ? (
                           "Update Prescription"
                         ) : (
