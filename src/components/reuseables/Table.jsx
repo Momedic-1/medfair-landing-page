@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { formatDate } from "../../utils";
 import { Hourglass } from "react-loader-spinner";
-import axios from "axios";
-import { baseUrl } from "../../env";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Modal, Box } from "@mui/material";
@@ -23,33 +21,17 @@ const modalStyle = {
 };
 
 const Table = ({ data = [], isLoading = false, emptyMessage }) => {
-  const token = JSON.parse(localStorage.getItem("authToken"))?.token;
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [medications, setMedications] = useState([]);
 
-  const getDrugs = async (patientId) => {
-    console.log("Patient ID:", patientId);
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/prescriptions/patient/${patientId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Drugs data:", response.data);
-
-      if (response.length === 0) {
-        toast.info("No prescribed medication");
-      } else {
-        setMedications(response.data);
-        setModalIsOpen(true);
-      }
-    } catch (err) {
-      console.error("Failed", err);
-      toast.error("Failed to fetch medications");
+  const viewMedications = (prescriptions) => {
+    if (!prescriptions || prescriptions.length === 0) {
+      toast.info("No prescribed medication");
+      return;
     }
+
+    setMedications(prescriptions);
+    setModalIsOpen(true);
   };
 
   return (
@@ -101,41 +83,41 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   colors={["#306cce", "#72a1ed"]}
                 />
               </div>
-            ) : data?.length < 0 ? (
+            ) : data?.length === 0 ? (
               <tr>
-                <td colSpan="7" className="text-center py-4">
+                <td colSpan="9" className="text-center py-4">
                   {emptyMessage || "No data available"}
                 </td>
               </tr>
             ) : (
               data.map((patient, index) => (
                 <tr key={index} className="border-b border-gray-200">
-                  <td className="px-2 py-2 text-sm text-gray-700">{`${patient.doctorLastName}, ${patient.doctorFirstName}`}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">{`${patient?.doctorLastName}, ${patient.doctorFirstName}`}</td>
                   <td className="px-2 py-2 text-sm text-gray-700">
-                    {formatDate(patient.visitDate)}
+                    {formatDate(patient?.visitDate)}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700 ">
-                    {patient.subjective}
+                    {patient?.subjective}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700 ">
-                    {patient.objective}
+                    {patient?.objective}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700 ">
-                    {patient.assessment}
+                    {patient?.assessment}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient.plan}
+                    {patient?.plan}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient.finalDiagnosis}
+                    {patient?.finalDiagnosis}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient.soapComment}
+                    {patient?.soapComment}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
-                  <button
+                    <button
                       className="p-4 hover:bg-gray-100 rounded-lg border"
-                      onClick={() => getDrugs(patient.id)}
+                      onClick={() => viewMedications(patient?.prescriptions)}
                     >
                       View
                     </button>
@@ -170,13 +152,15 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
               </thead>
               <tbody>
                 {medications.map((medication) => (
-                  <tr key={medication.id}>
-                    <td className="border px-4 py-2">{medication.drugName}</td>
-                    <td className="border px-4 py-2">{medication.dosage}</td>
-                    <td className="border px-4 py-2">{medication.frequency}</td>
-                    <td className="border px-4 py-2">{medication.duration}</td>
+                  <tr key={medication?.id}>
+                    <td className="border px-4 py-2">{medication?.drugName}</td>
+                    <td className="border px-4 py-2">{medication?.dosage}</td>
                     <td className="border px-4 py-2">
-                      {medication.instructions}
+                      {medication?.frequency}
+                    </td>
+                    <td className="border px-4 py-2">{medication?.duration}</td>
+                    <td className="border px-4 py-2">
+                      {medication?.instructions}
                     </td>
                   </tr>
                 ))}
