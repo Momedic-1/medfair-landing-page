@@ -39,31 +39,40 @@ const PatientTable = ({ data = [], isLoading = false, emptyMessage }) => {
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [medications, setMedications] = useState([]);
-
-  const getDrugs = async (patientId) => {
-    console.log("Patient ID:", patientId);
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/prescriptions/patient/${patientId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Drugs data:", response.data);
-
-      if (response.data.length === 0) {
+  
+    const viewMedications = (prescriptions) => {
+      if (!prescriptions || prescriptions.length === 0) {
         toast.info("No prescribed medication");
-      } else {
-        setMedications(response.data);
-        setModalIsOpen(true);
+        return;
       }
-    } catch (err) {
-      console.error("Failed", err);
-      toast.error("Failed to fetch medications");
-    }
-  };
+  
+      setMedications(prescriptions);
+      setModalIsOpen(true);
+    };
+  // const getDrugs = async (patientId) => {
+  //   console.log("Patient ID:", patientId);
+  //   try {
+  //     const response = await axios.get(
+  //       `${baseUrl}/api/prescriptions/patient/${patientId}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  //     console.log("Drugs data:", response.data);
+
+  //     if (response.data.length === 0) {
+  //       toast.info("No prescribed medication");
+  //     } else {
+  //       setMedications(response.data);
+  //       setModalIsOpen(true);
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed", err);
+  //     toast.error("Failed to fetch medications");
+  //   }
+  // };
 
   return (
     <div className="w-full border rounded-lg flex flex-col h-[400px]">
@@ -164,7 +173,8 @@ const PatientTable = ({ data = [], isLoading = false, emptyMessage }) => {
                   <td className="px-4 py-4 whitespace-nowrap">
                     <button
                       className="p-4 hover:bg-gray-100 rounded-lg border"
-                      onClick={() => getDrugs(patient.id)}
+                
+                      onClick={() => viewMedications(patient.prescriptions)}
                     >
                       View
                     </button>

@@ -182,17 +182,17 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       plan,
       finalDiagnosis,
       soapComment,
-      prescriptions: [
-        // Wrap in an array
-        {
-          drugName: prescriptionForm.drugName,
-          dosage: prescriptionForm.dosage,
-          frequency: prescriptionForm.frequency,
-          duration: prescriptionForm.duration,
-          instructions: prescriptionForm.instructions,
-          patientId: Number(patientId),
-        },
-      ],
+      prescriptions
+      // : [
+      //   {
+      //     drugName: prescriptionForm.drugName,
+      //     dosage: prescriptionForm.dosage,
+      //     frequency: prescriptionForm.frequency,
+      //     duration: prescriptionForm.duration,
+      //     instructions: prescriptionForm.instructions,
+      //     patientId: Number(patientId),
+      //   },
+      // ],
     };
     try {
       if (isEditMode) {
@@ -1028,7 +1028,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                 )} */}
               </div>
             )}
-            {console.log(prescriptions, "prescriptions")}
+         
 
             {/* Prescription Modal */}
             {isPrescriptionModalOpen && (
