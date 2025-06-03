@@ -100,14 +100,18 @@ const Dashboard = () => {
   const [isCallADoctorModalOpen, setIsCallADoctorModalOpen] = useState(false);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
+  const [meetingLink, setMeetingLink] = useState(null);
   const [specialistDetails, setSpecialistDetails] = useState([]);
-  console.log("specialist details", specialistDetails);
   const token = getToken();
   const [selectedTime, setSelectedTime] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [isBooking, setIsBooking] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [currentTime, setCurrentTime] = useState(dayjs());
+
+
+
 
   const patientId = getId();
 
@@ -116,6 +120,7 @@ const Dashboard = () => {
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
+  const BOOK_MEETING_URL = `${baseUrl}//api/appointment/meetings`;
 
   const handleCardClick = (title) => {
     if (title === "Schedule an Appointment with a Specialist") {
@@ -183,11 +188,36 @@ const Dashboard = () => {
       );
     } catch (error) {
       toast.error("Failed to book appointment");
-      console.error("Booking error:", error);
+      // console.error("Booking error:", error);
     } finally {
       setIsBooking(false);
     }
   };
+
+  const getMeetingLink = async (e, slotId, patientId) => {
+    e.preventDefault();
+    setIsBooking(true);
+    try {
+      const response = await axios.post(
+        `${BOOK_MEETING_URL}?slotId=${slotId}&patientId=${patientId}/join`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(response, " meeting link response");
+      setMeetingLink(response)
+      setIsBooking(false);
+    } catch (error) {
+      toast.error("Failed to book appointment");
+      // console.error("Booking error:", error);
+    } finally {
+     setIsBooking(false);
+    }
+  }
 
   const getSpecialistCount = async () => {
     try {
@@ -258,7 +288,7 @@ const Dashboard = () => {
         }
       );
       const formattedData = response.data;
-      console.log("upcoming appointments", formattedData);
+      // console.log("upcoming appointments", formattedData);
       setUpcomingAppointments(formattedData);
       setIsLoading(false);
     } catch (error) {
@@ -267,12 +297,6 @@ const Dashboard = () => {
     }
   };
 
-  console.log(
-    "specialist details slots",
-    specialistDetails.map((specialist) =>
-      specialist.slots.map((slot) => slot.time)
-    )
-  );
 
   const createMeeting = async () => {
     setIsLoading(true);
@@ -309,6 +333,21 @@ const Dashboard = () => {
   useEffect(() => {
     getUpcomingAppointments();
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(dayjs());
+    }, 1000); 
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // useEffect(()=> {
+  //    const interval = setInterval(() => {
+  //     getMeetingLink()
+  //   }, 4000); 
+  //   return () => clearInterval(interval);
+  // }, [])
 
   return (
     <div className="w-full">
@@ -369,30 +408,65 @@ const Dashboard = () => {
                     <div className="h-4 bg-gray-300 rounded w-2/5"></div>
                   </div>
                 ))
-            ) : upcomingAppointments.length > 0 ? (
-              upcomingAppointments.map((details, index) => (
-                <div
-                  key={index}
-                  className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
-                >
-                  <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-                  <div className="flex flex-col">
-                    <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span>📅 {details.date}</span>
-                      <span>⏰ {formatTime(details.time)}</span>
-                    </div>
-                    {/* <button className="mt-2 text-blue-500 hover:underline text-sm">
-                      View Details
-                    </button> */}
-                  </div>
+            ) : 
+            // upcomingAppointments.length > 0 ? (
+            // upcomingAppointments.map((details, index) => (
+            //   <div
+            //     key={index}
+            //     className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
+            //   >
+            //     <Avatar src={details?.imageUrl} sx={avatarStyle2} />
+            //     <div className="flex flex-col">
+            //       <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
+            //       <div className="flex items-center gap-2 text-sm text-gray-600">
+            //         <span>📅 {details.date}</span>
+            //         <span>⏰ {formatTime(details.time)}</span>
+            //       </div>
+            //      {currentTime.isSameOrAfter(appointmentTime) && (
+            //     <button className="mt-2 p-2 rounded-lg bg-blue-600 text-white hover:underline text-sm">
+            //       Join Call
+            //     </button>
+            //   )}
+            //     </div>
+            //   </div>
+            // ))
+            // ) : (
+            //   <div className="text-center text-gray-600 text-sm p-4">
+            //     No upcoming appointments
+            //   </div>
+            // )
+            upcomingAppointments.length > 0 ? (
+        upcomingAppointments.map((details, index) => {
+          const appointmentTime = dayjs(details.time);
+          const showJoinButtonTime = appointmentTime.subtract(5, 'minute');
+
+
+          return (
+            <div
+              key={index}
+              className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
+            >
+              <Avatar src={details?.imageUrl} sx={avatarStyle2} />
+              <div className="flex flex-col">
+                <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>📅 {details.date}</span>
+                  <span>⏰ {formatTime(details.time)}</span>
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-600 text-sm p-4">
-                No upcoming appointments
+                 {currentTime.isSameOrAfter(showJoinButtonTime) && (
+                  <button onClick={getMeetingLink(e, details.slotId, details.patientId)} className="mt-2 p-2 rounded-lg bg-blue-600 text-white hover:underline text-sm">
+                    Join Call
+                  </button>
+                )}
               </div>
-            )}
+            </div>
+          );
+        })
+      ) : (
+        <div className="text-center text-gray-600 text-sm p-4">
+          No upcoming appointments
+        </div>
+      )}
           </div>
         </div>
       </div>
