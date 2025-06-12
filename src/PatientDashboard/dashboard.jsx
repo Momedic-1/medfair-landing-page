@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Cards from "../components/reuseables/Cards";
 import call from "./assets/call (2).svg";
 import calendarIcon from "../assets/calendarIcon.jpeg";
@@ -12,7 +12,6 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
   Avatar,
   Button,
   Popover,
@@ -33,6 +32,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PiStethoscope } from "react-icons/pi";
+import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 const localizer = dayjsLocalizer(dayjs);
 const modalStyle = {
@@ -41,7 +41,7 @@ const modalStyle = {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: "90%",
-  maxWidth: "500px",
+  maxWidth: "650px",
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
@@ -63,10 +63,10 @@ const avatarStyle2 = {
 const specialistCategory = [
   {
     id: 1,
-    name: "Psychiatrist",
+    name: "Mental Health Specialist",
     count: 0,
     icon: "🧠",
-    specialization: "PSYCHIATRIST",
+    specialization: "MENTAL_HEALTH_SPECIALIST",
   },
   {
     id: 2,
@@ -77,10 +77,10 @@ const specialistCategory = [
   },
   {
     id: 3,
-    name: "Therapist",
+    name: "Relationship Therapist",
     count: 0,
     icon: "💭",
-    specialization: "THERAPIST",
+    specialization: "RELATIONSHIP_THERAPIST",
   },
   {
     id: 4,
@@ -90,8 +90,9 @@ const specialistCategory = [
     specialization: "SEX_THERAPIST",
   },
 ];
-
 const Dashboard = () => {
+  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+  const userId = userData.id;
   const [isLoading, setIsLoading] = useState(false);
   const [specialistCategories, setSpecialistCategories] =
     useState(specialistCategory);
@@ -108,10 +109,16 @@ const Dashboard = () => {
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [isBooking, setIsBooking] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [currentTime, setCurrentTime] = useState(dayjs());
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [showModal, setShowModal] = useState(false);
 
-
-
+  // New state for reminder system
+  const [upcomingAppointmentIds, setUpcomingAppointmentIds] = useState(
+    new Set()
+  );
+  const [showUpcomingModal, setShowUpcomingModal] = useState(false);
+  const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
+    useState(null);
 
   const patientId = getId();
 
@@ -121,6 +128,108 @@ const Dashboard = () => {
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
   const BOOK_MEETING_URL = `${baseUrl}//api/appointment/meetings`;
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Check for upcoming appointments (5-minute reminder)
+  useEffect(() => {
+    const checkUpcomingAppointments = () => {
+      const now = new Date();
+
+      upcomingAppointments.forEach((appointment) => {
+        if (!appointment.date || !appointment.time) return;
+
+        const appointmentDateTime = new Date(
+          `${appointment.date}T${appointment.time}`
+        );
+        const timeDiff = appointmentDateTime.getTime() - now.getTime();
+        const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+
+        if (
+          minutesDiff === 5 &&
+          !upcomingAppointmentIds.has(appointment.slotId)
+        ) {
+          setUpcomingAppointmentIds((prev) =>
+            new Set(prev).add(appointment.slotId)
+          );
+          setCurrentUpcomingAppointment(appointment);
+          setShowUpcomingModal(true);
+          toast.info(
+            `Appointment with Dr. ${appointment.name} starting in 5 minutes!`
+          );
+        }
+      });
+    };
+
+    checkUpcomingAppointments();
+  }, [currentTime, upcomingAppointments, upcomingAppointmentIds]);
+
+  // Get appointment status based on current time
+  const getAppointmentStatus = (appointment) => {
+    if (!appointment.date || !appointment.time) return "unknown";
+
+    const now = new Date();
+    const appointmentDateTime = new Date(
+      `${appointment.date}T${appointment.time}`
+    );
+    const timeDiff = now.getTime() - appointmentDateTime.getTime();
+    const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+
+    if (minutesDiff > 30) {
+      return "over"; // More than 30 minutes past appointment time
+    } else if (minutesDiff >= -5 && minutesDiff <= 30) {
+      return "active"; // 5 minutes before to 30 minutes after
+    } else {
+      return "upcoming"; // More than 5 minutes before
+    }
+  };
+
+  // Get status-based styling
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "over":
+        return "bg-red-100 border-red-300";
+      case "active":
+        return "bg-green-100 border-green-300";
+      case "upcoming":
+        return "bg-blue-100 border-blue-300";
+      default:
+        return "bg-gray-100";
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case "over":
+        return "⏰ Appointment Time Over";
+      case "active":
+        return "🟢 Active";
+      case "upcoming":
+        return "⏳ Upcoming";
+      default:
+        return "";
+    }
+  };
+
+  // Handle upcoming modal actions
+  const handleCloseUpcomingModal = () => {
+    setShowUpcomingModal(false);
+    setCurrentUpcomingAppointment(null);
+  };
+
+  const handleJoinFromUpcomingModal = () => {
+    if (currentUpcomingAppointment) {
+      handleJoinCall(currentUpcomingAppointment.slotId);
+      handleCloseUpcomingModal();
+    }
+  };
 
   const handleCardClick = (title) => {
     if (title === "Schedule an Appointment with a Specialist") {
@@ -188,7 +297,6 @@ const Dashboard = () => {
       );
     } catch (error) {
       toast.error("Failed to book appointment");
-      // console.error("Booking error:", error);
     } finally {
       setIsBooking(false);
     }
@@ -209,15 +317,14 @@ const Dashboard = () => {
       );
 
       console.log(response, " meeting link response");
-      setMeetingLink(response)
+      setMeetingLink(response);
       setIsBooking(false);
     } catch (error) {
       toast.error("Failed to book appointment");
-      // console.error("Booking error:", error);
     } finally {
-     setIsBooking(false);
+      setIsBooking(false);
     }
-  }
+  };
 
   const getSpecialistCount = async () => {
     try {
@@ -265,14 +372,13 @@ const Dashboard = () => {
       const specialists = Object.values(parsedResponse).flat();
 
       setSpecialistDetails(specialists);
-      console.log(specialists)
+      console.log(specialists);
 
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching specialists:", error);
       setIsLoading(false);
     }
-    // setSpecialistDetails(specialists[1]);
   };
 
   const getUpcomingAppointments = async () => {
@@ -288,7 +394,6 @@ const Dashboard = () => {
         }
       );
       const formattedData = response.data;
-      // console.log("upcoming appointments", formattedData);
       setUpcomingAppointments(formattedData);
       setIsLoading(false);
     } catch (error) {
@@ -296,7 +401,6 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
-
 
   const createMeeting = async () => {
     setIsLoading(true);
@@ -322,14 +426,15 @@ const Dashboard = () => {
       return response.data;
     } catch (err) {
       toast.error(err.response?.data?.error);
-      toast.error(err.response?.data?.error);
     } finally {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     getSpecialistCount();
   }, []);
+
   useEffect(() => {
     getUpcomingAppointments();
   }, []);
@@ -337,17 +442,10 @@ const Dashboard = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(dayjs());
-    }, 1000); 
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
-
-  // useEffect(()=> {
-  //    const interval = setInterval(() => {
-  //     getMeetingLink()
-  //   }, 4000); 
-  //   return () => clearInterval(interval);
-  // }, [])
 
   return (
     <div className="w-full">
@@ -376,7 +474,6 @@ const Dashboard = () => {
           <div className="w-full lg:w-[68%] rounded-lg border bg-white border-gray-200 p-4">
             <Calendar
               localizer={localizer}
-              // events={myEventsList}
               startAccessor="start"
               endAccessor="end"
               style={{
@@ -387,89 +484,77 @@ const Dashboard = () => {
               }}
             />
           </div>
-          <div className="w-full lg:w-[32%] h-[435px] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4">
+
+          <div className="w-full lg:w-[32%] h-[435px] rounded-lg border overflow-y-scroll bg-white border-gray-200 p-4">
             <h2 className="text-lg font-bold text-blue-900 md:text-xl">
               Appointments
             </h2>
             <p className="text-gray-950/60 text-sm">
               View your upcoming appointments
             </p>
-            {isLoading ? (
-              Array(3)
-                .fill(0)
-                .map((_, index) => (
-                  <div
-                    className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
-                    key={index}
-                  >
-                    <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-2/5"></div>
-                  </div>
-                ))
-            ) : 
-            // upcomingAppointments.length > 0 ? (
-            // upcomingAppointments.map((details, index) => (
-            //   <div
-            //     key={index}
-            //     className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
-            //   >
-            //     <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-            //     <div className="flex flex-col">
-            //       <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
-            //       <div className="flex items-center gap-2 text-sm text-gray-600">
-            //         <span>📅 {details.date}</span>
-            //         <span>⏰ {formatTime(details.time)}</span>
-            //       </div>
-            //      {currentTime.isSameOrAfter(appointmentTime) && (
-            //     <button className="mt-2 p-2 rounded-lg bg-blue-600 text-white hover:underline text-sm">
-            //       Join Call
-            //     </button>
-            //   )}
-            //     </div>
-            //   </div>
-            // ))
-            // ) : (
-            //   <div className="text-center text-gray-600 text-sm p-4">
-            //     No upcoming appointments
-            //   </div>
-            // )
-            upcomingAppointments.length > 0 ? (
-        upcomingAppointments.map((details, index) => {
-          const appointmentTime = dayjs(details.time);
-          const showJoinButtonTime = appointmentTime.subtract(5, 'minute');
+            {isLoading
+              ? Array(3)
+                  .fill(0)
+                  .map((_, idx) => (
+                    <div
+                      className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
+                      key={`loading-appointment-${idx}`}
+                    >
+                      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+                    </div>
+                  ))
+              : (() => {
+                  if (upcomingAppointments.length > 0) {
+                    return upcomingAppointments.map((details) => {
+                      const status = getAppointmentStatus(details);
 
-
-          return (
-            <div
-              key={index}
-              className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
-            >
-              <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-              <div className="flex flex-col">
-                <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>📅 {details.date}</span>
-                  <span>⏰ {formatTime(details.time)}</span>
-                </div>
-                 {currentTime.isSameOrAfter(showJoinButtonTime) && (
-                  <button onClick={getMeetingLink(e, details.slotId, details.patientId)} className="mt-2 p-2 rounded-lg bg-blue-600 text-white hover:underline text-sm">
-                    Join Call
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })
-      ) : (
-        <div className="text-center text-gray-600 text-sm p-4">
-          No upcoming appointments
-        </div>
-      )}
+                      return (
+                        <div
+                          key={
+                            details.slotId ||
+                            details.id ||
+                            `${details.name}-${details.date}-${details.time}`
+                          }
+                          className={`flex flex-row gap-4 mt-4 p-4 border-2 rounded-lg transition-all duration-200 ${
+                            status === "over"
+                              ? "bg-red-100 border-red-300 opacity-60"
+                              : `${getStatusColor(status)} hover:shadow-lg`
+                          }`}
+                        >
+                          <Avatar src={details?.imageUrl} sx={avatarStyle2} />
+                          <div className="flex flex-col flex-1">
+                            <p className="text-sm font-bold text-blue-900">
+                              Dr. {details.name}
+                            </p>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <span>📅 {details.date}</span>
+                              <span>⏰ {formatTime(details.time)}</span>
+                            </div>
+                            {status !== "upcoming" && (
+                              <div className="text-xs font-semibold text-gray-600 mt-1">
+                                {getStatusText(status)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  } else {
+                    return (
+                      <div className="text-center text-gray-600 text-sm p-4">
+                        No upcoming appointments
+                      </div>
+                    );
+                  }
+                })()}
           </div>
         </div>
       </div>
+
+      {/* All existing modals remain the same */}
       <Modal
         open={isMainModalOpen}
         onClose={() => setIsMainModalOpen(false)}
@@ -477,7 +562,9 @@ const Dashboard = () => {
       >
         <Box sx={modalStyle}>
           <div className="w-full flex justify-between items-center mb-4 bg-gradient-to-r from-blue-500 to-blue-700 p-4 rounded-t-lg">
-            <p className="text-2xl text-white font-semibold">Choose Specialist</p>
+            <p className="text-2xl text-white font-semibold">
+              Choose Specialist
+            </p>
             <button
               onClick={() => setIsMainModalOpen(false)}
               className="p-2 hover:bg-blue-600 rounded-full transition-colors"
@@ -511,6 +598,7 @@ const Dashboard = () => {
           ))}
         </Box>
       </Modal>
+
       <Modal
         open={isSpecialistsModalOpen}
         onClose={() => setIsSpecialistsModalOpen(false)}
@@ -568,12 +656,12 @@ const Dashboard = () => {
                             className="mb-4 md:mb-0"
                           />
                         ) : (
-                          <Avatar src="/broken-image.jpg" sx={avatarStyle} className="mb-4 md:mb-0" />
+                          <Avatar
+                            src="/broken-image.jpg"
+                            sx={avatarStyle}
+                            className="mb-4 md:mb-0"
+                          />
                         )}
-                        {/* <p className="text-lg text-gray-500 text-center md:text-left">
-                          ⭐⭐⭐⭐ {specialist?.doctorProfile?.rating || "4.7"} (
-                          {specialist?.doctorProfile?.reviews || 10} reviews)
-                        </p> */}
                       </div>
 
                       <div className="flex flex-col gap-2 md:w-2/3">
@@ -610,7 +698,7 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 md:mt-0">
+                      <div className="w-[120px] mt-4 md:mt-0">
                         <p className="text-sm font-bold text-center md:text-left">
                           {dayjs().format("ddd, MMM D")}
                         </p>
@@ -659,6 +747,7 @@ const Dashboard = () => {
           </List>
         </Box>
       </Modal>
+
       <Modal
         open={isCallADoctorModalOpen}
         onClose={() => setIsCallADoctorModalOpen(false)}
@@ -712,11 +801,6 @@ const Dashboard = () => {
                 >
                   {videoLink?.roomUrl}
                 </a>
-                {/* <Link to={videoLink?.roomUrl}>
-                  <button className="bg-blue-500 w-full h-10 text-white rounded-full">
-                    Click to join a call
-                  </button>
-                </Link> */}
 
                 <Link
                   to={`/video-call?roomUrl=${encodeURIComponent(
@@ -732,6 +816,7 @@ const Dashboard = () => {
           </div>
         </Box>
       </Modal>
+
       <Popover
         open={Boolean(anchorEl)}
         anchorEl={anchorEl}
@@ -748,7 +833,13 @@ const Dashboard = () => {
         <div className="p-4">
           <p>
             Confirm booking with{" "}
-            <span className="font-bold">{selectedDoctor?.doctorProfile.title + " " + selectedDoctor?.doctorProfile.firstName + " " + selectedDoctor?.doctorProfile.lastName }</span>
+            <span className="font-bold">
+              {selectedDoctor?.doctorProfile.title +
+                " " +
+                selectedDoctor?.doctorProfile.firstName +
+                " " +
+                selectedDoctor?.doctorProfile.lastName}
+            </span>
           </p>
           <p className="font-bold">
             {selectedTime &&
@@ -787,6 +878,67 @@ const Dashboard = () => {
           </div>
         </div>
       </Popover>
+
+      {/* Upcoming Appointment Modal */}
+      {showUpcomingModal && currentUpcomingAppointment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <LiaPhoneVolumeSolid
+                    className="text-blue-600"
+                    fontSize={32}
+                  />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Upcoming Appointment
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Your appointment with{" "}
+                  <strong>Dr. {currentUpcomingAppointment.name}</strong> starts
+                  in 5 minutes!
+                </p>
+                <div className="text-sm text-gray-500 mb-4">
+                  <p>📅 {currentUpcomingAppointment.date}</p>
+                  <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 justify-center">
+                <button
+                  onClick={handleCloseUpcomingModal}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+                >
+                  Dismiss
+                </button>
+                <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    disabled={isLoading}
+                    onClick={handleJoinFromUpcomingModal}
+                >
+                  {isLoading ? 'Joining...' : 'Join Call'}
+                </button>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="w-40 h-24 border rounded-lg py-4 px-4 grid place-items-center bg-green-700  bg-opacity-100 cursor-pointer">
+            <p className="text-white font-semibold text-center mb-2">
+              Incoming Call
+            </p>
+            <LiaPhoneVolumeSolid
+              className="shake text-yellow-500"
+              fontSize={28}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

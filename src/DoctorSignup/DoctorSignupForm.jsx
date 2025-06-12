@@ -13,7 +13,7 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { ColorRing } from 'react-loader-spinner';
 
-const specialization = ["Select specialization",'GENERAL_PRACTITIONER', 'PSYCHIATRIST', 'CLINICAL_PSYCHOLOGIST', 'THERAPIST', 'SEX_THERAPIST']
+const specialization = ["Select specialization",'GENERAL_PRACTITIONER', 'MENTAL_HEALTH_SPECIALIST', 'CLINICAL_PSYCHOLOGIST', 'RELATIONSHIP_THERAPIST', 'SEX_THERAPIST']
 export default function DoctorSignupForm() {
 
   const formatSpecialization = (specialization) => {
