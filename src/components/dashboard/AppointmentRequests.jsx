@@ -15,19 +15,16 @@ function AppointmentRequests({ appointments }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [upcomingAppointments, setUpcomingAppointments] = useState(new Set());
   const [showUpcomingModal, setShowUpcomingModal] = useState(false);
-  const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
-    useState(null);
+  const [currentUpcomingAppointment, setCurrentUpcomingAppointment] = useState(null);
 
-  // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    }, 60000);
 
     return () => clearInterval(timer);
   }, []);
 
-  // Check for upcoming appointments (5 minutes before)
   useEffect(() => {
     const checkUpcomingAppointments = () => {
       const now = new Date();
@@ -35,26 +32,15 @@ function AppointmentRequests({ appointments }) {
       appointments.forEach((appointment) => {
         if (!appointment.date || !appointment.time) return;
 
-        // Parse appointment date and time
-        const appointmentDateTime = new Date(
-          `${appointment.date}T${appointment.time}`
-        );
+        const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
         const timeDiff = appointmentDateTime.getTime() - now.getTime();
         const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-        // Show modal 5 minutes before appointment
-        if (
-          minutesDiff === 5 &&
-          !upcomingAppointments.has(appointment.slotId)
-        ) {
-          setUpcomingAppointments((prev) =>
-            new Set(prev).add(appointment.slotId)
-          );
+        if (minutesDiff === 5 && !upcomingAppointments.has(appointment.slotId)) {
+          setUpcomingAppointments((prev) => new Set(prev).add(appointment.slotId));
           setCurrentUpcomingAppointment(appointment);
           setShowUpcomingModal(true);
-          toast.info(
-            `Appointment with ${appointment.name} starting in 5 minutes!`
-          );
+          toast.info(`Appointment with ${appointment.name} starting in 5 minutes!`);
         }
       });
     };
@@ -66,24 +52,21 @@ function AppointmentRequests({ appointments }) {
     if (!appointment.date || !appointment.time) return "unknown";
 
     const now = new Date();
-    const appointmentDateTime = new Date(
-      `${appointment.date}T${appointment.time}`
-    );
+    const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
     const timeDiff = now.getTime() - appointmentDateTime.getTime();
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-    if (minutesDiff > 15) {
-      return "over"; // More than 15 minutes past appointment time
-    } else if (minutesDiff >= -5 && minutesDiff <= 15) {
-      return "active"; // 5 minutes before to 15 minutes after
+    if (minutesDiff > 30) {
+      return "over"; // More than 30 minutes past appointment time
+    } else if (minutesDiff >= -5 && minutesDiff <= 30) {
+      return "active"; // 5 minutes before to 30 minutes after
     } else {
       return "upcoming"; // More than 5 minutes before
     }
-  };
+  }
 
   const handleJoinCall = async (slotId) => {
     const token = getToken();
-
     if (!userId || !slotId || !token) {
       toast.error("Missing required info to join call");
       return;
@@ -109,8 +92,7 @@ function AppointmentRequests({ appointments }) {
       setShowModal(true);
     } catch (error) {
       console.error("Join call error:", error);
-      const errorMessage =
-        error?.response?.data?.message || "Failed to join call";
+      const errorMessage = error?.response?.data?.message || "Failed to join call";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -156,7 +138,7 @@ function AppointmentRequests({ appointments }) {
   };
 
   return (
-    <div className="w-full h-[420px] bg-white rounded-[12px] md:text-[14px] shadow-lg">
+    <div className="w-full h-[420px] bg-white rounded-[12px] md:text-[14px] overflow-y-scroll shadow-lg">
       <div className="px-4 py-4">
         <div className="flex justify-between text-[#020e7c]">
           <span className="text-base font-semibold font-['Roboto'] leading-[25px]">
@@ -170,12 +152,18 @@ function AppointmentRequests({ appointments }) {
         {appointments.length > 0 ? (
           appointments.map((appointment, index) => {
             const status = getAppointmentStatus(appointment);
+
             return (
               <div
                 key={appointment.id || appointment.slotId || index}
-                className={`flex items-center justify-between px-4 rounded-lg mt-4 p-2 border-2 ${getStatusColor(
-                  status
-                )}`}
+                onClick={() =>
+                  status !== "over" && !isLoading && handleJoinCall(appointment.slotId)
+                }
+                className={`flex items-center justify-between px-4 rounded-lg mt-4 p-2 border-2 transition-all duration-200 ${
+                  status === "over"
+                    ? "bg-red-100 border-red-300 cursor-not-allowed opacity-60 pointer-events-none"
+                    : `${getStatusColor(status)} cursor-pointer hover:shadow-md`
+                }`}
               >
                 <div className="flex-shrink-0">
                   {appointment.imageUrl ? (
@@ -207,30 +195,12 @@ function AppointmentRequests({ appointments }) {
                 </div>
 
                 <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
-                  📅{" "}
-                  {appointment.date
-                    ? formatAppointmentDate(appointment.date)
-                    : "No date"}
+                  📅 {appointment.date ? formatAppointmentDate(appointment.date) : "No date"}
                 </div>
 
                 <div className="text-[#020e7c] px-2 text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
-                  ⏰{" "}
-                  {appointment.time ? formatTime(appointment.time) : "No time"}
+                  ⏰ {appointment.time ? formatTime(appointment.time) : "No time"}
                 </div>
-
-                <button
-                  onClick={() => handleJoinCall(appointment.slotId)}
-                  disabled={status === "over" || isLoading}
-                  className={`px-3 py-1 rounded text-xs transition-colors duration-200 ${
-                    status === "over"
-                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                      : status === "active"
-                      ? "bg-green-600 hover:bg-green-700 text-white animate-pulse"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
-                >
-                  {status === "over" ? "Time Over" : "Join Call"}
-                </button>
               </div>
             );
           })
@@ -245,13 +215,8 @@ function AppointmentRequests({ appointments }) {
       {showModal && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
           <div className="w-40 h-24 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer">
-            <p className="text-white font-semibold text-center mb-2">
-              Incoming Call
-            </p>
-            <LiaPhoneVolumeSolid
-              className="shake text-yellow-500"
-              fontSize={28}
-            />
+            <p className="text-white font-semibold text-center mb-2">Incoming Call</p>
+            <LiaPhoneVolumeSolid className="shake text-yellow-500" fontSize={28} />
           </div>
         </div>
       )}
@@ -263,23 +228,17 @@ function AppointmentRequests({ appointments }) {
             <div className="text-center">
               <div className="mb-4">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <LiaPhoneVolumeSolid
-                    className="text-blue-600"
-                    fontSize={32}
-                  />
+                  <LiaPhoneVolumeSolid className="text-blue-600" fontSize={32} />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Upcoming Appointment
                 </h3>
                 <p className="text-gray-600 mb-4">
                   Your appointment with{" "}
-                  <strong>{currentUpcomingAppointment.name}</strong> starts in 5
-                  minutes!
+                  <strong>{currentUpcomingAppointment.name}</strong> starts in 5 minutes!
                 </p>
                 <div className="text-sm text-gray-500 mb-4">
-                  <p>
-                    📅 {formatAppointmentDate(currentUpcomingAppointment.date)}
-                  </p>
+                  <p className="pb-2">📅 {formatAppointmentDate(currentUpcomingAppointment.date)}</p>
                   <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
                 </div>
               </div>
