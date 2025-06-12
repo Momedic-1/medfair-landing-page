@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Cards from "../components/reuseables/Cards";
 import call from "./assets/call (2).svg";
 import calendarIcon from "../assets/calendarIcon.jpeg";
@@ -12,7 +12,6 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
   Avatar,
   Button,
   Popover,
@@ -41,7 +40,7 @@ const modalStyle = {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: "90%",
-  maxWidth: "500px",
+  maxWidth: "650px",
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
@@ -63,10 +62,10 @@ const avatarStyle2 = {
 const specialistCategory = [
   {
     id: 1,
-    name: "Psychiatrist",
+    name: "Mental Health Specialist",
     count: 0,
     icon: "🧠",
-    specialization: "PSYCHIATRIST",
+    specialization: "MENTAL_HEALTH_SPECIALIST",
   },
   {
     id: 2,
@@ -77,10 +76,10 @@ const specialistCategory = [
   },
   {
     id: 3,
-    name: "Therapist",
+    name: "Relationship Therapist",
     count: 0,
     icon: "💭",
-    specialization: "THERAPIST",
+    specialization: "RELATIONSHIP_THERAPIST",
   },
   {
     id: 4,
@@ -92,6 +91,8 @@ const specialistCategory = [
 ];
 
 const Dashboard = () => {
+  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+  const userId = userData.id;
   const [isLoading, setIsLoading] = useState(false);
   const [specialistCategories, setSpecialistCategories] =
     useState(specialistCategory);
@@ -109,9 +110,7 @@ const Dashboard = () => {
   const [isBooking, setIsBooking] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentTime, setCurrentTime] = useState(dayjs());
-
-
-
+  const [showModal, setShowModal] = useState(false);
 
   const patientId = getId();
 
@@ -149,6 +148,47 @@ const Dashboard = () => {
     const category = specialistCategories.find((cat) => cat.id === categoryId);
     getSpecialistsDetails(category.name);
     setIsSpecialistsModalOpen(true);
+  };
+
+  const handleJoinCall = async (slotId) => {
+    const token = getToken();
+
+    if (!userId || !slotId || !token) {
+      toast.error("Missing required info to join call");
+      return;
+    }
+
+    console.log("Joining call with slotId:", slotId, "and userId:", userId);
+
+    try {
+      setIsLoading(true);
+      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
+      console.log("Joining call with URL:", url);
+
+      const response = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success("Joined call successfully!");
+      setVideoLink(response.data.meetingUrl);
+      setShowModal(true);
+    } catch (error) {
+      console.error("Join call error:", error);
+      const rawMsg = error?.response?.data?.exceptionMessage;
+
+      if (rawMsg?.includes("Meeting has not been created yet")) {
+        toast.error("The meeting is not ready yet. Please try again later.");
+      } else {
+        const fallbackMsg =
+          error?.response?.data?.message || "Failed to join call";
+        toast.error(fallbackMsg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBookAppointment = async (e, slotId, patientId) => {
@@ -209,15 +249,15 @@ const Dashboard = () => {
       );
 
       console.log(response, " meeting link response");
-      setMeetingLink(response)
+      setMeetingLink(response);
       setIsBooking(false);
     } catch (error) {
       toast.error("Failed to book appointment");
       // console.error("Booking error:", error);
     } finally {
-     setIsBooking(false);
+      setIsBooking(false);
     }
-  }
+  };
 
   const getSpecialistCount = async () => {
     try {
@@ -265,7 +305,7 @@ const Dashboard = () => {
       const specialists = Object.values(parsedResponse).flat();
 
       setSpecialistDetails(specialists);
-      console.log(specialists)
+      console.log(specialists);
 
       setIsLoading(false);
     } catch (error) {
@@ -296,7 +336,6 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
-
 
   const createMeeting = async () => {
     setIsLoading(true);
@@ -337,7 +376,7 @@ const Dashboard = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(dayjs());
-    }, 1000); 
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -345,7 +384,7 @@ const Dashboard = () => {
   // useEffect(()=> {
   //    const interval = setInterval(() => {
   //     getMeetingLink()
-  //   }, 4000); 
+  //   }, 4000);
   //   return () => clearInterval(interval);
   // }, [])
 
@@ -387,86 +426,66 @@ const Dashboard = () => {
               }}
             />
           </div>
-          <div className="w-full lg:w-[32%] h-[435px] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4">
+          <div className="w-full lg:w-[32%] h-[435px] rounded-lg border overflow-y-scroll bg-white border-gray-200 p-4">
             <h2 className="text-lg font-bold text-blue-900 md:text-xl">
               Appointments
             </h2>
             <p className="text-gray-950/60 text-sm">
               View your upcoming appointments
             </p>
-            {isLoading ? (
-              Array(3)
-                .fill(0)
-                .map((_, index) => (
-                  <div
-                    className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
-                    key={index}
-                  >
-                    <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-2/5"></div>
-                  </div>
-                ))
-            ) : 
-            // upcomingAppointments.length > 0 ? (
-            // upcomingAppointments.map((details, index) => (
-            //   <div
-            //     key={index}
-            //     className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
-            //   >
-            //     <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-            //     <div className="flex flex-col">
-            //       <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
-            //       <div className="flex items-center gap-2 text-sm text-gray-600">
-            //         <span>📅 {details.date}</span>
-            //         <span>⏰ {formatTime(details.time)}</span>
-            //       </div>
-            //      {currentTime.isSameOrAfter(appointmentTime) && (
-            //     <button className="mt-2 p-2 rounded-lg bg-blue-600 text-white hover:underline text-sm">
-            //       Join Call
-            //     </button>
-            //   )}
-            //     </div>
-            //   </div>
-            // ))
-            // ) : (
-            //   <div className="text-center text-gray-600 text-sm p-4">
-            //     No upcoming appointments
-            //   </div>
-            // )
-            upcomingAppointments.length > 0 ? (
-        upcomingAppointments.map((details, index) => {
-          const appointmentTime = dayjs(details.time);
-          const showJoinButtonTime = appointmentTime.subtract(5, 'minute');
-
-
-          return (
-            <div
-              key={index}
-              className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
-            >
-              <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-              <div className="flex flex-col">
-                <p className="text-sm font-bold text-blue-900">Dr. {details.name}</p>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>📅 {details.date}</span>
-                  <span>⏰ {formatTime(details.time)}</span>
-                </div>
-                 {currentTime.isSameOrAfter(showJoinButtonTime) && (
-                  <button onClick={getMeetingLink(e, details.slotId, details.patientId)} className="mt-2 p-2 rounded-lg bg-blue-600 text-white hover:underline text-sm">
-                    Join Call
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })
-      ) : (
-        <div className="text-center text-gray-600 text-sm p-4">
-          No upcoming appointments
-        </div>
-      )}
+            {isLoading
+              ? Array(3)
+                  .fill(0)
+                  .map((_, idx) => (
+                    <div
+                      className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
+                      key={`loading-appointment-${idx}`}
+                    >
+                      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+                    </div>
+                  ))
+              : (() => {
+                  if (upcomingAppointments.length > 0) {
+                    return upcomingAppointments.map((details) => {
+                      return (
+                        <div
+                          key={
+                            details.slotId ||
+                            details.id ||
+                            `${details.name}-${details.date}-${details.time}`
+                          }
+                          className="flex flex-row gap-4 mt-4 p-4 border rounded-lg hover:shadow-lg transition-shadow"
+                        >
+                          <Avatar src={details?.imageUrl} sx={avatarStyle2} />
+                          <div className="flex flex-col">
+                            <p className="text-sm font-bold text-blue-900">
+                              Dr. {details.name}
+                            </p>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <span>📅 {details.date}</span>
+                              <span>⏰ {formatTime(details.time)}</span>
+                            </div>
+                            <button
+                              onClick={() => handleJoinCall(details.slotId)}
+                              className="mt-2 p-2 rounded-lg bg-blue-600 text-white hover:underline text-sm"
+                            >
+                              Join Call
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  } else {
+                    return (
+                      <div className="text-center text-gray-600 text-sm p-4">
+                        No upcoming appointments
+                      </div>
+                    );
+                  }
+                })()}
           </div>
         </div>
       </div>
@@ -477,7 +496,9 @@ const Dashboard = () => {
       >
         <Box sx={modalStyle}>
           <div className="w-full flex justify-between items-center mb-4 bg-gradient-to-r from-blue-500 to-blue-700 p-4 rounded-t-lg">
-            <p className="text-2xl text-white font-semibold">Choose Specialist</p>
+            <p className="text-2xl text-white font-semibold">
+              Choose Specialist
+            </p>
             <button
               onClick={() => setIsMainModalOpen(false)}
               className="p-2 hover:bg-blue-600 rounded-full transition-colors"
@@ -568,7 +589,11 @@ const Dashboard = () => {
                             className="mb-4 md:mb-0"
                           />
                         ) : (
-                          <Avatar src="/broken-image.jpg" sx={avatarStyle} className="mb-4 md:mb-0" />
+                          <Avatar
+                            src="/broken-image.jpg"
+                            sx={avatarStyle}
+                            className="mb-4 md:mb-0"
+                          />
                         )}
                         {/* <p className="text-lg text-gray-500 text-center md:text-left">
                           ⭐⭐⭐⭐ {specialist?.doctorProfile?.rating || "4.7"} (
@@ -610,7 +635,7 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 md:mt-0">
+                      <div className="w-[120px] mt-4 md:mt-0">
                         <p className="text-sm font-bold text-center md:text-left">
                           {dayjs().format("ddd, MMM D")}
                         </p>
@@ -748,7 +773,13 @@ const Dashboard = () => {
         <div className="p-4">
           <p>
             Confirm booking with{" "}
-            <span className="font-bold">{selectedDoctor?.doctorProfile.title + " " + selectedDoctor?.doctorProfile.firstName + " " + selectedDoctor?.doctorProfile.lastName }</span>
+            <span className="font-bold">
+              {selectedDoctor?.doctorProfile.title +
+                " " +
+                selectedDoctor?.doctorProfile.firstName +
+                " " +
+                selectedDoctor?.doctorProfile.lastName}
+            </span>
           </p>
           <p className="font-bold">
             {selectedTime &&
@@ -787,6 +818,62 @@ const Dashboard = () => {
           </div>
         </div>
       </Popover>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md mx-auto">
+            <div className="w-full h-full flex flex-col gap-y-8 px-4">
+              {videoLink === null ? (
+                <>
+                  <p className="text-lg text-center font-medium">
+                    Want to call a doctor?
+                  </p>
+                  <button
+                    className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full"
+                    disabled
+                  >
+                    {isLoading ? (
+                      <ColorRing
+                        height="40"
+                        width="40"
+                        ariaLabel="color-ring-loading"
+                        colors={["white", "white", "white", "white", "white"]}
+                      />
+                    ) : (
+                      "Create Meeting"
+                    )}
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col gap-y-4">
+                  <p className="text-xl font-medium">Your meeting link is:</p>
+                  <a
+                    href={videoLink}
+                    className="text-sm font-medium text-blue-800 underline break-all"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {videoLink}
+                  </a>
+                  <Link
+                    to={`/video-call?roomUrl=${encodeURIComponent(videoLink)}`}
+                  >
+                    <button className="bg-blue-500 w-full h-10 text-white rounded-full">
+                      Click to join the call
+                    </button>
+                  </Link>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="text-sm text-red-500 mt-2"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
