@@ -32,6 +32,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PiStethoscope } from "react-icons/pi";
+import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 const localizer = dayjsLocalizer(dayjs);
 const modalStyle = {
@@ -820,57 +821,15 @@ const Dashboard = () => {
       </Popover>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md mx-auto">
-            <div className="w-full h-full flex flex-col gap-y-8 px-4">
-              {videoLink === null ? (
-                <>
-                  <p className="text-lg text-center font-medium">
-                    Want to call a doctor?
-                  </p>
-                  <button
-                    className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full"
-                    disabled
-                  >
-                    {isLoading ? (
-                      <ColorRing
-                        height="40"
-                        width="40"
-                        ariaLabel="color-ring-loading"
-                        colors={["white", "white", "white", "white", "white"]}
-                      />
-                    ) : (
-                      "Create Meeting"
-                    )}
-                  </button>
-                </>
-              ) : (
-                <div className="flex flex-col gap-y-4">
-                  <p className="text-xl font-medium">Your meeting link is:</p>
-                  <a
-                    href={videoLink}
-                    className="text-sm font-medium text-blue-800 underline break-all"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {videoLink}
-                  </a>
-                  <Link
-                    to={`/video-call?roomUrl=${encodeURIComponent(videoLink)}`}
-                  >
-                    <button className="bg-blue-500 w-full h-10 text-white rounded-full">
-                      Click to join the call
-                    </button>
-                  </Link>
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="text-sm text-red-500 mt-2"
-                  >
-                    Close
-                  </button>
-                </div>
-              )}
-            </div>
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="w-40 h-24 border rounded-lg py-4 px-4 grid place-items-center bg-green-700  bg-opacity-100 cursor-pointer">
+            <p className="text-white font-semibold text-center mb-2">
+              Incoming Call
+            </p>
+            <LiaPhoneVolumeSolid
+              className="shake text-yellow-500"
+              fontSize={28}
+            />
           </div>
         </div>
       )}
