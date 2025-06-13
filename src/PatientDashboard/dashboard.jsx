@@ -359,31 +359,7 @@ const Dashboard = () => {
       setIsBooking(false);
     }
   };
-
-  const getMeetingLink = async (e, slotId, patientId) => {
-    e.preventDefault();
-    setIsBooking(true);
-    try {
-      const response = await axios.post(
-        `${BOOK_MEETING_URL}?slotId=${slotId}&patientId=${patientId}/join`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log(response, " meeting link response");
-      setMeetingLink(response);
-      setIsBooking(false);
-    } catch (error) {
-      toast.error("Failed to book appointment");
-    } finally {
-      setIsBooking(false);
-    }
-  };
-
+ 
   const getSpecialistCount = async () => {
     try {
       setIsLoading(true);
@@ -998,8 +974,7 @@ const Dashboard = () => {
         <Link
           to={`/video-call?roomUrl=${encodeURIComponent(videoLink?.roomUrl)}`}
         >
-          <div
-            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
             onClick={handleJoinFromUpcomingModal}
           >
             <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700  bg-opacity-100 cursor-pointer">
