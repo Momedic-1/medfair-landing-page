@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { formatAppointmentDate, formatTime, getToken } from "../../utils";
 import { baseUrl } from "../../env";
 import { LiaPhoneVolumeSolid } from "react-icons/lia";
+import { Link } from "react-router-dom";
 
 function AppointmentRequests({ appointments }) {
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
@@ -15,7 +16,8 @@ function AppointmentRequests({ appointments }) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [upcomingAppointments, setUpcomingAppointments] = useState(new Set());
   const [showUpcomingModal, setShowUpcomingModal] = useState(false);
-  const [currentUpcomingAppointment, setCurrentUpcomingAppointment] = useState(null);
+  const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
+    useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -26,44 +28,92 @@ function AppointmentRequests({ appointments }) {
   }, []);
 
   useEffect(() => {
-    const checkUpcomingAppointments = () => {
-      const now = new Date();
+    const now = new Date();
 
-      appointments.forEach((appointment) => {
-        if (!appointment.date || !appointment.time) return;
+    appointments.forEach((appointment) => {
+      if (!appointment.date || !appointment.time) return;
 
-        const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
-        const timeDiff = appointmentDateTime.getTime() - now.getTime();
-        const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+      const appointmentDateTime = new Date(
+        `${appointment.date}T${appointment.time}`
+      );
 
-        if (minutesDiff === 5 && !upcomingAppointments.has(appointment.slotId)) {
-          setUpcomingAppointments((prev) => new Set(prev).add(appointment.slotId));
-          setCurrentUpcomingAppointment(appointment);
-          setShowUpcomingModal(true);
-          toast.info(`Appointment with ${appointment.name} starting in 5 minutes!`);
-        }
-      });
-    };
+      // Check if the date is valid
+      if (isNaN(appointmentDateTime.getTime())) {
+        console.warn(
+          "Invalid appointment date/time:",
+          appointment.date,
+          appointment.time
+        );
+        return;
+      }
 
-    checkUpcomingAppointments();
+      const timeDiff = appointmentDateTime.getTime() - now.getTime();
+      const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+
+      // Show reminder between 4-6 minutes before (more flexible range)
+      if (
+        minutesDiff >= 4 &&
+        minutesDiff <= 6 &&
+        !upcomingAppointments.has(appointment.slotId)
+      ) {
+        setUpcomingAppointments((prev) =>
+          new Set(prev).add(appointment.slotId)
+        );
+        setCurrentUpcomingAppointment(appointment);
+        setShowUpcomingModal(true);
+        toast.info(
+          `Appointment with ${appointment.name} starting in ${minutesDiff} minutes!`
+        );
+      }
+
+      // Auto open Join Call modal when appointment is due (0 to 1 min after)
+      const nowDiff = now.getTime() - appointmentDateTime.getTime();
+      const nowMinutesDiff = Math.floor(nowDiff / (1000 * 60));
+      const isNow = nowMinutesDiff >= 0 && nowMinutesDiff <= 1;
+
+      // Close reminder modal if it's time for the meeting
+      if (
+        isNow &&
+        showUpcomingModal &&
+        currentUpcomingAppointment?.slotId === appointment.slotId
+      ) {
+        setShowUpcomingModal(false);
+        setCurrentUpcomingAppointment(null);
+      }
+
+      if (isNow && !showModal && !videoLink) {
+        handleJoinCall(appointment.slotId);
+      }
+    });
   }, [currentTime, appointments, upcomingAppointments]);
+
+  // Also update the timer to check more frequently
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 30000); // Check every 30 seconds instead of 60
+
+    return () => clearInterval(timer);
+  }, []);
 
   const getAppointmentStatus = (appointment) => {
     if (!appointment.date || !appointment.time) return "unknown";
 
     const now = new Date();
-    const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+    const appointmentDateTime = new Date(
+      `${appointment.date}T${appointment.time}`
+    );
     const timeDiff = now.getTime() - appointmentDateTime.getTime();
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
     if (minutesDiff > 30) {
-      return "over"; // More than 30 minutes past appointment time
+      return "over";
     } else if (minutesDiff >= -5 && minutesDiff <= 30) {
-      return "active"; // 5 minutes before to 30 minutes after
+      return "active";
     } else {
-      return "upcoming"; // More than 5 minutes before
+      return "upcoming";
     }
-  }
+  };
 
   const handleJoinCall = async (slotId) => {
     const token = getToken();
@@ -92,7 +142,8 @@ function AppointmentRequests({ appointments }) {
       setShowModal(true);
     } catch (error) {
       console.error("Join call error:", error);
-      const errorMessage = error?.response?.data?.message || "Failed to join call";
+      const errorMessage =
+        error?.response?.data?.message || "Failed to join call";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -154,10 +205,10 @@ function AppointmentRequests({ appointments }) {
             const status = getAppointmentStatus(appointment);
 
             return (
-              <div
-                key={appointment.id || appointment.slotId || index}
+              <div key={appointment.id || appointment.slotId || index}
                 onClick={() =>
-                  status !== "over" && !isLoading && handleJoinCall(appointment.slotId)
+                  status !== "over" &&
+                  !isLoading
                 }
                 className={`flex items-center justify-between px-4 rounded-lg mt-4 p-2 border-2 transition-all duration-200 ${
                   status === "over"
@@ -195,11 +246,15 @@ function AppointmentRequests({ appointments }) {
                 </div>
 
                 <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
-                  📅 {appointment.date ? formatAppointmentDate(appointment.date) : "No date"}
+                  📅{" "}
+                  {appointment.date
+                    ? formatAppointmentDate(appointment.date)
+                    : "No date"}
                 </div>
 
                 <div className="text-[#020e7c] px-2 text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
-                  ⏰ {appointment.time ? formatTime(appointment.time) : "No time"}
+                  ⏰{" "}
+                  {appointment.time ? formatTime(appointment.time) : "No time"}
                 </div>
               </div>
             );
@@ -212,13 +267,20 @@ function AppointmentRequests({ appointments }) {
       </div>
 
       {/* Video Call Modal */}
-      {showModal && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="w-40 h-24 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer">
-            <p className="text-white font-semibold text-center mb-2">Incoming Call</p>
-            <LiaPhoneVolumeSolid className="shake text-yellow-500" fontSize={28} />
+      {showModal && videoLink && (
+        <Link to={`/video-call?roomUrl=${encodeURIComponent(videoLink)}`}>
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
+              <p className="text-white font-semibold text-center mb-2">
+                Join Meeting Room
+              </p>
+              <LiaPhoneVolumeSolid
+                className="shake text-yellow-500"
+                fontSize={28}
+              />
+            </div>
           </div>
-        </div>
+        </Link>
       )}
 
       {/* Upcoming Appointment Modal */}
@@ -228,17 +290,23 @@ function AppointmentRequests({ appointments }) {
             <div className="text-center">
               <div className="mb-4">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <LiaPhoneVolumeSolid className="text-blue-600" fontSize={32} />
+                  <LiaPhoneVolumeSolid
+                    className="text-blue-600"
+                    fontSize={32}
+                  />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Upcoming Appointment
                 </h3>
                 <p className="text-gray-600 mb-4">
                   Your appointment with{" "}
-                  <strong>{currentUpcomingAppointment.name}</strong> starts in 5 minutes!
+                  <strong>{currentUpcomingAppointment.name}</strong> starts in 5
+                  minutes!
                 </p>
                 <div className="text-sm text-gray-500 mb-4">
-                  <p className="pb-2">📅 {formatAppointmentDate(currentUpcomingAppointment.date)}</p>
+                  <p className="pb-2">
+                    📅 {formatAppointmentDate(currentUpcomingAppointment.date)}
+                  </p>
                   <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
                 </div>
               </div>

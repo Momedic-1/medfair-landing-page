@@ -111,8 +111,7 @@ const Dashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
-
-  // New state for reminder system
+  const [bookedSlots, setBookedSlots] = useState(new Set());
   const [upcomingAppointmentIds, setUpcomingAppointmentIds] = useState(
     new Set()
   );
@@ -149,11 +148,24 @@ const Dashboard = () => {
         const appointmentDateTime = new Date(
           `${appointment.date}T${appointment.time}`
         );
+
+        // Check if the date is valid
+        if (isNaN(appointmentDateTime.getTime())) {
+          console.warn(
+            "Invalid appointment date/time:",
+            appointment.date,
+            appointment.time
+          );
+          return;
+        }
+
         const timeDiff = appointmentDateTime.getTime() - now.getTime();
         const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
+        // Show reminder between 4-6 minutes before (more flexible range)
         if (
-          minutesDiff === 5 &&
+          minutesDiff >= 4 &&
+          minutesDiff <= 6 &&
           !upcomingAppointmentIds.has(appointment.slotId)
         ) {
           setUpcomingAppointmentIds((prev) =>
@@ -162,14 +174,37 @@ const Dashboard = () => {
           setCurrentUpcomingAppointment(appointment);
           setShowUpcomingModal(true);
           toast.info(
-            `Appointment with Dr. ${appointment.name} starting in 5 minutes!`
+            `Appointment with Dr. ${appointment.name} starting in ${minutesDiff} minutes!`
           );
+        }
+
+        // Auto-close reminder modal when appointment is due (0 to 1 min after)
+        const nowDiff = now.getTime() - appointmentDateTime.getTime();
+        const nowMinutesDiff = Math.floor(nowDiff / (1000 * 60));
+        const isNow = nowMinutesDiff >= 0 && nowMinutesDiff <= 1;
+
+        // Close reminder modal if it's time for the meeting
+        if (
+          isNow &&
+          showUpcomingModal &&
+          currentUpcomingAppointment?.slotId === appointment.slotId
+        ) {
+          setShowUpcomingModal(false);
+          setCurrentUpcomingAppointment(null);
+          // Get the video link before showing the modal
+          handleJoinCall(appointment.slotId);
         }
       });
     };
 
     checkUpcomingAppointments();
-  }, [currentTime, upcomingAppointments, upcomingAppointmentIds]);
+  }, [
+    currentTime,
+    upcomingAppointments,
+    upcomingAppointmentIds,
+    showUpcomingModal,
+    currentUpcomingAppointment,
+  ]);
 
   // Get appointment status based on current time
   const getAppointmentStatus = (appointment) => {
@@ -260,6 +295,41 @@ const Dashboard = () => {
     setIsSpecialistsModalOpen(true);
   };
 
+  const handleJoinCall = async (slotId) => {
+    const token = getToken();
+    if (!userId || !slotId || !token) {
+      toast.error("Missing required info to join call");
+      return;
+    }
+    console.log("Joining call with slotId:", slotId, "and userId:", userId);
+    try {
+      setIsLoading(true);
+      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
+      console.log("Joining call with URL:", url);
+      const response = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Joined call successfully!");
+      setVideoLink(response.data.meetingUrl);
+      setShowModal(true);
+    } catch (error) {
+      console.error("Join call error:", error);
+      const rawMsg = error?.response?.data?.exceptionMessage;
+      if (rawMsg?.includes("Meeting has not been created yet")) {
+        toast.error("The meeting is not ready yet. Please try again later.");
+      } else {
+        const fallbackMsg =
+          error?.response?.data?.message || "Failed to join call";
+        toast.error(fallbackMsg);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleBookAppointment = async (e, slotId, patientId) => {
     e.preventDefault();
     setIsBooking(true);
@@ -282,19 +352,7 @@ const Dashboard = () => {
       setIsMainModalOpen(false);
       getUpcomingAppointments();
 
-      setSpecialistDetails((prev) =>
-        prev.map((doctor) => {
-          if (doctor.doctorId === selectedDoctor.doctorId) {
-            return {
-              ...doctor,
-              slots: doctor.slots.filter(
-                (slot) => slot.slotId !== selectedSlotId
-              ),
-            };
-          }
-          return doctor;
-        })
-      );
+      setBookedSlots((prev) => new Set(prev).add(selectedSlotId));
     } catch (error) {
       toast.error("Failed to book appointment");
     } finally {
@@ -510,7 +568,6 @@ const Dashboard = () => {
                   if (upcomingAppointments.length > 0) {
                     return upcomingAppointments.map((details) => {
                       const status = getAppointmentStatus(details);
-
                       return (
                         <div
                           key={
@@ -554,7 +611,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* All existing modals remain the same */}
       <Modal
         open={isMainModalOpen}
         onClose={() => setIsMainModalOpen(false)}
@@ -605,7 +661,7 @@ const Dashboard = () => {
         aria-labelledby="specialists-modal-title"
       >
         <Box sx={{ height: 800, overflowY: "auto", ...modalStyle }}>
-          <div className="w-full flex justify-between items-center mb-4">
+          <div className="w-full flex justify-between items-center mb-4 overflow-y-scroll">
             <p className="mb-1 text-2xl text-gray-950/60 font-semibold">
               Available Specialists
             </p>
@@ -617,7 +673,13 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+          <List
+            sx={{
+              width: "100%",
+              bgcolor: "background.paper",
+              overflowY: "auto",
+            }}
+          >
             {isLoading ? (
               Array(5)
                 .fill(0)
@@ -698,7 +760,7 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      <div className="w-[120px] mt-4 md:mt-0">
+                      <div className="w-[140px] mt-4 md:mt-0">
                         <p className="text-sm font-bold text-center md:text-left">
                           {dayjs().format("ddd, MMM D")}
                         </p>
@@ -711,8 +773,13 @@ const Dashboard = () => {
                               .map((slot) => (
                                 <button
                                   key={slot.slotId}
-                                  className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
+                                  className={`${
+                                    bookedSlots.has(slot.slotId)
+                                      ? "bg-red-300 cursor-not-allowed"
+                                      : "bg-[#020E7C] hover:bg-blue-600"
+                                  } text-white text-sm px-4 py-2 rounded-full transition`}
                                   onClick={(e) =>
+                                    !bookedSlots.has(slot.slotId) &&
                                     handleOpenPopover(
                                       e,
                                       specialist,
@@ -720,10 +787,13 @@ const Dashboard = () => {
                                       slot.slotId
                                     )
                                   }
+                                  disabled={bookedSlots.has(slot.slotId)}
                                 >
-                                  {dayjs(`${slot.date}T${slot.time}`).format(
-                                    "h:mm A"
-                                  )}
+                                  {bookedSlots.has(slot.slotId)
+                                    ? "Booked"
+                                    : dayjs(`${slot.date}T${slot.time}`).format(
+                                        "h:mm A"
+                                      )}
                                 </button>
                               ))
                           ) : (
@@ -772,6 +842,7 @@ const Dashboard = () => {
             {videoLink === null ? (
               <>
                 <p className="text-lg text-center font-medium">
+                  {" "}
                   Want to call a doctor?
                 </p>
                 <button
@@ -878,8 +949,6 @@ const Dashboard = () => {
           </div>
         </div>
       </Popover>
-
-      {/* Upcoming Appointment Modal */}
       {showUpcomingModal && currentUpcomingAppointment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
@@ -895,49 +964,55 @@ const Dashboard = () => {
                   Upcoming Appointment
                 </h3>
                 <p className="text-gray-600 mb-4">
+                  {" "}
                   Your appointment with{" "}
                   <strong>Dr. {currentUpcomingAppointment.name}</strong> starts
                   in 5 minutes!
                 </p>
                 <div className="text-sm text-gray-500 mb-4">
-                  <p>📅 {currentUpcomingAppointment.date}</p>
+                  <p className="pb-2">📅 {currentUpcomingAppointment.date}</p>
                   <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
                 </div>
               </div>
 
               <div className="flex space-x-3 justify-center">
                 <button
-                  onClick={handleCloseUpcomingModal}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+                  onClick={handleCloseUpcomingModal}
                 >
                   Dismiss
                 </button>
                 <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                    disabled={isLoading}
-                    onClick={handleJoinFromUpcomingModal}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  disabled={isLoading}
+                  onClick={handleJoinFromUpcomingModal}
                 >
-                  {isLoading ? 'Joining...' : 'Join Call'}
+                  {isLoading ? "Joining..." : "Join Call"}
                 </button>
               </div>
-              
             </div>
           </div>
         </div>
       )}
-
       {showModal && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="w-40 h-24 border rounded-lg py-4 px-4 grid place-items-center bg-green-700  bg-opacity-100 cursor-pointer">
-            <p className="text-white font-semibold text-center mb-2">
-              Incoming Call
-            </p>
-            <LiaPhoneVolumeSolid
-              className="shake text-yellow-500"
-              fontSize={28}
-            />
+        <Link
+          to={`/video-call?roomUrl=${encodeURIComponent(videoLink?.roomUrl)}`}
+        >
+          <div
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
+            onClick={handleJoinFromUpcomingModal}
+          >
+            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700  bg-opacity-100 cursor-pointer">
+              <p className="text-white font-semibold text-center mb-2">
+                Join Meeting Room
+              </p>
+              <LiaPhoneVolumeSolid
+                className="shake text-yellow-500"
+                fontSize={28}
+              />
+            </div>
           </div>
-        </div>
+        </Link>
       )}
     </div>
   );
