@@ -102,6 +102,7 @@ const Dashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
   const [meetingLink, setMeetingLink] = useState(null);
+  const [videoMeetingUrl, setVideoMeetingUrl] = useState(null);
   const [specialistDetails, setSpecialistDetails] = useState([]);
   const token = getToken();
   const [selectedTime, setSelectedTime] = useState(null);
@@ -111,7 +112,8 @@ const Dashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
-  const [bookedSlots, setBookedSlots] = useState(new Set());
+
+  // New state for reminder system
   const [upcomingAppointmentIds, setUpcomingAppointmentIds] = useState(
     new Set()
   );
@@ -138,73 +140,37 @@ const Dashboard = () => {
   }, []);
 
   // Check for upcoming appointments (5-minute reminder)
-  useEffect(() => {
-    const checkUpcomingAppointments = () => {
-      const now = new Date();
+  // useEffect(() => {
+  //   const checkUpcomingAppointments = () => {
+  //     const now = new Date();
 
-      upcomingAppointments.forEach((appointment) => {
-        if (!appointment.date || !appointment.time) return;
+  //     upcomingAppointments.forEach((appointment) => {
+  //       if (!appointment.date || !appointment.time) return;
 
-        const appointmentDateTime = new Date(
-          `${appointment.date}T${appointment.time}`
-        );
+  //       const appointmentDateTime = new Date(
+  //         `${appointment.date}T${appointment.time}`
+  //       );
+  //       const timeDiff = appointmentDateTime.getTime() - now.getTime();
+  //       const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-        // Check if the date is valid
-        if (isNaN(appointmentDateTime.getTime())) {
-          console.warn(
-            "Invalid appointment date/time:",
-            appointment.date,
-            appointment.time
-          );
-          return;
-        }
+  //       if (
+  //         minutesDiff === 5 &&
+  //         !upcomingAppointmentIds.has(appointment.slotId)
+  //       ) {
+  //         setUpcomingAppointmentIds((prev) =>
+  //           new Set(prev).add(appointment.slotId)
+  //         );
+  //         setCurrentUpcomingAppointment(appointment);
+  //         setShowUpcomingModal(true);
+  //         toast.info(
+  //           `Appointment with Dr. ${appointment.name} starting in 5 minutes!`
+  //         );
+  //       }
+  //     });
+  //   };
 
-        const timeDiff = appointmentDateTime.getTime() - now.getTime();
-        const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-
-        // Show reminder between 4-6 minutes before (more flexible range)
-        if (
-          minutesDiff >= 4 &&
-          minutesDiff <= 6 &&
-          !upcomingAppointmentIds.has(appointment.slotId)
-        ) {
-          setUpcomingAppointmentIds((prev) =>
-            new Set(prev).add(appointment.slotId)
-          );
-          setCurrentUpcomingAppointment(appointment);
-          setShowUpcomingModal(true);
-          toast.info(
-            `Appointment with Dr. ${appointment.name} starting in ${minutesDiff} minutes!`
-          );
-        }
-
-        // Auto-close reminder modal when appointment is due (0 to 1 min after)
-        const nowDiff = now.getTime() - appointmentDateTime.getTime();
-        const nowMinutesDiff = Math.floor(nowDiff / (1000 * 60));
-        const isNow = nowMinutesDiff >= 0 && nowMinutesDiff <= 1;
-
-        // Close reminder modal if it's time for the meeting
-        if (
-          isNow &&
-          showUpcomingModal &&
-          currentUpcomingAppointment?.slotId === appointment.slotId
-        ) {
-          setShowUpcomingModal(false);
-          setCurrentUpcomingAppointment(null);
-          // Get the video link before showing the modal
-          handleJoinCall(appointment.slotId);
-        }
-      });
-    };
-
-    checkUpcomingAppointments();
-  }, [
-    currentTime,
-    upcomingAppointments,
-    upcomingAppointmentIds,
-    showUpcomingModal,
-    currentUpcomingAppointment,
-  ]);
+  //   checkUpcomingAppointments();
+  // }, [currentTime, upcomingAppointments, upcomingAppointmentIds]);
 
   // Get appointment status based on current time
   const getAppointmentStatus = (appointment) => {
@@ -253,6 +219,99 @@ const Dashboard = () => {
     }
   };
 
+  const handleJoinCall = async (slotId) => {
+    const token = getToken();
+    if (!userId || !slotId || !token) {
+      toast.error("Missing required info to join call");
+      return;
+    }
+    console.log("Joining call with slotId:", slotId, "and userId:", userId);
+    try {
+      setIsLoading(true);
+      // const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
+      // console.log("Fetching meeting URL from:", url);
+      // const response = await axios.get(url, {
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // });
+
+      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/join`;
+
+      const response = await axios.post(
+        url,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+
+      toast.success("Meeting link ready!");
+      setVideoMeetingUrl(response.data.meetingUrl);
+      setShowModal(true);
+    } catch (error) {
+      console.error("Join call error:", error);
+      const rawMsg = error?.response?.data?.exceptionMessage;
+      if (rawMsg?.includes("Meeting has not been created yet")) {
+        toast.error("The meeting is not ready yet. Please try again later.");
+      } else {
+        const fallbackMsg =
+          error?.response?.data?.message || "Failed to get meeting link"; // Adjusted message
+        toast.error(fallbackMsg);
+      }
+      setShowModal(false);
+      setVideoMeetingUrl(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // const handleJoinCall = async (slotId) => {
+  //   const token = getToken();
+  //   if (!userId || !slotId || !token) {
+  //     toast.error("Missing required info to join call");
+  //     return;
+  //   }
+  //   console.log("Joining call with slotId:", slotId, "and userId:", userId);
+  //   try {
+  //     setIsLoading(true);
+  //     const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
+  //     console.log("Joining call with URL:", url);
+  //     const response = await axios.get(url, {
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     console.log("API Response:", response.data);
+
+  //     toast.success("Joined call successfully!");
+  //     setVideoMeetingUrl(response.data.meetingUrl); // Set the new state
+  //     setShowModal(true);
+  //   } catch (error) {
+  //     console.error("Join call error:", error);
+  //     const rawMsg = error?.response?.data?.exceptionMessage;
+  //     if (rawMsg?.includes("Meeting has not been created yet")) {
+  //       toast.error("The meeting is not ready yet. Please try again later.");
+  //     } else {
+  //       const fallbackMsg =
+  //         error?.response?.data?.message || "Failed to join call";
+  //       toast.error(fallbackMsg);
+  //     }
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+
+  //   console.log(handleJoinCall(), " handle join call function");
+  // };
+
   // Handle upcoming modal actions
   const handleCloseUpcomingModal = () => {
     setShowUpcomingModal(false);
@@ -295,41 +354,6 @@ const Dashboard = () => {
     setIsSpecialistsModalOpen(true);
   };
 
-  const handleJoinCall = async (slotId) => {
-    const token = getToken();
-    if (!userId || !slotId || !token) {
-      toast.error("Missing required info to join call");
-      return;
-    }
-    console.log("Joining call with slotId:", slotId, "and userId:", userId);
-    try {
-      setIsLoading(true);
-      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
-      console.log("Joining call with URL:", url);
-      const response = await axios.get(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      toast.success("Joined call successfully!");
-      setVideoLink(response.data.meetingUrl);
-      setShowModal(true);
-    } catch (error) {
-      console.error("Join call error:", error);
-      const rawMsg = error?.response?.data?.exceptionMessage;
-      if (rawMsg?.includes("Meeting has not been created yet")) {
-        toast.error("The meeting is not ready yet. Please try again later.");
-      } else {
-        const fallbackMsg =
-          error?.response?.data?.message || "Failed to join call";
-        toast.error(fallbackMsg);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleBookAppointment = async (e, slotId, patientId) => {
     e.preventDefault();
     setIsBooking(true);
@@ -352,14 +376,50 @@ const Dashboard = () => {
       setIsMainModalOpen(false);
       getUpcomingAppointments();
 
-      setBookedSlots((prev) => new Set(prev).add(selectedSlotId));
+      setSpecialistDetails((prev) =>
+        prev.map((doctor) => {
+          if (doctor.doctorId === selectedDoctor.doctorId) {
+            return {
+              ...doctor,
+              slots: doctor.slots.filter(
+                (slot) => slot.slotId !== selectedSlotId
+              ),
+            };
+          }
+          return doctor;
+        })
+      );
     } catch (error) {
       toast.error("Failed to book appointment");
     } finally {
       setIsBooking(false);
     }
   };
- 
+
+  const getMeetingLink = async (e, slotId, patientId) => {
+    e.preventDefault();
+    setIsBooking(true);
+    try {
+      const response = await axios.post(
+        `${BOOK_MEETING_URL}?slotId=${slotId}&patientId=${patientId}/join`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log(response, " meeting link response");
+      setMeetingLink(response);
+      setIsBooking(false);
+    } catch (error) {
+      toast.error("Failed to book appointment");
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
   const getSpecialistCount = async () => {
     try {
       setIsLoading(true);
@@ -464,6 +524,69 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
+
+  // Check for upcoming appointments (5-minute reminder) and active appointments
+  useEffect(() => {
+    const now = new Date();
+
+    upcomingAppointments.forEach((appointment) => {
+      if (!appointment.date || !appointment.time) return;
+
+      const appointmentDateTime = new Date(
+        `${appointment.date}T${appointment.time}`
+      );
+
+      // Ensure date is valid
+      if (isNaN(appointmentDateTime.getTime())) {
+        console.warn(
+          "Invalid appointment date/time:",
+          appointment.date,
+          appointment.time
+        );
+        return;
+      }
+
+      const timeDiffToStart = appointmentDateTime.getTime() - now.getTime();
+      const minutesDiffToStart = Math.floor(timeDiffToStart / (1000 * 60));
+
+      // Existing Logic for 5-minute reminder modal:
+      if (
+        minutesDiffToStart === 5 &&
+        !upcomingAppointmentIds.has(appointment.slotId)
+      ) {
+        setUpcomingAppointmentIds((prev) =>
+          new Set(prev).add(appointment.slotId)
+        );
+        setCurrentUpcomingAppointment(appointment);
+        setShowUpcomingModal(true);
+        toast.info(
+          `Appointment with Dr. ${appointment.name} starting in 5 minutes!`
+        );
+      }
+      const minutesPastStart = Math.floor(
+        (now.getTime() - appointmentDateTime.getTime()) / (1000 * 60)
+      );
+
+      const isActive = minutesPastStart >= 0 && minutesPastStart <= 1;
+      if (isActive && !showModal && !videoMeetingUrl) {
+        if (
+          showUpcomingModal &&
+          currentUpcomingAppointment?.slotId === appointment.slotId
+        ) {
+          setShowUpcomingModal(false);
+          setCurrentUpcomingAppointment(null);
+        }
+        handleJoinCall(appointment.slotId);
+      }
+    });
+  }, [
+    currentTime,
+    upcomingAppointments,
+    upcomingAppointmentIds,
+    showModal,
+    videoMeetingUrl,
+    currentUpcomingAppointment,
+  ]);
 
   useEffect(() => {
     getSpecialistCount();
@@ -572,6 +695,14 @@ const Dashboard = () => {
                               </div>
                             )}
                           </div>
+                          <button
+                            onClick={() =>
+                              handleJoinCall(details.slotId || details.id)
+                            }
+                            className="ml-auto bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                          >
+                            Join Call
+                          </button>
                         </div>
                       );
                     });
@@ -587,6 +718,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* All existing modals remain the same */}
       <Modal
         open={isMainModalOpen}
         onClose={() => setIsMainModalOpen(false)}
@@ -637,7 +769,7 @@ const Dashboard = () => {
         aria-labelledby="specialists-modal-title"
       >
         <Box sx={{ height: 800, overflowY: "auto", ...modalStyle }}>
-          <div className="w-full flex justify-between items-center mb-4 overflow-y-scroll">
+          <div className="w-full flex justify-between items-center mb-4">
             <p className="mb-1 text-2xl text-gray-950/60 font-semibold">
               Available Specialists
             </p>
@@ -649,13 +781,7 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <List
-            sx={{
-              width: "100%",
-              bgcolor: "background.paper",
-              overflowY: "auto",
-            }}
-          >
+          <List sx={{ width: "100%", bgcolor: "background.paper" }}>
             {isLoading ? (
               Array(5)
                 .fill(0)
@@ -736,7 +862,7 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      <div className="w-[140px] mt-4 md:mt-0">
+                      <div className="w-[120px] mt-4 md:mt-0">
                         <p className="text-sm font-bold text-center md:text-left">
                           {dayjs().format("ddd, MMM D")}
                         </p>
@@ -749,13 +875,8 @@ const Dashboard = () => {
                               .map((slot) => (
                                 <button
                                   key={slot.slotId}
-                                  className={`${
-                                    bookedSlots.has(slot.slotId)
-                                      ? "bg-red-300 cursor-not-allowed"
-                                      : "bg-[#020E7C] hover:bg-blue-600"
-                                  } text-white text-sm px-4 py-2 rounded-full transition`}
+                                  className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
                                   onClick={(e) =>
-                                    !bookedSlots.has(slot.slotId) &&
                                     handleOpenPopover(
                                       e,
                                       specialist,
@@ -763,13 +884,10 @@ const Dashboard = () => {
                                       slot.slotId
                                     )
                                   }
-                                  disabled={bookedSlots.has(slot.slotId)}
                                 >
-                                  {bookedSlots.has(slot.slotId)
-                                    ? "Booked"
-                                    : dayjs(`${slot.date}T${slot.time}`).format(
-                                        "h:mm A"
-                                      )}
+                                  {dayjs(`${slot.date}T${slot.time}`).format(
+                                    "h:mm A"
+                                  )}
                                 </button>
                               ))
                           ) : (
@@ -818,7 +936,6 @@ const Dashboard = () => {
             {videoLink === null ? (
               <>
                 <p className="text-lg text-center font-medium">
-                  {" "}
                   Want to call a doctor?
                 </p>
                 <button
@@ -925,6 +1042,7 @@ const Dashboard = () => {
           </div>
         </div>
       </Popover>
+
       {showUpcomingModal && currentUpcomingAppointment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
@@ -940,21 +1058,20 @@ const Dashboard = () => {
                   Upcoming Appointment
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  {" "}
                   Your appointment with{" "}
                   <strong>Dr. {currentUpcomingAppointment.name}</strong> starts
                   in 5 minutes!
                 </p>
                 <div className="text-sm text-gray-500 mb-4">
-                  <p className="pb-2">📅 {currentUpcomingAppointment.date}</p>
+                  <p>📅 {currentUpcomingAppointment.date}</p>
                   <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
                 </div>
               </div>
 
               <div className="flex space-x-3 justify-center">
                 <button
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
                   onClick={handleCloseUpcomingModal}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
                 >
                   Dismiss
                 </button>
@@ -970,14 +1087,11 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-      {showModal && (
-        <Link
-          to={`/video-call?roomUrl=${encodeURIComponent(videoLink?.roomUrl)}`}
-        >
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
-            onClick={handleJoinFromUpcomingModal}
-          >
-            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700  bg-opacity-100 cursor-pointer">
+
+      {showModal && videoMeetingUrl && (
+        <Link to={`/video-call?roomUrl=${encodeURIComponent(videoMeetingUrl)}`}>
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
               <p className="text-white font-semibold text-center mb-2">
                 Join Meeting Room
               </p>
