@@ -237,11 +237,11 @@ const Dashboard = () => {
       //   },
       // });
 
-      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/join`;
+      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
 
-      const response = await axios.post(
+      const response = await axios.get(
         url,
-        {},
+        // {},
         {
           headers: {
             "Content-Type": "application/json",
@@ -410,7 +410,7 @@ const Dashboard = () => {
         }
       );
 
-      console.log(response, " meeting link response");
+      console.log(response, "meeting link response");
       setMeetingLink(response);
       setIsBooking(false);
     } catch (error) {
@@ -576,7 +576,7 @@ const Dashboard = () => {
           setShowUpcomingModal(false);
           setCurrentUpcomingAppointment(null);
         }
-        handleJoinCall(appointment.slotId);
+        // handleJoinCall(appointment.slotId);
       }
     });
   }, [
@@ -697,7 +697,7 @@ const Dashboard = () => {
                           </div>
                           <button
                             onClick={() =>
-                              handleJoinCall(details.slotId || details.id)
+                              handleJoinCall(details.meetingUrl || details.slotId)
                             }
                             className="ml-auto bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors"
                           >

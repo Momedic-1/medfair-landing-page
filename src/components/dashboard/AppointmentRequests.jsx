@@ -256,11 +256,6 @@ function AppointmentRequests({ appointments }) {
                   ⏰{" "}
                   {appointment.time ? formatTime(appointment.time) : "No time"}
                 </div>
-                <button
-                onClick={()=> handleJoinCall(appointment.slotId) }
-                >
-                  joi
-                </button>
               </div>
             );
           })
