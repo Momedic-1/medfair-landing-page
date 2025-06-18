@@ -101,7 +101,7 @@ const Dashboard = () => {
   const [isCallADoctorModalOpen, setIsCallADoctorModalOpen] = useState(false);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
-  const [meetingLink, setMeetingLink] = useState(null);
+  // const [meetingLink, setMeetingLink] = useState(null);
   const [videoMeetingUrl, setVideoMeetingUrl] = useState(null);
   const [specialistDetails, setSpecialistDetails] = useState([]);
   const token = getToken();
@@ -113,6 +113,7 @@ const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
   const [meetingUrlGenerated, setMeetingUrlGenerated] = useState(new Set());
+  const [notificationShown, setNotificationShown] = useState(new Set());
 
   const [showUpcomingModal, setShowUpcomingModal] = useState(false);
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
@@ -125,7 +126,7 @@ const Dashboard = () => {
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
-  const BOOK_MEETING_URL = `${baseUrl}//api/appointment/meetings`;
+  // const BOOK_MEETING_URL = `${baseUrl}//api/appointment/meetings`;
 
   // Update current time every minute
   useEffect(() => {
@@ -187,7 +188,7 @@ const Dashboard = () => {
   const generateMeetingUrl = async (slotId) => {
     const token = getToken();
     if (!userId || !slotId || !token) {
-      toast.error("Missing required info to generate meeting URL");
+      // toast.error("Missing required info to generate meeting URL");
       return;
     }
 
@@ -215,7 +216,7 @@ const Dashboard = () => {
       toast.success("Meeting URL generated! You can join when ready.");
     } catch (error) {
       console.error("Generate URL error:", error);
-      toast.error("Failed to generate meeting URL");
+      // toast.error("Failed to generate meeting URL");
     } finally {
       setIsLoading(false);
     }
@@ -226,14 +227,14 @@ const Dashboard = () => {
     if (storedUrl) {
       setVideoMeetingUrl(storedUrl);
       setShowModal(true);
-      toast.success("Joining meeting...");
+      // toast.success("Joining meeting...");
       return;
     }
 
     // If no stored URL, generate one first
     await generateMeetingUrl(slotId);
   };
-  
+
   // Handle upcoming modal actions
   const handleCloseUpcomingModal = () => {
     setShowUpcomingModal(false);
@@ -440,12 +441,14 @@ const Dashboard = () => {
       // Generate URL 5 minutes before appointment
       if (
         minutesDiffToStart === 5 &&
-        !meetingUrlGenerated.has(appointment.slotId)
+        !meetingUrlGenerated.has(appointment.slotId) &&
+        !notificationShown.has(appointment.slotId)
       ) {
         generateMeetingUrl(appointment.slotId);
         setCurrentUpcomingAppointment(appointment);
         setShowUpcomingModal(true);
         toast.info(`Meeting URL generated for Dr. ${appointment.name}!`);
+        setNotificationShown((prev) => new Set(prev).add(appointment.slotId));
       }
 
       // Show join option when appointment time arrives
@@ -458,7 +461,27 @@ const Dashboard = () => {
         setShowModal(true);
       }
     });
-  }, [currentTime, upcomingAppointments, meetingUrlGenerated]);
+  }, [
+    currentTime,
+    upcomingAppointments,
+    meetingUrlGenerated,
+    notificationShown,
+  ]);
+
+  useEffect(() => {
+    const currentSlotIds = new Set(
+      upcomingAppointments.map((apt) => apt.slotId)
+    );
+    setNotificationShown((prev) => {
+      const filtered = new Set();
+      prev.forEach((slotId) => {
+        if (currentSlotIds.has(slotId)) {
+          filtered.add(slotId);
+        }
+      });
+      return filtered;
+    });
+  }, [upcomingAppointments]);
 
   useEffect(() => {
     getSpecialistCount();
@@ -567,20 +590,6 @@ const Dashboard = () => {
                               </div>
                             )}
                           </div>
-                          <button
-                            onClick={() => {
-                              if (meetingUrlGenerated.has(details.slotId)) {
-                                joinMeeting(details.slotId);
-                              } else {
-                                generateMeetingUrl(details.slotId);
-                              }
-                            }}
-                            className="ml-auto bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                          >
-                            {meetingUrlGenerated.has(details.slotId)
-                              ? "Join Call"
-                              : "Generate URL"}
-                          </button>
                         </div>
                       );
                     });
@@ -953,13 +962,18 @@ const Dashboard = () => {
                 >
                   Dismiss
                 </button>
-                <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                  disabled={isLoading}
-                  onClick={handleJoinFromUpcomingModal}
+                <Link
+                  to={`/video-call?roomUrl=${encodeURIComponent(
+                    videoMeetingUrl
+                  )}`}
                 >
-                  Join Call
-                </button>
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    disabled={isLoading}
+                  >
+                    Join Call
+                  </button>
+                </Link>
               </div>
             </div>
           </div>

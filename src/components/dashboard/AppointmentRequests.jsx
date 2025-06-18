@@ -242,11 +242,6 @@ function AppointmentRequests({ appointments }) {
             return (
               <div key={appointment.id || appointment.slotId || index}>
                 <div
-                  onClick={() =>
-                    status !== "over" &&
-                    !isLoading &&
-                    handleJoinCall(appointment.slotId)
-                  }
                   className={`flex items-center justify-between px-4 rounded-lg mt-4 p-2 border-2 transition-all duration-200 ${
                     status === "over"
                       ? "bg-red-100 border-red-300 cursor-not-allowed opacity-60 pointer-events-none"
@@ -304,7 +299,7 @@ function AppointmentRequests({ appointments }) {
                 </div>
 
                 {/* Debug info for each appointment */}
-                <div className="text-xs text-gray-500 px-4">
+                {/* <div className="text-xs text-gray-500 px-4">
                   Minutes diff:{" "}
                   {appointmentTime
                     ? Math.floor(
@@ -312,7 +307,7 @@ function AppointmentRequests({ appointments }) {
                           60000
                       )
                     : "N/A"}
-                </div>
+                </div> */}
               </div>
             );
           })
