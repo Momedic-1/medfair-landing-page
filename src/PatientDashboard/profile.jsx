@@ -476,7 +476,7 @@ export default function Profile() {
                             name="fullName"
                             readOnly
                             value={fullName}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:ring-opacity-50 transition-colors duration-200 px-4"
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:ring-opacity-50 transition-colors duration-200"
                           />
                         </div>
                         <div>
@@ -488,7 +488,7 @@ export default function Profile() {
                             name="email"
                             readOnly
                             value={userData.emailAddress}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200"
                           />
                         </div>
                         <div>
@@ -500,7 +500,7 @@ export default function Profile() {
                             name="dateOfBirth"
                             value={profileData.dateOfBirth}
                             onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200"
                           />
                         </div>
                         <div>
@@ -512,7 +512,7 @@ export default function Profile() {
                             name="weight"
                             value={profileData.weight}
                             onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-20"
                             placeholder="Enter your weight"
                           />
                         </div>
@@ -524,7 +524,7 @@ export default function Profile() {
                             name="bloodGroup"
                             value={profileData.bloodGroup}
                             onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 appearance-none bg-white"
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 appearance-none bg-white"
                           >
                             <option value="">Select Blood Group</option>
                             {bloodGroupOptions.map((option) => (
@@ -542,7 +542,7 @@ export default function Profile() {
                             name="genotype"
                             value={profileData.genotype}
                             onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 appearance-none bg-white"
+                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 appearance-none bg-white"
                           >
                             <option value="">Select Genotype</option>
                             {genotypeOptions.map((option) => (

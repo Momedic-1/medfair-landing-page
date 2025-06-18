@@ -19,6 +19,17 @@ function AppointmentRequests({ appointments }) {
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
 
+  const getAppointmentDateTime = (appointment) => {
+    if (appointment.startTime) {
+      return new Date(appointment.startTime);
+    } else if (appointment.date && appointment.time) {
+      return new Date(`${appointment.date}T${appointment.time}`);
+    } else {
+      console.warn("Invalid appointment date/time:", appointment);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -28,90 +39,86 @@ function AppointmentRequests({ appointments }) {
   }, []);
 
   useEffect(() => {
-    const now = new Date();
+    const interval = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now);
 
-    appointments.forEach((appointment) => {
-      if (!appointment.date || !appointment.time) return;
+      console.log("Checking appointments at:", now.toLocaleString());
+      console.log("Appointments:", appointments);
 
-      const appointmentDateTime = new Date(
-        `${appointment.date}T${appointment.time}`
-      );
-
-      // Check if the date is valid
-      if (isNaN(appointmentDateTime.getTime())) {
-        console.warn(
-          "Invalid appointment date/time:",
-          appointment.date,
-          appointment.time
-        );
+      if (!appointments || appointments.length === 0) {
+        console.log("No appointments to check");
         return;
       }
 
-      const timeDiff = appointmentDateTime.getTime() - now.getTime();
-      const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+      appointments.forEach((appointment) => {
+        const appointmentTime = getAppointmentDateTime(appointment);
 
-      // Show reminder between 4-6 minutes before (more flexible range)
-      if (
-        minutesDiff >= 4 &&
-        minutesDiff <= 6 &&
-        !upcomingAppointments.has(appointment.slotId)
-      ) {
-        setUpcomingAppointments((prev) =>
-          new Set(prev).add(appointment.slotId)
+        if (!appointmentTime) {
+          console.warn("Skipping appointment with invalid time:", appointment);
+          return;
+        }
+
+        const minutesDiff = Math.floor(
+          (appointmentTime.getTime() - now.getTime()) / 60000
         );
-        setCurrentUpcomingAppointment(appointment);
-        setShowUpcomingModal(true);
-        toast.info(
-          `Appointment with ${appointment.name} starting in ${minutesDiff} minutes!`
-        );
-      }
 
-      // Auto open Join Call modal when appointment is due (0 to 1 min after)
-      const nowDiff = now.getTime() - appointmentDateTime.getTime();
-      const nowMinutesDiff = Math.floor(nowDiff / (1000 * 60));
-      const isNow = nowMinutesDiff >= 0 && nowMinutesDiff <= 1;
+        console.log(`Appointment ${appointment.slotId || appointment.id}:`, {
+          appointmentTime: appointmentTime.toLocaleString(),
+          currentTime: now.toLocaleString(),
+          minutesDiff,
+          upcomingSet: Array.from(upcomingAppointments),
+        });
 
-      // Close reminder modal if it's time for the meeting
-      if (
-        isNow &&
-        showUpcomingModal &&
-        currentUpcomingAppointment?.slotId === appointment.slotId
-      ) {
-        setShowUpcomingModal(false);
-        setCurrentUpcomingAppointment(null);
-      }
+        // Trigger upcoming appointment modal (5 minutes before)
+        if (
+          minutesDiff <= 5 &&
+          minutesDiff > 0 &&
+          !upcomingAppointments.has(appointment.slotId)
+        ) {
+          console.log("🔔 Triggering upcoming modal for:", appointment);
+          setUpcomingAppointments((prev) =>
+            new Set(prev).add(appointment.slotId)
+          );
+          setCurrentUpcomingAppointment(appointment);
+          setShowUpcomingModal(true);
+        }
 
-      if (isNow && !showModal && !videoLink) {
-        handleJoinCall(appointment.slotId);
-      }
-    });
-  }, [currentTime, appointments, upcomingAppointments]);
-
-  // Also update the timer to check more frequently
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 30000); // Check every 30 seconds instead of 60
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const getAppointmentStatus = (appointment) => {
-    if (!appointment.date || !appointment.time) return "unknown";
+        // Trigger main appointment modal (at appointment time)
+        if (
+          minutesDiff <= 0 &&
+          minutesDiff >= -5 &&
+          !upcomingAppointments.has(`started-${appointment.slotId}`)
+        ) {
+          console.log("🚀 Triggering appointment modal for:", appointment);
+          setUpcomingAppointments((prev) =>
+            new Set(prev).add(`started-${appointment.slotId}`)
+          );
+          setShowModal(true);
+        }
+      });
+    }, 30000);
 
     const now = new Date();
-    const appointmentDateTime = new Date(
-      `${appointment.date}T${appointment.time}`
-    );
-    const timeDiff = now.getTime() - appointmentDateTime.getTime();
+    console.log("Initial check at:", now.toLocaleString());
+
+    return () => clearInterval(interval);
+  }, [appointments, upcomingAppointments]);
+
+  const getAppointmentStatus = (appointment) => {
+    const appointmentTime = getAppointmentDateTime(appointment);
+    if (!appointmentTime) return "unknown";
+
+    const now = new Date();
+    const timeDiff = now.getTime() - appointmentTime.getTime();
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
     if (minutesDiff > 30) {
-      return "over";
+      return "over"; // More than 30 minutes past appointment time
     } else if (minutesDiff >= -5 && minutesDiff <= 30) {
-      return "active";
+      return "active"; // 5 minutes before to 30 minutes after
     } else {
-      return "upcoming";
+      return "upcoming"; // More than 5 minutes before
     }
   };
 
@@ -124,10 +131,25 @@ function AppointmentRequests({ appointments }) {
 
     try {
       setIsLoading(true);
-      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/join`;
 
-      const response = await axios.post(
-        url,
+      // Step 1: Get the meeting URL
+      const getUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
+      const getResponse = await axios.get(getUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const meetingUrl = getResponse.data.meetingUrl;
+      if (!meetingUrl) {
+        throw new Error("Meeting URL not available");
+      }
+
+      setVideoLink(meetingUrl);
+
+      const postUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/join`;
+      await axios.post(
+        postUrl,
         {},
         {
           headers: {
@@ -138,7 +160,6 @@ function AppointmentRequests({ appointments }) {
       );
 
       toast.success("Joined call successfully!");
-      setVideoLink(response.data.meetingUrl);
       setShowModal(true);
     } catch (error) {
       console.error("Join call error:", error);
@@ -188,8 +209,21 @@ function AppointmentRequests({ appointments }) {
     }
   };
 
+  // // Debug component - remove in production
+  // const DebugInfo = () => (
+  //   <div className="bg-yellow-100 p-2 text-xs border-b">
+  //     <p>Current Time: {currentTime.toLocaleString()}</p>
+  //     <p>Appointments: {appointments?.length || 0}</p>
+  //     <p>Upcoming Set: {Array.from(upcomingAppointments).join(', ')}</p>
+  //     <p>Show Upcoming Modal: {showUpcomingModal.toString()}</p>
+  //     <p>Show Main Modal: {showModal.toString()}</p>
+  //   </div>
+  // );
+
   return (
     <div className="w-full h-[420px] bg-white rounded-[12px] md:text-[14px] overflow-y-scroll shadow-lg">
+      {/* <DebugInfo /> */}
+
       <div className="px-4 py-4">
         <div className="flex justify-between text-[#020e7c]">
           <span className="text-base font-semibold font-['Roboto'] leading-[25px]">
@@ -203,58 +237,81 @@ function AppointmentRequests({ appointments }) {
         {appointments.length > 0 ? (
           appointments.map((appointment, index) => {
             const status = getAppointmentStatus(appointment);
+            const appointmentTime = getAppointmentDateTime(appointment);
 
             return (
-              <div key={appointment.id || appointment.slotId || index}
-                onClick={() =>
-                  status !== "over" &&
-                  !isLoading
-                }
-                className={`flex items-center justify-between px-4 rounded-lg mt-4 p-2 border-2 transition-all duration-200 ${
-                  status === "over"
-                    ? "bg-red-100 border-red-300 cursor-not-allowed opacity-60 pointer-events-none"
-                    : `${getStatusColor(status)} cursor-pointer hover:shadow-md`
-                }`}
-              >
-                <div className="flex-shrink-0">
-                  {appointment.imageUrl ? (
-                    <img
-                      src={appointment.imageUrl}
-                      alt={`${appointment.name}'s avatar`}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-xs">
-                      {appointment.name
-                        ?.split(" ")
-                        .map((word) => word[0])
-                        .join("")
-                        .toUpperCase() || "?"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 ml-2">
-                  <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
-                    {appointment.name || "Unknown"}
+              <div key={appointment.id || appointment.slotId || index}>
+                <div
+                  onClick={() =>
+                    status !== "over" &&
+                    !isLoading &&
+                    handleJoinCall(appointment.slotId)
+                  }
+                  className={`flex items-center justify-between px-4 rounded-lg mt-4 p-2 border-2 transition-all duration-200 ${
+                    status === "over"
+                      ? "bg-red-100 border-red-300 cursor-not-allowed opacity-60 pointer-events-none"
+                      : `${getStatusColor(
+                          status
+                        )} cursor-pointer hover:shadow-md`
+                  }`}
+                >
+                  <div className="flex-shrink-0">
+                    {appointment.imageUrl ? (
+                      <img
+                        src={appointment.imageUrl}
+                        alt={`${appointment.name}'s avatar`}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-xs">
+                        {appointment.name
+                          ?.split(" ")
+                          .map((word) => word[0])
+                          .join("")
+                          .toUpperCase() || "?"}
+                      </div>
+                    )}
                   </div>
-                  {status !== "upcoming" && (
-                    <div className="text-xs font-semibold text-gray-600">
-                      {getStatusText(status)}
+
+                  <div className="flex-1 ml-2">
+                    <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
+                      {appointment.name || "Unknown"}
                     </div>
-                  )}
+                    {status !== "upcoming" && (
+                      <div className="text-xs font-semibold text-gray-600">
+                        {getStatusText(status)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
+                    📅{" "}
+                    {appointment.date
+                      ? formatAppointmentDate(appointment.date)
+                      : appointmentTime
+                      ? appointmentTime.toLocaleDateString()
+                      : "No date"}
+                  </div>
+
+                  <div className="text-[#020e7c] px-2 text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
+                    ⏰{" "}
+                    {appointment.time
+                      ? formatTime(appointment.time)
+                      : appointmentTime
+                      ? appointmentTime.toLocaleTimeString()
+                      : "No time"}
+                  </div>
                 </div>
 
-                <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
-                  📅{" "}
-                  {appointment.date
-                    ? formatAppointmentDate(appointment.date)
-                    : "No date"}
-                </div>
-
-                <div className="text-[#020e7c] px-2 text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
-                  ⏰{" "}
-                  {appointment.time ? formatTime(appointment.time) : "No time"}
+                {/* Debug info for each appointment */}
+                <div className="text-xs text-gray-500 px-4">
+                  Minutes diff:{" "}
+                  {appointmentTime
+                    ? Math.floor(
+                        (appointmentTime.getTime() - currentTime.getTime()) /
+                          60000
+                      )
+                    : "N/A"}
                 </div>
               </div>
             );
@@ -266,7 +323,7 @@ function AppointmentRequests({ appointments }) {
         )}
       </div>
 
-      {/* Video Call Modal */}
+      {/* Main Modal */}
       {showModal && videoLink && (
         <Link to={`/video-call?roomUrl=${encodeURIComponent(videoLink)}`}>
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
@@ -300,14 +357,26 @@ function AppointmentRequests({ appointments }) {
                 </h3>
                 <p className="text-gray-600 mb-4">
                   Your appointment with{" "}
-                  <strong>{currentUpcomingAppointment.name}</strong> starts in 5
-                  minutes!
+                  <strong>
+                    {currentUpcomingAppointment.name ||
+                      currentUpcomingAppointment.patientName}
+                  </strong>{" "}
+                  starts in 5 minutes!
                 </p>
-                <div className="text-sm text-gray-500 mb-4">
-                  <p className="pb-2">
-                    📅 {formatAppointmentDate(currentUpcomingAppointment.date)}
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-center text-sm text-gray-500 mb-4">
+                  <p>
+                    📅{" "}
+                    {currentUpcomingAppointment.date ||
+                      formatAppointmentDate(
+                        currentUpcomingAppointment.startTime
+                      )}
                   </p>
-                  <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
+                  <p>
+                    ⏰{" "}
+                    {currentUpcomingAppointment.time
+                      ? formatTime(currentUpcomingAppointment.time)
+                      : formatTime(currentUpcomingAppointment.startTime)}
+                  </p>
                 </div>
               </div>
 
@@ -319,11 +388,11 @@ function AppointmentRequests({ appointments }) {
                   Dismiss
                 </button>
                 <button
-                  onClick={handleJoinFromUpcomingModal}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                   disabled={isLoading}
+                  onClick={handleJoinFromUpcomingModal}
                 >
-                  {isLoading ? "Joining..." : "Join Now"}
+                  Join Now
                 </button>
               </div>
             </div>

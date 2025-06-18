@@ -82,7 +82,7 @@ const Subscription = () => {
       <p className="text-gray-600 text-center mt-2">
         Select the plan that best suits your needs and enjoy premium features.
       </p>
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         {ActiveSlide.map((swipe, index) => (
           <div
             key={index}

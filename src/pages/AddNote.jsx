@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { baseUrl } from "../env";
@@ -51,7 +50,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [activeTab, setActiveTab] = useState("SOAP");
 
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
-  
+
   // Enhanced prescription form to handle multiple prescriptions
   const [prescriptionForms, setPrescriptionForms] = useState([
     {
@@ -60,9 +59,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       frequency: "",
       duration: "",
       instructions: "",
-    }
+    },
   ]);
-  
+
   const [prescriptionError, setPrescriptionError] = useState("");
   const [prescriptionLoading, setPrescriptionLoading] = useState(false);
 
@@ -155,11 +154,18 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
     // Validate that at least one prescription has required fields
     const validPrescriptions = prescriptionForms.filter(
-      form => form.drugName && form.dosage && form.frequency && form.duration && form.instructions
+      (form) =>
+        form.drugName &&
+        form.dosage &&
+        form.frequency &&
+        form.duration &&
+        form.instructions
     );
 
     if (validPrescriptions.length === 0) {
-      setPrescriptionError("Please fill in at least one complete prescription.");
+      setPrescriptionError(
+        "Please fill in at least one complete prescription."
+      );
       return;
     }
 
@@ -173,7 +179,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       plan,
       finalDiagnosis,
       soapComment,
-      prescriptions: validPrescriptions.map(form => ({
+      prescriptions: validPrescriptions.map((form) => ({
         ...form,
         patientId: Number(patientId),
       })),
@@ -195,12 +201,14 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           }
         );
 
-      const prescriptionCount = validPrescriptions.length;
-      if (prescriptionCount === 1) {
-        toast.success("Prescription created successfully!");
-      } else {
-       toast.success(`${prescriptionCount} prescriptions created successfully!`);
-      }
+        const prescriptionCount = validPrescriptions.length;
+        if (prescriptionCount === 1) {
+          toast.success("Prescription created successfully!");
+        } else {
+          toast.success(
+            `${prescriptionCount} prescriptions created successfully!`
+          );
+        }
         onNoteAdded(response.data);
         resetForm();
         setLoading(false);
@@ -209,7 +217,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     } catch (err) {
       setLoading(false);
       console.error("Failed to add note:", err);
-       toast.error("Failed to add note, please try again.");
+      toast.error("Failed to add note, please try again.");
     }
   };
 
@@ -229,7 +237,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         frequency: "",
         duration: "",
         instructions: "",
-      }
+      },
     ]);
   };
 
@@ -260,13 +268,15 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       );
 
       const prescription = response.data;
-      setPrescriptionForms([{
-        drugName: prescription.drugName,
-        dosage: prescription.dosage,
-        frequency: prescription.frequency,
-        duration: prescription.duration,
-        instructions: prescription.instructions,
-      }]);
+      setPrescriptionForms([
+        {
+          drugName: prescription.drugName,
+          dosage: prescription.dosage,
+          frequency: prescription.frequency,
+          duration: prescription.duration,
+          instructions: prescription.instructions,
+        },
+      ]);
       setIsPrescriptionModalOpen(true);
     } catch (err) {
       console.error("Failed to fetch prescription details:", err);
@@ -298,7 +308,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       setIsPrescriptionModalOpen(false);
       resetPrescriptionForm();
       fetchPatientPrescriptions();
-     toast.success("Prescription updated successfully!");
+      toast.success("Prescription updated successfully!");
     } catch (err) {
       setPrescriptionError(
         err.response?.data?.message || "Failed to update prescription"
@@ -316,7 +326,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         frequency: "",
         duration: "",
         instructions: "",
-      }
+      },
     ]);
     setIsEditMode(false);
     setCurrentPrescriptionId(null);
@@ -348,7 +358,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         frequency: "",
         duration: "",
         instructions: "",
-      }
+      },
     ]);
   };
 
@@ -858,7 +868,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                                               prescription.id
                                             )
                                           }
-                                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                         >
                                           <Eye className="h-3 w-3 mr-1" />
                                           View
@@ -917,7 +927,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           </>
         )}
 
-      
         {isPrescriptionModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white w-[90%] max-w-2xl rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-auto">
@@ -990,26 +999,29 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                         />
                       </div>
 
-                    
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Frequency *
-  </label>
-  <select
-    name="frequency"
-    value={form.frequency}
-    onChange={(e) => handlePrescriptionChange(e, index)}
-    className="w-full p-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500"
-    required
-  >
-    <option value="">Select frequency</option>
-    <option value="Once Daily">Once Daily</option>
-    <option value="Twice Daily">Twice Daily</option>
-    <option value="Three Times Daily">Three Times Daily</option>
-    <option value="Four Times Daily">Four Times Daily</option>
-    <option value="As Needed">As Needed</option>
-  </select>
-</div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Frequency *
+                        </label>
+                        <select
+                          name="frequency"
+                          value={form.frequency}
+                          onChange={(e) => handlePrescriptionChange(e, index)}
+                          className="w-full p-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500"
+                          required
+                        >
+                          <option value="">Select frequency</option>
+                          <option value="Once Daily">Once Daily</option>
+                          <option value="Twice Daily">Twice Daily</option>
+                          <option value="Three Times Daily">
+                            Three Times Daily
+                          </option>
+                          <option value="Four Times Daily">
+                            Four Times Daily
+                          </option>
+                          <option value="As Needed">As Needed</option>
+                        </select>
+                      </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1089,24 +1101,22 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           </div>
         )}
 
-         <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        style={{ zIndex: 9999 }}
-      />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          style={{ zIndex: 9999 }}
+        />
       </div>
     </div>
   );
 };
 
 export default AddNoteModal;
-
-
