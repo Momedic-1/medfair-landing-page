@@ -101,7 +101,8 @@ const Dashboard = () => {
   const [isCallADoctorModalOpen, setIsCallADoctorModalOpen] = useState(false);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [videoLink, setVideoLink] = useState(null);
-  const [meetingLink, setMeetingLink] = useState(null);
+  // const [meetingLink, setMeetingLink] = useState(null);
+  const [videoMeetingUrl, setVideoMeetingUrl] = useState(null);
   const [specialistDetails, setSpecialistDetails] = useState([]);
   const token = getToken();
   const [selectedTime, setSelectedTime] = useState(null);
@@ -111,11 +112,9 @@ const Dashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
+  const [meetingUrlGenerated, setMeetingUrlGenerated] = useState(new Set());
+  const [notificationShown, setNotificationShown] = useState(new Set());
 
-  // New state for reminder system
-  const [upcomingAppointmentIds, setUpcomingAppointmentIds] = useState(
-    new Set()
-  );
   const [showUpcomingModal, setShowUpcomingModal] = useState(false);
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
@@ -127,7 +126,7 @@ const Dashboard = () => {
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
-  const BOOK_MEETING_URL = `${baseUrl}//api/appointment/meetings`;
+  // const BOOK_MEETING_URL = `${baseUrl}//api/appointment/meetings`;
 
   // Update current time every minute
   useEffect(() => {
@@ -137,39 +136,6 @@ const Dashboard = () => {
 
     return () => clearInterval(timer);
   }, []);
-
-  // Check for upcoming appointments (5-minute reminder)
-  useEffect(() => {
-    const checkUpcomingAppointments = () => {
-      const now = new Date();
-
-      upcomingAppointments.forEach((appointment) => {
-        if (!appointment.date || !appointment.time) return;
-
-        const appointmentDateTime = new Date(
-          `${appointment.date}T${appointment.time}`
-        );
-        const timeDiff = appointmentDateTime.getTime() - now.getTime();
-        const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-
-        if (
-          minutesDiff === 5 &&
-          !upcomingAppointmentIds.has(appointment.slotId)
-        ) {
-          setUpcomingAppointmentIds((prev) =>
-            new Set(prev).add(appointment.slotId)
-          );
-          setCurrentUpcomingAppointment(appointment);
-          setShowUpcomingModal(true);
-          toast.info(
-            `Appointment with Dr. ${appointment.name} starting in 5 minutes!`
-          );
-        }
-      });
-    };
-
-    checkUpcomingAppointments();
-  }, [currentTime, upcomingAppointments, upcomingAppointmentIds]);
 
   // Get appointment status based on current time
   const getAppointmentStatus = (appointment) => {
@@ -218,6 +184,57 @@ const Dashboard = () => {
     }
   };
 
+  // Generate meeting URL (call 5 minutes before)
+  const generateMeetingUrl = async (slotId) => {
+    const token = getToken();
+    if (!userId || !slotId || !token) {
+      // toast.error("Missing required info to generate meeting URL");
+      return;
+    }
+
+    // Check if URL already exists in state
+    if (meetingUrlGenerated.has(slotId)) {
+      console.log("URL already generated for this slot");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const url = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
+
+      const response = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Store the URL with the slotId
+      const meetingUrl = response.data.meetingUrl || response.data.url;
+      setVideoMeetingUrl(meetingUrl);
+      setMeetingUrlGenerated((prev) => new Map(prev).set(slotId, meetingUrl));
+      toast.success("Meeting URL generated! You can join when ready.");
+    } catch (error) {
+      console.error("Generate URL error:", error);
+      // toast.error("Failed to generate meeting URL");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const joinMeeting = async (slotId) => {
+    const storedUrl = meetingUrlGenerated.get(slotId);
+    if (storedUrl) {
+      setVideoMeetingUrl(storedUrl);
+      setShowModal(true);
+      // toast.success("Joining meeting...");
+      return;
+    }
+
+    // If no stored URL, generate one first
+    await generateMeetingUrl(slotId);
+  };
+
   // Handle upcoming modal actions
   const handleCloseUpcomingModal = () => {
     setShowUpcomingModal(false);
@@ -226,7 +243,7 @@ const Dashboard = () => {
 
   const handleJoinFromUpcomingModal = () => {
     if (currentUpcomingAppointment) {
-      handleJoinCall(currentUpcomingAppointment.slotId);
+      joinMeeting(currentUpcomingAppointment.slotId);
       handleCloseUpcomingModal();
     }
   };
@@ -295,30 +312,6 @@ const Dashboard = () => {
           return doctor;
         })
       );
-    } catch (error) {
-      toast.error("Failed to book appointment");
-    } finally {
-      setIsBooking(false);
-    }
-  };
-
-  const getMeetingLink = async (e, slotId, patientId) => {
-    e.preventDefault();
-    setIsBooking(true);
-    try {
-      const response = await axios.post(
-        `${BOOK_MEETING_URL}?slotId=${slotId}&patientId=${patientId}/join`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log(response, " meeting link response");
-      setMeetingLink(response);
-      setIsBooking(false);
     } catch (error) {
       toast.error("Failed to book appointment");
     } finally {
@@ -432,6 +425,65 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    const now = new Date();
+
+    upcomingAppointments.forEach((appointment) => {
+      if (!appointment.date || !appointment.time) return;
+
+      const appointmentDateTime = new Date(
+        `${appointment.date}T${appointment.time}`
+      );
+      if (isNaN(appointmentDateTime.getTime())) return;
+
+      const timeDiffToStart = appointmentDateTime.getTime() - now.getTime();
+      const minutesDiffToStart = Math.floor(timeDiffToStart / (1000 * 60));
+
+      // Generate URL 5 minutes before appointment
+      if (
+        minutesDiffToStart === 5 &&
+        !meetingUrlGenerated.has(appointment.slotId) &&
+        !notificationShown.has(appointment.slotId)
+      ) {
+        generateMeetingUrl(appointment.slotId);
+        setCurrentUpcomingAppointment(appointment);
+        setShowUpcomingModal(true);
+        toast.info(`Meeting URL generated for Dr. ${appointment.name}!`);
+        setNotificationShown((prev) => new Set(prev).add(appointment.slotId));
+      }
+
+      // Show join option when appointment time arrives
+      const minutesPastStart = Math.floor(
+        (now.getTime() - appointmentDateTime.getTime()) / (1000 * 60)
+      );
+      const isActive = minutesPastStart >= 0 && minutesPastStart <= 1;
+
+      if (isActive && meetingUrlGenerated.has(appointment.slotId)) {
+        setShowModal(true);
+      }
+    });
+  }, [
+    currentTime,
+    upcomingAppointments,
+    meetingUrlGenerated,
+    notificationShown,
+  ]);
+
+  useEffect(() => {
+    const currentSlotIds = new Set(
+      upcomingAppointments.map((apt) => apt.slotId)
+    );
+    setNotificationShown((prev) => {
+      const filtered = new Set();
+      prev.forEach((slotId) => {
+        if (currentSlotIds.has(slotId)) {
+          filtered.add(slotId);
+        }
+      });
+      return filtered;
+    });
+  }, [upcomingAppointments]);
+
+  useEffect(() => {
     getSpecialistCount();
   }, []);
 
@@ -510,7 +562,6 @@ const Dashboard = () => {
                   if (upcomingAppointments.length > 0) {
                     return upcomingAppointments.map((details) => {
                       const status = getAppointmentStatus(details);
-
                       return (
                         <div
                           key={
@@ -879,7 +930,6 @@ const Dashboard = () => {
         </div>
       </Popover>
 
-      {/* Upcoming Appointment Modal */}
       {showUpcomingModal && currentUpcomingAppointment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
@@ -899,7 +949,7 @@ const Dashboard = () => {
                   <strong>Dr. {currentUpcomingAppointment.name}</strong> starts
                   in 5 minutes!
                 </p>
-                <div className="text-sm text-gray-500 mb-4">
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-center text-sm text-gray-500 mb-4">
                   <p>📅 {currentUpcomingAppointment.date}</p>
                   <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
                 </div>
@@ -912,32 +962,38 @@ const Dashboard = () => {
                 >
                   Dismiss
                 </button>
-                <button
+                <Link
+                  to={`/video-call?roomUrl=${encodeURIComponent(
+                    videoMeetingUrl
+                  )}`}
+                >
+                  <button
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                     disabled={isLoading}
-                    onClick={handleJoinFromUpcomingModal}
-                >
-                  {isLoading ? 'Joining...' : 'Join Call'}
-                </button>
+                  >
+                    Join Call
+                  </button>
+                </Link>
               </div>
-              
             </div>
           </div>
         </div>
       )}
 
-      {showModal && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="w-40 h-24 border rounded-lg py-4 px-4 grid place-items-center bg-green-700  bg-opacity-100 cursor-pointer">
-            <p className="text-white font-semibold text-center mb-2">
-              Incoming Call
-            </p>
-            <LiaPhoneVolumeSolid
-              className="shake text-yellow-500"
-              fontSize={28}
-            />
+      {showModal && videoMeetingUrl && (
+        <Link to={`/video-call?roomUrl=${encodeURIComponent(videoMeetingUrl)}`}>
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
+              <p className="text-white font-semibold text-center mb-2">
+                Join Meeting Room
+              </p>
+              <LiaPhoneVolumeSolid
+                className="shake text-yellow-500"
+                fontSize={28}
+              />
+            </div>
           </div>
-        </div>
+        </Link>
       )}
     </div>
   );
