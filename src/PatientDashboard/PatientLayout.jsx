@@ -259,12 +259,12 @@ export default function PatientLayout() {
   
 
       <ToastContainer />
-      <div className='w-full h-screen lg:overflow-hidden flex flex-col lg:flex-row lg:justify-between'>
+      <div className='w-full h-screen overflow-y-scroll flex flex-col lg:flex-row lg:justify-between'>
       <div className='lg:w-[20%]'>
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       </div>
      
-      <div className="w-full lg:w-[80%] bg-gray-100">
+      <div className="w-full lg:w-[80%] h-full bg-gray-100">
          <div className='w-full'>
             <div className={`flex flex-col bg-white transition-all ${isSidebarOpen ? '' : 'ml-0'}`}>
         <header className="w-full p-2 h-16 bg-white flex justify-between items-center shadow px-4">
@@ -290,6 +290,4 @@ export default function PatientLayout() {
       </div>
       </div>
     </div>
-    )};
-    
- 
+    )}

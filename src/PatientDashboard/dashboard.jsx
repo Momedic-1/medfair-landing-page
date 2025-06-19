@@ -56,8 +56,8 @@ const avatarStyle = {
 };
 
 const avatarStyle2 = {
-  width: 40,
-  height: 40,
+  width: 35,
+  height: 35,
 };
 
 const specialistCategory = [
@@ -114,7 +114,7 @@ const Dashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [meetingUrlGenerated, setMeetingUrlGenerated] = useState(new Set());
   const [notificationShown, setNotificationShown] = useState(new Set());
-
+  const [bookedSlots, setBookedSlots] = useState(new Set());
   const [showUpcomingModal, setShowUpcomingModal] = useState(false);
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
@@ -174,7 +174,7 @@ const Dashboard = () => {
   const getStatusText = (status) => {
     switch (status) {
       case "over":
-        return "⏰ Appointment Time Over";
+        return "⏰ Appointment Over";
       case "active":
         return "🟢 Active";
       case "upcoming":
@@ -294,24 +294,28 @@ const Dashboard = () => {
       console.log(response);
       toast.success("Appointment booked successfully!");
 
+      // Add the booked slot to our tracking set
+      setBookedSlots((prev) => new Set(prev).add(slotId));
+
       handleClosePopover();
       setIsSpecialistsModalOpen(false);
       setIsMainModalOpen(false);
       getUpcomingAppointments();
 
-      setSpecialistDetails((prev) =>
-        prev.map((doctor) => {
-          if (doctor.doctorId === selectedDoctor.doctorId) {
-            return {
-              ...doctor,
-              slots: doctor.slots.filter(
-                (slot) => slot.slotId !== selectedSlotId
-              ),
-            };
-          }
-          return doctor;
-        })
-      );
+      // Remove this part - don't filter out booked slots
+      // setSpecialistDetails((prev) =>
+      //   prev.map((doctor) => {
+      //     if (doctor.doctorId === selectedDoctor.doctorId) {
+      //       return {
+      //         ...doctor,
+      //         slots: doctor.slots.filter(
+      //           (slot) => slot.slotId !== selectedSlotId
+      //         ),
+      //       };
+      //     }
+      //     return doctor;
+      //   })
+      // );
     } catch (error) {
       toast.error("Failed to book appointment");
     } finally {
@@ -499,6 +503,22 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    // Initialize booked slots from upcoming appointments for today
+    const bookedSlotIds = upcomingAppointments
+      .filter((apt) => dayjs(apt.date).isSame(dayjs(), "day"))
+      .map((apt) => apt.slotId);
+
+    setBookedSlots(new Set(bookedSlotIds));
+  }, [upcomingAppointments]);
+
+  // 5. Additional function to check if slot is booked from upcoming appointments
+  const isSlotBookedFromAppointments = (slotId) => {
+    return upcomingAppointments.some(
+      (apt) => apt.slotId === slotId && dayjs(apt.date).isSame(dayjs(), "day")
+    );
+  };
+
   return (
     <div className="w-full">
       <ToastContainer />
@@ -569,26 +589,33 @@ const Dashboard = () => {
                             details.id ||
                             `${details.name}-${details.date}-${details.time}`
                           }
-                          className={`flex flex-row gap-4 mt-4 p-4 border-2 rounded-lg transition-all duration-200 ${
+                          className={`flex flex-row gap-2 mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${
                             status === "over"
                               ? "bg-red-100 border-red-300 opacity-60"
                               : `${getStatusColor(status)} hover:shadow-lg`
                           }`}
                         >
                           <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-                          <div className="flex flex-col flex-1">
+                          <div className="flex gap-1 flex-1">
+                            <div>
                             <p className="text-sm font-bold text-blue-900">
                               Dr. {details.name}
-                            </p>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <span>📅 {details.date}</span>
-                              <span>⏰ {formatTime(details.time)}</span>
-                            </div>
-                            {status !== "upcoming" && (
+                              {status !== "upcoming" && (
                               <div className="text-xs font-semibold text-gray-600 mt-1">
                                 {getStatusText(status)}
                               </div>
                             )}
+                            </p>
+                            </div>
+                            <div className="flex flex-col xl:flex-row items-start gap-1 text-xs text-gray-600">
+                              <span className="text-xs">
+                                {" "}
+                                📅 {details.date}
+                              </span>
+                              <span className="text-xs">
+                                ⏰ {formatTime(details.time)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -604,8 +631,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* All existing modals remain the same */}
+    
       <Modal
         open={isMainModalOpen}
         onClose={() => setIsMainModalOpen(false)}
@@ -759,29 +785,50 @@ const Dashboard = () => {
                               .filter((slot) =>
                                 dayjs(slot.date).isSame(dayjs(), "day")
                               )
-                              .map((slot) => (
-                                <button
-                                  key={slot.slotId}
-                                  className="bg-[#020E7C] text-white text-sm px-4 py-2 rounded-full hover:bg-blue-600 transition"
-                                  onClick={(e) =>
-                                    handleOpenPopover(
-                                      e,
-                                      specialist,
-                                      `${slot.date}T${slot.time}`,
-                                      slot.slotId
-                                    )
-                                  }
-                                >
-                                  {dayjs(`${slot.date}T${slot.time}`).format(
-                                    "h:mm A"
-                                  )}
-                                </button>
-                              ))
+                              .map((slot) => {
+                                // Check both session bookings and upcoming appointments
+                                const isBooked =
+                                  bookedSlots.has(slot.slotId) ||
+                                  isSlotBookedFromAppointments(slot.slotId);
+                                return (
+                                  <div
+                                    key={slot.slotId}
+                                    className="flex flex-col items-center"
+                                  >
+                                    <button
+                                      className={`text-xs w-full flex flex-col gap-1 px-4 py-2 rounded-full transition ${
+                                        isBooked
+                                          ? "bg-red-400 text-white cursor-not-allowed opacity-70"
+                                          : "bg-[#020E7C] text-white hover:bg-blue-600"
+                                      }`}
+                                      onClick={(e) =>
+                                        !isBooked &&
+                                        handleOpenPopover(
+                                          e,
+                                          specialist,
+                                          `${slot.date}T${slot.time}`,
+                                          slot.slotId
+                                        )
+                                      }
+                                      disabled={isBooked}
+                                    >
+                                      {dayjs(
+                                        `${slot.date}T${slot.time}`
+                                      ).format("h:mm A")}
+                                      {isBooked && (
+                                      <span className="text-xs text-red-200 font-medium">
+                                        Booked
+                                      </span>
+                                    )}
+                                    </button>
+                                  </div>
+                                );
+                              })
                           ) : (
                             <p className="text-sm text-gray-500">
                               No available slots today
                             </p>
-                          )}
+                          )}{" "}
                         </div>
                       </div>
                     </div>
@@ -852,16 +899,17 @@ const Dashboard = () => {
                 >
                   {videoLink?.roomUrl}
                 </a>
-
-                <Link
-                  to={`/video-call?roomUrl=${encodeURIComponent(
-                    videoLink?.roomUrl
-                  )}`}
-                >
-                  <button className="bg-blue-500 w-full h-10 text-white rounded-full">
-                    Click to join a call
-                  </button>
-                </Link>
+                {showModal && videoMeetingUrl && (
+                  <Link
+                    to={`/video-call?roomUrl=${encodeURIComponent(
+                      videoLink?.roomUrl
+                    )}`}
+                  >
+                    <button className="bg-blue-500 w-full h-10 text-white rounded-full">
+                      Click to join a call
+                    </button>
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -930,6 +978,22 @@ const Dashboard = () => {
         </div>
       </Popover>
 
+      {showModal && videoMeetingUrl && (
+        <Link to={`/video-call?roomUrl=${encodeURIComponent(videoMeetingUrl)}`}>
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
+              <p className="text-white font-semibold text-center mb-2">
+                Join Meeting Room
+              </p>
+              <LiaPhoneVolumeSolid
+                className="shake text-yellow-500"
+                fontSize={28}
+              />
+            </div>
+          </div>
+        </Link>
+      )}
+
       {showUpcomingModal && currentUpcomingAppointment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
@@ -950,8 +1014,12 @@ const Dashboard = () => {
                   in 5 minutes!
                 </p>
                 <div className="flex flex-col md:flex-row gap-4 items-center justify-center text-sm text-gray-500 mb-4">
-                  <p>📅 {currentUpcomingAppointment.date}</p>
-                  <p>⏰ {formatTime(currentUpcomingAppointment.time)}</p>
+                  <p className="text-xs">
+                    📅 {currentUpcomingAppointment.date}
+                  </p>
+                  <p className="text-xs">
+                    ⏰ {formatTime(currentUpcomingAppointment.time)}
+                  </p>
                 </div>
               </div>
 
@@ -962,38 +1030,17 @@ const Dashboard = () => {
                 >
                   Dismiss
                 </button>
-                <Link
-                  to={`/video-call?roomUrl=${encodeURIComponent(
-                    videoMeetingUrl
-                  )}`}
+                <button
+                  onClick={handleJoinFromUpcomingModal}
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                 >
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                    disabled={isLoading}
-                  >
-                    Join Call
-                  </button>
-                </Link>
+                  Join Call
+                </button>
               </div>
             </div>
           </div>
         </div>
-      )}
-
-      {showModal && videoMeetingUrl && (
-        <Link to={`/video-call?roomUrl=${encodeURIComponent(videoMeetingUrl)}`}>
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
-              <p className="text-white font-semibold text-center mb-2">
-                Join Meeting Room
-              </p>
-              <LiaPhoneVolumeSolid
-                className="shake text-yellow-500"
-                fontSize={28}
-              />
-            </div>
-          </div>
-        </Link>
       )}
     </div>
   );

@@ -8,9 +8,10 @@ import {baseUrl} from "../env.jsx";
 
 export default function PaymentPage() {
   const subscriptionPlans = {
-    yearly: { name: 'Yearly', price: 45000 },
-    monthly: { name: 'Monthly', price: 5000 },
     instant: { name: 'Instant', price: 1500 },
+    monthly: { name: 'Monthly', price: 4500 },
+    yearly: { name: 'Yearly', price: 45000 },
+    specialist: { name: 'Specialist', price: 5000 },
   };
 
   const navigate = useNavigate();
@@ -20,8 +21,6 @@ export default function PaymentPage() {
     cvv: '',
     date: '',
   });
-
- 
   
   const location = useLocation();
   const initialPlan = location.state?.selectedPlan || 'monthly';
@@ -54,7 +53,6 @@ export default function PaymentPage() {
           Authorization: `Bearer ${token}`,
         },
       });
-     
     } catch (error) {
       console.error('Error viewing payment prices :', error);
     }
@@ -64,7 +62,6 @@ export default function PaymentPage() {
     e.preventDefault();
     formData.plan = selectedPlan;
     formData.amount = `${selectedPrice}.00`;
-   
     
     // const token = JSON.parse(localStorage.getItem('authToken'));
     const userData = JSON.parse(localStorage.getItem('userData'));

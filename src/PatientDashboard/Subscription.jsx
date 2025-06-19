@@ -64,7 +64,7 @@ const Subscription = () => {
   };
 
   return (
-    <div className="w-full px-4">
+    <div className="w-full px-4 h-screen overflow-auto">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 backdrop-blur-sm z-50">
           <Hourglass
@@ -82,11 +82,11 @@ const Subscription = () => {
       <p className="text-gray-600 text-center mt-2">
         Select the plan that best suits your needs and enjoy premium features.
       </p>
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mt-8 mb-12 grid grid-cols-1 md:grid-cols-2 gap-6">
         {ActiveSlide.map((swipe, index) => (
           <div
             key={index}
-            className="flex flex-col w-full min-h-[350px] bg-gradient-to-br from-white to-gray-100 p-6 border border-gray-200 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-2"
+            className="flex flex-col w-full min-h-[300px] bg-gradient-to-br from-white to-gray-100 p-6 border border-gray-200 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-2"
           >
             <span className="text-blue-600 text-2xl font-bold">{swipe.title}</span>
             <div className="text-4xl font-extrabold text-[#020E7C] mt-2">

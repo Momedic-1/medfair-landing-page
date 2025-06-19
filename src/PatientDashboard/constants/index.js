@@ -22,10 +22,10 @@ export const ActiveSlide = [
     buttonLink: "/payment",
   },
   {
-    title: "Specialist Plan ",
+    title: "Specialist Plan",
     subTitle: 5000,
     content: [
-      " Video call with a licensed professional",
+      "Video call with a licensed professional",
       "One-time consultation",
       "Fast and easy booking",
       "Confidential and secure sessions",
