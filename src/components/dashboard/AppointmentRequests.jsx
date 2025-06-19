@@ -267,9 +267,8 @@ function AppointmentRequests({ appointments }) {
                       </div>
                     )}
                   </div>
-
                   <div className="flex-1 ml-2">
-                    <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
+                    <div className="text-[#020e7c] text-xs font-normal font-['Roboto'] leading-[25px]">
                       {appointment.name || "Unknown"}
                     </div>
                     {status !== "upcoming" && (
@@ -278,8 +277,8 @@ function AppointmentRequests({ appointments }) {
                       </div>
                     )}
                   </div>
-
-                  <div className="text-[#020e7c] text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
+                  <div className='flex flex-col'>
+                  <div className="text-[#020e7c] text-xs font-normal font-['Roboto'] leading-[25px]">
                     📅{" "}
                     {appointment.date
                       ? formatAppointmentDate(appointment.date)
@@ -287,8 +286,9 @@ function AppointmentRequests({ appointments }) {
                       ? appointmentTime.toLocaleDateString()
                       : "No date"}
                   </div>
+                  </div>
 
-                  <div className="text-[#020e7c] px-2 text-[12px] md:text-[14px] font-normal font-['Roboto'] leading-[25px]">
+                  <div className="text-[#020e7c] px-2 text-xs font-normal font-['Roboto'] leading-[25px]">
                     ⏰{" "}
                     {appointment.time
                       ? formatTime(appointment.time)
@@ -297,17 +297,6 @@ function AppointmentRequests({ appointments }) {
                       : "No time"}
                   </div>
                 </div>
-
-                {/* Debug info for each appointment */}
-                {/* <div className="text-xs text-gray-500 px-4">
-                  Minutes diff:{" "}
-                  {appointmentTime
-                    ? Math.floor(
-                        (appointmentTime.getTime() - currentTime.getTime()) /
-                          60000
-                      )
-                    : "N/A"}
-                </div> */}
               </div>
             );
           })
@@ -359,14 +348,14 @@ function AppointmentRequests({ appointments }) {
                   starts in 5 minutes!
                 </p>
                 <div className="flex flex-col md:flex-row gap-4 items-center justify-center text-sm text-gray-500 mb-4">
-                  <p>
+                  <p className='text-xs'>
                     📅{" "}
                     {currentUpcomingAppointment.date ||
                       formatAppointmentDate(
                         currentUpcomingAppointment.startTime
                       )}
                   </p>
-                  <p>
+                  <p className='text-xs'>
                     ⏰{" "}
                     {currentUpcomingAppointment.time
                       ? formatTime(currentUpcomingAppointment.time)
