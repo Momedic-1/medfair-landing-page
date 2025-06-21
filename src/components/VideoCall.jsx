@@ -13,7 +13,6 @@ import { capitalizeFirstLetter } from "../utils";
 import { useLocation } from "react-router-dom";
 import { setRoomUrl, setCall } from "../features/authSlice";
 
-
 const VideoCall = () => {
   const userData = JSON.parse(localStorage.getItem("userData"));
 
@@ -24,14 +23,14 @@ const VideoCall = () => {
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
-  const [patientInfo, setPatientInfo] = useState(null);
+  const [displayInfo, setDisplayInfo] = useState(null);
   const [isLocalVideoFullscreen, setIsLocalVideoFullscreen] = useState(true);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const roomUrl = queryParams.get("roomUrl") ||  useSelector((state) => state.auth.roomUrl);
+  const roomUrl =
+    queryParams.get("roomUrl") || useSelector((state) => state.auth.roomUrl);
 
-  // const roomUrl = useSelector((state) => state.auth.roomUrl);
   const call = useSelector((state) => state.auth.call);
 
   const roomConnection = useRoomConnection(roomUrl, {
@@ -69,7 +68,7 @@ const VideoCall = () => {
       await actions.leaveRoom();
 
       if (localParticipant?.stream) {
-        localParticipant.stream.getTracks().forEach(track => {
+        localParticipant.stream.getTracks().forEach((track) => {
           track.stop();
         });
       }
@@ -102,23 +101,44 @@ const VideoCall = () => {
 
   useEffect(() => {
     const userRole = userData?.role;
-    
-    if (userRole === "DOCTOR" && call) {
-      setPatientInfo({
+
+    if (userRole === "PATIENT" && call) {
+      // Patient sees doctor information
+      setDisplayInfo({
+        label: "Doctor",
+        firstName: capitalizeFirstLetter(call.doctorFirstName) || "N/A",
+        lastName: capitalizeFirstLetter(call.doctorLastName) || "N/A",
+        dob: 
+        // call.doctorDob ||
+         "N/A",
+        age: calculateAge(call.doctorDob),
+      });
+    } else if (userRole === "DOCTOR" && call) {
+      // Doctor sees patient information
+      setDisplayInfo({
+        label: "Patient",
         firstName: capitalizeFirstLetter(call.patientFirstName) || "N/A",
         lastName: capitalizeFirstLetter(call.patientLastName) || "N/A",
         dob: call.dob || userData?.dob || "N/A",
-        age: calculateAge(call.dob || userData?.dob)
+        age: calculateAge(call.dob || userData?.dob),
       });
     } else {
-      setPatientInfo({
+      // Fallback to user's own data
+      setDisplayInfo({
+        label: userRole === "DOCTOR" ? "Patient" : "Doctor",
         firstName: capitalizeFirstLetter(userData?.firstName) || "N/A",
         lastName: capitalizeFirstLetter(userData?.lastName) || "N/A",
         dob: userData?.dob || "N/A",
-        age: calculateAge(userData?.dob)
+        age: calculateAge(userData?.dob),
       });
     }
-  }, [call]);
+  }, [call, userData]);
+
+  useEffect(() => {
+    if (displayInfo) {
+      console.log("👤 Display Info:", displayInfo);
+    }
+  }, [displayInfo]);
 
   const handleToggleAudio = () => {
     toggleMicrophone();
@@ -152,28 +172,30 @@ const VideoCall = () => {
       setShowCopiedMessage(true);
       setTimeout(() => setShowCopiedMessage(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
 
   const toggleVideoView = () => {
-    setIsLocalVideoFullscreen(prev => !prev);
+    setIsLocalVideoFullscreen((prev) => !prev);
   };
 
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden bg-gradient-to-b from-blue-800 via-blue-950/40 to-white/50">
       <div className="bg-black h-16 md:h-20 flex flex-col md:flex-row items-start md:items-center justify-start md:justify-between text-white px-2 py-1 md:px-5 md:py-0 space-y-1 md:space-y-0">
         <p className="text-xs sm:text-sm md:text-base">
-          <span className="font-bold">Patient: </span>
-          {patientInfo ? `${patientInfo.firstName} ${patientInfo.lastName}` : "Loading..."}
+          <span className="font-bold">{displayInfo?.label}: </span>
+          {displayInfo
+            ? `${displayInfo.firstName} ${displayInfo.lastName}`
+            : "Loading..."}
         </p>
         <p className="text-xs sm:text-sm md:text-base">
           <span className="font-bold">DOB: </span>
-          {patientInfo ? patientInfo.dob : "Loading..."}
+          {displayInfo ? displayInfo.dob : "Loading..."}
         </p>
         <p className="text-xs sm:text-sm md:text-base">
           <span className="font-bold">Age: </span>
-          {patientInfo ? patientInfo.age : "Loading..."}
+          {displayInfo ? displayInfo.age : "Loading..."}
         </p>
       </div>
 
@@ -187,7 +209,7 @@ const VideoCall = () => {
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover"
+                  objectFit: "cover",
                 }}
               />
             ) : null
@@ -201,7 +223,7 @@ const VideoCall = () => {
                   style={{
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover"
+                    objectFit: "cover",
                   }}
                 />
               );
@@ -225,7 +247,7 @@ const VideoCall = () => {
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
-                        borderRadius: "12px"
+                        borderRadius: "12px",
                       }}
                     />
                     <p className="absolute top-2 left-2 font-bold text-white bg-black/50 px-2 py-1 rounded text-xs sm:text-sm">
@@ -236,9 +258,13 @@ const VideoCall = () => {
               })
             ) : (
               <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center p-1 sm:p-2 md:p-4">
-                <p className="text-white text-[8px] sm:text-xs md:text-sm mb-1 sm:mb-2">Share this link:</p>
+                <p className="text-white text-[8px] sm:text-xs md:text-sm mb-1 sm:mb-2">
+                  Share this link:
+                </p>
                 <div className="w-[90%] bg-gray-800 rounded-lg p-1 sm:p-2 mb-1 sm:mb-2">
-                  <p className="text-gray-300 text-[6px] sm:text-[10px] md:text-xs break-all">{roomUrl}</p>
+                  <p className="text-gray-300 text-[6px] sm:text-[10px] md:text-xs break-all">
+                    {roomUrl}
+                  </p>
                 </div>
                 <button
                   onClick={handleShareLink}
@@ -258,7 +284,7 @@ const VideoCall = () => {
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    borderRadius: "12px"
+                    borderRadius: "12px",
                   }}
                 />
                 <p className="absolute top-2 left-2 font-bold text-white bg-black/50 px-2 py-1 rounded text-xs sm:text-sm">

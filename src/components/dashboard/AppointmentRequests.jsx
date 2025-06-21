@@ -25,7 +25,6 @@ function AppointmentRequests({ appointments }) {
     } else if (appointment.date && appointment.time) {
       return new Date(`${appointment.date}T${appointment.time}`);
     } else {
-      console.warn("Invalid appointment date/time:", appointment);
       return null;
     }
   };
@@ -34,7 +33,6 @@ function AppointmentRequests({ appointments }) {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-
     return () => clearInterval(timer);
   }, []);
 
@@ -42,41 +40,21 @@ function AppointmentRequests({ appointments }) {
     const interval = setInterval(() => {
       const now = new Date();
       setCurrentTime(now);
-
-      console.log("Checking appointments at:", now.toLocaleString());
-      console.log("Appointments:", appointments);
-
-      if (!appointments || appointments.length === 0) {
-        console.log("No appointments to check");
-        return;
-      }
+      if (!appointments || appointments.length === 0) return;
 
       appointments.forEach((appointment) => {
         const appointmentTime = getAppointmentDateTime(appointment);
-
-        if (!appointmentTime) {
-          console.warn("Skipping appointment with invalid time:", appointment);
-          return;
-        }
+        if (!appointmentTime) return;
 
         const minutesDiff = Math.floor(
           (appointmentTime.getTime() - now.getTime()) / 60000
         );
 
-        console.log(`Appointment ${appointment.slotId || appointment.id}:`, {
-          appointmentTime: appointmentTime.toLocaleString(),
-          currentTime: now.toLocaleString(),
-          minutesDiff,
-          upcomingSet: Array.from(upcomingAppointments),
-        });
-
-        // Trigger upcoming appointment modal (5 minutes before)
         if (
           minutesDiff <= 5 &&
           minutesDiff > 0 &&
           !upcomingAppointments.has(appointment.slotId)
         ) {
-          console.log("🔔 Triggering upcoming modal for:", appointment);
           setUpcomingAppointments((prev) =>
             new Set(prev).add(appointment.slotId)
           );
@@ -84,13 +62,11 @@ function AppointmentRequests({ appointments }) {
           setShowUpcomingModal(true);
         }
 
-        // Trigger main appointment modal (at appointment time)
         if (
           minutesDiff <= 0 &&
           minutesDiff >= -5 &&
           !upcomingAppointments.has(`started-${appointment.slotId}`)
         ) {
-          console.log("🚀 Triggering appointment modal for:", appointment);
           setUpcomingAppointments((prev) =>
             new Set(prev).add(`started-${appointment.slotId}`)
           );
@@ -99,12 +75,10 @@ function AppointmentRequests({ appointments }) {
       });
     }, 30000);
 
-    const now = new Date();
-    console.log("Initial check at:", now.toLocaleString());
-
     return () => clearInterval(interval);
   }, [appointments, upcomingAppointments]);
 
+  // ✅ Modified to keep "active" for +45 mins
   const getAppointmentStatus = (appointment) => {
     const appointmentTime = getAppointmentDateTime(appointment);
     if (!appointmentTime) return "unknown";
@@ -113,12 +87,12 @@ function AppointmentRequests({ appointments }) {
     const timeDiff = now.getTime() - appointmentTime.getTime();
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-    if (minutesDiff > 30) {
-      return "over"; // More than 30 minutes past appointment time
-    } else if (minutesDiff >= -5 && minutesDiff <= 30) {
-      return "active"; // 5 minutes before to 30 minutes after
+    if (minutesDiff > 45) {
+      return "over";
+    } else if (minutesDiff >= -5 && minutesDiff <= 45) {
+      return "active";
     } else {
-      return "upcoming"; // More than 5 minutes before
+      return "upcoming";
     }
   };
 
@@ -132,7 +106,6 @@ function AppointmentRequests({ appointments }) {
     try {
       setIsLoading(true);
 
-      // Step 1: Get the meeting URL
       const getUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
       const getResponse = await axios.get(getUrl, {
         headers: {
@@ -209,21 +182,8 @@ function AppointmentRequests({ appointments }) {
     }
   };
 
-  // // Debug component - remove in production
-  // const DebugInfo = () => (
-  //   <div className="bg-yellow-100 p-2 text-xs border-b">
-  //     <p>Current Time: {currentTime.toLocaleString()}</p>
-  //     <p>Appointments: {appointments?.length || 0}</p>
-  //     <p>Upcoming Set: {Array.from(upcomingAppointments).join(', ')}</p>
-  //     <p>Show Upcoming Modal: {showUpcomingModal.toString()}</p>
-  //     <p>Show Main Modal: {showModal.toString()}</p>
-  //   </div>
-  // );
-
   return (
     <div className="w-full h-[420px] bg-white rounded-[12px] md:text-[14px] overflow-y-scroll shadow-lg">
-      {/* <DebugInfo /> */}
-
       <div className="px-4 py-4">
         <div className="flex justify-between text-[#020e7c]">
           <span className="text-base font-semibold font-['Roboto'] leading-[25px]">
@@ -277,25 +237,38 @@ function AppointmentRequests({ appointments }) {
                       </div>
                     )}
                   </div>
-                  <div className='flex flex-col'>
-                  <div className="text-[#020e7c] text-xs font-normal font-['Roboto'] leading-[25px]">
-                    📅{" "}
-                    {appointment.date
-                      ? formatAppointmentDate(appointment.date)
-                      : appointmentTime
-                      ? appointmentTime.toLocaleDateString()
-                      : "No date"}
-                  </div>
-                  </div>
 
-                  <div className="text-[#020e7c] px-2 text-xs font-normal font-['Roboto'] leading-[25px]">
-                    ⏰{" "}
-                    {appointment.time
-                      ? formatTime(appointment.time)
-                      : appointmentTime
-                      ? appointmentTime.toLocaleTimeString()
-                      : "No time"}
-                  </div>
+                  {/* ✅ Show Join Button if ACTIVE */}
+                  {status === "active" ? (
+                    <button
+                      onClick={() => handleJoinCall(appointment.slotId)}
+                      disabled={isLoading}
+                      className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
+                    >
+                      Join Now
+                    </button>
+                  ) : (
+                    <>
+                      <div className="flex flex-col">
+                        <div className="text-[#020e7c] text-xs font-normal font-['Roboto'] leading-[25px]">
+                          📅{" "}
+                          {appointment.date
+                            ? formatAppointmentDate(appointment.date)
+                            : appointmentTime
+                            ? appointmentTime.toLocaleDateString()
+                            : "No date"}
+                        </div>
+                      </div>
+                      <div className="text-[#020e7c] px-2 text-xs font-normal font-['Roboto'] leading-[25px]">
+                        ⏰{" "}
+                        {appointment.time
+                          ? formatTime(appointment.time)
+                          : appointmentTime
+                          ? appointmentTime.toLocaleTimeString()
+                          : "No time"}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -307,11 +280,11 @@ function AppointmentRequests({ appointments }) {
         )}
       </div>
 
-      {/* Main Modal */}
+      {/* ✅ Floating Modal to join call immediately (optional) */}
       {showModal && videoLink && (
         <Link to={`/video-call?roomUrl=${encodeURIComponent(videoLink)}`}>
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
+            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 cursor-pointer hover:bg-green-800 transition-colors">
               <p className="text-white font-semibold text-center mb-2">
                 Join Meeting Room
               </p>
@@ -324,7 +297,7 @@ function AppointmentRequests({ appointments }) {
         </Link>
       )}
 
-      {/* Upcoming Appointment Modal */}
+      {/* ✅ Upcoming Reminder Modal */}
       {showUpcomingModal && currentUpcomingAppointment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
@@ -348,14 +321,14 @@ function AppointmentRequests({ appointments }) {
                   starts in 5 minutes!
                 </p>
                 <div className="flex flex-col md:flex-row gap-4 items-center justify-center text-sm text-gray-500 mb-4">
-                  <p className='text-xs'>
+                  <p className="text-xs">
                     📅{" "}
                     {currentUpcomingAppointment.date ||
                       formatAppointmentDate(
                         currentUpcomingAppointment.startTime
                       )}
                   </p>
-                  <p className='text-xs'>
+                  <p className="text-xs">
                     ⏰{" "}
                     {currentUpcomingAppointment.time
                       ? formatTime(currentUpcomingAppointment.time)

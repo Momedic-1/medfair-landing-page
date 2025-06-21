@@ -122,7 +122,7 @@ const IncomingCall = () => {
               >
                 <div>
                   <p className='font-bold'>
-                    Patient: {call.patientFirstName} {call.patientLastName}
+                    Passstient: {call.patientFirstName} {call.patientLastName}
                   </p>
                   <p className='text-sm text-gray-600'>
                     Initiated at: {formatTime(call.callInitiationTime)}
