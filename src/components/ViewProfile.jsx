@@ -142,6 +142,7 @@ const ViewProfile = () => {
           parsedProfile.qualifications || prevState.qualifications,
       }));
     }
+    console.log(parsedProfile.medicalSpecialization, "medicalSpecialization");
   };
 
   const handleChange = (e) => {

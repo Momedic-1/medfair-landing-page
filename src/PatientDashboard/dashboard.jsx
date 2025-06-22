@@ -148,7 +148,7 @@ const Dashboard = () => {
     const timeDiff = now.getTime() - appointmentDateTime.getTime();
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-    if (minutesDiff > 30) {
+    if (minutesDiff > 45) {
       return "over"; // More than 30 minutes past appointment time
     } else if (minutesDiff >= -5 && minutesDiff <= 30) {
       return "active"; // 5 minutes before to 30 minutes after
@@ -217,6 +217,56 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Generate URL error:", error);
       // toast.error("Failed to generate meeting URL");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleJoinCall = async (slotId) => {
+    const token = getToken();
+    if (!userId || !slotId || !token) {
+      toast.error("Missing required info to join call");
+      return;
+    }
+  
+    try {
+      setIsLoading(true);
+  
+      // Get the meeting URL
+      const getUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
+      const getResponse = await axios.get(getUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      const meetingUrl = getResponse.data.meetingUrl;
+      if (!meetingUrl) {
+        throw new Error("Meeting URL not available");
+      }
+  
+      setVideoMeetingUrl(meetingUrl);
+  
+      // Join the meeting
+      const postUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/join`;
+      await axios.post(
+        postUrl,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      toast.success("Joined call successfully!");
+      setShowModal(true);
+    } catch (error) {
+      console.error("Join call error:", error);
+      const errorMessage =
+        error?.response?.data?.message || "Failed to join call";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -376,6 +426,7 @@ const Dashboard = () => {
       console.error("Error fetching specialists:", error);
       setIsLoading(false);
     }
+    console.log("Specialist details fetched:", specialistDetails);
   };
 
   const getUpcomingAppointments = async () => {
@@ -470,6 +521,7 @@ const Dashboard = () => {
     upcomingAppointments,
     meetingUrlGenerated,
     notificationShown,
+    showModal
   ]);
 
   useEffect(() => {
@@ -565,69 +617,80 @@ const Dashboard = () => {
               View your upcoming appointments
             </p>
             {isLoading
-              ? Array(3)
-                  .fill(0)
-                  .map((_, idx) => (
-                    <div
-                      className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
-                      key={`loading-appointment-${idx}`}
-                    >
-                      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+  ? Array(3)
+      .fill(0)
+      .map((_, idx) => (
+        <div
+          className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
+          key={`loading-appointment-${idx}`}
+        >
+          <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+        </div>
+      ))
+  : (() => {
+      if (upcomingAppointments.length > 0) {
+        return upcomingAppointments.map((details) => {
+          const status = getAppointmentStatus(details);
+          return (
+            <div
+              key={
+                details.slotId ||
+                details.id ||
+                `${details.name}-${details.date}-${details.time}`
+              }
+              className={`flex items-center justify-between mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${
+                status === "over"
+                  ? "bg-red-100 border-red-300 opacity-60 cursor-not-allowed pointer-events-none"
+                  : `${getStatusColor(status)} hover:shadow-lg`
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Avatar src={details?.imageUrl} sx={avatarStyle2} />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-blue-900">
+                    Dr. {details.name}
+                  </p>
+                  {status !== "upcoming" && (
+                    <div className="text-xs font-semibold text-gray-600 mt-1">
+                      {getStatusText(status)}
                     </div>
-                  ))
-              : (() => {
-                  if (upcomingAppointments.length > 0) {
-                    return upcomingAppointments.map((details) => {
-                      const status = getAppointmentStatus(details);
-                      return (
-                        <div
-                          key={
-                            details.slotId ||
-                            details.id ||
-                            `${details.name}-${details.date}-${details.time}`
-                          }
-                          className={`flex flex-row gap-2 mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${
-                            status === "over"
-                              ? "bg-red-100 border-red-300 opacity-60"
-                              : `${getStatusColor(status)} hover:shadow-lg`
-                          }`}
-                        >
-                          <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-                          <div className="flex gap-1 flex-1">
-                            <div>
-                            <p className="text-sm font-bold text-blue-900">
-                              Dr. {details.name}
-                              {status !== "upcoming" && (
-                              <div className="text-xs font-semibold text-gray-600 mt-1">
-                                {getStatusText(status)}
-                              </div>
-                            )}
-                            </p>
-                            </div>
-                            <div className="flex flex-col xl:flex-row items-start gap-1 text-xs text-gray-600">
-                              <span className="text-xs">
-                                {" "}
-                                📅 {details.date}
-                              </span>
-                              <span className="text-xs">
-                                ⏰ {formatTime(details.time)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    });
-                  } else {
-                    return (
-                      <div className="text-center text-gray-600 text-sm p-4">
-                        No upcoming appointments
-                      </div>
-                    );
-                  }
-                })()}
+                  )}
+                </div>
+              </div>
+
+              {/* Show Join Button if ACTIVE, otherwise show date/time */}
+              {status === "active" ? (
+                <button
+                  onClick={() => handleJoinCall(details.slotId)}
+                  disabled={isLoading}
+                  className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
+                >
+                  Join Now
+                </button>
+              ) : (
+                <div className="flex flex-col text-right">
+                  <span className="text-xs text-gray-600">
+                    📅 {details.date}
+                  </span>
+                  <span className="text-xs text-gray-600">
+                    ⏰ {formatTime(details.time)}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        });
+      } else {
+        return (
+          <div className="text-center text-gray-600 text-sm p-4">
+            No upcoming appointments
+          </div>
+        );
+      }
+    })()}
           </div>
         </div>
       </div>
@@ -1022,7 +1085,6 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
-
               <div className="flex space-x-3 justify-center">
                 <button
                   onClick={handleCloseUpcomingModal}
