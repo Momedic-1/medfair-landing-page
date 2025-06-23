@@ -962,17 +962,17 @@ const Dashboard = () => {
                 >
                   {videoLink?.roomUrl}
                 </a>
-                {showModal && videoMeetingUrl && (
+                {/* {showModal && videoMeetingUrl && ( */}
                   <Link
                     to={`/video-call?roomUrl=${encodeURIComponent(
                       videoLink?.roomUrl
                     )}`}
                   >
                     <button className="bg-blue-500 w-full h-10 text-white rounded-full">
-                      Click to join a call
+                      Click to Join the Meeting
                     </button>
                   </Link>
-                )}
+                {/* )} */}
               </div>
             )}
           </div>
