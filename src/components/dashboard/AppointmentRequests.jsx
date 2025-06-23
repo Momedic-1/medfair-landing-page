@@ -138,7 +138,8 @@ function AppointmentRequests({ appointments }) {
       console.error("Join call error:", error);
       const errorMessage =
         error?.response?.data?.message || "Failed to join call";
-      toast.error(errorMessage);
+      // toast.error(errorMessage);
+      console.error(errorMessage, "Please try again later.");
     } finally {
       setIsLoading(false);
     }
