@@ -79,7 +79,7 @@ const specialistCategory = [
     id: 3,
     name: "Relationship Therapist",
     count: 0,
-    icon: "💭",
+    icon: "💑",
     specialization: "RELATIONSHIP_THERAPIST",
   },
   {
@@ -88,6 +88,13 @@ const specialistCategory = [
     count: 0,
     icon: "❤️",
     specialization: "SEX_THERAPIST",
+  },
+  {
+    id: 5,
+    name: "Urologist",
+    count: 0,
+    icon: "🫁",
+    specialization: "UROLOGIST",
   },
 ];
 const Dashboard = () => {
@@ -340,38 +347,80 @@ const Dashboard = () => {
           },
         }
       );
-
+  
       console.log(response);
       toast.success("Appointment booked successfully!");
-
-      // Add the booked slot to our tracking set
+  
+      // Add the booked slot to our tracking set immediately
       setBookedSlots((prev) => new Set(prev).add(slotId));
-
+  
       handleClosePopover();
       setIsSpecialistsModalOpen(false);
       setIsMainModalOpen(false);
-      getUpcomingAppointments();
-
-      // Remove this part - don't filter out booked slots
-      // setSpecialistDetails((prev) =>
-      //   prev.map((doctor) => {
-      //     if (doctor.doctorId === selectedDoctor.doctorId) {
-      //       return {
-      //         ...doctor,
-      //         slots: doctor.slots.filter(
-      //           (slot) => slot.slotId !== selectedSlotId
-      //         ),
-      //       };
-      //     }
-      //     return doctor;
-      //   })
-      // );
+      
+      // Refresh upcoming appointments to get the latest data
+      await getUpcomingAppointments();
+  
     } catch (error) {
+      console.error("Booking error:", error);
       toast.error("Failed to book appointment");
+      // Remove from bookedSlots if booking failed
+      setBookedSlots((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(slotId);
+        return newSet;
+      });
     } finally {
       setIsBooking(false);
     }
   };
+  
+
+  // const handleBookAppointment = async (e, slotId, patientId) => {
+  //   e.preventDefault();
+  //   setIsBooking(true);
+  //   try {
+  //     const response = await axios.post(
+  //       `${BOOK_APPOINTMENT_URL}?slotId=${slotId}&patientId=${patientId}`,
+  //       {},
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     console.log(response);
+  //     toast.success("Appointment booked successfully!");
+
+  //     // Add the booked slot to our tracking set
+  //     setBookedSlots((prev) => new Set(prev).add(slotId));
+
+  //     handleClosePopover();
+  //     setIsSpecialistsModalOpen(false);
+  //     setIsMainModalOpen(false);
+  //     getUpcomingAppointments();
+
+  //     // Remove this part - don't filter out booked slots
+  //     // setSpecialistDetails((prev) =>
+  //     //   prev.map((doctor) => {
+  //     //     if (doctor.doctorId === selectedDoctor.doctorId) {
+  //     //       return {
+  //     //         ...doctor,
+  //     //         slots: doctor.slots.filter(
+  //     //           (slot) => slot.slotId !== selectedSlotId
+  //     //         ),
+  //     //       };
+  //     //     }
+  //     //     return doctor;
+  //     //   })
+  //     // );
+  //   } catch (error) {
+  //     toast.error("Failed to book appointment");
+  //   } finally {
+  //     setIsBooking(false);
+  //   }
+  // };
 
   const getSpecialistCount = async () => {
     try {
@@ -555,20 +604,51 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    // Initialize booked slots from upcoming appointments for today
-    const bookedSlotIds = upcomingAppointments
-      .filter((apt) => dayjs(apt.date).isSame(dayjs(), "day"))
-      .map((apt) => apt.slotId);
+  // useEffect(() => {
+  //   // Initialize booked slots from upcoming appointments for today
+  //   const bookedSlotIds = upcomingAppointments
+  //     .filter((apt) => dayjs(apt.date).isSame(dayjs(), "day"))
+  //     .map((apt) => apt.slotId);
 
+  //   setBookedSlots(new Set(bookedSlotIds));
+  // }, [upcomingAppointments]);
+
+  useEffect(() => {
+    // Initialize booked slots from upcoming appointments
+    const bookedSlotIds = upcomingAppointments
+      .map((apt) => apt.slotId)
+      .filter(Boolean); // Remove any undefined/null slotIds
+  
     setBookedSlots(new Set(bookedSlotIds));
   }, [upcomingAppointments]);
 
-  // 5. Additional function to check if slot is booked from upcoming appointments
+  // const isSlotBookedFromAppointments = (slotId) => {
+  //   return upcomingAppointments.some(
+  //     (apt) => apt.slotId === slotId && dayjs(apt.date).isSame(dayjs(), "day")
+  //   );
+  // };
+  const isSlotBooked = (slotId) => {
+    // Check both local state and upcoming appointments
+    return bookedSlots.has(slotId) || isSlotBookedFromAppointments(slotId);
+  };
+
+
+  const cleanupOldBookedSlots = () => {
+    const today = dayjs();
+    const validSlotIds = upcomingAppointments
+      .filter((apt) => dayjs(apt.date).isAfter(today.subtract(1, 'day')))
+      .map((apt) => apt.slotId);
+    
+    setBookedSlots(new Set(validSlotIds));
+  };
+  
+  // Add this useEffect to handle cleanup on component mount
+  useEffect(() => {
+    cleanupOldBookedSlots();
+  }, []);
+
   const isSlotBookedFromAppointments = (slotId) => {
-    return upcomingAppointments.some(
-      (apt) => apt.slotId === slotId && dayjs(apt.date).isSame(dayjs(), "day")
-    );
+    return upcomingAppointments.some((apt) => apt.slotId === slotId);
   };
 
   return (
@@ -843,7 +923,7 @@ const Dashboard = () => {
                           {dayjs().format("ddd, MMM D")}
                         </p>
                         <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
-                          {specialist.slots?.length > 0 ? (
+                          {/* {specialist.slots?.length > 0 ? (
                             specialist.slots
                               .filter((slot) =>
                                 dayjs(slot.date).isSame(dayjs(), "day")
@@ -890,7 +970,43 @@ const Dashboard = () => {
                           ) : (
                             <p className="text-sm text-gray-500">
                               No available slots today
-                            </p>
+                            </p> */}
+                            {specialist.slots?.length > 0 ? (
+  specialist.slots
+    .filter((slot) => dayjs(slot.date).isSame(dayjs(), "day"))
+    .map((slot) => {
+      const isBooked = isSlotBooked(slot.slotId);
+      return (
+        <div key={slot.slotId} className="flex flex-col items-center">
+          <button
+            className={`text-xs w-full flex flex-col gap-1 px-4 py-2 rounded-full transition ${
+              isBooked
+                ? "bg-red-400 text-white cursor-not-allowed opacity-70"
+                : "bg-[#020E7C] text-white hover:bg-blue-600"
+            }`}
+            onClick={(e) =>
+              !isBooked &&
+              handleOpenPopover(
+                e,
+                specialist,
+                `${slot.date}T${slot.time}`,
+                slot.slotId
+              )
+            }
+            disabled={isBooked}
+          >
+            {dayjs(`${slot.date}T${slot.time}`).format("h:mm A")}
+            {isBooked && (
+              <span className="text-xs text-red-200 font-medium">
+                Booked
+              </span>
+            )}
+          </button>
+        </div>
+      );
+    })
+) : (
+  <p className="text-sm text-gray-500">No available slots today</p>
                           )}{" "}
                         </div>
                       </div>

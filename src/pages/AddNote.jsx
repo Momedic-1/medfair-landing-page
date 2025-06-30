@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { baseUrl } from "../env";
-import { IoIosAdd } from "react-icons/io";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Alert,
-  Typography,
 } from "@mui/material";
 import { capitalizeFirstLetter, formatDate } from "../utils";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -44,11 +42,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
   const userData = JSON.parse(localStorage.getItem("userData")) || {};
   const [expandedDates, setExpandedDates] = useState(new Set());
-
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const patientId = localStorage.getItem("patientId");
-
   const [activeTab, setActiveTab] = useState("SOAP");
-
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
 
   // Enhanced prescription form to handle multiple prescriptions
@@ -64,10 +60,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
   const [prescriptionError, setPrescriptionError] = useState("");
   const [prescriptionLoading, setPrescriptionLoading] = useState(false);
-
   const [prescriptions, setPrescriptions] = useState([]);
   const [fetchingPrescriptions, setFetchingPrescriptions] = useState(false);
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState(null);
 
@@ -148,11 +142,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     setIsViewNotesOpen(false);
   };
 
-  // Enhanced function to handle multiple prescriptions
   const handleAddNote = async (e) => {
     e.preventDefault();
 
-    // Validate that at least one prescription has required fields
     const validPrescriptions = prescriptionForms.filter(
       (form) =>
         form.drugName &&
@@ -172,7 +164,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     const formData = {
       doctorId: userData?.id,
       patientId: Number(patientId),
-      visitDate: visitDate,
+      visitDate,
       subjective,
       objective,
       assessment,
@@ -202,13 +194,15 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         );
 
         const prescriptionCount = validPrescriptions.length;
-        if (prescriptionCount === 1) {
-          toast.success("Prescription created successfully!");
-        } else {
-          toast.success(
-            `${prescriptionCount} prescriptions created successfully!`
-          );
-        }
+        toast.success(
+          prescriptionCount === 1
+            ? "Prescription created successfully!"
+            : `${prescriptionCount} prescriptions created successfully!`
+        );
+
+        // setShowSuccessModal(true); // ✅ Show success modal
+        console.log("showSuccessModal:", true);
+
         onNoteAdded(response.data);
         resetForm();
         setLoading(false);
@@ -255,7 +249,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     setCurrentPrescriptionId(prescriptionId);
     setIsEditMode(true);
     setPrescriptionLoading(true);
-
     try {
       const response = await axios.get(
         `${baseUrl}/api/prescriptions/${prescriptionId}`,
@@ -266,7 +259,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           },
         }
       );
-
       const prescription = response.data;
       setPrescriptionForms([
         {
@@ -289,7 +281,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     e.preventDefault();
     setPrescriptionError("");
     setPrescriptionLoading(true);
-
     try {
       await axios.put(
         `${baseUrl}/api/prescriptions/${currentPrescriptionId}`,
@@ -304,11 +295,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           },
         }
       );
-
       setIsPrescriptionModalOpen(false);
       resetPrescriptionForm();
       fetchPatientPrescriptions();
       toast.success("Prescription updated successfully!");
+      setShowSuccessModal(true);
     } catch (err) {
       setPrescriptionError(
         err.response?.data?.message || "Failed to update prescription"
@@ -337,7 +328,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     setIsPrescriptionModalOpen(true);
   };
 
-  // Enhanced prescription form handlers
   const handlePrescriptionChange = (e, index) => {
     const updatedForms = [...prescriptionForms];
     updatedForms[index] = {
@@ -345,10 +335,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       [e.target.name]: e.target.value,
     };
     setPrescriptionForms(updatedForms);
-    setPrescriptionError(""); // Clear error when user starts typing
+    setPrescriptionError("");
   };
 
-  // Add new prescription form
   const handleAddMorePrescription = () => {
     setPrescriptionForms([
       ...prescriptionForms,
@@ -362,7 +351,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     ]);
   };
 
-  // Remove prescription form
   const handleRemovePrescription = (index) => {
     if (prescriptionForms.length > 1) {
       const updatedForms = prescriptionForms.filter((_, i) => i !== index);
@@ -387,16 +375,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       acc[date].push(prescription);
       return acc;
     }, {});
-
     const sortedDates = Object.keys(grouped).sort(
       (a, b) => new Date(b) - new Date(a)
     );
-
     return sortedDates.map((date) => ({
       date,
-      prescriptions: grouped[date].sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      ),
+      prescriptions: grouped[date],
     }));
   };
 
@@ -412,7 +396,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-
     if (date.toDateString() === today.toDateString()) {
       return "Today";
     } else if (date.toDateString() === yesterday.toDateString()) {
@@ -1079,6 +1062,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                     Cancel
                   </button>
                   <button
+                    onClick={() => setShowSuccessModal(true)}
                     type="submit"
                     disabled={prescriptionLoading}
                     className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
@@ -1097,6 +1081,58 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white w-[60%] max-w-2xl rounded-lg shadow-lg p-6 max-h-[40vh] overflow-y-auto relative">
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  resetForm();
+                  setIsPrescriptionModalOpen(false);
+                }}
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                  <svg
+                    className="h-6 w-6 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Prescription Saved
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Your prescription has been saved successfully.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    resetForm();
+                    setIsPrescriptionModalOpen(false);
+                  }}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

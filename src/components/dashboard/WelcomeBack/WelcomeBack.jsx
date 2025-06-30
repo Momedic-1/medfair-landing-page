@@ -1,5 +1,5 @@
 import DoctorImg from '../../../assets/doctor.png';
-import call from '../../../assets/call.svg';
+// import call from '../../../assets/call.svg';
 import './WelcomeBack.css';
 import { useEffect, useRef, useState } from 'react';
 import { baseUrl } from '../../../env';
