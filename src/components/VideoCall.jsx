@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
 import micOn from "../assets/mic_on_image.png";
 import micOff from "../assets/mic_off_image.png";
@@ -6,15 +6,20 @@ import videoOn from "../assets/video-camera_on.png";
 import videoOff from "../assets/video-camera_off.png";
 import note from "../assets/call_note.png";
 import { MdCallEnd, MdSwapHoriz } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
 import { capitalizeFirstLetter } from "../utils";
-import { useLocation } from "react-router-dom";
 import { setRoomUrl, setCall } from "../features/authSlice";
 
 const VideoCall = () => {
-  const userData = JSON.parse(localStorage.getItem("userData"));
+  const [userData] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("userData")) || {};
+    } catch {
+      return {};
+    }
+  });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -30,7 +35,6 @@ const VideoCall = () => {
   const queryParams = new URLSearchParams(location.search);
   const roomUrl =
     queryParams.get("roomUrl") || useSelector((state) => state.auth.roomUrl);
-
   const call = useSelector((state) => state.auth.call);
 
   const roomConnection = useRoomConnection(roomUrl, {
@@ -44,15 +48,14 @@ const VideoCall = () => {
   const { connectionState, localParticipant, remoteParticipants } = state;
   const { joinRoom, toggleCamera, toggleMicrophone } = actions;
 
+  // Join the room only once
   useEffect(() => {
     joinRoom();
-
     return () => {
-      if (connectionState === "connected") {
-        actions.leaveRoom();
-      }
+      actions.leaveRoom();
     };
-  }, [joinRoom, connectionState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const leaveRoom = async () => {
     try {
@@ -103,18 +106,14 @@ const VideoCall = () => {
     const userRole = userData?.role;
 
     if (userRole === "PATIENT" && call) {
-      // Patient sees doctor information
       setDisplayInfo({
         label: "Doctor",
         firstName: capitalizeFirstLetter(call.doctorFirstName) || "N/A",
         lastName: capitalizeFirstLetter(call.doctorLastName) || "N/A",
-        dob: 
-        // call.doctorDob ||
-         "N/A",
+        dob: "N/A",
         age: calculateAge(call.doctorDob),
       });
     } else if (userRole === "DOCTOR" && call) {
-      // Doctor sees patient information
       setDisplayInfo({
         label: "Patient",
         firstName: capitalizeFirstLetter(call.patientFirstName) || "N/A",
@@ -123,7 +122,6 @@ const VideoCall = () => {
         age: calculateAge(call.dob || userData?.dob),
       });
     } else {
-      // Fallback to user's own data
       setDisplayInfo({
         label: userRole === "DOCTOR" ? "Patient" : "Doctor",
         firstName: capitalizeFirstLetter(userData?.firstName) || "N/A",
@@ -133,12 +131,6 @@ const VideoCall = () => {
       });
     }
   }, [call, userData]);
-
-  useEffect(() => {
-    if (displayInfo) {
-      console.log("👤 Display Info:", displayInfo);
-    }
-  }, [displayInfo]);
 
   const handleToggleAudio = () => {
     toggleMicrophone();
@@ -206,11 +198,7 @@ const VideoCall = () => {
               <VideoView
                 muted
                 stream={localParticipant.stream}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : null
           ) : (
@@ -220,11 +208,7 @@ const VideoCall = () => {
                 <VideoView
                   key={participant.id}
                   stream={participant.stream}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               );
             })
@@ -257,18 +241,14 @@ const VideoCall = () => {
                 );
               })
             ) : (
-              <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center p-1 sm:p-2 md:p-4">
-                <p className="text-white text-[8px] sm:text-xs md:text-sm mb-1 sm:mb-2">
-                  Share this link:
-                </p>
-                <div className="w-[90%] bg-gray-800 rounded-lg p-1 sm:p-2 mb-1 sm:mb-2">
-                  <p className="text-gray-300 text-[6px] sm:text-[10px] md:text-xs break-all">
-                    {roomUrl}
-                  </p>
+              <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center p-2">
+                <p className="text-white text-xs mb-2">Share this link:</p>
+                <div className="w-[90%] bg-gray-800 rounded-lg p-2 mb-2">
+                  <p className="text-gray-300 text-xs break-all">{roomUrl}</p>
                 </div>
                 <button
                   onClick={handleShareLink}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-[8px] sm:text-xs md:text-sm px-2 py-0.5 sm:px-3 sm:py-1 md:px-4 md:py-2 rounded-lg transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
                 >
                   {showCopiedMessage ? "Copied!" : "Copy"}
                 </button>
@@ -313,11 +293,12 @@ const VideoCall = () => {
           } text-white`}
           onClick={handleToggleAudio}
         >
-          {isAudioOn ? (
-            <img src={micOn} alt="mic on" height={25} width={25} />
-          ) : (
-            <img src={micOff} alt="mic off" height={25} width={25} />
-          )}
+          <img
+            src={isAudioOn ? micOn : micOff}
+            alt="mic"
+            height={25}
+            width={25}
+          />
         </div>
 
         <div
@@ -326,11 +307,12 @@ const VideoCall = () => {
           } text-white`}
           onClick={handleToggleVideo}
         >
-          {isVideoOn ? (
-            <img src={videoOn} alt="video on" height={25} width={25} />
-          ) : (
-            <img src={videoOff} alt="video off" height={25} width={25} />
-          )}
+          <img
+            src={isVideoOn ? videoOn : videoOff}
+            alt="video"
+            height={25}
+            width={25}
+          />
         </div>
 
         {userData?.role === "DOCTOR" && (
@@ -338,7 +320,7 @@ const VideoCall = () => {
             className="rounded-full p-3 bg-gray-400 cursor-pointer"
             onClick={takeNote}
           >
-            <img src={note} alt="take note" height={25} width={25} />
+            <img src={note} alt="note" height={25} width={25} />
           </div>
         )}
 
@@ -360,6 +342,7 @@ const VideoCall = () => {
 };
 
 export default VideoCall;
+
 // import React, { useEffect, useState } from 'react';
 // import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
 // import micOn from "../assets/mic_on_image.png";

@@ -16,7 +16,7 @@ export const ActiveSlide = [
     content: [
       "Up to 3 consultations per month",
       "Ongoing health support",
-      "Access to specialists",
+      "Available 24/7",
     ],
     buttonText: "Subscribe",
     buttonLink: "/payment",
@@ -37,7 +37,7 @@ export const ActiveSlide = [
     title: "Yearly",
     subTitle: 45000,
     content: [
-      "Up to 10 consultations per year",
+      "Up to 40 consultations per year",
       "Expert care anytime",
       "Priority support",
     ],

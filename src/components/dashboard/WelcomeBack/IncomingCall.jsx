@@ -63,7 +63,7 @@ const IncomingCall = () => {
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/video/join?callId=${callId}&doctorId=${userData?.id}`,
-         {},
+        {},
         {
           headers: {
             "Content-Type": 'application/json',
@@ -72,13 +72,14 @@ const IncomingCall = () => {
         }
       );
       const { patientId, joinRoomUrl } = response.data;
+      // console.log(response, 'inconing call')
+      // console('JjoinRoomUrl:', joinRoomUrl);
+      // console.log('Patient ID:', patientId);
       
       if (joinRoomUrl) {
-        
         dispatch(setRoomUrl(joinRoomUrl));
         dispatch(setCall(call));
         localStorage.setItem('patientId', patientId);
-       
         const pickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
         pickedCalls.push(callId);
         localStorage.setItem('pickedCalls', JSON.stringify(pickedCalls));

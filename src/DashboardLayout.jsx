@@ -1,6 +1,6 @@
-import React from 'react'
-import { Routes, Route,useLocation } from 'react-router-dom'
-import Sidebar from './components/Sidebar'
+// import React from 'react'
+import { Routes, Route } from 'react-router-dom'
+// import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import Search from "./pages/Search"
 const DashboardLayout = () => {
