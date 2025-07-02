@@ -254,7 +254,7 @@ function AppointmentRequests({ appointments }) {
                       disabled={isLoading}
                       className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
                     >
-                      Join Nowww
+                      Join Now
                     </button>
                   ) : (
                     <>
