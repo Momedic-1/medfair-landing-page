@@ -33,7 +33,8 @@ const VideoCall = () => {
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const roomUrl = queryParams.get("roomUrl") || useSelector((state) => state.auth.roomUrl);
+  const roomUrl =
+    queryParams.get("roomUrl") || useSelector((state) => state.auth.roomUrl);
   const call = useSelector((state) => state.auth.call);
 
   const roomConnection = useRoomConnection(roomUrl, {
@@ -106,14 +107,14 @@ const VideoCall = () => {
     if (userRole === "PATIENT" && call) {
       setDisplayInfo({
         firstName: capitalizeFirstLetter(call.patientFirstName) || "N/A",
-        lastName: capitalizeFirstLetter(call.patientLastName) || "N/A",
+        // lastName: capitalizeFirstLetter(call.patientLastName) || "N/A",
         dob: "N/A",
         age: calculateAge(call.doctorDob),
       });
     } else if (userRole === "DOCTOR" && call) {
       setDisplayInfo({
         label: "Patient",
-        name: capitalizeFirstLetter(call.name) || "N/A",
+        firstName: capitalizeFirstLetter(call.name) || "N/A",
         // lastName: capitalizeFirstLetter(call.patientLastName) || "aaaa",
         dob: call.dob || userData?.dob || "N/A",
         age: calculateAge(call.dob || userData?.dob),
@@ -175,8 +176,13 @@ const VideoCall = () => {
         <p className="text-xs sm:text-sm md:text-base">
           <span className="font-bold">Patient: </span>
           {displayInfo
-            ? `${displayInfo.name}`
+            ? displayInfo.lastName
+              ? `${displayInfo.firstName} ${displayInfo.lastName}`
+              : displayInfo.firstName
             : "Loading..."}
+          {/* {displayInfo
+            ? `${displayInfo.firstName} ${displayInfo.lastName}`
+            : "Loading..."} */}
         </p>
         <p className="text-xs sm:text-sm md:text-base">
           <span className="font-bold">DOB: </span>
