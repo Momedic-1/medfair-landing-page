@@ -26,9 +26,6 @@ const IncomingCall = () => {
         const incomingResponse = await axios.get(`${baseUrl}/api/v1/video/recent-calls`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-
-
         let incomingCallsData = incomingResponse?.data || [];
         setIncomingCalls(incomingResponse?.data || []);
         const pickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
@@ -123,7 +120,7 @@ const IncomingCall = () => {
               >
                 <div>
                   <p className='font-bold'>
-                    Passstient: {call.patientFirstName} {call.patientLastName}
+                    Patient: {call.patientFirstName} {call.patientLastName}
                   </p>
                   <p className='text-sm text-gray-600'>
                     Initiated at: {formatTime(call.callInitiationTime)}

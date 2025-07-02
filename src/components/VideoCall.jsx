@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
 import micOn from "../assets/mic_on_image.png";
 import micOff from "../assets/mic_off_image.png";
@@ -33,8 +33,7 @@ const VideoCall = () => {
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const roomUrl =
-    queryParams.get("roomUrl") || useSelector((state) => state.auth.roomUrl);
+  const roomUrl = queryParams.get("roomUrl") || useSelector((state) => state.auth.roomUrl);
   const call = useSelector((state) => state.auth.call);
 
   const roomConnection = useRoomConnection(roomUrl, {
@@ -104,20 +103,18 @@ const VideoCall = () => {
 
   useEffect(() => {
     const userRole = userData?.role;
-
     if (userRole === "PATIENT" && call) {
       setDisplayInfo({
-        label: "Doctor",
-        firstName: capitalizeFirstLetter(call.doctorFirstName) || "N/A",
-        lastName: capitalizeFirstLetter(call.doctorLastName) || "N/A",
+        firstName: capitalizeFirstLetter(call.patientFirstName) || "N/A",
+        lastName: capitalizeFirstLetter(call.patientLastName) || "N/A",
         dob: "N/A",
         age: calculateAge(call.doctorDob),
       });
     } else if (userRole === "DOCTOR" && call) {
       setDisplayInfo({
         label: "Patient",
-        firstName: capitalizeFirstLetter(call.patientFirstName) || "N/A",
-        lastName: capitalizeFirstLetter(call.patientLastName) || "N/A",
+        firstName: capitalizeFirstLetter(call.name) || "N/A",
+        // lastName: capitalizeFirstLetter(call.patientLastName) || "",
         dob: call.dob || userData?.dob || "N/A",
         age: calculateAge(call.dob || userData?.dob),
       });
@@ -176,7 +173,7 @@ const VideoCall = () => {
     <div className="w-full h-screen flex flex-col overflow-hidden bg-gradient-to-b from-blue-800 via-blue-950/40 to-white/50">
       <div className="bg-black h-16 md:h-20 flex flex-col md:flex-row items-start md:items-center justify-start md:justify-between text-white px-2 py-1 md:px-5 md:py-0 space-y-1 md:space-y-0">
         <p className="text-xs sm:text-sm md:text-base">
-          <span className="font-bold">{displayInfo?.label}: </span>
+          <span className="font-bold">Patient: </span>
           {displayInfo
             ? `${displayInfo.firstName} ${displayInfo.lastName}`
             : "Loading..."}
