@@ -252,7 +252,7 @@ function AppointmentRequests({ appointments }) {
                       onClick={() => handleJoinCall({slotId: appointment.slotId, call: appointment})}
                       // onClick={() => handleJoinCall(appointment.slotId)}
                       disabled={isLoading}
-                      className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
+                      className="text-white bg-blue-600 cursor-pointer hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
                     >
                       Join Now
                     </button>
@@ -354,7 +354,7 @@ function AppointmentRequests({ appointments }) {
                   Dismiss
                 </button>
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white cursor-pointer rounded hover:bg-blue-700 transition-colors"
                   disabled={isLoading}
                   onClick={handleJoinFromUpcomingModal}
                 >
