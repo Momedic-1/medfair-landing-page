@@ -114,8 +114,8 @@ const VideoCall = () => {
     } else if (userRole === "DOCTOR" && call) {
       setDisplayInfo({
         label: "Patient",
-        firstName: capitalizeFirstLetter(call.name) || "N/A",
-        // lastName: capitalizeFirstLetter(call.patientLastName) || "aaaa",
+        firstName: capitalizeFirstLetter(call.name) || capitalizeFirstLetter(call.patientFirstName) || "N/A",
+        lastName: capitalizeFirstLetter(call.patientLastName) || "",
         dob: call.dob || userData?.dob || "N/A",
         age: calculateAge(call.dob || userData?.dob),
       });

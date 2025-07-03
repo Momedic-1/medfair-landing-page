@@ -746,7 +746,7 @@ const Dashboard = () => {
                 <button
                   onClick={() => handleJoinCall(details.slotId)}
                   disabled={isLoading}
-                  className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
+                  className="text-white cursor-pointer bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
                 >
                   Join Now
                 </button>
@@ -867,7 +867,7 @@ const Dashboard = () => {
               specialistDetails.map((specialist) => (
                 <ListItem key={specialist.slots.slotId} disablePadding>
                   <ListItemButton>
-                    <div className="px-4 py-4 border shadow-xl rounded-lg flex flex-col gap-4 w-full md:flex-row md:items-center">
+                    <div className="p-4 md:h-[200px] border shadow-xl rounded-lg flex flex-col gap-4 w-full md:flex-row md:items-center">
                       <div className="flex flex-col items-center md:items-start md:w-1/3">
                         {specialist.doctorProfile ? (
                           <Avatar
@@ -922,64 +922,16 @@ const Dashboard = () => {
                         <p className="text-sm font-bold text-center md:text-left">
                           {dayjs().format("ddd, MMM D")}
                         </p>
-                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2">
-                          {/* {specialist.slots?.length > 0 ? (
-                            specialist.slots
-                              .filter((slot) =>
-                                dayjs(slot.date).isSame(dayjs(), "day")
-                              )
-                              .map((slot) => {
-                                // Check both session bookings and upcoming appointments
-                                const isBooked =
-                                  bookedSlots.has(slot.slotId) ||
-                                  isSlotBookedFromAppointments(slot.slotId);
-                                return (
-                                  <div
-                                    key={slot.slotId}
-                                    className="flex flex-col items-center"
-                                  >
-                                    <button
-                                      className={`text-xs w-full flex flex-col gap-1 px-4 py-2 rounded-full transition ${
-                                        isBooked
-                                          ? "bg-red-400 text-white cursor-not-allowed opacity-70"
-                                          : "bg-[#020E7C] text-white hover:bg-blue-600"
-                                      }`}
-                                      onClick={(e) =>
-                                        !isBooked &&
-                                        handleOpenPopover(
-                                          e,
-                                          specialist,
-                                          `${slot.date}T${slot.time}`,
-                                          slot.slotId
-                                        )
-                                      }
-                                      disabled={isBooked}
-                                    >
-                                      {dayjs(
-                                        `${slot.date}T${slot.time}`
-                                      ).format("h:mm A")}
-                                      {isBooked && (
-                                      <span className="text-xs text-red-200 font-medium">
-                                        Booked
-                                      </span>
-                                    )}
-                                    </button>
-                                  </div>
-                                );
-                              })
-                          ) : (
-                            <p className="text-sm text-gray-500">
-                              No available slots today
-                            </p> */}
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-2 h-[150px] overflow-scroll">
                             {specialist.slots?.length > 0 ? (
   specialist.slots
     .filter((slot) => dayjs(slot.date).isSame(dayjs(), "day"))
     .map((slot) => {
       const isBooked = isSlotBooked(slot.slotId);
       return (
-        <div key={slot.slotId} className="flex flex-col items-center">
+        <div key={slot.slotId} className="w-full flex flex-col items-center">
           <button
-            className={`text-xs w-full flex flex-col gap-1 px-4 py-2 rounded-full transition ${
+            className={`text-xs w-full flex flex-col gap-1 p-2 rounded-lg transition ${
               isBooked
                 ? "bg-red-400 text-white cursor-not-allowed opacity-70"
                 : "bg-[#020E7C] text-white hover:bg-blue-600"

@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
-  const [patientFirstName, setpatientFirstName] = useState("");
+  const [patientFirstName, setPatientFirstName] = useState("");
   const [patientLastName, setPatientLastName] = useState("");
   const [visitDate, setVisitDate] = useState("");
   const [subjective, setSubjective] = useState("");
@@ -92,7 +92,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       const notesData = response.data;
       if (notesData.length > 0) {
         const firstNote = notesData[0];
-        setpatientFirstName(firstNote.patientFirstName);
+        setPatientFirstName(firstNote.patientFirstName);
         setPatientLastName(firstNote.patientLastName);
       }
       setExistingNotes(notesData);
