@@ -397,10 +397,25 @@ const Dashboard = () => {
 
       setSpecialistCategories(updatedCategories);
     } catch (error) {
-      console.error("Error fetching specialist count:", error);
+      // console.error("Error fetching specialist count:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const sortSlotsByTime = (specialists) => {
+    return specialists.map((specialist) => ({
+      ...specialist,
+      slotGroups: specialist.slotGroups?.map((slotGroup) => ({
+        ...slotGroup,
+        slots: slotGroup.slots?.sort((a, b) => {
+          // Parse time strings and compare
+          const timeA = dayjs(`${a.date}T${a.time}`);
+          const timeB = dayjs(`${b.date}T${b.time}`);
+          return timeA.isBefore(timeB) ? -1 : timeA.isAfter(timeB) ? 1 : 0;
+        }),
+      })),
+    }));
   };
 
   const getSpecialistsDetails = async (categoryName) => {
@@ -419,15 +434,17 @@ const Dashboard = () => {
       const parsedResponse = response?.data || {};
       const specialists = Object.values(parsedResponse).flat();
 
-      setSpecialistDetails(specialists);
-      console.log(specialists);
+      // Sort slots by time before setting state
+      const sortedSpecialists = sortSlotsByTime(specialists);
+      setSpecialistDetails(sortedSpecialists);
 
+      console.log(sortedSpecialists);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching specialists:", error);
+      // console.error("Error fetching specialists:", error);
       setIsLoading(false);
     }
-    console.log("Specialist details fetched:", specialistDetails);
+    // console.log("Specialist details fetched:", specialistDetails);
   };
 
   const getUpcomingAppointments = async () => {
@@ -579,7 +596,6 @@ const Dashboard = () => {
     setBookedSlots(new Set(validSlotIds));
   };
 
-  // Add this useEffect to handle cleanup on component mount
   useEffect(() => {
     cleanupOldBookedSlots();
   }, []);
@@ -773,7 +789,6 @@ const Dashboard = () => {
               <span className="text-gray-500">✕</span>
             </button>
           </div>
-
           <List sx={{ width: "100%", bgcolor: "background.paper" }}>
             {isLoading ? (
               Array(5)
@@ -855,7 +870,7 @@ const Dashboard = () => {
                             {specialist.slotGroups?.map((slotGroup) => (
                               <div
                                 key={slotGroup.date}
-                                className="border rounded-lg p-3"
+                                className="border rounded-lg p-3 overflow-y-scroll h-[120px]"
                               >
                                 <p className="text-sm font-bold text-center mb-2">
                                   {dayjs(slotGroup.date).format("ddd, MMM D")}
