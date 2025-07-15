@@ -29,7 +29,7 @@ const CurrentBalance = () => {
           }
         );
 
-        setBalance(response.data.currentBalance);
+        setBalance(response.data.totalEarnings);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch balance data.");
@@ -47,11 +47,11 @@ const CurrentBalance = () => {
     <div className="w-full p-6 rounded-xl mb-8 bg-gradient-to-br from-blue-50 via-white to-blue-100 shadow-md">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold text-[#020e7c] text-lg">
-          Current Balance
+          Total Balance
         </h3>
       </div>
       <p className="text-sm text-gray-600 mb-2">
-        This is the remaining amount available in your wallet for withdrawal.
+        This is the Total amount you've earned so far.
       </p>
 
       <div className="flex justify-between mb-8">

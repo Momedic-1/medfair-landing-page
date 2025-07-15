@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import dashboard from "./assets/dashboard.svg";
 import help from "./assets/help-circle.svg";
 import profile from "./assets/profile (2).svg";
@@ -55,7 +55,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
             </NavLink>
 
             <NavLink
-              to="/contact-us"
+              to="/patient-dashboard/contact-us"
               className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
               onClick={toggleSidebar}
             >

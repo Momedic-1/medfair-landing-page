@@ -5,6 +5,8 @@ import Dashboard from "./components/Dashboard";
 import Search from "./pages/Search";
 import Finances from "./pages/Finances";
 import ContactUs from "./pages/ContactUs";
+import DoctorProfile from "./components/DoctorProfile";
+
 const DashboardLayout = () => {
   return (
     <div className="">
@@ -18,6 +20,7 @@ const DashboardLayout = () => {
           <Route path="/notes" element={<Search />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/finances" element={<Finances />} />
+          <Route path="doctor-profile" element={<DoctorProfile />} />
         </Routes>
       </div>
     </div>
