@@ -55,7 +55,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
             </NavLink>
 
             <NavLink
-              to="/help"
+              to="/contact-us"
               className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
               onClick={toggleSidebar}
             >
@@ -82,7 +82,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
             </NavLink>
 
             <NavLink
-              to="/logout"
+              to="/login"
               className="flex items-center p-3 m-3 py-2 px-2 rounded hover:bg-white hover:text-[#020E7C]"
               onClick={toggleSidebar}
             >
@@ -231,7 +231,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
 
                 <li>
                   <NavLink
-                    to="/logout"
+                    to="/login"
                     onClick={toggleSidebar}
                     className="flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg hover:text-[#020E7C] hover:bg-gray-100"
                   >

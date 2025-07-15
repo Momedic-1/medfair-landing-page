@@ -21,7 +21,7 @@ const CurrentBalance = () => {
         }
 
         const response = await axios.get(
-          `${baseUrl}/api/earnings/${id}/earnings`,
+          `${baseUrl}/api/earnings/summary/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -29,7 +29,7 @@ const CurrentBalance = () => {
           }
         );
 
-        setBalance(response.data.currentBalance || 0);
+        setBalance(response.data.currentBalance);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch balance data.");
