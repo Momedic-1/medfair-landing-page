@@ -60,7 +60,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               onClick={toggleSidebar}
             >
               <img src={help} alt="Help" />
-              <span className="ml-3">Help</span>
+              <span className="ml-3">Contact Us</span>
             </NavLink>
 
             <NavLink
