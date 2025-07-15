@@ -22,7 +22,8 @@ import ProfileLayout from "./components/ProfileLayout.jsx";
 import ViewProfile from "./components/ViewProfile.jsx";
 import DoctorProfile from "./components/DoctorProfile.jsx";
 import { ToastContainer } from "react-toastify";
-import Finances from "./pages/Finances.jsx";
+
+import ContactUs from "./pages/ContactUs.jsx";
 
 const App = () => {
   return (
@@ -57,7 +58,7 @@ const App = () => {
             <Route path="patient-notes" element={<PatientNotes />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="payment" element={<PaymentPage />} />
-            <Route path="contact-us" element={<Finances />} />
+             <Route path="contact-us" element={<ContactUs />} />
           </Route>
           <Route element={<ProtectedRoute role="DOCTOR" />}>
             <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />

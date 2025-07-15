@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { baseUrl } from "../../env.jsx";
 import { formatNumber, getId, getToken } from "../../utils.jsx";
 
@@ -29,7 +29,7 @@ function Income() {
           }
         );
 
-        setIncomeData(response.data.totalEarnings);
+        setIncomeData(response.data.currentBalance);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch earnings data.");
@@ -51,11 +51,12 @@ function Income() {
   return (
     <div className="w-full bg-white p-6 rounded-lg h-52 mb-8 bg-gradient-to-br from-blue-50 via-white to-blue-100 shadow-md">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-[#020e7c]">Total Income</h3>
+       <h3 className="font-semibold text-[#020e7c] text-lg">
+          Current Balance
+        </h3>
       </div>
-
-      <p className="text-sm text-gray-600 mb-2">
-        This shows your total earnings so far.
+      <p className="text-sm text-gray-600 my-2">
+        This is the remaining amount available in your wallet for withdrawal.
       </p>
 
       <div className="flex justify-between mb-8">
