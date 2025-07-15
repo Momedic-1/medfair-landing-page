@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import SwipeStatus from './dashboard/SwipeStatus';
+import {useEffect, useState} from 'react';
+// import SwipeStatus from './dashboard/SwipeStatus';
 import LeftPanel from "./dashboard/LeftPanel.jsx";
-import RightPanel from "./dashboard/RightPanel.jsx";
-import Income from "./dashboard/Income.jsx";
+// import RightPanel from "./dashboard/RightPanel.jsx";
+// import Income from "./dashboard/Income.jsx";
 import {useNavigate} from "react-router-dom";
 
 const Dashboard = () => {
@@ -28,7 +28,7 @@ const Dashboard = () => {
         <div className='flex flex-col h-full items-stretch justify-start bg-gray-100 overflow-y-auto'>
             <LeftPanel status={status} />
             <div className='w-full p-4 overflow-y-auto'>
-                <Income />
+                {/* <Income /> */}
             </div>
         </div>
 
