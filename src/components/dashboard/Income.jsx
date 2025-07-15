@@ -21,7 +21,7 @@ function Income() {
         }
 
         const response = await axios.get(
-          `${baseUrl}/api/earnings/${id}/earnings`,
+          `${baseUrl}/api/earnings/summary/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -29,7 +29,7 @@ function Income() {
           }
         );
 
-        setIncomeData(response.data);
+        setIncomeData(response.data.totalEarnings);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch earnings data.");

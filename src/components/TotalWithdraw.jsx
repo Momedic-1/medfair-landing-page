@@ -22,7 +22,7 @@ const TotalWithdraw = () => {
         }
 
         const response = await axios.get(
-          `${baseUrl}/api/earnings/${id}/earnings`,
+          `${baseUrl}/api/earnings/summary/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -30,7 +30,7 @@ const TotalWithdraw = () => {
           }
         );
 
-        setWithdrawAmount(response.data.totalWithdrawals || 0);
+        setWithdrawAmount(response.data.totalWithdrawals);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch withdrawal data.");
@@ -61,12 +61,6 @@ const TotalWithdraw = () => {
           ₦{formatNumber(withdrawAmount)}
         </p>
       </div>
-
-      {/* 
-      <button className='w-56 h-10 bg-[#020e7c] text-white py-2 rounded-lg'>
-        View Withdrawal History
-      </button> 
-      */}
     </div>
   );
 };
