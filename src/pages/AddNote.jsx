@@ -193,6 +193,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           }
         );
 
+        // Only show success modal if the API call succeeds
         const prescriptionCount = validPrescriptions.length;
         toast.success(
           prescriptionCount === 1
@@ -200,7 +201,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             : `${prescriptionCount} prescriptions created successfully!`
         );
 
-        // setShowSuccessModal(true); // ✅ Show success modal
+        setShowSuccessModal(true); // ✅ Only show success modal on successful API response
         console.log("showSuccessModal:", true);
 
         onNoteAdded(response.data);
@@ -212,6 +213,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       setLoading(false);
       console.error("Failed to add note:", err);
       toast.error("Failed to add note, please try again.");
+      // Don't show success modal on error
     }
   };
 
@@ -299,11 +301,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       resetPrescriptionForm();
       fetchPatientPrescriptions();
       toast.success("Prescription updated successfully!");
-      setShowSuccessModal(true);
+      setShowSuccessModal(true); // ✅ Only show success modal on successful update
     } catch (err) {
       setPrescriptionError(
         err.response?.data?.message || "Failed to update prescription"
       );
+      // Don't show success modal on error
     } finally {
       setPrescriptionLoading(false);
     }
@@ -576,6 +579,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                       {`${capitalizeFirstLetter(
                         patientFirstName
                       )} ${capitalizeFirstLetter(patientLastName)}`}
+                      {console.log(
+                        patientFirstName,
+                        patientLastName,
+                        "mmmmnbghjmmmmm"
+                      )}
                     </p>
                   </div>
 
@@ -1062,7 +1070,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => setShowSuccessModal(true)}
                     type="submit"
                     disabled={prescriptionLoading}
                     className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"

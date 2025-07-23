@@ -22,7 +22,6 @@ function AppointmentRequests({ appointments }) {
     useState(null);
   const dispatch = useDispatch();
 
-
   const getAppointmentDateTime = (appointment) => {
     if (appointment.startTime) {
       return new Date(appointment.startTime);
@@ -33,7 +32,6 @@ function AppointmentRequests({ appointments }) {
     }
   };
 
-  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -101,8 +99,9 @@ function AppointmentRequests({ appointments }) {
     }
   };
 
-  const handleJoinCall = async ({slotId, call}) => {
-    
+  const handleJoinCall = async ({ slotId, call, patientId }) => {
+    localStorage.setItem("patientId", patientId);
+
     const token = getToken();
     if (!userId || !slotId || !token) {
       toast.error("Missing required info to join call");
@@ -249,7 +248,13 @@ function AppointmentRequests({ appointments }) {
                   {/* ✅ Show Join Button if ACTIVE */}
                   {status === "active" ? (
                     <button
-                      onClick={() => handleJoinCall({slotId: appointment.slotId, call: appointment})}
+                      onClick={() =>
+                        handleJoinCall({
+                          slotId: appointment.slotId,
+                          call: appointment,
+                          patientId: appointment?.patientId,
+                        })
+                      }
                       // onClick={() => handleJoinCall(appointment.slotId)}
                       disabled={isLoading}
                       className="text-white bg-blue-600 cursor-pointer hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
