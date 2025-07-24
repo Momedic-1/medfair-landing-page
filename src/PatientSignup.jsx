@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import * as Preline from "preline";
 import PatientSignupForm from "./PatientSignup/PatientSignupForm";
 import VerificationInput from "./PatientSignup/VerificationInput";
@@ -16,13 +16,38 @@ const PatientSignup = () => {
   const [loading, setLoading] = useState(false);
   const [verificationToken, setVerificationToken] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Extract partner slug from URL parameters
+  const partnerSlug = searchParams.get("partner");
 
   useEffect(() => {
     if (Preline.HSStepperJS && typeof Preline.HSStepperJS.init === "function") {
       Preline.HSStepperJS.init();
     }
-  }, []);
+
+    // Debug: Log URL parameters and partner info
+    console.log("=== PARTNER SIGNUP DEBUG ===");
+    console.log("Full URL:", window.location.href);
+    console.log("Search params:", Object.fromEntries(searchParams));
+    console.log("Partner slug from URL:", partnerSlug);
+
+    // If partner slug exists, add it to form data
+    if (partnerSlug) {
+      console.log("Adding partner slug to form data:", partnerSlug);
+      setFormData((prev) => {
+        const updatedData = {
+          ...prev,
+          partnerSlug: partnerSlug,
+        };
+        console.log("Updated form data with partner:", updatedData);
+        return updatedData;
+      });
+    } else {
+      // console.log("No partner slug found - regular signup");
+    }
+  }, [partnerSlug]);
 
   const stepLabels = ["Account", "Verification", "Login"];
 
@@ -30,7 +55,11 @@ const PatientSignup = () => {
     switch (step) {
       case 1:
         return (
-          <PatientSignupForm formData={formData} setFormData={setFormData} />
+          <PatientSignupForm
+            formData={formData}
+            setFormData={setFormData}
+            partnerSlug={partnerSlug} // Pass partner slug to form component
+          />
         );
       case 2:
         return showCheckEmail ? (
@@ -69,15 +98,26 @@ const PatientSignup = () => {
   async function validateForm() {
     setLoading(true);
     try {
+      // Prepare the payload with partner slug if it exists
+      const payload = {
+        ...formData,
+      };
+
+      // Only include partnerSlug if it exists
+      if (partnerSlug) {
+        payload.partnerSlug = partnerSlug;
+      } else {
+        // console.log("No partnerSlug to add to payload");
+      }
+
       const response = await fetch(
         `${baseUrl}/api/v1/registration/patients-registrations`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         }
       );
-
       const responseText = await response.text();
       let result = {};
       try {
@@ -100,6 +140,8 @@ const PatientSignup = () => {
       setLoading(false);
       setErrorMessage("Error submitting form. Please try again.");
       return false;
+    } finally {
+      // console.log("=== END FORM VALIDATION DEBUG ===");
     }
   }
 
@@ -145,6 +187,11 @@ const PatientSignup = () => {
         <div className="px-6 py-10 sm:px-10">
           <h2 className="text-3xl font-bold text-center text-indigo-900">
             Create Patient Account
+            {partnerSlug && (
+              <span className="block text-sm font-normal text-gray-600 mt-1">
+                via {partnerSlug}
+              </span>
+            )}
           </h2>
           <p className="mt-2 text-center text-gray-600 text-sm">
             Fill in your details to get started
