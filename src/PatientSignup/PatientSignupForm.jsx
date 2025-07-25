@@ -74,7 +74,6 @@ export default function PatientSignupForm({
             </p>
           </div>
         )}
-
         <form
           className="bg-white shadow-md w-full lg:w-3/4 p-6"
           onSubmit={handleSubmit}
