@@ -41,11 +41,11 @@ const MobileNavbar = () => {
           <ul className="flex flex-col items-center space-y-4 py-4 w-full">
             <li><a href="#home" className="text-white">Home</a></li>
             <li><a href="#contact-us" className="text-white">Contact us</a></li>
-            <li><a href='/login' className="text-white">Login</a></li>
+            <li><a href='/login' className="text-white font-extrabold">Login</a></li>
             <div className="flex flex-col space-y-4 w-full items-center">
               <div className="relative">
                 <button
-                  className="px-4 py-2 bg-white text-[#020E7C] rounded-md hover:bg-blue-300"
+                  className="px-4 py-2 bg-white text-[#020E7C] rounded-md hover:bg-blue-300 font-extrabold"
                   onClick={toggleDropdown}
                 >
                   Sign Up

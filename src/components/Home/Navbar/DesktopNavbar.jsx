@@ -44,7 +44,7 @@ const DesktopNavbar = () => {
       </ul>
 
       <div className="hidden md:flex items-center space-x-5">
-        <button className="px-3 py-1 border border-[#020E7C] text-[#020E7C] text-[14px] rounded-full hover:bg-blue-100">
+        <button className="px-3 py-1 border border-[#020E7C] text-[#020E7C] text-[14px] font-extrabold rounded-full hover:bg-blue-100">
           <a href="/login" >
             Login
           </a>
@@ -52,7 +52,7 @@ const DesktopNavbar = () => {
 
         <div className="relative" ref={dropdownRef}>
           <button
-            className="px-3 py-1 bg-[#020E7C] text-[14px] text-white rounded-full hover:bg-blue-600"
+            className="px-3 py-1 bg-[#020E7C] text-[14px] text-white font-extrabold rounded-full hover:bg-blue-600"
             onClick={toggleDropdown}
           >
             Sign Up

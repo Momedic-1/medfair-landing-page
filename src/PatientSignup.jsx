@@ -224,8 +224,8 @@ const PatientSignup = () => {
           <div className="mt-10">{renderStepContent(currentStep)}</div>
 
           {!showCheckEmail && (
-            <div className="mt-10 flex flex-col sm:flex-row justify-between gap-4">
-              {currentStep !== 1 && (
+            <div className="mt-4 md:mt-10 flex flex-col sm:flex-row justify-between gap-4">
+              {/* {currentStep !== 1 && (
                 <button
                   type="button"
                   onClick={() =>
@@ -235,7 +235,7 @@ const PatientSignup = () => {
                 >
                   Back
                 </button>
-              )}
+              )} */}
               <button
                 type="button"
                 onClick={handleNextClick}
