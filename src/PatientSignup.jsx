@@ -16,6 +16,7 @@ const PatientSignup = () => {
   const [loading, setLoading] = useState(false);
   const [verificationToken, setVerificationToken] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -49,7 +50,24 @@ const PatientSignup = () => {
     }
   }, [partnerSlug]);
 
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
   const stepLabels = ["Account", "Verification", "Login"];
+
+  const handleResendSuccess = (message) => {
+    setSuccessMessage(message);
+  };
+
+  const handleResendError = (message) => {
+    setErrorMessage(message);
+  };
 
   const renderStepContent = (step) => {
     switch (step) {
@@ -68,7 +86,12 @@ const PatientSignup = () => {
             onAnimationComplete={handleCheckEmailComplete}
           />
         ) : (
-          <VerificationInput setVerificationToken={setVerificationToken} />
+          <VerificationInput
+            setVerificationToken={setVerificationToken}
+            email={formData.emailAddress}
+            onResendSuccess={handleResendSuccess}
+            onResendError={handleResendError}
+          />
         );
       case 3:
         return <VerificationSuccessful />;
@@ -196,6 +219,13 @@ const PatientSignup = () => {
           <p className="mt-2 text-center text-gray-600 text-sm">
             Fill in your details to get started
           </p>
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
+              {successMessage}
+            </div>
+          )}
 
           <div className="mt-8">
             <ul className="flex justify-center gap-4">
