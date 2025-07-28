@@ -74,7 +74,7 @@ export default function ForgotPassword() {
       <DesignedSideBar />
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center">
         <h1 className="text-2xl mb-3 text-blue-500 mt-5 lg:mt-0">Reset Password</h1>
-        <form onSubmit={handleSubmit} className="p-8 w-3/4 max-w-md">
+        <form onSubmit={handleSubmit} className="p-0 md:p-8 w-3/4 max-w-md">
           {error && <p className="text-red-600 mb-4">{error}</p>}
           <div className="lg:mb-10 mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">

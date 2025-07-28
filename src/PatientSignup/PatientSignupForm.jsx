@@ -238,7 +238,7 @@ export default function PatientSignupForm({
           </div>
 
           <div className="mt-6 flex items-center">
-            <input required type="checkbox" className="rounded-md mr-2" />
+            <input required type="checkbox" className="rounded-md mr-2 cursor-pointer" />
             <span className="text-sm text-gray-900 font-medium">
               Accept the{" "}
               <a href="#" className="text-violet-700">

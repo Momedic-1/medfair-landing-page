@@ -91,8 +91,8 @@ export default function LoginPage() {
     <div className="flex flex-col lg:flex-row h-screen">
       <DesignedSideBar />
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center">
-        <h1 className="text-2xl mb-3 text-blue-500 mt-5 lg:mt-0">Get Started</h1>
-        <form onSubmit={handleSubmit} className="p-8 w-3/4 max-w-md">
+        <h1 className="text-2xl mb-8 text-blue-500 mt-12 lg:mt-0">Get Started</h1>
+        <form onSubmit={handleSubmit} className="p-0 md:p-8 w-3/4 max-w-md">
           {error && <p className="text-red-600 mb-4">{error}</p>}
           <div className="lg:mb-10 mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="emailOrPhone">

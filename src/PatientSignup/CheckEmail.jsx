@@ -13,7 +13,7 @@ const CheckEmail = ({ onAnimationComplete, email }) => {
   }, [onAnimationComplete])
 
   return (
-    <div className='flex items-center justify-center min-h-screen bg-white animate-fade-in'>
+    <div className='flex items-center justify-center md:min-h-screen bg-white animate-fade-in'>
       <div className='bg-gray-50 p-8 rounded-lg shadow-lg text-center max-w-md w-full'>
         <CheckEmailImage/>
 
