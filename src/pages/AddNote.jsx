@@ -202,7 +202,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
         );
 
         setShowSuccessModal(true); // ✅ Only show success modal on successful API response
-        console.log("showSuccessModal:", true);
 
         onNoteAdded(response.data);
         resetForm();
@@ -211,7 +210,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       }
     } catch (err) {
       setLoading(false);
-      console.error("Failed to add note:", err);
       toast.error("Failed to add note, please try again.");
       // Don't show success modal on error
     }
@@ -579,11 +577,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                       {`${capitalizeFirstLetter(
                         patientFirstName
                       )} ${capitalizeFirstLetter(patientLastName)}`}
-                      {console.log(
-                        patientFirstName,
-                        patientLastName,
-                        "mmmmnbghjmmmmm"
-                      )}
                     </p>
                   </div>
 
