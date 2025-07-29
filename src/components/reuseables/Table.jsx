@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { formatDate } from "../../utils";
+import { formatDate, getToken } from "../../utils";
 import { Hourglass } from "react-loader-spinner";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Modal, Box } from "@mui/material";
+import { baseUrl } from "../../env";
 
 const modalStyle = {
   position: "absolute",
@@ -24,15 +25,44 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [medications, setMedications] = useState([]);
   const [showPharmacyDropdown, setShowPharmacyDropdown] = useState(null);
+  const [partnerPharmacies, setPartnerPharmacies] = useState([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
 
   const dropdownRef = useRef(null);
 
-  const partnerPharmacies = [
-    "HealthPlus",
-    "MedPlus",
-    "Alpha Pharmacy",
-    "NetPharm",
-  ];
+  // Fetch partner pharmacies from API
+  const fetchPartners = async () => {
+    try {
+      setPartnersLoading(true);
+      const token = getToken();
+
+      const response = await fetch(`${baseUrl}/api/organization/get-partners`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Extract partners from the API response structure
+      if (result.content && Array.isArray(result.content)) {
+        setPartnerPharmacies(result.content);
+      } else {
+        setPartnerPharmacies([]);
+      }
+    } catch (error) {
+      console.error("Error fetching partners:", error);
+      toast.error("Failed to load partner pharmacies");
+    } finally {
+      setPartnersLoading(false);
+    }
+  };
 
   const viewMedications = (prescriptions) => {
     if (!prescriptions || prescriptions.length === 0) {
@@ -43,12 +73,25 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
     setModalIsOpen(true);
   };
 
+  // Handle pharmacy selection
+  const handlePharmacySelect = (pharmacy, patientData) => {
+    // You can pass additional patient data to the pharmacy if needed
+    toast.success(`Redirecting to ${pharmacy}`);
+    setShowPharmacyDropdown(null);
+
+    // Add your redirection logic here
+    // window.open(`https://${pharmacy.toLowerCase()}.com/prescription`, '_blank');
+    // or navigate to a specific route with patient data
+  };
+
+  useEffect(() => {
+    // Fetch partners when component mounts
+    fetchPartners();
+  }, []);
+
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowPharmacyDropdown(null);
       }
     }
@@ -66,7 +109,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
           <thead className="bg-gray-50 sticky top-0 z-10 py-4">
             <tr>
               {[
-                "Doctor‘s Full Name",
+                "Doctor's Full Name",
                 "Visit Date",
                 "Subjective",
                 "Objective",
@@ -115,12 +158,24 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   <td className="px-2 py-2 text-sm text-gray-700">
                     {formatDate(patient?.visitDate)}
                   </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">{patient?.subjective}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700">{patient?.objective}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700">{patient?.assessment}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700">{patient?.plan}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700">{patient?.finalDiagnosis}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700">{patient?.soapComment}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.subjective}
+                  </td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.objective}
+                  </td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.assessment}
+                  </td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.plan}
+                  </td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.finalDiagnosis}
+                  </td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.soapComment}
+                  </td>
 
                   {/* View Medications */}
                   <td className="p-4 text-sm">
@@ -152,16 +207,17 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                     </button>
                   </td>
 
-                  {/* Get Prescription with Dropdown */}
+                  {/* Get Prescription with Dynamic Dropdown */}
                   <td className="px-3 py-3 text-sm relative">
                     <div className="relative" ref={dropdownRef}>
                       <button
-                        className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                        className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() =>
                           setShowPharmacyDropdown(
                             showPharmacyDropdown === index ? null : index
                           )
                         }
+                        disabled={partnersLoading}
                       >
                         <svg
                           className="w-5 h-5"
@@ -176,25 +232,30 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        Get Prescription
+                        {partnersLoading ? "Loading..." : "Get Prescription"}
                       </button>
 
                       {showPharmacyDropdown === index && (
                         <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                          <ul className="divide-y divide-gray-100">
-                            {partnerPharmacies.map((pharmacy, idx) => (
-                              <li
-                                key={idx}
-                                className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm text-gray-700"
-                                onClick={() => {
-                                  toast.success(`Redirecting to ${pharmacy}`);
-                                  setShowPharmacyDropdown(null);
-                                }}
-                              >
-                                {pharmacy}
-                              </li>
-                            ))}
-                          </ul>
+                          {partnerPharmacies.length > 0 ? (
+                            <ul className="divide-y divide-gray-100">
+                              {partnerPharmacies.map((pharmacy, idx) => (
+                                <li
+                                  key={idx}
+                                  className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm text-gray-700"
+                                  onClick={() =>
+                                    handlePharmacySelect(pharmacy.name, patient)
+                                  }
+                                >
+                                  {pharmacy.name}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="px-4 py-2 text-sm text-gray-500">
+                              No partner pharmacies available
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -233,9 +294,13 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   <tr key={medication?.id}>
                     <td className="border px-4 py-2">{medication?.drugName}</td>
                     <td className="border px-4 py-2">{medication?.dosage}</td>
-                    <td className="border px-4 py-2">{medication?.frequency}</td>
+                    <td className="border px-4 py-2">
+                      {medication?.frequency}
+                    </td>
                     <td className="border px-4 py-2">{medication?.duration}</td>
-                    <td className="border px-4 py-2">{medication?.instructions}</td>
+                    <td className="border px-4 py-2">
+                      {medication?.instructions}
+                    </td>
                   </tr>
                 ))}
               </tbody>
