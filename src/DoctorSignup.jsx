@@ -6,7 +6,7 @@ import VerificationInput from './DoctorSignup/VerificationInput'
 import VerificationSuccessful from './DoctorSignup/VerificationSuccessful'
 import CheckEmail from './DoctorSignup/CheckEmail'
 import { baseUrl } from './env'
-import DesignedSideBar from './components/reuseables/DesignedSideBar'
+// import DesignedSideBar from './components/reuseables/DesignedSideBar'
 
 const DoctorSignup = () => {
   const [currentStep, setCurrentStep] = useState(1)

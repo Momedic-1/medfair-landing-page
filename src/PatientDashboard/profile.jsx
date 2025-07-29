@@ -756,79 +756,189 @@ export default function Profile() {
 
                   {/* File Upload Tab */}
                   <Tab.Panel>
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Upload Medical Documents
-                        </label>
-                        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-                          <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="space-y-8">
+                      {/* Upload Section */}
+                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                        <div className="mb-6">
+                          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                            Upload Medical Documents
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Securely upload your medical records and documents
+                            for easy access
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Document Category Selection */}
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-800">
                               Document Category
                             </label>
-                            <select
-                              name="documentCategory"
-                              value={profileData.documentCategory}
-                              onChange={handleChange}
-                              className="block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-600 focus:ring-blue-600 focus:ring-opacity-50 transition-colors duration-200 px-3 bg-white"
-                            >
-                              <option value="">Select Category</option>
-                              {documentCategoryOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {capitalizeFirstLetter(option.label)}
+                            <div className="relative">
+                              <select
+                                name="documentCategory"
+                                value={profileData.documentCategory}
+                                onChange={handleChange}
+                                className="w-full h-12 pl-4 pr-10 text-sm bg-white border border-gray-300 rounded-lg shadow-sm hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 appearance-none cursor-pointer"
+                              >
+                                <option value="" className="text-gray-500">
+                                  Select Category
                                 </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <div className="mt-1 flex justify-center px-4 py-6 border-2 border-gray-200 border-dashed rounded-md hover:border-blue-600 transition-colors duration-200 cursor-pointer group">
-                              <div className="space-y-2 text-center">
+                                {documentCategoryOptions.map((option) => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {capitalizeFirstLetter(option.label)}
+                                  </option>
+                                ))}
+                              </select>
+                              {/* Custom dropdown arrow */}
+                              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg
-                                  className="mx-auto h-12 w-12 text-gray-400 group-hover:text-blue-600 transition-colors duration-200"
-                                  stroke="currentColor"
+                                  className="w-5 h-5 text-gray-400"
                                   fill="none"
-                                  viewBox="0 0 48 48"
-                                  aria-hidden="true"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
                                 >
                                   <path
-                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                    strokeWidth={2}
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
                                   />
                                 </svg>
-                                <div className="flex text-sm text-gray-600 justify-center">
-                                  <label
-                                    htmlFor="file-upload"
-                                    className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-800 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-600 transition-colors duration-200"
-                                  >
-                                    <span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* File Upload Area */}
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-800">
+                              Upload File
+                            </label>
+                            <div className="relative">
+                              <div className="flex justify-center px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300 cursor-pointer group bg-gray-50/50">
+                                <div className="text-center space-y-3">
+                                  {/* Upload Icon */}
+                                  <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-300">
+                                    {uploadingDocument ? (
+                                      <svg
+                                        className="w-6 h-6 text-blue-600 animate-spin"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        />
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        />
+                                      </svg>
+                                    ) : (
+                                      <svg
+                                        className="w-6 h-6 text-blue-600"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                        />
+                                      </svg>
+                                    )}
+                                  </div>
+
+                                  {/* Upload Text */}
+                                  <div className="space-y-1">
+                                    <label
+                                      htmlFor="file-upload"
+                                      className="cursor-pointer font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200"
+                                    >
                                       {uploadingDocument
                                         ? "Uploading..."
-                                        : "Upload a file"}
-                                    </span>
-                                    <input
-                                      id="file-upload"
-                                      name="file-upload"
-                                      type="file"
-                                      className="sr-only"
-                                      onChange={handleDocumentUpload}
-                                      disabled={uploadingDocument}
-                                    />
-                                  </label>
-                                  <p className="pl-1">or drag and drop</p>
+                                        : "Choose file to upload"}
+                                      <input
+                                        id="file-upload"
+                                        name="file-upload"
+                                        type="file"
+                                        className="sr-only"
+                                        onChange={handleDocumentUpload}
+                                        disabled={uploadingDocument}
+                                      />
+                                    </label>
+                                    <p className="text-xs text-gray-500">
+                                      or drag and drop here
+                                    </p>
+                                  </div>
+
+                                  {/* File Format Info */}
+                                  <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                    <span>PDF, DOC, DOCX • Max 10MB</span>
+                                  </div>
                                 </div>
-                                <p className="text-xs text-gray-500">
-                                  PDF, DOC, DOCX up to 10MB
-                                </p>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Display uploaded documents */}
-                      {/* {profileData.documents && profileData.documents.length > 0 && (
+                      {/* Uploaded Documents Section */}
+                      {profileData.documents &&
+                        profileData.documents.length > 0 && (
+                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                            <div className="flex items-center justify-between mb-6">
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                  Uploaded Documents
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {profileData.documents.length} document
+                                  {profileData.documents.length !== 1
+                                    ? "s"
+                                    : ""}{" "}
+                                  uploaded
+                                </p>
+                              </div>
+                              <div className="flex items-center text-sm text-gray-500">
+                                <svg
+                                  className="w-4 h-4 mr-1"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                Secure & Encrypted
+                              </div>
+                            </div>
+                            {/* Display uploaded documents */}
+                            {/* {profileData.documents && profileData.documents.length > 0 && (
                         <div className="mt-6">
                           <h3 className="text-lg font-medium text-gray-900 mb-4">Uploaded Documents</h3>
                           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -864,45 +974,64 @@ export default function Profile() {
                           </div>
                         </div>
                       )} */}
-                      {profileData.documents &&
-                        profileData.documents.length > 0 && (
-                          <div className="mt-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                              Uploaded Documents
-                            </h3>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                               {profileData.documents.map((doc, index) => (
                                 <div
                                   key={index}
-                                  className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:border-gray-400 cursor-pointer"
+                                  className="group relative bg-gray-50 hover:bg-white border border-gray-200 hover:border-blue-300 rounded-lg p-4 transition-all duration-200 cursor-pointer hover:shadow-md"
                                   onClick={() => openModal(doc)}
                                 >
-                                  <div className="flex-shrink-0">
-                                    <svg
-                                      className="h-10 w-10 text-gray-400"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                      />
-                                    </svg>
+                                  {/* Document Icon & Info */}
+                                  <div className="flex items-start space-x-3">
+                                    <div className="flex-shrink-0">
+                                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
+                                        <svg
+                                          className="w-5 h-5 text-blue-600"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                          />
+                                        </svg>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                          {doc.category}
+                                        </p>
+                                        <svg
+                                          className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors duration-200"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                          />
+                                        </svg>
+                                      </div>
+                                      <p className="text-sm font-medium text-gray-700 truncate mb-1">
+                                        {doc.fileName}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        Click to view document
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-900">
-                                      {doc.category}
-                                    </p>
-                                    <p className="text-sm font-medium text-gray-900">
-                                      {doc.fileName}
-                                    </p>
-                                    <p className="truncate text-sm text-gray-500">
-                                      Click to view
-                                    </p>
-                                  </div>
+
+                                  {/* Hover Effect Overlay */}
+                                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
                                 </div>
                               ))}
                             </div>
