@@ -270,7 +270,7 @@ const PatientSignup = () => {
                 type="button"
                 onClick={handleNextClick}
                 disabled={loading}
-                className={`w-full sm:w-auto inline-flex justify-center items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-400 transition ${
+                className={`w-full sm:w-auto inline-flex justify-center ml-auto items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-400 transition ${
                   loading ? "opacity-70 cursor-not-allowed" : ""
                 }`}
               >
