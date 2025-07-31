@@ -41,8 +41,19 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [medications, setMedications] = useState([]);
   const [showPharmacyDropdown, setShowPharmacyDropdown] = useState(null);
-  const [partnerPharmacies, setPartnerPharmacies] = useState([]);
-  const [partnersLoading, setPartnersLoading] = useState(false);
+
+  const partnerPharmacies = [
+    {
+      id: "smartpharm",
+      name: "SmartPharm",
+      partner: "SMARTPHARM",
+    },
+    {
+      id: "degree_360",
+      name: "Degree 360 Pharmacy",
+      partner: "DEGREE_360",
+    },
+  ];
 
   // New states for order modal
   const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -51,39 +62,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   const [orderLoading, setOrderLoading] = useState(false);
 
   const dropdownRef = useRef(null);
-
-  // Fetch partner pharmacies from API
-  const fetchPartners = async () => {
-    try {
-      setPartnersLoading(true);
-      const token = getToken();
-
-      const response = await fetch(`${baseUrl}/api/organization/get-partners`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      // Extract partners from the API response structure
-      if (result.content && Array.isArray(result.content)) {
-        setPartnerPharmacies(result.content);
-      } else {
-        setPartnerPharmacies([]);
-      }
-    } catch (error) {
-      toast.error("Failed to load partner pharmacies");
-    } finally {
-      setPartnersLoading(false);
-    }
-  };
 
   const viewMedications = (prescriptions) => {
     if (!prescriptions || prescriptions.length === 0) {
@@ -94,7 +72,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
     setModalIsOpen(true);
   };
 
-  // Handle pharmacy selection - now opens order modal
   const handlePharmacySelect = (pharmacy, patientData) => {
     // Always open the modal first to see what's happening
     setSelectedPharmacy(pharmacy);
@@ -110,7 +87,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
 
   // Order drugs API call
   const handleOrderDrugs = async () => {
-    // Use the correct ID field from the data structure
     const noteId = selectedPatient?.id;
 
     if (!noteId) {
@@ -123,7 +99,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
       const token = getToken();
 
       const response = await fetch(
-        `${baseUrl}/api/notes/notes/${noteId}/order-drugs`,
+        `${baseUrl}/api/notes/notes/${noteId}/order-drugs?partner=${selectedPharmacy.partner}`,
         {
           method: "POST",
           headers: {
@@ -145,8 +121,8 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
         );
       }
 
-      const result = await response.json();
-      console.log("Order successful:", result);
+      const result = await response.text(); // or use try-catch for flexibility
+      console.log(result, "results");
 
       toast.success(
         `Drug order sent to ${selectedPharmacy.name} successfully!`
@@ -160,11 +136,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   };
 
   useEffect(() => {
-    // Fetch partners when component mounts
-    fetchPartners();
-  }, []);
-
-  useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowPharmacyDropdown(null);
@@ -172,7 +143,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
     }
 
     const timer = setTimeout(() => {
-      document.addEventListener("click", handleClickOutside); // CHANGED from 'mousedown' to 'click'
+      document.addEventListener("click", handleClickOutside);
     }, 100);
 
     return () => {
@@ -286,11 +257,11 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                     </button>
                   </td>
 
-                  {/* Get Prescription with Dynamic Dropdown */}
+                  {/* Get Prescription with Static Dropdown */}
                   <td className="px-3 py-3 text-sm relative">
                     <div className="relative" ref={dropdownRef}>
                       <button
-                        className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -298,7 +269,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                             showPharmacyDropdown === index ? null : index
                           );
                         }}
-                        disabled={partnersLoading}
                       >
                         <svg
                           className="w-5 h-5"
@@ -313,54 +283,46 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-                        {partnersLoading ? "Loading..." : "Get Prescription"}
+                        Get Prescription
                       </button>
 
                       {showPharmacyDropdown === index && (
                         <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                          <div className="p-2 text-xs text-gray-500 border-b">
-                            Partners found: {partnerPharmacies.length}
+                          <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white rounded-t-2xl">
+                            Available Pharmacies
                           </div>
-                          {partnerPharmacies.length > 0 ? (
-                            <ul className="divide-y divide-gray-100">
-                              {partnerPharmacies.map((pharmacy, idx) => (
-                                <li
-                                  key={idx}
-                                  className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm text-gray-700 transition-colors"
-                                  onClick={() =>
-                                    handlePharmacySelect(pharmacy, patient)
-                                  }
-                                  onMouseDown={(e) => e.stopPropagation()} // ✅ Prevent dropdown from closing prematurely
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4 text-orange-500"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                      />
-                                    </svg>
-                                    {pharmacy.name ||
-                                      pharmacy.organizationName ||
-                                      "Unknown Pharmacy"}
-                                    <span className="text-xs text-blue-500">
-                                      #{idx}
-                                    </span>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <div className="px-4 py-2 text-sm text-gray-500">
-                              No partner pharmacies available
-                            </div>
-                          )}
+                          <ul className="divide-y divide-gray-100">
+                            {partnerPharmacies.map((pharmacy, idx) => (
+                              <li
+                                key={idx}
+                                className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm text-gray-700 transition-colors"
+                                onClick={() =>
+                                  handlePharmacySelect(pharmacy, patient)
+                                }
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <svg
+                                    className="w-4 h-4 text-orange-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                    />
+                                  </svg>
+                                  {pharmacy.name}
+                                  {/* <span className="text-xs text-blue-500">
+                                    {pharmacy.partner}
+                                  </span> */}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
                     </div>
@@ -478,7 +440,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
           </div>
 
           {/* Modal Content */}
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             {/* Pharmacy Info */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <h3 className="text-lg font-semibold text-blue-800 mb-2">
@@ -504,7 +466,9 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   <p className="font-medium text-blue-900">
                     {selectedPharmacy?.name}
                   </p>
-                  <p className="text-sm text-blue-600">Partner Pharmacy</p>
+                  <p className="text-sm text-blue-600">
+                    Partner: {selectedPharmacy?.partner}
+                  </p>
                 </div>
               </div>
             </div>
@@ -637,7 +601,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
               <button
                 onClick={() => setOrderModalOpen(false)}
                 disabled={orderLoading}
-                className="flex-1 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-2 md:px-6 text-sm md:text-base py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
@@ -646,7 +610,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                 disabled={
                   orderLoading || !selectedPatient?.prescriptions?.length
                 }
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-2 md:px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text:sm md:text-base text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {orderLoading ? (
                   <>
