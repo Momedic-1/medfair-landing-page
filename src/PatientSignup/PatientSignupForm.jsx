@@ -96,7 +96,10 @@ export default function PatientSignupForm({
         )}
 
         {/* Main Form */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+        >
           <div className="bg-gradient-to-r from-violet-600 to-blue-600 p-6">
             <h2 className="text-xl font-semibold text-white flex items-center justify-center space-x-2">
               <User className="w-6 h-6" />
@@ -299,7 +302,7 @@ export default function PatientSignupForm({
             </div>
 
             {/* Terms and Conditions */}
-            <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+            <div className="bg-gray-50 rounded-lg space-y-4">
               <label className="flex items-start space-x-3 cursor-pointer group">
                 <input
                   required
@@ -334,7 +337,7 @@ export default function PatientSignupForm({
             </div>
 
             {/* Login Link */}
-            <div className="text-center">
+            <div className="text-start">
               <p className="text-gray-600">
                 Already have an account?{" "}
                 <button
@@ -348,15 +351,15 @@ export default function PatientSignupForm({
             </div>
 
             {/* Submit Button */}
-            <button
+            {/* <button
               type="button"
               onClick={handleSubmit}
               className="w-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 shadow-lg"
             >
               Create Account
-            </button>
+            </button> */}
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
