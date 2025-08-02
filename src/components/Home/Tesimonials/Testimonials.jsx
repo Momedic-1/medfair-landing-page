@@ -40,16 +40,16 @@ const Testimonials = () => {
       avatar: "👨‍💻",
       gradient: "from-purple-500 to-pink-500",
     },
-    {
-      id: 4,
-      name: "Maria Rodriguez",
-      job: "Teacher",
-      testimonial:
-        "The convenience of MedFair is unmatched. I can get medical advice without missing work or arranging childcare. The doctors are professional and thorough in their consultations.",
-      rating: 5,
-      avatar: "👩‍🏫",
-      gradient: "from-orange-500 to-red-500",
-    },
+    // {
+    //   id: 4,
+    //   name: "Maria Rodriguez",
+    //   job: "Teacher",
+    //   testimonial:
+    //     "The convenience of MedFair is unmatched. I can get medical advice without missing work or arranging childcare. The doctors are professional and thorough in their consultations.",
+    //   rating: 5,
+    //   avatar: "👩‍🏫",
+    //   gradient: "from-orange-500 to-red-500",
+    // },
   ];
 
   const nextSlide = () => {

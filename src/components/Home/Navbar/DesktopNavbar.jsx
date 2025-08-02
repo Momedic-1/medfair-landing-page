@@ -46,6 +46,7 @@ const DesktopNavbar = () => {
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo Section */}
+           <a href="/">
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="relative">
               <img src={logo} alt="MedFair Logo" className="h-8 lg:ml-12" />
@@ -57,6 +58,7 @@ const DesktopNavbar = () => {
               MedFair
             </span>
           </div>
+          </a>
 
           {/* Navigation Links */}
           <ul className="hidden md:flex items-center space-x-8">

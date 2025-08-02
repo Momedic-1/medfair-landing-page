@@ -288,9 +288,11 @@ const FAQs = () => {
         <div className="text-center mt-16">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 max-w-md mx-auto shadow-lg border border-white/60">
             <p className="text-gray-700 mb-4">Still have questions?</p>
-            <button className="px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300">
-              Contact Support
-            </button>
+            <a href="#contact-us">
+              <button className="px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300">
+                Contact Support
+              </button>
+            </a>
           </div>
         </div>
       </div>
