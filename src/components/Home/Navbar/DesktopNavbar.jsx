@@ -48,7 +48,7 @@ const DesktopNavbar = () => {
           {/* Logo Section */}
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="relative">
-              <img src={logo} alt="MedFair Logo" className="h-8 ml-12" />
+              <img src={logo} alt="MedFair Logo" className="h-8 lg:ml-12" />
 
               {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-300"></div>
