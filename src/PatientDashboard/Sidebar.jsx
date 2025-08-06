@@ -1,4 +1,4 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import dashboard from "./assets/dashboard.svg";
 import help from "./assets/help-circle.svg";
 import profile from "./assets/profile (2).svg";

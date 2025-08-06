@@ -608,7 +608,7 @@ const Dashboard = () => {
     <div className="w-full">
       <ToastContainer />
       <div className="w-full px-4 py-8 overflow-hidden">
-        <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 lg:grid-cols-3 md:gap-8 mt-4">
+        <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 md:gap-8 mt-4">
           <div onClick={handleCallADoctorClick}>
             <Cards title="Call a Doctor" img={call} />
           </div>
@@ -622,13 +622,13 @@ const Dashboard = () => {
               img={calendarIcon}
             />
           </div>
-          <div onClick={() => handleCardClick("Get your test done")}>
+          {/* <div onClick={() => handleCardClick("Get your test done")}>
             <Cards title="Get your test done" img={testTube} />
-          </div>
+          </div> */}
         </div>
 
-        <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-y-6 lg:gap-y-0 lg:flex-row items-start gap-x-8 px-1">
-          <div className="w-full lg:w-[68%] rounded-lg border bg-white border-gray-200 p-4">
+        <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-6 xl:gap-y-0 xl:flex-row items-start gap-x-8 px-1">
+          <div className="w-full xl:w-[68%] rounded-lg border bg-white border-gray-200 p-4">
             <Calendar
               localizer={localizer}
               startAccessor="start"
@@ -642,7 +642,7 @@ const Dashboard = () => {
             />
           </div>
 
-          <div className="w-full lg:w-[32%] h-[435px] rounded-lg border overflow-y-scroll bg-white border-gray-200 p-4">
+          <div className="w-full xl:w-[32%] h-[435px] rounded-lg border overflow-y-scroll bg-white border-gray-200 p-4">
             <h2 className="text-lg font-bold text-blue-900 md:text-xl">
               Appointments
             </h2>

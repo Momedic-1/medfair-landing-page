@@ -24,6 +24,7 @@ import {
   Plus,
 } from "lucide-react";
 import ViewDocuments from "../components/ViewDocuments";
+import Lab from "../components/Lab";
 
 const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [patientFirstName, setPatientFirstName] = useState("");
@@ -485,6 +486,16 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           >
             View Documents
           </button>
+          <button
+            className={`px-4 py-2 ${
+              activeTab === "lab"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-500"
+            }`}
+            onClick={() => setActiveTab("lab")}
+          >
+            Lab
+          </button>
         </div>
 
         {isViewNotesOpen && (
@@ -922,6 +933,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
 
             {activeTab === "ViewDocuments" && (
             <ViewDocuments />
+            )}
+            {activeTab === "lab" && (
+           <Lab />
             )}
           </>
         )}

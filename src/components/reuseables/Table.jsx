@@ -21,7 +21,6 @@ const modalStyle = {
   maxHeight: "90vh",
 };
 
-// New modal style for order confirmation
 const orderModalStyle = {
   position: "absolute",
   top: "50%",
@@ -55,7 +54,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
     },
   ];
 
-  // New states for order modal
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -73,13 +71,11 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   };
 
   const handlePharmacySelect = (pharmacy, patientData) => {
-    // Always open the modal first to see what's happening
     setSelectedPharmacy(pharmacy);
     setSelectedPatient(patientData);
     setOrderModalOpen(true);
     setShowPharmacyDropdown(null);
 
-    // Show warning if no prescriptions, but still open modal
     if (!patientData?.prescriptions || patientData.prescriptions.length === 0) {
       toast.warning("No medications prescribed for this patient");
     }
@@ -161,13 +157,15 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
               {[
                 "Doctor's Full Name",
                 "Visit Date",
-                "Subjective",
-                "Objective",
-                "Assessment",
-                "Plan",
-                "Final diagnosis",
-                "SOAP comment",
+                // "Subjective",
+                // "Objective",
+                // "Assessment",
+                // "Plan",
+                // "Final diagnosis",
+                // "SOAP comment",
                 "Medications",
+                "Get Prescription",
+                "Lab Tests",
                 "Actions",
               ].map((header, idx) => (
                 <th
@@ -208,13 +206,13 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   <td className="px-2 py-2 text-sm text-gray-700">
                     {formatDate(patient?.visitDate)}
                   </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.subjective}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.objective}
-                  </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
+                  </td> */}
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.assessment}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
@@ -222,10 +220,10 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.finalDiagnosis}
-                  </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
+                  </td> */}
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.soapComment}
-                  </td>
+                  </td> */}
 
                   {/* View Medications */}
                   <td className="p-4 text-sm">
@@ -325,6 +323,28 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                           </ul>
                         </div>
                       )}
+                    </div>
+                  </td>
+
+                  {/* Lab test */}
+                  <td className="px-3 py-3 text-sm relative">
+                    <div className="relative" ref={dropdownRef}>
+                      <button className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        Lab Test
+                      </button>
                     </div>
                   </td>
                 </tr>
