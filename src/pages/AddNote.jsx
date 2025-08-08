@@ -935,8 +935,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             <ViewDocuments />
             )}
             {activeTab === "lab" && (
-           <Lab />
-            )}
+  <Lab doctorId={userData?.id} />
+)}
           </>
         )}
 
