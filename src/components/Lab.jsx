@@ -3,7 +3,7 @@ import { AlertCircle, Search, X } from "lucide-react";
 import axios from "axios";
 import { baseUrl } from "../env";
 
-const Lab = () => {
+const Lab = ({ doctorId }) => {
   const [investigations, setInvestigations] = useState([]);
   const [selectedInvestigations, setSelectedInvestigations] = useState([]);
   const [search, setSearch] = useState("");
@@ -11,10 +11,20 @@ const Lab = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(null);
   const dropdownRef = useRef(null);
   const debounceTimeout = useRef(null);
 
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
+  const patientId = localStorage.getItem("patientId");
+
+  // Log initial props and localStorage values for debugging
+  useEffect(() => {
+    console.log("Doctor ID:", doctorId);
+    console.log("Patient ID:", patientId);
+    console.log("Token:", token);
+  }, [doctorId, patientId, token]);
 
   // Debounce search input
   useEffect(() => {
@@ -23,7 +33,7 @@ const Lab = () => {
     }
     debounceTimeout.current = setTimeout(() => {
       setDebouncedSearch(search);
-    }, 300); // 300ms debounce delay
+    }, 300);
 
     return () => clearTimeout(debounceTimeout.current);
   }, [search]);
@@ -35,19 +45,34 @@ const Lab = () => {
         setLoading(true);
         setError(null);
 
-        const response = await axios.get(`${baseUrl}/api/investigations/names`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          params: {
-            search: debouncedSearch || undefined,
-            page: 0,
-            size: 10,
-          },
-        });
+        const response = await axios.get(
+          `${baseUrl}/api/investigations/names`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            params: {
+              search: debouncedSearch || undefined,
+              page: 0,
+              size: 10,
+            },
+          }
+        );
 
-        setInvestigations(response.data.content || []);
+        // Log API response for debugging
+        console.log("Investigations API Response:", response.data);
+
+        // Handle different possible response formats
+        const investigationsData = response.data.content || response.data || [];
+        const formattedInvestigations = investigationsData.map(
+          (item, index) =>
+            typeof item === "string"
+              ? { id: index + 1, name: item } // Fallback: use index as ID if API returns strings
+              : { id: item.id, name: item.name || item.title || "Unknown" } // Handle object with id/name or id/title
+        );
+
+        setInvestigations(formattedInvestigations);
         setLoading(false);
       } catch (error) {
         setError(
@@ -90,8 +115,8 @@ const Lab = () => {
   // Handle investigation selection
   const handleSelectInvestigation = (investigation) => {
     setSelectedInvestigations((prev) =>
-      prev.includes(investigation)
-        ? prev.filter((item) => item !== investigation)
+      prev.some((item) => item.id === investigation.id)
+        ? prev.filter((item) => item.id !== investigation.id)
         : [...prev, investigation]
     );
     setSearch("");
@@ -99,14 +124,83 @@ const Lab = () => {
   };
 
   // Handle removing selected investigation
-  const handleRemoveInvestigation = (investigation) => {
+  const handleRemoveInvestigation = (investigationId) => {
     setSelectedInvestigations((prev) =>
-      prev.filter((item) => item !== investigation)
+      prev.filter((item) => item.id !== investigationId)
     );
   };
 
+  // Handle order submission
+  const handleSubmitOrder = async () => {
+    // Validate inputs
+    if (!doctorId) {
+      setError("Doctor ID is missing");
+      return;
+    }
+    if (!patientId) {
+      setError("Patient ID is missing");
+      return;
+    }
+    if (selectedInvestigations.length === 0) {
+      setError("Please select at least one investigation");
+      return;
+    }
+    if (!token) {
+      setError("Authentication token is missing");
+      return;
+    }
+
+    setSubmitLoading(true);
+    setError(null);
+    setSubmitSuccess(null);
+
+    // Log request data for debugging
+    const requestBody = selectedInvestigations.map((item) => ({
+      investigationId: item.id,
+      instruction: "Perform as per protocol",
+    }));
+    console.log("Submit Order Request:", {
+      doctorId,
+      patientId,
+      requestBody,
+    });
+
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/investigations/create-order`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            doctorId: Number(doctorId), // Ensure numeric ID
+            patientId: Number(patientId), // Ensure numeric ID
+          },
+        }
+      );
+
+      console.log("Submit Order Response:", response.data);
+      setSubmitSuccess(
+        `Order created successfully! Order ID: ${response.data.orderId}`
+      );
+      setSelectedInvestigations([]); // Clear selections
+      setTimeout(() => setSubmitSuccess(null), 3000);
+    } catch (error) {
+      setError(
+        `Failed to create order: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+      console.error("Submit Order Error:", error.response?.data || error);
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
   // Error state
-  if (error) {
+  if (error && !submitSuccess) {
     return (
       <div className="p-0 md:p-6 max-w-6xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
@@ -154,9 +248,7 @@ const Lab = () => {
             {loading ? (
               <div className="flex items-center justify-center p-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600 text-sm">
-                  Loading...
-                </span>
+                <span className="ml-2 text-gray-600 text-sm">Loading...</span>
               </div>
             ) : investigations.length === 0 && debouncedSearch ? (
               <div className="p-4 text-center">
@@ -172,11 +264,15 @@ const Lab = () => {
                 >
                   <input
                     type="checkbox"
-                    checked={selectedInvestigations.includes(investigation)}
+                    checked={selectedInvestigations.some(
+                      (item) => item.id === investigation.id
+                    )}
                     readOnly
                     className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="ml-3 text-gray-800">{investigation}</span>
+                  <span className="ml-3 text-gray-800">
+                    {investigation.name || "Unnamed Investigation"}
+                  </span>
                 </div>
               ))
             )}
@@ -196,17 +292,48 @@ const Lab = () => {
                 key={index}
                 className="flex items-center bg-white rounded-full px-3 py-1 text-sm text-gray-800 border border-gray-200"
               >
-                <span>{investigation}</span>
+                <span>{investigation.name || "Unnamed Investigation"}</span>
                 <X
                   className="ml-2 h-4 w-4 text-gray-500 cursor-pointer hover:text-red-500"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleRemoveInvestigation(investigation);
+                    handleRemoveInvestigation(investigation.id);
                   }}
                 />
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Submit Button */}
+      {selectedInvestigations.length > 0 && (
+        <div className="mt-4">
+          <button
+            onClick={handleSubmitOrder}
+            disabled={submitLoading}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              submitLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            } transition`}
+          >
+            {submitLoading ? (
+              <span className="flex items-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Submitting...
+              </span>
+            ) : (
+              "Submit Order"
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {submitSuccess && (
+        <div className="mt-4 p-4 bg-green-50 rounded-lg text-green-700">
+          {submitSuccess}
         </div>
       )}
     </div>
