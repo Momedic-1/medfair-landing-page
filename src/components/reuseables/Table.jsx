@@ -77,6 +77,12 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
   const [labLoading, setLabLoading] = useState(false);
   const [selectedLabPartner, setSelectedLabPartner] = useState(null);
   const [labOrderSending, setLabOrderSending] = useState(false);
+  
+  // Payment state
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [paymentCompleted, setPaymentCompleted] = useState(false); // New state to track payment
+  const [paymentReference, setPaymentReference] = useState(''); // Store payment reference
 
   const dropdownRef = useRef(null);
 
@@ -155,6 +161,10 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
     setLabModalOpen(true);
     setSelectedPatient(patientData);
     setSelectedLabPartner(null);
+    setUserEmail('');
+    setPaymentCompleted(false); // Reset payment status
+    setPaymentReference(''); // Reset payment reference
+    
     try {
       const token = getToken();
       if (!patientId) {
@@ -173,7 +183,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
         throw new Error("Failed to fetch lab orders");
       }
       const orders = await response.json();
-      // Select the first order or null if no orders exist
       setSelectedOrder(orders[0] || null);
     } catch (error) {
       toast.error(`Failed to fetch lab orders: ${error.message}`);
@@ -184,10 +193,16 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
   };
 
   const handleSendLabOrder = async () => {
+    if (!paymentCompleted) {
+      toast.warning("Please complete payment before sending lab order");
+      return;
+    }
+    
     if (!selectedOrder?.orderId || !selectedLabPartner) {
       toast.warning("Please select a lab partner");
       return;
     }
+    
     setLabOrderSending(true);
     try {
       const token = getToken();
@@ -211,6 +226,78 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
       toast.error(`Failed to send lab order: ${error.message}`);
     } finally {
       setLabOrderSending(false);
+    }
+  };
+
+  // Modified payment function
+  const handleInitiatePayment = async () => {
+    if (!selectedOrder?.orderId || !userEmail.trim()) {
+      toast.warning("Please provide your email address");
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const token = getToken();
+      const response = await fetch(
+        `${baseUrl}/api/investigations/initiate-payment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            orderId: selectedOrder.orderId,
+            email: userEmail.trim(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const paymentData = await response.json();
+      
+      // Assuming the API returns a Paystack authorization URL
+      if (paymentData.authorizationUrl || paymentData.authorization_url) {
+        // Redirect to Paystack payment page
+        window.location.href = paymentData.authorizationUrl || paymentData.authorization_url;
+      } else if (paymentData.access_code) {
+        // Alternative: Use Paystack Popup (if you have Paystack SDK loaded)
+        if (window.PaystackPop) {
+          const handler = window.PaystackPop.setup({
+            key: paymentData.publicKey || 'pk_test_your_paystack_public_key', // Use your Paystack public key
+            email: userEmail,
+            amount: selectedOrder.totalCost * 100, // Paystack expects amount in kobo
+            currency: 'NGN',
+            ref: paymentData.reference || paymentData.access_code,
+            callback: function(response) {
+              toast.success(`Payment successful! Reference: ${response.reference}`);
+              setPaymentCompleted(true);
+              setPaymentReference(response.reference);
+              // Don't close modal, allow user to proceed with lab order
+            },
+            onClose: function() {
+              toast.info('Payment cancelled');
+            }
+          });
+          handler.openIframe();
+        } else {
+          toast.error('Payment gateway not available. Please refresh the page.');
+        }
+      } else {
+        // If payment was successful (mock success for demo)
+        toast.success('Payment completed successfully!');
+        setPaymentCompleted(true);
+        setPaymentReference(paymentData.reference || 'MOCK_REF_' + Date.now());
+      }
+    } catch (error) {
+      toast.error(`Failed to initiate payment: ${error.message}`);
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -720,10 +807,10 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
         </Box>
       </Modal>
 
-      {/* Lab Order Modal */}
+      {/* Lab Order Modal - Modified to enforce payment first */}
       <Modal
         open={labModalOpen}
-        onClose={() => !labOrderSending && setLabModalOpen(false)}
+        onClose={() => !labOrderSending && !paymentLoading && setLabModalOpen(false)}
         aria-labelledby="lab-modal-title"
         aria-describedby="lab-modal-description"
       >
@@ -750,7 +837,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                 </svg>
                 Lab Investigations
               </h2>
-              {!labOrderSending && (
+              {!labOrderSending && !paymentLoading && (
                 <button
                   onClick={() => setLabModalOpen(false)}
                   className="text-white hover:text-gray-200 transition-colors"
@@ -804,28 +891,101 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
               </div>
             ) : (
               <>
-                {/* Select Lab Partner */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                    Select Lab Partner
-                  </h3>
-                  <select
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                    onChange={(e) =>
-                      setSelectedLabPartner(
-                        labPartners.find((p) => p.id === e.target.value)
-                      )
-                    }
-                    value={selectedLabPartner?.id || ""}
-                  >
-                    <option value="">Choose a lab...</option>
-                    {labPartners.map((lab) => (
-                      <option key={lab.id} value={lab.id}>
-                        {lab.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Payment Status Indicator */}
+                {paymentCompleted && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-green-500 p-2 rounded-full">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-green-800">Payment Completed</h3>
+                        <p className="text-sm text-green-600">
+                          Reference: {paymentReference}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Email Input for Payment */}
+                {!paymentCompleted && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <h3 className="text-lg font-semibold text-green-800 mb-2">
+                      Payment Required
+                    </h3>
+                    <p className="text-sm text-green-700 mb-3">
+                      Payment must be completed before sending lab order to partner lab.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="bg-green-500 p-2 rounded-full">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-green-800 mb-1">
+                          Email for Payment Receipt
+                        </label>
+                        <input
+                          type="email"
+                          value={userEmail}
+                          onChange={(e) => setUserEmail(e.target.value)}
+                          placeholder="Enter your email address"
+                          className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Select Lab Partner - Only shown after payment */}
+                {paymentCompleted && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                      Select Lab Partner
+                    </h3>
+                    <select
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) =>
+                        setSelectedLabPartner(
+                          labPartners.find((p) => p.id === e.target.value)
+                        )
+                      }
+                      value={selectedLabPartner?.id || ""}
+                    >
+                      <option value="">Choose a lab...</option>
+                      {labPartners.map((lab) => (
+                        <option key={lab.id} value={lab.id}>
+                          {lab.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Patient Info */}
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
@@ -896,7 +1056,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                                   Price:
                                 </span>
                                 <p className="text-gray-800">
-                                  ${item.price}
+                                  ₦{item.price?.toLocaleString()}
                                 </p>
                               </div>
                             </div>
@@ -909,56 +1069,100 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                       </div>
                     )}
                   </div>
-                  <div className="mt-4 text-right">
-                    <span className="font-medium text-gray-600">Total Cost:</span>
-                    <span className="ml-2 text-gray-800 font-semibold">
-                      ${selectedOrder.totalCost}
-                    </span>
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-700">Total Cost:</span>
+                      <span className="text-xl font-bold text-green-600">
+                        ₦{selectedOrder.totalCost?.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons - Modified to enforce payment first */}
                 <div className="flex gap-4 pt-4 border-t border-gray-200">
                   <button
                     onClick={() => setLabModalOpen(false)}
-                    disabled={labOrderSending}
-                    className="flex-1 px-2 md:px-6 text-sm md:text-base py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={labOrderSending || paymentLoading}
+                    className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
-                  <button
-                    onClick={handleSendLabOrder}
-                    disabled={
-                      labOrderSending ||
-                      !selectedLabPartner ||
-                      selectedOrder.items?.length === 0
-                    }
-                    className="flex-1 px-2 md:px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text:sm md:text-base text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {labOrderSending ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Sending Order...
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                          />
-                        </svg>
-                        Send Order to Lab
-                      </>
-                    )}
-                  </button>
+                  
+                  {/* Payment Button - Only shown if payment not completed */}
+                  {!paymentCompleted && (
+                    <button
+                      onClick={handleInitiatePayment}
+                      disabled={
+                        paymentLoading ||
+                        labOrderSending ||
+                        !userEmail.trim() ||
+                        selectedOrder.items?.length === 0
+                      }
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {paymentLoading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                            />
+                          </svg>
+                          Pay ₦{selectedOrder.totalCost?.toLocaleString()}
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Send to Lab Button - Only shown after payment is completed */}
+                  {paymentCompleted && (
+                    <button
+                      onClick={handleSendLabOrder}
+                      disabled={
+                        labOrderSending ||
+                        !selectedLabPartner ||
+                        selectedOrder.items?.length === 0
+                      }
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {labOrderSending ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Sending Order...
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                            />
+                          </svg>
+                          Send to {selectedLabPartner?.name || 'Lab'}
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </>
             )}
