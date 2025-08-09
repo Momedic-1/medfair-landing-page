@@ -136,7 +136,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
         );
       }
 
-      const result = await response.text(); // or use try-catch for flexibility
+      const result = await response.text();
       console.log(result, "results");
 
       toast.success(
@@ -173,15 +173,8 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
         throw new Error("Failed to fetch lab orders");
       }
       const orders = await response.json();
-      // Filter matching order based on doctor and date
-      const visitDateStr = new Date(patientData.visitDate).toISOString().slice(0, 10);
-      const matchingOrder = orders.find(
-        (order) =>
-          order.doctorName ===
-            `${patientData.doctorFirstName} ${patientData.doctorLastName}` &&
-          order.createdDate === visitDateStr
-      );
-      setSelectedOrder(matchingOrder || null);
+      // Select the first order or null if no orders exist
+      setSelectedOrder(orders[0] || null);
     } catch (error) {
       toast.error(`Failed to fetch lab orders: ${error.message}`);
       setSelectedOrder(null);
@@ -392,7 +385,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                   {/* Lab test */}
                   <td className="px-3 py-3 text-sm relative">
                     <div className="relative" ref={dropdownRef}>
-                      <button 
+                      <button
                         className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
                         onClick={() => handleViewLabs(patient)}
                       >
@@ -843,13 +836,13 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                     <div>
                       <span className="font-medium text-gray-600">Doctor:</span>
                       <span className="ml-2 text-gray-800">
-                        {selectedOrder.doctorName}
+                        {selectedPatient?.doctorFirstName} {selectedPatient?.doctorLastName}
                       </span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-600">Date:</span>
                       <span className="ml-2 text-gray-800">
-                        {selectedOrder.createdDate}
+                        {formatDate(selectedPatient?.visitDate)}
                       </span>
                     </div>
                   </div>
