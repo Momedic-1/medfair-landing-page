@@ -26,6 +26,7 @@ const PatientNotes = () => {
       );
 
       const data = response?.data;
+      console.log("Fetched patient notes:", data);
 
       setResults(data);
     } catch (error) {
