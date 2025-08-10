@@ -24,6 +24,7 @@ import DoctorProfile from "./components/DoctorProfile.jsx";
 import { ToastContainer } from "react-toastify";
 
 import ContactUs from "./pages/ContactUs.jsx";
+import Investigations from "./PatientDashboard/Investigations.jsx";
 
 const App = () => {
   return (
@@ -56,9 +57,10 @@ const App = () => {
             <Route path="" element={<Dashboard />} />
             <Route path="profile" element={<Profile />} />
             <Route path="patient-notes" element={<PatientNotes />} />
+            <Route path="patient-investigations" element={<Investigations />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="payment" element={<PaymentPage />} />
-             <Route path="contact-us" element={<ContactUs />} />
+            <Route path="contact-us" element={<ContactUs />} />
           </Route>
           <Route element={<ProtectedRoute role="DOCTOR" />}>
             <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />

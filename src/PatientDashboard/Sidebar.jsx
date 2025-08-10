@@ -78,7 +78,16 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               onClick={toggleSidebar}
             >
               <FaUser />
-              <span className="ml-3">Notes</span>
+              <span className="ml-3">Medications</span>
+            </NavLink>
+
+            <NavLink
+              to="/patient-dashboard/patient-investigations"
+              className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
+              onClick={toggleSidebar}
+            >
+              <FaUser />
+              <span className="ml-3">Investigations</span>
             </NavLink>
 
             <NavLink
