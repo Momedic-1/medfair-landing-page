@@ -12,6 +12,30 @@ const Investigations = () => {
   const [allInvestigationOrders, setAllInvestigationOrders] = useState([]);
   const [investigationsLoading, setInvestigationsLoading] = useState(true);
 
+  // Payment functionality states from table component
+  const [selectedInvestigations, setSelectedInvestigations] = useState(new Set());
+  const [paidInvestigations, setPaidInvestigations] = useState(new Set());
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  // Lab order states
+  const [selectedLabPartner, setSelectedLabPartner] = useState(null);
+  const [labOrderSending, setLabOrderSending] = useState(false);
+
+  const labPartners = [
+    {
+      id: "smartlab",
+      name: "SmartLab",
+      partner: "SMARTLAB",
+    },
+    {
+      id: "degree_360_lab",
+      name: "Degree 360 Lab",
+      partner: "DEGREE_360",
+    },
+  ];
+
   // Function to fetch all investigations on component mount
   const fetchInvestigations = async () => {
     setInvestigationsLoading(true);
@@ -52,6 +76,232 @@ const Investigations = () => {
     }
   };
 
+  // Function to toggle investigation selection
+  const toggleInvestigationSelection = (orderId, itemIndex) => {
+    const key = `${orderId}-${itemIndex}`;
+    const newSelected = new Set(selectedInvestigations);
+
+    if (newSelected.has(key)) {
+      newSelected.delete(key);
+    } else {
+      newSelected.add(key);
+    }
+
+    setSelectedInvestigations(newSelected);
+  };
+
+  // Function to calculate total cost of selected investigations
+  const getSelectedTotal = () => {
+    let total = 0;
+    selectedInvestigations.forEach((key) => {
+      const [orderId, itemIndex] = key.split("-");
+      const order = allInvestigationOrders.find(
+        (o) => o.orderId.toString() === orderId
+      );
+      if (order && order.items[parseInt(itemIndex)]) {
+        total += order.items[parseInt(itemIndex)].price;
+      }
+    });
+    return total;
+  };
+
+  // Payment verification function
+  const verifyPayment = async (reference) => {
+    try {
+      setVerifyingPayment(true);
+      const token = getToken();
+      const response = await fetch(
+        `${baseUrl}/api/investigations/verify-payment?reference=${reference}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const verificationResult = await response.json();
+
+      if (
+        verificationResult.status === "success" ||
+        verificationResult.verified === true
+      ) {
+        // Mark selected investigations as paid
+        const newPaidInvestigations = new Set([
+          ...paidInvestigations,
+          ...selectedInvestigations,
+        ]);
+        setPaidInvestigations(newPaidInvestigations);
+        setSelectedInvestigations(new Set()); // Clear selections after payment
+
+        toast.success("Payment verified successfully!");
+        return true;
+      } else {
+        toast.error("Payment verification failed. Please try again.");
+        return false;
+      }
+    } catch (error) {
+      toast.error(`Failed to verify payment: ${error.message}`);
+      return false;
+    } finally {
+      setVerifyingPayment(false);
+    }
+  };
+
+  // Payment function for selected investigations
+  const handleInitiatePayment = async () => {
+    if (selectedInvestigations.size === 0) {
+      toast.warning("Please select investigations to pay for");
+      return;
+    }
+
+    if (!userEmail.trim()) {
+      toast.warning("Please provide your email address");
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const token = getToken();
+
+      // Prepare payment data for selected investigations
+      const selectedItems = [];
+      selectedInvestigations.forEach((key) => {
+        const [orderId, itemIndex] = key.split("-");
+        const order = allInvestigationOrders.find(
+          (o) => o.orderId.toString() === orderId
+        );
+        if (order && order.items[parseInt(itemIndex)]) {
+          selectedItems.push({
+            orderId: parseInt(orderId),
+            itemIndex: parseInt(itemIndex),
+            item: order.items[parseInt(itemIndex)],
+          });
+        }
+      });
+
+      const response = await fetch(
+        `${baseUrl}/api/investigations/initiate-payment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            selectedInvestigations: selectedItems,
+            email: userEmail.trim(),
+            totalAmount: getSelectedTotal(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const paymentData = await response.json();
+
+      // Handle payment
+      if (paymentData.authorizationUrl || paymentData.authorization_url) {
+        const reference = paymentData.reference || paymentData.access_code;
+
+        const paymentWindow = window.open(
+          paymentData.authorizationUrl || paymentData.authorization_url,
+          "paystack-payment",
+          "width=500,height=600,scrollbars=yes,resizable=yes"
+        );
+
+        const pollPayment = setInterval(async () => {
+          if (paymentWindow.closed) {
+            clearInterval(pollPayment);
+            if (reference) {
+              const verified = await verifyPayment(reference);
+              if (verified) {
+                setPaymentLoading(false);
+              }
+            }
+            setPaymentLoading(false);
+          }
+        }, 1000);
+      } else {
+        // Mock success for demo
+        const mockRef = paymentData.reference || "MOCK_REF_" + Date.now();
+        const verified = await verifyPayment(mockRef);
+        if (verified) {
+          toast.success("Payment completed successfully!");
+        }
+      }
+    } catch (error) {
+      toast.error(`Failed to initiate payment: ${error.message}`);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  // Function to send lab order for paid investigations
+  const handleSendLabOrder = async () => {
+    if (!selectedLabPartner) {
+      toast.warning("Please select a lab partner");
+      return;
+    }
+
+    const paidItems = Array.from(paidInvestigations);
+    if (paidItems.length === 0) {
+      toast.warning("No paid investigations to send");
+      return;
+    }
+
+    setLabOrderSending(true);
+    try {
+      const token = getToken();
+
+      // Group paid investigations by orderId for API call
+      const orderIds = [...new Set(paidItems.map((key) => key.split("-")[0]))];
+
+      for (const orderId of orderIds) {
+        const response = await fetch(
+          `${baseUrl}/api/investigations/investigations/select-lab?orderId=${orderId}&labPartner=${selectedLabPartner.partner}`,
+          {
+            method: "POST",
+            headers: {
+              Accept: "*/*",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message || `HTTP error! status: ${response.status}`
+          );
+        }
+      }
+
+      toast.success(
+        `Lab orders sent to ${selectedLabPartner.name} successfully!`
+      );
+      
+      // Clear paid investigations after successful lab order
+      setPaidInvestigations(new Set());
+    } catch (error) {
+      toast.error(`Failed to send lab order: ${error.message}`);
+    } finally {
+      setLabOrderSending(false);
+    }
+  };
+
   // Fetch investigations when component mounts
   useEffect(() => {
     fetchInvestigations();
@@ -61,7 +311,7 @@ const Investigations = () => {
     <div className="investigations-component max-w-6xl mx-auto p-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-green-500 to-green-700 px-6 py-6 rounded-t-2xl mb-6">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+        <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
           <svg
             className="w-8 h-8"
             fill="none"
@@ -83,6 +333,222 @@ const Investigations = () => {
           </p>
         )}
       </div>
+
+      {/* Payment Controls Section - Only show when there are selections or paid items */}
+      {(selectedInvestigations.size > 0 || paidInvestigations.size > 0 || verifyingPayment) && (
+        <div className="mb-6 space-y-4">
+          {/* Payment verification in progress */}
+          {verifyingPayment && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-500 p-2 rounded-full">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-800">
+                    Verifying Payment
+                  </h3>
+                  <p className="text-sm text-blue-600">
+                    Please wait while we verify your payment...
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Selection Summary */}
+          {selectedInvestigations.size > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-800">
+                    Selected for Payment
+                  </h3>
+                  <p className="text-sm text-blue-600">
+                    {selectedInvestigations.size} investigation(s) selected
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-800">
+                    ₦{getSelectedTotal().toLocaleString()}
+                  </p>
+                  <p className="text-sm text-blue-600">Total Amount</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Paid Investigations Summary */}
+          {paidInvestigations.size > 0 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-500 p-2 rounded-full">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-green-800">
+                    Paid Investigations
+                  </h3>
+                  <p className="text-sm text-green-600">
+                    {paidInvestigations.size} investigation(s) paid for
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Email Input for Payment */}
+          {selectedInvestigations.size > 0 && !verifyingPayment && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-orange-800 mb-2">
+                Payment Information
+              </h3>
+              <p className="text-sm text-orange-700 mb-3">
+                Enter your email address to proceed with payment
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-500 p-2 rounded-full">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-orange-800 mb-1">
+                    Email for Payment Receipt
+                  </label>
+                  <input
+                    type="email"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    placeholder="Enter your email address"
+                    className="w-full p-2 border border-orange-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Select Lab Partner */}
+          {paidInvestigations.size > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                Select Lab Partner
+              </h3>
+              <p className="text-sm text-blue-700 mb-3">
+                Choose a lab partner to send your paid investigations to
+              </p>
+              <select
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) =>
+                  setSelectedLabPartner(
+                    labPartners.find((p) => p.id === e.target.value)
+                  )
+                }
+                value={selectedLabPartner?.id || ""}
+              >
+                <option value="">Choose a lab...</option>
+                {labPartners.map((lab) => (
+                  <option key={lab.id} value={lab.id}>
+                    {lab.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            {/* Payment Button */}
+            {selectedInvestigations.size > 0 && !verifyingPayment && (
+              <button
+                onClick={handleInitiatePayment}
+                disabled={paymentLoading || labOrderSending || !userEmail.trim()}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {paymentLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                      />
+                    </svg>
+                    Pay ₦{getSelectedTotal().toLocaleString()}
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Send to Lab Button */}
+            {paidInvestigations.size > 0 && !verifyingPayment && (
+              <button
+                onClick={handleSendLabOrder}
+                disabled={labOrderSending || !selectedLabPartner}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {labOrderSending ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Sending Order...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                    Send to {selectedLabPartner?.name || "Lab"}
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       {investigationsLoading ? (
@@ -149,26 +615,68 @@ const Investigations = () => {
               {/* Order Items */}
               <div className="p-6">
                 <div className="space-y-3">
-                  {order.items?.map((item, itemIndex) => (
-                    <div
-                      key={itemIndex}
-                      className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-800 mb-1">
-                          {item.testName}
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          {item.instruction}
-                        </p>
+                  {order.items?.map((item, itemIndex) => {
+                    const key = `${order.orderId}-${itemIndex}`;
+                    const isSelected = selectedInvestigations.has(key);
+                    const isPaid = paidInvestigations.has(key);
+
+                    return (
+                      <div
+                        key={itemIndex}
+                        className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
+                          isPaid
+                            ? "bg-green-50 border-green-200"
+                            : isSelected
+                            ? "bg-blue-50 border-blue-200"
+                            : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={isPaid}
+                            onChange={() =>
+                              toggleInvestigationSelection(order.orderId, itemIndex)
+                            }
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-800 mb-1">
+                              {item.testName}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {item.instruction}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 ml-4">
+                          <span className="text-lg font-semibold text-green-600">
+                            ₦{item.price?.toLocaleString()}
+                          </span>
+                          {isPaid && (
+                            <div className="flex items-center gap-1 text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-medium">
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              PAID
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right ml-4">
-                        <span className="text-lg font-semibold text-green-600">
-                          ₦{item.price?.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Order Total */}
