@@ -8,9 +8,9 @@ import { baseUrl } from "../env";
 
 const Investigations = () => {
   const patientId = getId();
-  const navigate = useNavigate(); // Add this hook
-  const user = getUserData(); 
-  console.log(user, "User Data in Investigations Component");
+  const navigate = useNavigate();
+  const user = getUserData();
+  const token = getToken();
 
   // State for displaying investigations
   const [allInvestigationOrders, setAllInvestigationOrders] = useState([]);
@@ -23,7 +23,7 @@ const Investigations = () => {
   const [paidInvestigations, setPaidInvestigations] = useState(new Set());
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
+  const [userEmail, setUserEmail] = useState(user?.emailAddress);
 
   // Lab order states
   const [selectedLabPartner, setSelectedLabPartner] = useState(null);
@@ -41,6 +41,13 @@ const Investigations = () => {
       partner: "DEGREE_360",
     },
   ];
+
+  // Update userEmail when user data changes
+  useEffect(() => {
+    if (user?.emailAddress && !userEmail) {
+      setUserEmail(user.emailAddress);
+    }
+  }, [user, userEmail]);
 
   // Helper function to check if a test was done within the last 30 days
   const isTestDoneWithinMonth = (
@@ -252,12 +259,16 @@ const Investigations = () => {
         setPaidInvestigations(newPaidInvestigations);
         setSelectedInvestigations(new Set()); // Clear selections after payment
 
-        toast.success("Payment verified successfully! Please select a lab partner to send your order to.");
-        
+        toast.success(
+          "Payment verified successfully! Please select a lab partner to send your order to."
+        );
+
         // Route back to the investigations page after successful payment
         // This ensures the user can see the paid investigations and select a lab partner
         setTimeout(() => {
-          navigate("/patient-dashboard/patient-investigations", { replace: true });
+          navigate("/http://localhost:5173/patient-dashboard/patient-investigations", {
+            replace: true,
+          });
         }, 2000);
 
         return true;
@@ -273,7 +284,7 @@ const Investigations = () => {
     }
   };
 
-  // Enhanced payment function with final duplicate check
+  // Enhanced payment function with proper data structure
   const handleInitiatePayment = async () => {
     if (selectedInvestigations.size === 0) {
       toast.warning("Please select investigations to pay for");
@@ -282,6 +293,13 @@ const Investigations = () => {
 
     if (!userEmail.trim()) {
       toast.warning("Please provide your email address");
+      return;
+    }
+
+    // Get patient ID - this is crucial and might be missing
+    const patientId = getId();
+    if (!patientId) {
+      toast.error("Patient ID is required for payment. Please log in again.");
       return;
     }
 
@@ -356,6 +374,23 @@ const Investigations = () => {
         }
       });
 
+      // Create the payment request with proper structure
+      const paymentRequest = {
+        // Based on the schema you provided, it expects orderId and email
+        orderId: selectedItems.length > 0 ? selectedItems[0].orderId : null,
+        email: userEmail.trim(),
+
+        // Additional data that might be expected by the backend
+        patientId: parseInt(patientId), // Make sure this is included
+        selectedInvestigations: selectedItems,
+        totalAmount: getSelectedTotal(),
+
+        // If the API expects multiple orders, you might need this structure instead:
+        orderIds: [...new Set(selectedItems.map((item) => item.orderId))],
+      };
+
+      console.log("Payment request payload:", paymentRequest); // Debug log
+
       const response = await fetch(
         `${baseUrl}/api/investigations/initiate-payment`,
         {
@@ -364,22 +399,26 @@ const Investigations = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            selectedInvestigations: selectedItems,
-            email: userEmail.trim(),
-            totalAmount: getSelectedTotal(),
-          }),
+          body: JSON.stringify(paymentRequest),
         }
       );
 
+      // Better error handling
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.message || errorData.exceptionMessage || errorMessage;
+          console.error("Payment initiation error:", errorData); // Debug log
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
+        }
+        throw new Error(errorMessage);
       }
 
       const paymentData = await response.json();
+      console.log("Payment response:", paymentData); // Debug log
 
       // Handle payment
       if (paymentData.authorizationUrl || paymentData.authorization_url) {
@@ -412,6 +451,7 @@ const Investigations = () => {
         }
       }
     } catch (error) {
+      console.error("Payment initiation failed:", error); // Debug log
       toast.error(`Failed to initiate payment: ${error.message}`);
     } finally {
       setPaymentLoading(false);
@@ -464,10 +504,9 @@ const Investigations = () => {
 
       // Clear paid investigations after successful lab order
       setPaidInvestigations(new Set());
-      
+
       // Optionally refetch investigations to get updated status
       await fetchInvestigations();
-      
     } catch (error) {
       toast.error(`Failed to send lab order: ${error.message}`);
     } finally {
@@ -636,7 +675,8 @@ const Investigations = () => {
                     Paid Investigations
                   </h3>
                   <p className="text-sm text-green-600">
-                    {paidInvestigations.size} investigation(s) paid for - Select a lab partner below
+                    {paidInvestigations.size} investigation(s) paid for - Select
+                    a lab partner below
                   </p>
                 </div>
               </div>
@@ -650,7 +690,7 @@ const Investigations = () => {
                 Payment Information
               </h3>
               <p className="text-sm text-orange-700 mb-3">
-                Enter your email address to proceed with payment
+                Confirm or update your email address for the payment receipt
               </p>
               <div className="flex items-center gap-3">
                 <div className="bg-orange-500 p-2 rounded-full">
@@ -679,7 +719,13 @@ const Investigations = () => {
                     placeholder="Enter your email address"
                     className="w-full p-2 border border-orange-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     required
+                    readOnly
                   />
+                  {user?.emailAddress && userEmail === user.emailAddress && (
+                    <p className="text-xs text-orange-600 mt-1">
+                      Using your account email address
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
