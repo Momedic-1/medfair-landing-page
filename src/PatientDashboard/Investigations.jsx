@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import
+import { useNavigate } from "react-router-dom";
 import { formatDate, getId, getToken, getUserData } from "../utils";
 import { Hourglass } from "react-loader-spinner";
 import { toast } from "react-toastify";
@@ -12,44 +12,29 @@ const Investigations = () => {
   const user = getUserData();
   const token = getToken();
 
-  // State for displaying investigations
   const [allInvestigationOrders, setAllInvestigationOrders] = useState([]);
   const [investigationsLoading, setInvestigationsLoading] = useState(true);
-
-  // Payment functionality states from table component
-  const [selectedInvestigations, setSelectedInvestigations] = useState(
-    new Set()
-  );
+  const [selectedOrders, setSelectedOrders] = useState(new Set());
   const [paidInvestigations, setPaidInvestigations] = useState(new Set());
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
-  const [userEmail, setUserEmail] = useState(user?.emailAddress);
-
-  // Lab order states
+  const [userEmail, setUserEmail] = useState(user?.emailAddress || "");
+  const [pendingPaidOrders, setPendingPaidOrders] = useState(new Set());
   const [selectedLabPartner, setSelectedLabPartner] = useState(null);
   const [labOrderSending, setLabOrderSending] = useState(false);
 
   const labPartners = [
-    {
-      id: "smartlab",
-      name: "SmartLab",
-      partner: "SMARTLAB",
-    },
-    {
-      id: "degree_360_lab",
-      name: "Degree 360 Lab",
-      partner: "DEGREE_360",
-    },
+    { id: "smartlab", name: "SmartLab", partner: "SMARTLAB" },
+    { id: "degree_360_lab", name: "Degree 360 Lab", partner: "DEGREE_360" },
   ];
 
-  // Update userEmail when user data changes
   useEffect(() => {
     if (user?.emailAddress && !userEmail) {
       setUserEmail(user.emailAddress);
     }
   }, [user, userEmail]);
 
-  // Helper function to check if a test was done within the last 30 days
+  // Helper: check if a test was done within last 30 days (skips comparing to the same item if provided)
   const isTestDoneWithinMonth = (
     testName,
     currentOrderId,
@@ -60,11 +45,8 @@ const Investigations = () => {
 
     for (const order of allInvestigationOrders) {
       const orderDate = new Date(order.createdDate);
+      if (orderDate < thirtyDaysAgo) continue; // older than window
 
-      // Skip if order is older than 30 days
-      if (orderDate < thirtyDaysAgo) continue;
-
-      // Check each item in the order
       for (
         let itemIndex = 0;
         itemIndex < (order.items?.length || 0);
@@ -73,11 +55,13 @@ const Investigations = () => {
         const item = order.items[itemIndex];
         const itemKey = `${order.orderId}-${itemIndex}`;
 
-        // Skip the current item being checked
-        if (order.orderId === currentOrderId && itemIndex === currentItemIndex)
+        // Skip comparing the same item in the same order
+        if (
+          order.orderId.toString() === currentOrderId.toString() &&
+          itemIndex === currentItemIndex
+        )
           continue;
 
-        // Check if same test name and if it's paid for or completed
         if (
           item.testName === testName &&
           (paidInvestigations.has(itemKey) || order.status === "completed")
@@ -94,12 +78,12 @@ const Investigations = () => {
     return { isDuplicate: false };
   };
 
-  // Function to get all tests done in the last 30 days
+  // Get tests completed in the last 30 days (used for the yellow warning banner)
   const getRecentTests = () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const recentTests = new Map(); // testName -> { date, orderId }
+    const recentTests = new Map();
 
     allInvestigationOrders.forEach((order) => {
       const orderDate = new Date(order.createdDate);
@@ -124,37 +108,27 @@ const Investigations = () => {
     return recentTests;
   };
 
-  // Function to fetch all investigations on component mount
+  // Fetch orders
   const fetchInvestigations = async () => {
     setInvestigationsLoading(true);
-
     try {
       const token = getToken();
-      if (!patientId) {
-        throw new Error("Patient ID not provided");
-      }
+      if (!patientId) throw new Error("Patient ID not provided");
 
       const response = await fetch(
         `${baseUrl}/api/investigations/orders/patient/${patientId}`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch investigation orders");
-      }
+      if (!response.ok) throw new Error("Failed to fetch investigation orders");
 
       const orders = await response.json();
-
-      // Sort orders by date (most recent first)
       const sortedOrders = orders.sort(
         (a, b) => new Date(b.createdDate) - new Date(a.createdDate)
       );
-
       setAllInvestigationOrders(sortedOrders);
     } catch (error) {
       toast.error(`Failed to fetch investigation orders: ${error.message}`);
@@ -164,66 +138,62 @@ const Investigations = () => {
     }
   };
 
-  // Function to toggle investigation selection with duplicate check
-  const toggleInvestigationSelection = (orderId, itemIndex) => {
-    const key = `${orderId}-${itemIndex}`;
-    const newSelected = new Set(selectedInvestigations);
+  useEffect(() => {
+    fetchInvestigations();
+  }, [patientId]);
 
-    // Find the test item
+  // Toggle order selection (order-level)
+  const toggleOrderSelection = (orderId) => {
+    const idStr = orderId.toString();
     const order = allInvestigationOrders.find(
-      (o) => o.orderId.toString() === orderId.toString()
+      (o) => o.orderId.toString() === idStr
     );
-    if (!order || !order.items[itemIndex]) return;
+    if (!order) return;
 
-    const testItem = order.items[itemIndex];
-
-    if (newSelected.has(key)) {
-      // Removing selection - always allowed
-      newSelected.delete(key);
-    } else {
-      // Adding selection - check for duplicates
-      const duplicateCheck = isTestDoneWithinMonth(
-        testItem.testName,
-        orderId,
-        itemIndex
-      );
-
-      if (duplicateCheck.isDuplicate) {
-        const daysSince = Math.ceil(
-          (new Date() - duplicateCheck.lastDoneDate) / (1000 * 60 * 60 * 24)
-        );
-        const remainingDays = 30 - daysSince;
-
-        toast.warning(
-          `This test (${testItem.testName}) was completed ${daysSince} days ago in Order #${duplicateCheck.orderId}. ` +
-            `You can request it again in ${remainingDays} days.`,
-          { autoClose: 5000 }
-        );
-        return;
+    // Check if order contains any duplicate/blocked items
+    const blockedItems = [];
+    for (let i = 0; i < (order.items?.length || 0); i++) {
+      const item = order.items[i];
+      const dup = isTestDoneWithinMonth(item.testName, order.orderId, i);
+      const itemKey = `${order.orderId}-${i}`;
+      if (
+        dup.isDuplicate ||
+        paidInvestigations.has(itemKey) ||
+        order.status === "completed"
+      ) {
+        blockedItems.push({ item, index: i, dup });
       }
-
-      newSelected.add(key);
     }
 
-    setSelectedInvestigations(newSelected);
+    if (blockedItems.length > 0) {
+      // block selecting this order as whole
+      const names = blockedItems.map((b) => b.item.testName).join(", ");
+      toast.warning(
+        `Order #${order.orderId} contains blocked tests: ${names}. You must remove or wait before paying for this order.`,
+        { autoClose: 7000 }
+      );
+      return;
+    }
+
+    const newSelected = new Set(selectedOrders);
+    if (newSelected.has(idStr)) newSelected.delete(idStr);
+    else newSelected.add(idStr);
+
+    setSelectedOrders(newSelected);
   };
 
-  // Function to calculate total cost of selected investigations
   const getSelectedTotal = () => {
     let total = 0;
-    selectedInvestigations.forEach((key) => {
-      const [orderId, itemIndex] = key.split("-");
+    selectedOrders.forEach((idStr) => {
       const order = allInvestigationOrders.find(
-        (o) => o.orderId.toString() === orderId
+        (o) => o.orderId.toString() === idStr
       );
-      if (order && order.items[parseInt(itemIndex)]) {
-        total += order.items[parseInt(itemIndex)].price;
-      }
+      if (order) total += Number(order.totalCost || 0);
     });
     return total;
   };
 
-  // Payment verification function
+  // Payment verification
   const verifyPayment = async (reference) => {
     try {
       setVerifyingPayment(true);
@@ -232,45 +202,45 @@ const Investigations = () => {
         `${baseUrl}/api/investigations/verify-payment?reference=${reference}`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      const contentType = response.headers.get("content-type");
+      let verificationResult;
+
+      if (contentType && contentType.includes("application/json")) {
+        verificationResult = await response.json();
+      } else {
+        const text = await response.text();
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          text || `Unexpected response format (${response.status})`
         );
       }
-
-      const verificationResult = await response.json();
 
       if (
         verificationResult.status === "success" ||
         verificationResult.verified === true
       ) {
-        // Mark selected investigations as paid
-        const newPaidInvestigations = new Set([
-          ...paidInvestigations,
-          ...selectedInvestigations,
-        ]);
-        setPaidInvestigations(newPaidInvestigations);
-        setSelectedInvestigations(new Set()); // Clear selections after payment
+        const newPaid = new Set(paidInvestigations);
+        pendingPaidOrders.forEach((orderIdStr) => {
+          const order = allInvestigationOrders.find(
+            (o) => o.orderId.toString() === orderIdStr
+          );
+          if (order) {
+            for (let i = 0; i < (order.items?.length || 0); i++) {
+              newPaid.add(`${order.orderId}-${i}`);
+            }
+          }
+        });
 
+        setPaidInvestigations(newPaid);
+        console.log("Paid investigations:", Array.from(newPaid));
+        setSelectedOrders(new Set());
+        setPendingPaidOrders(new Set());
         toast.success(
-          "Payment verified successfully! Please select a lab partner to send your order to."
+          "Payment verified successfully! Please select a lab partner."
         );
-
-        // Route back to the investigations page after successful payment
-        // This ensures the user can see the paid investigations and select a lab partner
-        setTimeout(() => {
-          navigate("/http://localhost:5173/patient-dashboard/patient-investigations", {
-            replace: true,
-          });
-        }, 2000);
-
         return true;
       } else {
         toast.error("Payment verification failed. Please try again.");
@@ -284,10 +254,20 @@ const Investigations = () => {
     }
   };
 
-  // Enhanced payment function with proper data structure
+  useEffect(() => {
+  console.log("Paid Investigations:", paidInvestigations);
+}, [paidInvestigations]);
+
+
+useEffect(() => {
+  console.log("Paid Investigations updated:", paidInvestigations);
+}, [paidInvestigations]);
+
+
+  // Initiate payment for selected orders
   const handleInitiatePayment = async () => {
-    if (selectedInvestigations.size === 0) {
-      toast.warning("Please select investigations to pay for");
+    if (selectedOrders.size === 0) {
+      toast.warning("Please select one or more orders to pay for");
       return;
     }
 
@@ -296,60 +276,48 @@ const Investigations = () => {
       return;
     }
 
-    // Get patient ID - this is crucial and might be missing
-    const patientId = getId();
-    if (!patientId) {
+    const pid = getId();
+    if (!pid) {
       toast.error("Patient ID is required for payment. Please log in again.");
       return;
     }
 
-    // Final duplicate check before payment
-    const duplicatesFound = [];
-    selectedInvestigations.forEach((key) => {
-      const [orderId, itemIndex] = key.split("-");
+    // Final duplicate check at order level (shouldn't happen normally because we blocked selection)
+    const toRemove = [];
+    selectedOrders.forEach((idStr) => {
       const order = allInvestigationOrders.find(
-        (o) => o.orderId.toString() === orderId
+        (o) => o.orderId.toString() === idStr
       );
-      if (order && order.items[parseInt(itemIndex)]) {
-        const testItem = order.items[parseInt(itemIndex)];
-        const duplicateCheck = isTestDoneWithinMonth(
-          testItem.testName,
-          parseInt(orderId),
-          parseInt(itemIndex)
-        );
+      if (!order) {
+        toRemove.push(idStr);
+        return;
+      }
 
-        if (duplicateCheck.isDuplicate) {
-          duplicatesFound.push({
-            testName: testItem.testName,
-            key: key,
-            lastDoneDate: duplicateCheck.lastDoneDate,
-            orderId: duplicateCheck.orderId,
-          });
+      for (let i = 0; i < (order.items?.length || 0); i++) {
+        const testItem = order.items[i];
+        const dup = isTestDoneWithinMonth(testItem.testName, order.orderId, i);
+        const itemKey = `${order.orderId}-${i}`;
+        if (
+          dup.isDuplicate ||
+          paidInvestigations.has(itemKey) ||
+          order.status === "completed"
+        ) {
+          toRemove.push(idStr);
+          toast.error(
+            `Removed Order #${order.orderId} from payment - contains ${testItem.testName} which is recently done or already paid.`,
+            { autoClose: 7000 }
+          );
+          break;
         }
       }
     });
 
-    if (duplicatesFound.length > 0) {
-      // Remove duplicate tests from selection and show warning
-      const newSelected = new Set(selectedInvestigations);
-      duplicatesFound.forEach((duplicate) => {
-        newSelected.delete(duplicate.key);
-        const daysSince = Math.ceil(
-          (new Date() - duplicate.lastDoneDate) / (1000 * 60 * 60 * 24)
-        );
-        const remainingDays = 30 - daysSince;
-
-        toast.error(
-          `Removed ${duplicate.testName} from payment - completed ${daysSince} days ago in Order #${duplicate.orderId}. ` +
-            `Available again in ${remainingDays} days.`,
-          { autoClose: 7000 }
-        );
-      });
-
-      setSelectedInvestigations(newSelected);
-
-      if (newSelected.size === 0) {
-        toast.warning("No valid tests remaining for payment");
+    if (toRemove.length > 0) {
+      const newSel = new Set(selectedOrders);
+      toRemove.forEach((r) => newSel.delete(r));
+      setSelectedOrders(newSel);
+      if (newSel.size === 0) {
+        toast.warning("No valid orders remaining for payment");
         return;
       }
     }
@@ -357,39 +325,13 @@ const Investigations = () => {
     setPaymentLoading(true);
     try {
       const token = getToken();
+      const orderIds = Array.from(selectedOrders).map((s) => parseInt(s));
 
-      // Prepare payment data for selected investigations
-      const selectedItems = [];
-      selectedInvestigations.forEach((key) => {
-        const [orderId, itemIndex] = key.split("-");
-        const order = allInvestigationOrders.find(
-          (o) => o.orderId.toString() === orderId
-        );
-        if (order && order.items[parseInt(itemIndex)]) {
-          selectedItems.push({
-            orderId: parseInt(orderId),
-            itemIndex: parseInt(itemIndex),
-            item: order.items[parseInt(itemIndex)],
-          });
-        }
-      });
-
-      // Create the payment request with proper structure
       const paymentRequest = {
-        // Based on the schema you provided, it expects orderId and email
-        orderId: selectedItems.length > 0 ? selectedItems[0].orderId : null,
+        orderId: orderIds[0], // first selected order
         email: userEmail.trim(),
-
-        // Additional data that might be expected by the backend
-        patientId: parseInt(patientId), // Make sure this is included
-        selectedInvestigations: selectedItems,
-        totalAmount: getSelectedTotal(),
-
-        // If the API expects multiple orders, you might need this structure instead:
-        orderIds: [...new Set(selectedItems.map((item) => item.orderId))],
       };
-
-      console.log("Payment request payload:", paymentRequest); // Debug log
+      console.log("Payment request payload:", paymentRequest);
 
       const response = await fetch(
         `${baseUrl}/api/investigations/initiate-payment`,
@@ -403,14 +345,13 @@ const Investigations = () => {
         }
       );
 
-      // Better error handling
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
           const errorData = await response.json();
           errorMessage =
             errorData.message || errorData.exceptionMessage || errorMessage;
-          console.error("Payment initiation error:", errorData); // Debug log
+          console.error("Payment initiation error:", errorData);
         } catch (parseError) {
           console.error("Failed to parse error response:", parseError);
         }
@@ -418,12 +359,14 @@ const Investigations = () => {
       }
 
       const paymentData = await response.json();
-      console.log("Payment response:", paymentData); // Debug log
+      console.log("Payment response:", paymentData);
 
-      // Handle payment
+      // Remember which orders are pending payment verification
+      setPendingPaidOrders(new Set(selectedOrders));
+
+      // Open payment if authorization url provided
       if (paymentData.authorizationUrl || paymentData.authorization_url) {
         const reference = paymentData.reference || paymentData.access_code;
-
         const paymentWindow = window.open(
           paymentData.authorizationUrl || paymentData.authorization_url,
           "paystack-payment",
@@ -435,30 +378,26 @@ const Investigations = () => {
             clearInterval(pollPayment);
             if (reference) {
               const verified = await verifyPayment(reference);
-              if (verified) {
-                setPaymentLoading(false);
-              }
+              if (verified) setPaymentLoading(false);
             }
             setPaymentLoading(false);
           }
         }, 1000);
       } else {
-        // Mock success for demo
+        // Fallback/mock flow
         const mockRef = paymentData.reference || "MOCK_REF_" + Date.now();
         const verified = await verifyPayment(mockRef);
-        if (verified) {
-          toast.success("Payment completed successfully!");
-        }
+        if (verified) toast.success("Payment completed successfully!");
       }
     } catch (error) {
-      console.error("Payment initiation failed:", error); // Debug log
+      console.error("Payment initiation failed:", error);
       toast.error(`Failed to initiate payment: ${error.message}`);
     } finally {
       setPaymentLoading(false);
     }
   };
 
-  // Function to send lab order for paid investigations
+  // Send lab order for paid investigations (grouped by orderId)
   const handleSendLabOrder = async () => {
     if (!selectedLabPartner) {
       toast.warning("Please select a lab partner");
@@ -474,38 +413,23 @@ const Investigations = () => {
     setLabOrderSending(true);
     try {
       const token = getToken();
-
-      // Group paid investigations by orderId for API call
       const orderIds = [...new Set(paidItems.map((key) => key.split("-")[0]))];
 
       for (const orderId of orderIds) {
-        const response = await fetch(
-          `${baseUrl}/api/investigations/investigations/select-lab?orderId=${orderId}&labPartner=${selectedLabPartner.partner}`,
-          {
-            method: "POST",
-            headers: {
-              Accept: "*/*",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.message || `HTTP error! status: ${response.status}`
-          );
-        }
+        await fetch(`${baseUrl}/api/investigations/initiate-payment`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ orderId, email: userEmail.trim() }),
+        });
       }
 
       toast.success(
         `Lab orders sent to ${selectedLabPartner.name} successfully!`
       );
-
-      // Clear paid investigations after successful lab order
       setPaidInvestigations(new Set());
-
-      // Optionally refetch investigations to get updated status
       await fetchInvestigations();
     } catch (error) {
       toast.error(`Failed to send lab order: ${error.message}`);
@@ -514,14 +438,9 @@ const Investigations = () => {
     }
   };
 
-  // Fetch investigations when component mounts
-  useEffect(() => {
-    fetchInvestigations();
-  }, [patientId]);
-
+  // Render
   return (
     <div className="investigations-component max-w-6xl mx-auto p-6">
-      {/* Header */}
       <div className="bg-gradient-to-r from-green-500 to-green-700 px-6 py-6 rounded-t-2xl mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
           <svg
@@ -605,12 +524,11 @@ const Investigations = () => {
           ) : null;
         })()}
 
-      {/* Payment Controls Section - Only show when there are selections or paid items */}
-      {(selectedInvestigations.size > 0 ||
+      {/* Payment Controls Section */}
+      {(selectedOrders.size > 0 ||
         paidInvestigations.size > 0 ||
         verifyingPayment) && (
         <div className="mb-6 space-y-4">
-          {/* Payment verification in progress */}
           {verifyingPayment && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
@@ -629,16 +547,16 @@ const Investigations = () => {
             </div>
           )}
 
-          {/* Selection Summary */}
-          {selectedInvestigations.size > 0 && (
+          {/* Selected Orders Summary */}
+          {selectedOrders.size > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-blue-800">
-                    Selected for Payment
+                    Selected Orders for Payment
                   </h3>
                   <p className="text-sm text-blue-600">
-                    {selectedInvestigations.size} investigation(s) selected
+                    {selectedOrders.size} order(s) selected
                   </p>
                 </div>
                 <div className="text-right">
@@ -684,7 +602,7 @@ const Investigations = () => {
           )}
 
           {/* Email Input for Payment */}
-          {selectedInvestigations.size > 0 && !verifyingPayment && (
+          {selectedOrders.size > 0 && !verifyingPayment && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-orange-800 mb-2">
                 Payment Information
@@ -761,8 +679,7 @@ const Investigations = () => {
 
           {/* Action Buttons */}
           <div className="flex gap-4">
-            {/* Payment Button */}
-            {selectedInvestigations.size > 0 && !verifyingPayment && (
+            {selectedOrders.size > 0 && !verifyingPayment && (
               <button
                 onClick={handleInitiatePayment}
                 disabled={
@@ -796,7 +713,6 @@ const Investigations = () => {
               </button>
             )}
 
-            {/* Send to Lab Button */}
             {paidInvestigations.size > 0 && !verifyingPayment && (
               <button
                 onClick={handleSendLabOrder}
@@ -864,89 +780,119 @@ const Investigations = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Investigation Orders */}
-          {allInvestigationOrders.map((order) => (
-            <div
-              key={order.orderId}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* Order Header */}
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
-                <div className="flex justify-between items-start flex-wrap gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      Order #{order.orderId}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Doctor: {order.doctorName}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">
-                      {formatDate(order.createdDate)}
-                    </p>
-                    <span
-                      className={`inline-block px-3 py-1 text-xs font-medium rounded-full mt-1 ${
-                        order.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {order.status.charAt(0).toUpperCase() +
-                        order.status.slice(1)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+          {allInvestigationOrders.map((order) => {
+            const idStr = order.orderId.toString();
 
-              {/* Order Items */}
-              <div className="p-6">
-                <div className="space-y-3">
-                  {order.items?.map((item, itemIndex) => {
-                    const key = `${order.orderId}-${itemIndex}`;
-                    const isSelected = selectedInvestigations.has(key);
-                    const isPaid = paidInvestigations.has(key);
-                    const duplicateCheck = isTestDoneWithinMonth(
-                      item.testName,
-                      order.orderId,
-                      itemIndex
-                    );
-                    const isDuplicate = duplicateCheck.isDuplicate;
+            // Determine if order is blocked (any item duplicate or already paid)
+            let orderHasDuplicate = false;
+            let orderHasPaidItem = false;
+            const blockedItemNames = [];
 
-                    return (
-                      <div
-                        key={itemIndex}
-                        className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
-                          isPaid
-                            ? "bg-green-50 border-green-200"
-                            : isDuplicate
-                            ? "bg-red-50 border-red-200 opacity-75"
-                            : isSelected
-                            ? "bg-blue-50 border-blue-200"
-                            : "bg-gray-50 border-gray-200 hover:border-gray-300"
+            for (let i = 0; i < (order.items?.length || 0); i++) {
+              const itemKey = `${order.orderId}-${i}`;
+              const item = order.items[i];
+              const dup = isTestDoneWithinMonth(
+                item.testName,
+                order.orderId,
+                i
+              );
+              if (dup.isDuplicate) {
+                orderHasDuplicate = true;
+                blockedItemNames.push(item.testName);
+              }
+              if (paidInvestigations.has(itemKey)) {
+                orderHasPaidItem = true;
+              }
+            }
+
+            const disabledSelect =
+              orderHasDuplicate ||
+              orderHasPaidItem ||
+              order.status === "completed";
+
+            return (
+              <div
+                key={order.orderId}
+                className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
+                  <div className="flex justify-between items-start flex-wrap gap-4">
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedOrders.has(idStr)}
+                          disabled={
+                            disabledSelect || paymentLoading || verifyingPayment
+                          }
+                          onChange={() => toggleOrderSelection(order.orderId)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
+                        />
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            Order #{order.orderId}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            Doctor: {order.doctorName}
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">
+                        {formatDate(order.createdDate)}
+                      </p>
+                      <span
+                        className={`inline-block px-3 py-1 text-xs font-medium rounded-full mt-1 ${
+                          order.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            disabled={isPaid || isDuplicate}
-                            onChange={() =>
-                              toggleInvestigationSelection(
-                                order.orderId,
-                                itemIndex
-                              )
-                            }
-                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
-                          />
-                          <div className="flex-1">
+                        {order.status.charAt(0).toUpperCase() +
+                          order.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                  {disabledSelect && orderHasDuplicate && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Blocked for payment: {blockedItemNames.join(", ")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="space-y-3">
+                    {order.items?.map((item, itemIndex) => {
+                      const key = `${order.orderId}-${itemIndex}`;
+                      const isPaid = paidInvestigations.has(key);
+                      const dup = isTestDoneWithinMonth(
+                        item.testName,
+                        order.orderId,
+                        itemIndex
+                      );
+
+                      return (
+                        <div
+                          key={itemIndex}
+                          className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
+                            isPaid
+                              ? "bg-green-50 border-green-200"
+                              : dup.isDuplicate
+                              ? "bg-red-50 border-red-200 opacity-75"
+                              : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div>
                             <h4
                               className={`font-medium mb-1 ${
-                                isDuplicate ? "text-red-700" : "text-gray-800"
+                                dup.isDuplicate
+                                  ? "text-red-700"
+                                  : "text-gray-800"
                               }`}
                             >
                               {item.testName}
-                              {isDuplicate && (
+                              {dup.isDuplicate && (
                                 <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
                                   Recently Done
                                 </span>
@@ -954,97 +900,98 @@ const Investigations = () => {
                             </h4>
                             <p
                               className={`text-sm ${
-                                isDuplicate ? "text-red-600" : "text-gray-600"
+                                dup.isDuplicate
+                                  ? "text-red-600"
+                                  : "text-gray-600"
                               }`}
                             >
                               {item.instruction}
                             </p>
-                            {isDuplicate && (
+                            {dup.isDuplicate && (
                               <p className="text-xs text-red-600 mt-1">
                                 Last done:{" "}
                                 {Math.ceil(
-                                  (new Date() - duplicateCheck.lastDoneDate) /
+                                  (new Date() - dup.lastDoneDate) /
                                     (1000 * 60 * 60 * 24)
                                 )}{" "}
-                                days ago (Order #{duplicateCheck.orderId}).
-                                Available in{" "}
+                                days ago (Order #{dup.orderId}). Available in{" "}
                                 {30 -
                                   Math.ceil(
-                                    (new Date() - duplicateCheck.lastDoneDate) /
+                                    (new Date() - dup.lastDoneDate) /
                                       (1000 * 60 * 60 * 24)
                                   )}{" "}
                                 days.
                               </p>
                             )}
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-3 ml-4">
-                          <span
-                            className={`text-lg font-semibold ${
-                              isDuplicate ? "text-red-600" : "text-green-600"
-                            }`}
-                          >
-                            ₦{item.price?.toLocaleString()}
-                          </span>
-                          {isPaid && (
-                            <div className="flex items-center gap-1 text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-medium">
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                              PAID
-                            </div>
-                          )}
-                          {isDuplicate && (
-                            <div className="flex items-center gap-1 text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs font-medium">
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
-                                />
-                              </svg>
-                              BLOCKED
-                            </div>
-                          )}
+                          <div className="flex items-center gap-3 ml-4">
+                            <span
+                              className={`text-lg font-semibold ${
+                                dup.isDuplicate
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              ₦{item.price?.toLocaleString()}
+                            </span>
+                            {isPaid && (
+                              <div className="flex items-center gap-1 text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-medium">
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                PAID
+                              </div>
+                            )}
+                            {dup.isDuplicate && (
+                              <div className="flex items-center gap-1 text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs font-medium">
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                                  />
+                                </svg>
+                                BLOCKED
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
 
-                {/* Order Total */}
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-medium text-gray-700">
-                      Total Cost:
-                    </span>
-                    <span className="text-xl font-bold text-green-600">
-                      ₦{order.totalCost?.toLocaleString()}
-                    </span>
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-medium text-gray-700">
+                        Total Cost:
+                      </span>
+                      <span className="text-xl font-bold text-green-600">
+                        ₦{order.totalCost?.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {/* Summary Stats */}
           <div className="mt-8 bg-white rounded-xl p-6 border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Summary
