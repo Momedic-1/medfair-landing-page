@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { formatDate, getId, getToken } from "../utils";
+import { useNavigate } from "react-router-dom"; // Add this import
+import { formatDate, getId, getToken, getUserData } from "../utils";
 import { Hourglass } from "react-loader-spinner";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -7,13 +8,18 @@ import { baseUrl } from "../env";
 
 const Investigations = () => {
   const patientId = getId();
-  
+  const navigate = useNavigate(); // Add this hook
+  const user = getUserData(); 
+  console.log(user, "User Data in Investigations Component");
+
   // State for displaying investigations
   const [allInvestigationOrders, setAllInvestigationOrders] = useState([]);
   const [investigationsLoading, setInvestigationsLoading] = useState(true);
 
   // Payment functionality states from table component
-  const [selectedInvestigations, setSelectedInvestigations] = useState(new Set());
+  const [selectedInvestigations, setSelectedInvestigations] = useState(
+    new Set()
+  );
   const [paidInvestigations, setPaidInvestigations] = useState(new Set());
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
@@ -35,6 +41,81 @@ const Investigations = () => {
       partner: "DEGREE_360",
     },
   ];
+
+  // Helper function to check if a test was done within the last 30 days
+  const isTestDoneWithinMonth = (
+    testName,
+    currentOrderId,
+    currentItemIndex
+  ) => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    for (const order of allInvestigationOrders) {
+      const orderDate = new Date(order.createdDate);
+
+      // Skip if order is older than 30 days
+      if (orderDate < thirtyDaysAgo) continue;
+
+      // Check each item in the order
+      for (
+        let itemIndex = 0;
+        itemIndex < (order.items?.length || 0);
+        itemIndex++
+      ) {
+        const item = order.items[itemIndex];
+        const itemKey = `${order.orderId}-${itemIndex}`;
+
+        // Skip the current item being checked
+        if (order.orderId === currentOrderId && itemIndex === currentItemIndex)
+          continue;
+
+        // Check if same test name and if it's paid for or completed
+        if (
+          item.testName === testName &&
+          (paidInvestigations.has(itemKey) || order.status === "completed")
+        ) {
+          return {
+            isDuplicate: true,
+            lastDoneDate: orderDate,
+            orderId: order.orderId,
+          };
+        }
+      }
+    }
+
+    return { isDuplicate: false };
+  };
+
+  // Function to get all tests done in the last 30 days
+  const getRecentTests = () => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentTests = new Map(); // testName -> { date, orderId }
+
+    allInvestigationOrders.forEach((order) => {
+      const orderDate = new Date(order.createdDate);
+      if (orderDate >= thirtyDaysAgo) {
+        order.items?.forEach((item, itemIndex) => {
+          const itemKey = `${order.orderId}-${itemIndex}`;
+          if (paidInvestigations.has(itemKey) || order.status === "completed") {
+            if (
+              !recentTests.has(item.testName) ||
+              recentTests.get(item.testName).date < orderDate
+            ) {
+              recentTests.set(item.testName, {
+                date: orderDate,
+                orderId: order.orderId,
+              });
+            }
+          }
+        });
+      }
+    });
+
+    return recentTests;
+  };
 
   // Function to fetch all investigations on component mount
   const fetchInvestigations = async () => {
@@ -76,14 +157,44 @@ const Investigations = () => {
     }
   };
 
-  // Function to toggle investigation selection
+  // Function to toggle investigation selection with duplicate check
   const toggleInvestigationSelection = (orderId, itemIndex) => {
     const key = `${orderId}-${itemIndex}`;
     const newSelected = new Set(selectedInvestigations);
 
+    // Find the test item
+    const order = allInvestigationOrders.find(
+      (o) => o.orderId.toString() === orderId.toString()
+    );
+    if (!order || !order.items[itemIndex]) return;
+
+    const testItem = order.items[itemIndex];
+
     if (newSelected.has(key)) {
+      // Removing selection - always allowed
       newSelected.delete(key);
     } else {
+      // Adding selection - check for duplicates
+      const duplicateCheck = isTestDoneWithinMonth(
+        testItem.testName,
+        orderId,
+        itemIndex
+      );
+
+      if (duplicateCheck.isDuplicate) {
+        const daysSince = Math.ceil(
+          (new Date() - duplicateCheck.lastDoneDate) / (1000 * 60 * 60 * 24)
+        );
+        const remainingDays = 30 - daysSince;
+
+        toast.warning(
+          `This test (${testItem.testName}) was completed ${daysSince} days ago in Order #${duplicateCheck.orderId}. ` +
+            `You can request it again in ${remainingDays} days.`,
+          { autoClose: 5000 }
+        );
+        return;
+      }
+
       newSelected.add(key);
     }
 
@@ -141,7 +252,14 @@ const Investigations = () => {
         setPaidInvestigations(newPaidInvestigations);
         setSelectedInvestigations(new Set()); // Clear selections after payment
 
-        toast.success("Payment verified successfully!");
+        toast.success("Payment verified successfully! Please select a lab partner to send your order to.");
+        
+        // Route back to the investigations page after successful payment
+        // This ensures the user can see the paid investigations and select a lab partner
+        setTimeout(() => {
+          navigate("/patient-dashboard/patient-investigations", { replace: true });
+        }, 2000);
+
         return true;
       } else {
         toast.error("Payment verification failed. Please try again.");
@@ -155,7 +273,7 @@ const Investigations = () => {
     }
   };
 
-  // Payment function for selected investigations
+  // Enhanced payment function with final duplicate check
   const handleInitiatePayment = async () => {
     if (selectedInvestigations.size === 0) {
       toast.warning("Please select investigations to pay for");
@@ -165,6 +283,57 @@ const Investigations = () => {
     if (!userEmail.trim()) {
       toast.warning("Please provide your email address");
       return;
+    }
+
+    // Final duplicate check before payment
+    const duplicatesFound = [];
+    selectedInvestigations.forEach((key) => {
+      const [orderId, itemIndex] = key.split("-");
+      const order = allInvestigationOrders.find(
+        (o) => o.orderId.toString() === orderId
+      );
+      if (order && order.items[parseInt(itemIndex)]) {
+        const testItem = order.items[parseInt(itemIndex)];
+        const duplicateCheck = isTestDoneWithinMonth(
+          testItem.testName,
+          parseInt(orderId),
+          parseInt(itemIndex)
+        );
+
+        if (duplicateCheck.isDuplicate) {
+          duplicatesFound.push({
+            testName: testItem.testName,
+            key: key,
+            lastDoneDate: duplicateCheck.lastDoneDate,
+            orderId: duplicateCheck.orderId,
+          });
+        }
+      }
+    });
+
+    if (duplicatesFound.length > 0) {
+      // Remove duplicate tests from selection and show warning
+      const newSelected = new Set(selectedInvestigations);
+      duplicatesFound.forEach((duplicate) => {
+        newSelected.delete(duplicate.key);
+        const daysSince = Math.ceil(
+          (new Date() - duplicate.lastDoneDate) / (1000 * 60 * 60 * 24)
+        );
+        const remainingDays = 30 - daysSince;
+
+        toast.error(
+          `Removed ${duplicate.testName} from payment - completed ${daysSince} days ago in Order #${duplicate.orderId}. ` +
+            `Available again in ${remainingDays} days.`,
+          { autoClose: 7000 }
+        );
+      });
+
+      setSelectedInvestigations(newSelected);
+
+      if (newSelected.size === 0) {
+        toast.warning("No valid tests remaining for payment");
+        return;
+      }
     }
 
     setPaymentLoading(true);
@@ -292,9 +461,13 @@ const Investigations = () => {
       toast.success(
         `Lab orders sent to ${selectedLabPartner.name} successfully!`
       );
-      
+
       // Clear paid investigations after successful lab order
       setPaidInvestigations(new Set());
+      
+      // Optionally refetch investigations to get updated status
+      await fetchInvestigations();
+      
     } catch (error) {
       toast.error(`Failed to send lab order: ${error.message}`);
     } finally {
@@ -334,8 +507,69 @@ const Investigations = () => {
         )}
       </div>
 
+      {/* Recent Tests Warning */}
+      {!investigationsLoading &&
+        allInvestigationOrders.length > 0 &&
+        (() => {
+          const recentTests = getRecentTests();
+          return recentTests.size > 0 ? (
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-yellow-500 p-2 rounded-full">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-yellow-800">
+                    Recently Completed Tests
+                  </h3>
+                  <p className="text-sm text-yellow-700 mb-2">
+                    The following tests were completed within the last 30 days
+                    and cannot be repeated:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(recentTests.entries()).map(
+                      ([testName, info]) => {
+                        const daysSince = Math.ceil(
+                          (new Date() - info.date) / (1000 * 60 * 60 * 24)
+                        );
+                        const remainingDays = 30 - daysSince;
+                        return (
+                          <span
+                            key={testName}
+                            className="inline-flex items-center px-2 py-1 text-xs bg-yellow-200 text-yellow-800 rounded-full"
+                            title={`Completed ${daysSince} days ago in Order #${info.orderId}. Available in ${remainingDays} days.`}
+                          >
+                            {testName}
+                            <span className="ml-1 text-yellow-600">
+                              ({remainingDays}d)
+                            </span>
+                          </span>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null;
+        })()}
+
       {/* Payment Controls Section - Only show when there are selections or paid items */}
-      {(selectedInvestigations.size > 0 || paidInvestigations.size > 0 || verifyingPayment) && (
+      {(selectedInvestigations.size > 0 ||
+        paidInvestigations.size > 0 ||
+        verifyingPayment) && (
         <div className="mb-6 space-y-4">
           {/* Payment verification in progress */}
           {verifyingPayment && (
@@ -402,7 +636,7 @@ const Investigations = () => {
                     Paid Investigations
                   </h3>
                   <p className="text-sm text-green-600">
-                    {paidInvestigations.size} investigation(s) paid for
+                    {paidInvestigations.size} investigation(s) paid for - Select a lab partner below
                   </p>
                 </div>
               </div>
@@ -485,7 +719,9 @@ const Investigations = () => {
             {selectedInvestigations.size > 0 && !verifyingPayment && (
               <button
                 onClick={handleInitiatePayment}
-                disabled={paymentLoading || labOrderSending || !userEmail.trim()}
+                disabled={
+                  paymentLoading || labOrderSending || !userEmail.trim()
+                }
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {paymentLoading ? (
@@ -576,7 +812,9 @@ const Investigations = () => {
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-gray-500 text-lg">No investigations found for this patient</p>
+          <p className="text-gray-500 text-lg">
+            No investigations found for this patient
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -601,12 +839,15 @@ const Investigations = () => {
                     <p className="text-sm text-gray-500">
                       {formatDate(order.createdDate)}
                     </p>
-                    <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full mt-1 ${
-                      order.status === 'pending' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    <span
+                      className={`inline-block px-3 py-1 text-xs font-medium rounded-full mt-1 ${
+                        order.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {order.status.charAt(0).toUpperCase() +
+                        order.status.slice(1)}
                     </span>
                   </div>
                 </div>
@@ -619,6 +860,12 @@ const Investigations = () => {
                     const key = `${order.orderId}-${itemIndex}`;
                     const isSelected = selectedInvestigations.has(key);
                     const isPaid = paidInvestigations.has(key);
+                    const duplicateCheck = isTestDoneWithinMonth(
+                      item.testName,
+                      order.orderId,
+                      itemIndex
+                    );
+                    const isDuplicate = duplicateCheck.isDuplicate;
 
                     return (
                       <div
@@ -626,6 +873,8 @@ const Investigations = () => {
                         className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
                           isPaid
                             ? "bg-green-50 border-green-200"
+                            : isDuplicate
+                            ? "bg-red-50 border-red-200 opacity-75"
                             : isSelected
                             ? "bg-blue-50 border-blue-200"
                             : "bg-gray-50 border-gray-200 hover:border-gray-300"
@@ -635,24 +884,61 @@ const Investigations = () => {
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            disabled={isPaid}
+                            disabled={isPaid || isDuplicate}
                             onChange={() =>
-                              toggleInvestigationSelection(order.orderId, itemIndex)
+                              toggleInvestigationSelection(
+                                order.orderId,
+                                itemIndex
+                              )
                             }
                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
                           />
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-800 mb-1">
+                            <h4
+                              className={`font-medium mb-1 ${
+                                isDuplicate ? "text-red-700" : "text-gray-800"
+                              }`}
+                            >
                               {item.testName}
+                              {isDuplicate && (
+                                <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                                  Recently Done
+                                </span>
+                              )}
                             </h4>
-                            <p className="text-sm text-gray-600">
+                            <p
+                              className={`text-sm ${
+                                isDuplicate ? "text-red-600" : "text-gray-600"
+                              }`}
+                            >
                               {item.instruction}
                             </p>
+                            {isDuplicate && (
+                              <p className="text-xs text-red-600 mt-1">
+                                Last done:{" "}
+                                {Math.ceil(
+                                  (new Date() - duplicateCheck.lastDoneDate) /
+                                    (1000 * 60 * 60 * 24)
+                                )}{" "}
+                                days ago (Order #{duplicateCheck.orderId}).
+                                Available in{" "}
+                                {30 -
+                                  Math.ceil(
+                                    (new Date() - duplicateCheck.lastDoneDate) /
+                                      (1000 * 60 * 60 * 24)
+                                  )}{" "}
+                                days.
+                              </p>
+                            )}
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3 ml-4">
-                          <span className="text-lg font-semibold text-green-600">
+                          <span
+                            className={`text-lg font-semibold ${
+                              isDuplicate ? "text-red-600" : "text-green-600"
+                            }`}
+                          >
                             ₦{item.price?.toLocaleString()}
                           </span>
                           {isPaid && (
@@ -671,6 +957,24 @@ const Investigations = () => {
                                 />
                               </svg>
                               PAID
+                            </div>
+                          )}
+                          {isDuplicate && (
+                            <div className="flex items-center gap-1 text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs font-medium">
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                                />
+                              </svg>
+                              BLOCKED
                             </div>
                           )}
                         </div>
@@ -696,7 +1000,9 @@ const Investigations = () => {
 
           {/* Summary Stats */}
           <div className="mt-8 bg-white rounded-xl p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Summary</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Summary
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
@@ -706,13 +1012,19 @@ const Investigations = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
-                  {allInvestigationOrders.reduce((acc, order) => acc + (order.items?.length || 0), 0)}
+                  {allInvestigationOrders.reduce(
+                    (acc, order) => acc + (order.items?.length || 0),
+                    0
+                  )}
                 </div>
                 <div className="text-sm text-gray-600">Total Tests</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  ₦{allInvestigationOrders.reduce((acc, order) => acc + (order.totalCost || 0), 0).toLocaleString()}
+                  ₦
+                  {allInvestigationOrders
+                    .reduce((acc, order) => acc + (order.totalCost || 0), 0)
+                    .toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-600">Total Value</div>
               </div>
