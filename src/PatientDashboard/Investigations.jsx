@@ -28,6 +28,21 @@ const Investigations = () => {
     { id: "degree_360_lab", name: "Degree 360 Lab", partner: "DEGREE_360" },
   ];
 
+  const getSuccessfulOrders = () => {
+    return allInvestigationOrders.filter((order) => order.status === "success");
+  };
+
+  const getSuccessfulOrdersCount = () => {
+    return getSuccessfulOrders().length;
+  };
+
+  const getTotalSuccessfulTests = () => {
+    return getSuccessfulOrders().reduce(
+      (total, order) => total + (order.items?.length || 0),
+      0
+    );
+  };
+
   useEffect(() => {
     if (user?.emailAddress && !userEmail) {
       setUserEmail(user.emailAddress);
@@ -255,14 +270,12 @@ const Investigations = () => {
   };
 
   useEffect(() => {
-  console.log("Paid Investigations:", paidInvestigations);
-}, [paidInvestigations]);
+    console.log("Paid Investigations:", paidInvestigations);
+  }, [paidInvestigations]);
 
-
-useEffect(() => {
-  console.log("Paid Investigations updated:", paidInvestigations);
-}, [paidInvestigations]);
-
+  useEffect(() => {
+    console.log("Paid Investigations updated:", paidInvestigations);
+  }, [paidInvestigations]);
 
   // Initiate payment for selected orders
   const handleInitiatePayment = async () => {
@@ -398,38 +411,85 @@ useEffect(() => {
   };
 
   // Send lab order for paid investigations (grouped by orderId)
+  //   const handleSendLabOrder = async () => {
+  //     if (!selectedLabPartner) {
+  //       toast.warning("Please select a lab partner");
+  //       return;
+  //     }
+
+  //     const paidItems = Array.from(paidInvestigations);
+  //     if (paidItems.length === 0) {
+  //       toast.warning("No paid investigations to send");
+  //       return;
+  //     }
+
+  //     setLabOrderSending(true);
+  //     try {
+  //       const token = getToken();
+  //       const orderIds = [...new Set(paidItems.map((key) => key.split("-")[0]))];
+
+  //       for (const orderId of orderIds) {
+  //         await fetch(`${baseUrl}/api/investigations/initiate-payment`, {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //           body: JSON.stringify({ orderId, email: userEmail.trim() }),
+  //         });
+  //       }
+
+  //       toast.success(
+  //         `Lab orders sent to ${selectedLabPartner.name} successfully!`
+  //       );
+  //       setPaidInvestigations(new Set());
+  //       await fetchInvestigations();
+  //     } catch (error) {
+  //       toast.error(`Failed to send lab order: ${error.message}`);
+  //     } finally {
+  //       setLabOrderSending(false);
+  //     }
+  //   };
   const handleSendLabOrder = async () => {
     if (!selectedLabPartner) {
       toast.warning("Please select a lab partner");
       return;
     }
 
-    const paidItems = Array.from(paidInvestigations);
-    if (paidItems.length === 0) {
-      toast.warning("No paid investigations to send");
+    const successfulOrders = getSuccessfulOrders();
+    if (successfulOrders.length === 0) {
+      toast.warning("No successful orders to send");
       return;
     }
 
     setLabOrderSending(true);
     try {
       const token = getToken();
-      const orderIds = [...new Set(paidItems.map((key) => key.split("-")[0]))];
 
-      for (const orderId of orderIds) {
-        await fetch(`${baseUrl}/api/investigations/initiate-payment`, {
+      // Send each successful order to the lab
+      for (const order of successfulOrders) {
+        await fetch(`${baseUrl}/api/investigations/send-to-lab`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ orderId, email: userEmail.trim() }),
+          body: JSON.stringify({
+            orderId: order.orderId,
+            labPartner: selectedLabPartner.partner,
+            email: userEmail.trim(),
+          }),
         });
       }
 
       toast.success(
-        `Lab orders sent to ${selectedLabPartner.name} successfully!`
+        `${successfulOrders.length} order(s) sent to ${selectedLabPartner.name} successfully!`
       );
-      setPaidInvestigations(new Set());
+
+      // Reset the lab partner selection
+      setSelectedLabPartner(null);
+
+      // Refresh the orders to get updated status
       await fetchInvestigations();
     } catch (error) {
       toast.error(`Failed to send lab order: ${error.message}`);
@@ -569,8 +629,8 @@ useEffect(() => {
             </div>
           )}
 
-          {/* Paid Investigations Summary */}
-          {paidInvestigations.size > 0 && (
+          {/* Successful Orders Summary */}
+          {!investigationsLoading && getSuccessfulOrdersCount() > 0 && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <div className="bg-green-500 p-2 rounded-full">
@@ -590,17 +650,17 @@ useEffect(() => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-green-800">
-                    Paid Investigations
+                    Successful Orders
                   </h3>
                   <p className="text-sm text-green-600">
-                    {paidInvestigations.size} investigation(s) paid for - Select
-                    a lab partner below
+                    {getSuccessfulOrdersCount()} order(s) with{" "}
+                    {getTotalSuccessfulTests()} test(s) ready for lab processing
+                    - Select a lab partner below
                   </p>
                 </div>
               </div>
             </div>
           )}
-
           {/* Email Input for Payment */}
           {selectedOrders.size > 0 && !verifyingPayment && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -650,13 +710,14 @@ useEffect(() => {
           )}
 
           {/* Select Lab Partner */}
-          {paidInvestigations.size > 0 && (
+          {!investigationsLoading && getSuccessfulOrdersCount() > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-blue-800 mb-2">
                 Select Lab Partner
               </h3>
               <p className="text-sm text-blue-700 mb-3">
-                Choose a lab partner to send your paid investigations to
+                Choose a lab partner to send your successful orders to (
+                {getSuccessfulOrdersCount()} orders available)
               </p>
               <select
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -713,37 +774,40 @@ useEffect(() => {
               </button>
             )}
 
-            {paidInvestigations.size > 0 && !verifyingPayment && (
-              <button
-                onClick={handleSendLabOrder}
-                disabled={labOrderSending || !selectedLabPartner}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {labOrderSending ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Sending Order...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                      />
-                    </svg>
-                    Send to {selectedLabPartner?.name || "Lab"}
-                  </>
-                )}
-              </button>
-            )}
+            {!investigationsLoading &&
+              getSuccessfulOrdersCount() > 0 &&
+              !verifyingPayment && (
+                <button
+                  onClick={handleSendLabOrder}
+                  disabled={labOrderSending || !selectedLabPartner}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {labOrderSending ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Sending Order...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        />
+                      </svg>
+                      Send {getSuccessfulOrdersCount()} Order(s) to{" "}
+                      {selectedLabPartner?.name || "Lab"}
+                    </>
+                  )}
+                </button>
+              )}
           </div>
         </div>
       )}
