@@ -22,6 +22,7 @@ const Investigations = () => {
   const [pendingPaidOrders, setPendingPaidOrders] = useState(new Set());
   const [selectedLabPartner, setSelectedLabPartner] = useState(null);
   const [labOrderSending, setLabOrderSending] = useState(false);
+  const [sentToLabOrders, setSentToLabOrders] = useState(new Set()); // Track orders sent to lab
 
   const labPartners = [
     { id: "smartlab", name: "SmartLab", partner: "SMARTLAB" },
@@ -41,6 +42,17 @@ const Investigations = () => {
       (total, order) => total + (order.items?.length || 0),
       0
     );
+  };
+
+  // Get orders that are successful but not yet sent to lab
+  const getUnsentSuccessfulOrders = () => {
+    return getSuccessfulOrders().filter(
+      (order) => !sentToLabOrders.has(order.orderId.toString())
+    );
+  };
+
+  const getUnsentSuccessfulOrdersCount = () => {
+    return getUnsentSuccessfulOrders().length;
   };
 
   useEffect(() => {
@@ -79,7 +91,9 @@ const Investigations = () => {
 
         if (
           item.testName === testName &&
-          (paidInvestigations.has(itemKey) || order.status === "completed")
+          (paidInvestigations.has(itemKey) ||
+            order.status === "completed" ||
+            order.status === "success")
         ) {
           return {
             isDuplicate: true,
@@ -105,7 +119,11 @@ const Investigations = () => {
       if (orderDate >= thirtyDaysAgo) {
         order.items?.forEach((item, itemIndex) => {
           const itemKey = `${order.orderId}-${itemIndex}`;
-          if (paidInvestigations.has(itemKey) || order.status === "completed") {
+          if (
+            paidInvestigations.has(itemKey) ||
+            order.status === "completed" ||
+            order.status === "success"
+          ) {
             if (
               !recentTests.has(item.testName) ||
               recentTests.get(item.testName).date < orderDate
@@ -145,6 +163,11 @@ const Investigations = () => {
         (a, b) => new Date(b.createdDate) - new Date(a.createdDate)
       );
       setAllInvestigationOrders(sortedOrders);
+
+      // Load sent to lab orders from localStorage (since we can't use browser storage in artifacts)
+      // In a real implementation, this would come from the server
+      const savedSentOrders = new Set(); // Replace with actual server data
+      setSentToLabOrders(savedSentOrders);
     } catch (error) {
       toast.error(`Failed to fetch investigation orders: ${error.message}`);
       setAllInvestigationOrders([]);
@@ -164,6 +187,14 @@ const Investigations = () => {
       (o) => o.orderId.toString() === idStr
     );
     if (!order) return;
+
+    // Prevent selecting orders that are already successful (paid)
+    if (order.status === "success") {
+      toast.info(
+        `Order #${order.orderId} has already been paid for and cannot be selected again.`
+      );
+      return;
+    }
 
     // Check if order contains any duplicate/blocked items
     const blockedItems = [];
@@ -253,6 +284,10 @@ const Investigations = () => {
         console.log("Paid investigations:", Array.from(newPaid));
         setSelectedOrders(new Set());
         setPendingPaidOrders(new Set());
+
+        // Refresh orders to get updated status from server
+        await fetchInvestigations();
+
         toast.success(
           "Payment verified successfully! Please select a lab partner."
         );
@@ -303,6 +338,13 @@ const Investigations = () => {
       );
       if (!order) {
         toRemove.push(idStr);
+        return;
+      }
+
+      // Check if order is already successful
+      if (order.status === "success") {
+        toRemove.push(idStr);
+        toast.info(`Order #${order.orderId} has already been paid for.`);
         return;
       }
 
@@ -410,55 +452,16 @@ const Investigations = () => {
     }
   };
 
-  // Send lab order for paid investigations (grouped by orderId)
-  //   const handleSendLabOrder = async () => {
-  //     if (!selectedLabPartner) {
-  //       toast.warning("Please select a lab partner");
-  //       return;
-  //     }
-
-  //     const paidItems = Array.from(paidInvestigations);
-  //     if (paidItems.length === 0) {
-  //       toast.warning("No paid investigations to send");
-  //       return;
-  //     }
-
-  //     setLabOrderSending(true);
-  //     try {
-  //       const token = getToken();
-  //       const orderIds = [...new Set(paidItems.map((key) => key.split("-")[0]))];
-
-  //       for (const orderId of orderIds) {
-  //         await fetch(`${baseUrl}/api/investigations/initiate-payment`, {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //           body: JSON.stringify({ orderId, email: userEmail.trim() }),
-  //         });
-  //       }
-
-  //       toast.success(
-  //         `Lab orders sent to ${selectedLabPartner.name} successfully!`
-  //       );
-  //       setPaidInvestigations(new Set());
-  //       await fetchInvestigations();
-  //     } catch (error) {
-  //       toast.error(`Failed to send lab order: ${error.message}`);
-  //     } finally {
-  //       setLabOrderSending(false);
-  //     }
-  //   };
+  // Send lab order for successful orders
   const handleSendLabOrder = async () => {
     if (!selectedLabPartner) {
       toast.warning("Please select a lab partner");
       return;
     }
 
-    const successfulOrders = getSuccessfulOrders();
-    if (successfulOrders.length === 0) {
-      toast.warning("No successful orders to send");
+    const unsentSuccessfulOrders = getUnsentSuccessfulOrders();
+    if (unsentSuccessfulOrders.length === 0) {
+      toast.warning("No successful orders available to send");
       return;
     }
 
@@ -467,7 +470,7 @@ const Investigations = () => {
       const token = getToken();
 
       // Send each successful order to the lab
-      for (const order of successfulOrders) {
+      for (const order of unsentSuccessfulOrders) {
         await fetch(`${baseUrl}/api/investigations/send-to-lab`, {
           method: "POST",
           headers: {
@@ -482,8 +485,15 @@ const Investigations = () => {
         });
       }
 
+      // Mark orders as sent to lab
+      const newSentToLab = new Set(sentToLabOrders);
+      unsentSuccessfulOrders.forEach((order) => {
+        newSentToLab.add(order.orderId.toString());
+      });
+      setSentToLabOrders(newSentToLab);
+
       toast.success(
-        `${successfulOrders.length} order(s) sent to ${selectedLabPartner.name} successfully!`
+        `${unsentSuccessfulOrders.length} order(s) sent to ${selectedLabPartner.name} successfully!`
       );
 
       // Reset the lab partner selection
@@ -587,7 +597,8 @@ const Investigations = () => {
       {/* Payment Controls Section */}
       {(selectedOrders.size > 0 ||
         paidInvestigations.size > 0 ||
-        verifyingPayment) && (
+        verifyingPayment ||
+        getUnsentSuccessfulOrdersCount() > 0) && (
         <div className="mb-6 space-y-4">
           {verifyingPayment && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -630,7 +641,7 @@ const Investigations = () => {
           )}
 
           {/* Successful Orders Summary */}
-          {!investigationsLoading && getSuccessfulOrdersCount() > 0 && (
+          {!investigationsLoading && getUnsentSuccessfulOrdersCount() > 0 && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <div className="bg-green-500 p-2 rounded-full">
@@ -650,17 +661,49 @@ const Investigations = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-green-800">
-                    Successful Orders
+                    Orders Ready for Lab
                   </h3>
                   <p className="text-sm text-green-600">
-                    {getSuccessfulOrdersCount()} order(s) with{" "}
-                    {getTotalSuccessfulTests()} test(s) ready for lab processing
-                    - Select a lab partner below
+                    {getUnsentSuccessfulOrdersCount()} paid order(s) ready to be
+                    sent to lab partner
                   </p>
                 </div>
               </div>
             </div>
           )}
+
+          {/* Orders Sent to Lab Summary */}
+          {!investigationsLoading && sentToLabOrders.size > 0 && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-500 p-2 rounded-full">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-800">
+                    Orders Sent to Lab
+                  </h3>
+                  <p className="text-sm text-purple-600">
+                    {sentToLabOrders.size} order(s) have been sent to lab
+                    partners for processing
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Email Input for Payment */}
           {selectedOrders.size > 0 && !verifyingPayment && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -710,14 +753,14 @@ const Investigations = () => {
           )}
 
           {/* Select Lab Partner */}
-          {!investigationsLoading && getSuccessfulOrdersCount() > 0 && (
+          {!investigationsLoading && getUnsentSuccessfulOrdersCount() > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-blue-800 mb-2">
                 Select Lab Partner
               </h3>
               <p className="text-sm text-blue-700 mb-3">
                 Choose a lab partner to send your successful orders to (
-                {getSuccessfulOrdersCount()} orders available)
+                {getUnsentSuccessfulOrdersCount()} orders available)
               </p>
               <select
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -775,7 +818,7 @@ const Investigations = () => {
             )}
 
             {!investigationsLoading &&
-              getSuccessfulOrdersCount() > 0 &&
+              getUnsentSuccessfulOrdersCount() > 0 &&
               !verifyingPayment && (
                 <button
                   onClick={handleSendLabOrder}
@@ -802,10 +845,37 @@ const Investigations = () => {
                           d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                         />
                       </svg>
-                      Send {getSuccessfulOrdersCount()} Order(s) to{" "}
+                      Send {getUnsentSuccessfulOrdersCount()} Order(s) to{" "}
                       {selectedLabPartner?.name || "Lab"}
                     </>
                   )}
+                </button>
+              )}
+
+            {/* Orders Already Sent Button (Disabled) */}
+            {!investigationsLoading &&
+              sentToLabOrders.size > 0 &&
+              getUnsentSuccessfulOrdersCount() === 0 &&
+              getSuccessfulOrdersCount() > 0 &&
+              !verifyingPayment && (
+                <button
+                  disabled={true}
+                  className="flex-1 px-4 py-3 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  All Orders Sent to Lab
                 </button>
               )}
           </div>
@@ -846,6 +916,7 @@ const Investigations = () => {
         <div className="space-y-4">
           {allInvestigationOrders.map((order) => {
             const idStr = order.orderId.toString();
+            const isOrderSentToLab = sentToLabOrders.has(idStr);
 
             // Determine if order is blocked (any item duplicate or already paid)
             let orderHasDuplicate = false;
@@ -872,7 +943,8 @@ const Investigations = () => {
             const disabledSelect =
               orderHasDuplicate ||
               orderHasPaidItem ||
-              order.status === "completed";
+              order.status === "completed" ||
+              order.status === "success"; // Prevent selecting successful orders
 
             return (
               <div
@@ -906,18 +978,30 @@ const Investigations = () => {
                       <p className="text-sm text-gray-500">
                         {formatDate(order.createdDate)}
                       </p>
-                      <span
-                        className={`inline-block px-3 py-1 text-xs font-medium rounded-full mt-1 ${
-                          order.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1)}
-                      </span>
+                      <div className="flex flex-col gap-1 mt-1">
+                        <span
+                          className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                            order.status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)}
+                        </span>
+                        {isOrderSentToLab && (
+                          <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                            Sent to Lab
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {disabledSelect && order.status === "success" && (
+                    <p className="text-xs text-green-600 mt-2">
+                      ✓ This order has been paid for successfully
+                    </p>
+                  )}
                   {disabledSelect && orderHasDuplicate && (
                     <p className="text-xs text-red-600 mt-2">
                       Blocked for payment: {blockedItemNames.join(", ")}
@@ -930,6 +1014,7 @@ const Investigations = () => {
                     {order.items?.map((item, itemIndex) => {
                       const key = `${order.orderId}-${itemIndex}`;
                       const isPaid = paidInvestigations.has(key);
+                      const isOrderSuccessful = order.status === "success";
                       const dup = isTestDoneWithinMonth(
                         item.testName,
                         order.orderId,
@@ -940,7 +1025,7 @@ const Investigations = () => {
                         <div
                           key={itemIndex}
                           className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
-                            isPaid
+                            isPaid || isOrderSuccessful
                               ? "bg-green-50 border-green-200"
                               : dup.isDuplicate
                               ? "bg-red-50 border-red-200 opacity-75"
@@ -952,6 +1037,8 @@ const Investigations = () => {
                               className={`font-medium mb-1 ${
                                 dup.isDuplicate
                                   ? "text-red-700"
+                                  : isOrderSuccessful
+                                  ? "text-green-700"
                                   : "text-gray-800"
                               }`}
                             >
@@ -966,6 +1053,8 @@ const Investigations = () => {
                               className={`text-sm ${
                                 dup.isDuplicate
                                   ? "text-red-600"
+                                  : isOrderSuccessful
+                                  ? "text-green-600"
                                   : "text-gray-600"
                               }`}
                             >
@@ -999,7 +1088,7 @@ const Investigations = () => {
                             >
                               ₦{item.price?.toLocaleString()}
                             </span>
-                            {isPaid && (
+                            {(isPaid || isOrderSuccessful) && (
                               <div className="flex items-center gap-1 text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-medium">
                                 <svg
                                   className="w-3 h-3"
@@ -1060,7 +1149,7 @@ const Investigations = () => {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Summary
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
                   {allInvestigationOrders.length}
@@ -1068,16 +1157,19 @@ const Investigations = () => {
                 <div className="text-sm text-gray-600">Total Orders</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {allInvestigationOrders.reduce(
-                    (acc, order) => acc + (order.items?.length || 0),
-                    0
-                  )}
+                <div className="text-2xl font-bold text-green-600">
+                  {getSuccessfulOrdersCount()}
                 </div>
-                <div className="text-sm text-gray-600">Total Tests</div>
+                <div className="text-sm text-gray-600">Successful Orders</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-purple-600">
+                  {sentToLabOrders.size}
+                </div>
+                <div className="text-sm text-gray-600">Orders Sent to Lab</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">
                   ₦
                   {allInvestigationOrders
                     .reduce((acc, order) => acc + (order.totalCost || 0), 0)
