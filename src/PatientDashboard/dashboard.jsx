@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { baseUrl } from "../env";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ColorRing } from "react-loader-spinner";
 import {
   formatSpecialization,
@@ -98,6 +98,7 @@ const specialistCategory = [
   },
 ];
 const Dashboard = () => {
+  const navigate = useNavigate();
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const userId = userData.id;
   const [isLoading, setIsLoading] = useState(false);
@@ -604,11 +605,15 @@ const Dashboard = () => {
     return upcomingAppointments.some((apt) => apt.slotId === slotId);
   };
 
+  const handleRoute = () => {
+    navigate("/patient-dashboard/patient-investigations");
+  };
+  
   return (
     <div className="w-full">
       <ToastContainer />
       <div className="w-full px-4 py-8 overflow-hidden">
-        <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 md:gap-8 mt-4">
+        <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 xl:grid-cols-3 md:gap-8 mt-4">
           <div onClick={handleCallADoctorClick}>
             <Cards title="Call a Doctor" img={call} />
           </div>
@@ -622,9 +627,9 @@ const Dashboard = () => {
               img={calendarIcon}
             />
           </div>
-          {/* <div onClick={() => handleCardClick("Get your test done")}>
+          <div onClick={() => handleCardClick("Get your test done"), handleRoute}>
             <Cards title="Get your test done" img={testTube} />
-          </div> */}
+          </div>
         </div>
 
         <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-6 xl:gap-y-0 xl:flex-row items-start gap-x-8 px-1">
