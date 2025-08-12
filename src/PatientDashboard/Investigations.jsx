@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { formatDate, getId, getToken, getUserData } from "../utils";
 import { Hourglass } from "react-loader-spinner";
 import { toast } from "react-toastify";
@@ -8,9 +7,7 @@ import { baseUrl } from "../env";
 
 const Investigations = () => {
   const patientId = getId();
-  const navigate = useNavigate();
   const user = getUserData();
-  const token = getToken();
 
   const [allInvestigationOrders, setAllInvestigationOrders] = useState([]);
   const [investigationsLoading, setInvestigationsLoading] = useState(true);
@@ -22,7 +19,7 @@ const Investigations = () => {
   const [pendingPaidOrders, setPendingPaidOrders] = useState(new Set());
   const [selectedLabPartner, setSelectedLabPartner] = useState(null);
   const [labOrderSending, setLabOrderSending] = useState(false);
-  const [sentToLabOrders, setSentToLabOrders] = useState(new Set()); // Track orders sent to lab
+  const [sentToLabOrders, setSentToLabOrders] = useState(new Set());
 
   const labPartners = [
     { id: "smartlab", name: "SmartLab", partner: "SMARTLAB" },
@@ -44,9 +41,10 @@ const Investigations = () => {
     );
   };
 
-  // Get orders that are successful but not yet sent to lab
   const getUnsentSuccessfulOrders = () => {
-    return getSuccessfulOrders().filter(order => !sentToLabOrders.has(order.orderId.toString()));
+    return getSuccessfulOrders().filter(
+      (order) => !sentToLabOrders.has(order.orderId.toString())
+    );
   };
 
   const getUnsentSuccessfulOrdersCount = () => {
@@ -59,81 +57,6 @@ const Investigations = () => {
     }
   }, [user, userEmail]);
 
-  // Helper: check if a test was done within last 30 days (skips comparing to the same item if provided)
-  const isTestDoneWithinMonth = (
-    testName,
-    currentOrderId,
-    currentItemIndex
-  ) => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    for (const order of allInvestigationOrders) {
-      const orderDate = new Date(order.createdDate);
-      if (orderDate < thirtyDaysAgo) continue; // older than window
-
-      for (
-        let itemIndex = 0;
-        itemIndex < (order.items?.length || 0);
-        itemIndex++
-      ) {
-        const item = order.items[itemIndex];
-        const itemKey = `${order.orderId}-${itemIndex}`;
-
-        // Skip comparing the same item in the same order
-        if (
-          order.orderId.toString() === currentOrderId.toString() &&
-          itemIndex === currentItemIndex
-        )
-          continue;
-
-        if (
-          item.testName === testName &&
-          (paidInvestigations.has(itemKey) || order.status === "completed" || order.status === "success")
-        ) {
-          return {
-            isDuplicate: true,
-            lastDoneDate: orderDate,
-            orderId: order.orderId,
-          };
-        }
-      }
-    }
-
-    return { isDuplicate: false };
-  };
-
-  // Get tests completed in the last 30 days (used for the yellow warning banner)
-  const getRecentTests = () => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentTests = new Map();
-
-    allInvestigationOrders.forEach((order) => {
-      const orderDate = new Date(order.createdDate);
-      if (orderDate >= thirtyDaysAgo) {
-        order.items?.forEach((item, itemIndex) => {
-          const itemKey = `${order.orderId}-${itemIndex}`;
-          if (paidInvestigations.has(itemKey) || order.status === "completed" || order.status === "success") {
-            if (
-              !recentTests.has(item.testName) ||
-              recentTests.get(item.testName).date < orderDate
-            ) {
-              recentTests.set(item.testName, {
-                date: orderDate,
-                orderId: order.orderId,
-              });
-            }
-          }
-        });
-      }
-    });
-
-    return recentTests;
-  };
-
-  // Fetch orders
   const fetchInvestigations = async () => {
     setInvestigationsLoading(true);
     try {
@@ -155,10 +78,8 @@ const Investigations = () => {
         (a, b) => new Date(b.createdDate) - new Date(a.createdDate)
       );
       setAllInvestigationOrders(sortedOrders);
-      
-      // Load sent to lab orders from localStorage (since we can't use browser storage in artifacts)
-      // In a real implementation, this would come from the server
-      const savedSentOrders = new Set(); // Replace with actual server data
+
+      const savedSentOrders = new Set();
       setSentToLabOrders(savedSentOrders);
     } catch (error) {
       toast.error(`Failed to fetch investigation orders: ${error.message}`);
@@ -172,7 +93,6 @@ const Investigations = () => {
     fetchInvestigations();
   }, [patientId]);
 
-  // Toggle order selection (order-level)
   const toggleOrderSelection = (orderId) => {
     const idStr = orderId.toString();
     const order = allInvestigationOrders.find(
@@ -180,30 +100,24 @@ const Investigations = () => {
     );
     if (!order) return;
 
-    // Allow selecting successful orders that haven't been sent to lab
     if (order.status === "success" && sentToLabOrders.has(idStr)) {
-      toast.info(`Order #${order.orderId} has already been sent to the lab partner.`);
+      toast.info(
+        `Order #${order.orderId} has already been sent to the lab partner.`
+      );
       return;
     }
 
-    // Only block if order is not paid/successful, and contains duplicates/issues
     if (order.status !== "success") {
       const blockedItems = [];
       for (let i = 0; i < (order.items?.length || 0); i++) {
-        const item = order.items[i];
-        const dup = isTestDoneWithinMonth(item.testName, order.orderId, i);
         const itemKey = `${order.orderId}-${i}`;
-        if (
-          dup.isDuplicate ||
-          paidInvestigations.has(itemKey) ||
-          order.status === "completed"
-        ) {
-          blockedItems.push({ item, index: i, dup });
+        if (paidInvestigations.has(itemKey) || order.status === "completed") {
+          blockedItems.push(order.items[i].testName);
         }
       }
 
       if (blockedItems.length > 0) {
-        const names = blockedItems.map((b) => b.item.testName).join(", ");
+        const names = blockedItems.join(", ");
         toast.warning(
           `Order #${order.orderId} contains blocked tests: ${names}. You must remove or wait before paying for this order.`,
           { autoClose: 7000 }
@@ -232,7 +146,6 @@ const Investigations = () => {
     return total;
   };
 
-  // Get selected orders that need payment (not successful)
   const getSelectedOrdersForPayment = () => {
     const ordersForPayment = new Set();
     selectedOrders.forEach((idStr) => {
@@ -246,7 +159,6 @@ const Investigations = () => {
     return ordersForPayment;
   };
 
-  // Get selected orders that are successful (for lab sending)
   const getSelectedSuccessfulOrders = () => {
     const successfulOrders = [];
     selectedOrders.forEach((idStr) => {
@@ -260,7 +172,6 @@ const Investigations = () => {
     return successfulOrders;
   };
 
-  // Payment verification
   const verifyPayment = async (reference) => {
     try {
       setVerifyingPayment(true);
@@ -302,13 +213,11 @@ const Investigations = () => {
         });
 
         setPaidInvestigations(newPaid);
-        console.log("Paid investigations:", Array.from(newPaid));
         setSelectedOrders(new Set());
         setPendingPaidOrders(new Set());
-        
-        // Refresh orders to get updated status from server
+
         await fetchInvestigations();
-        
+
         toast.success(
           "Payment verified successfully! Please select a lab partner."
         );
@@ -329,14 +238,9 @@ const Investigations = () => {
     console.log("Paid Investigations:", paidInvestigations);
   }, [paidInvestigations]);
 
-  useEffect(() => {
-    console.log("Paid Investigations updated:", paidInvestigations);
-  }, [paidInvestigations]);
-
-  // Initiate payment for selected orders
   const handleInitiatePayment = async () => {
     const ordersForPayment = getSelectedOrdersForPayment();
-    
+
     if (ordersForPayment.size === 0) {
       toast.warning("Please select one or more unpaid orders to pay for");
       return;
@@ -353,35 +257,22 @@ const Investigations = () => {
       return;
     }
 
-    // Final duplicate check at order level for unpaid orders only
     const toRemove = [];
     ordersForPayment.forEach((idStr) => {
       const order = allInvestigationOrders.find(
         (o) => o.orderId.toString() === idStr
       );
-      if (!order) {
-        toRemove.push(idStr);
-        return;
-      }
-
-      // Skip payment processing for successful orders (they're selected for lab sending)
-      if (order.status === "success") {
+      if (!order || order.status === "success") {
         toRemove.push(idStr);
         return;
       }
 
       for (let i = 0; i < (order.items?.length || 0); i++) {
-        const testItem = order.items[i];
-        const dup = isTestDoneWithinMonth(testItem.testName, order.orderId, i);
         const itemKey = `${order.orderId}-${i}`;
-        if (
-          dup.isDuplicate ||
-          paidInvestigations.has(itemKey) ||
-          order.status === "completed"
-        ) {
+        if (paidInvestigations.has(itemKey) || order.status === "completed") {
           toRemove.push(idStr);
           toast.error(
-            `Removed Order #${order.orderId} from payment - contains ${testItem.testName} which is recently done or already paid.`,
+            `Removed Order #${order.orderId} from payment - contains ${order.items[i].testName} which is already paid.`,
             { autoClose: 7000 }
           );
           break;
@@ -393,8 +284,7 @@ const Investigations = () => {
       const newSel = new Set(selectedOrders);
       toRemove.forEach((r) => newSel.delete(r));
       setSelectedOrders(newSel);
-      
-      // Recalculate orders for payment after removal
+
       const remainingOrdersForPayment = getSelectedOrdersForPayment();
       if (remainingOrdersForPayment.size === 0) {
         toast.warning("No valid orders remaining for payment");
@@ -406,13 +296,14 @@ const Investigations = () => {
     try {
       const token = getToken();
       const finalOrdersForPayment = getSelectedOrdersForPayment();
-      const orderIds = Array.from(finalOrdersForPayment).map((s) => parseInt(s));
+      const orderIds = Array.from(finalOrdersForPayment).map((s) =>
+        parseInt(s)
+      );
 
       const paymentRequest = {
-        orderId: orderIds[0], // first selected order
+        orderId: orderIds[0],
         email: userEmail.trim(),
       };
-      console.log("Payment request payload:", paymentRequest);
 
       const response = await fetch(
         `${baseUrl}/api/investigations/initiate-payment`,
@@ -432,7 +323,6 @@ const Investigations = () => {
           const errorData = await response.json();
           errorMessage =
             errorData.message || errorData.exceptionMessage || errorMessage;
-          console.error("Payment initiation error:", errorData);
         } catch (parseError) {
           console.error("Failed to parse error response:", parseError);
         }
@@ -440,12 +330,8 @@ const Investigations = () => {
       }
 
       const paymentData = await response.json();
-      console.log("Payment response:", paymentData);
-
-      // Remember which orders are pending payment verification
       setPendingPaidOrders(new Set(finalOrdersForPayment));
 
-      // Open payment if authorization url provided
       if (paymentData.authorizationUrl || paymentData.authorization_url) {
         const reference = paymentData.reference || paymentData.access_code;
         const paymentWindow = window.open(
@@ -465,7 +351,6 @@ const Investigations = () => {
           }
         }, 1000);
       } else {
-        // Fallback/mock flow
         const mockRef = paymentData.reference || "MOCK_REF_" + Date.now();
         const verified = await verifyPayment(mockRef);
         if (verified) toast.success("Payment completed successfully!");
@@ -478,153 +363,84 @@ const Investigations = () => {
     }
   };
 
-  // Send lab order for selected successful orders
-//   const handleSendLabOrder = async () => {
-//     if (!selectedLabPartner) {
-//       toast.warning("Please select a lab partner");
-//       return;
-//     }
-
-//     const selectedSuccessfulOrders = getSelectedSuccessfulOrders();
-//     if (selectedSuccessfulOrders.length === 0) {
-//       toast.warning("Please select paid orders that haven't been sent to lab yet");
-//       return;
-//     }
-
-//     setLabOrderSending(true);
-//     try {
-//       const token = getToken();
-
-//       // Send each selected successful order to the lab
-//       for (const order of selectedSuccessfulOrders) {
-//         await fetch(`${baseUrl}/api/investigations/send-to-lab`, {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/json",
-//             Authorization: `Bearer ${token}`,
-//           },
-//           body: JSON.stringify({
-//             orderId: order.orderId,
-//             labPartner: selectedLabPartner.partner,
-//             email: userEmail.trim(),
-//           }),
-//         });
-//       }
-
-//       // Mark orders as sent to lab
-//       const newSentToLab = new Set(sentToLabOrders);
-//       selectedSuccessfulOrders.forEach(order => {
-//         newSentToLab.add(order.orderId.toString());
-//       });
-//       setSentToLabOrders(newSentToLab);
-
-//       // Remove sent orders from selection
-//       const newSelectedOrders = new Set(selectedOrders);
-//       selectedSuccessfulOrders.forEach(order => {
-//         newSelectedOrders.delete(order.orderId.toString());
-//       });
-//       setSelectedOrders(newSelectedOrders);
-
-//       toast.success(
-//         `${selectedSuccessfulOrders.length} order(s) sent to ${selectedLabPartner.name} successfully!`
-//       );
-
-//       // Reset the lab partner selection
-//       setSelectedLabPartner(null);
-
-//       // Refresh the orders to get updated status
-//       await fetchInvestigations();
-//     } catch (error) {
-//       toast.error(`Failed to send lab order: ${error.message}`);
-//     } finally {
-//       setLabOrderSending(false);
-//     }
-//   };
-// Send lab order for selected successful orders
-const handleSendLabOrder = async () => {
-  if (!selectedLabPartner) {
-    toast.warning("Please select a lab partner");
-    return;
-  }
-
-  const selectedSuccessfulOrders = getSelectedSuccessfulOrders();
-  if (selectedSuccessfulOrders.length === 0) {
-    toast.warning("Please select paid orders that haven't been sent to lab yet");
-    return;
-  }
-
-  setLabOrderSending(true);
-  try {
-    const token = getToken();
-
-    // Send each selected successful order to the lab using the correct endpoint
-    for (const order of selectedSuccessfulOrders) {
-      // Use query parameters as per API specification
-      const queryParams = new URLSearchParams({
-        orderId: order.orderId.toString(),
-        labPartner: selectedLabPartner.partner
-      });
-
-      const response = await fetch(
-        `${baseUrl}/api/investigations/investigations/select-lab?${queryParams}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Accept": "*/*"
-          },
-          // No body needed as per API spec
-        }
-      );
-
-      if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-          console.error("Lab order send error:", errorText);
-        } catch (parseError) {
-          console.error("Failed to parse error response:", parseError);
-        }
-        throw new Error(`Failed to send order ${order.orderId}: ${errorMessage}`);
-      }
-
-      // Log successful response
-      const responseText = await response.text();
-      console.log(`Order ${order.orderId} response:`, responseText);
+  const handleSendLabOrder = async () => {
+    if (!selectedLabPartner) {
+      toast.warning("Please select a lab partner");
+      return;
     }
 
-    // Mark orders as sent to lab
-    const newSentToLab = new Set(sentToLabOrders);
-    selectedSuccessfulOrders.forEach(order => {
-      newSentToLab.add(order.orderId.toString());
-    });
-    setSentToLabOrders(newSentToLab);
+    const selectedSuccessfulOrders = getSelectedSuccessfulOrders();
+    if (selectedSuccessfulOrders.length === 0) {
+      toast.warning(
+        "Please select paid orders that haven't been sent to lab yet"
+      );
+      return;
+    }
 
-    // Remove sent orders from selection
-    const newSelectedOrders = new Set(selectedOrders);
-    selectedSuccessfulOrders.forEach(order => {
-      newSelectedOrders.delete(order.orderId.toString());
-    });
-    setSelectedOrders(newSelectedOrders);
+    setLabOrderSending(true);
+    try {
+      const token = getToken();
 
-    toast.success(
-      `${selectedSuccessfulOrders.length} order(s) sent to ${selectedLabPartner.name} successfully!`
-    );
+      for (const order of selectedSuccessfulOrders) {
+        const queryParams = new URLSearchParams({
+          orderId: order.orderId.toString(),
+          labPartner: selectedLabPartner.partner,
+        });
 
-    // Reset the lab partner selection
-    setSelectedLabPartner(null);
+        const response = await fetch(
+          `${baseUrl}/api/investigations/investigations/select-lab?${queryParams}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "*/*",
+            },
+          }
+        );
 
-    // Refresh the orders to get updated status
-    await fetchInvestigations();
-  } catch (error) {
-    console.error("Lab order send failed:", error);
-    toast.error(`Failed to send lab order: ${error.message}`);
-  } finally {
-    setLabOrderSending(false);
-  }
-};
-  // Render
+        if (!response.ok) {
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          try {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          } catch (parseError) {
+            console.error("Failed to parse error response:", parseError);
+          }
+          throw new Error(
+            `Failed to send order ${order.orderId}: ${errorMessage}`
+          );
+        }
+
+        const responseText = await response.text();
+        console.log(`Order ${order.orderId} response:`, responseText);
+      }
+
+      const newSentToLab = new Set(sentToLabOrders);
+      selectedSuccessfulOrders.forEach((order) => {
+        newSentToLab.add(order.orderId.toString());
+      });
+      setSentToLabOrders(newSentToLab);
+
+      const newSelectedOrders = new Set(selectedOrders);
+      selectedSuccessfulOrders.forEach((order) => {
+        newSelectedOrders.delete(order.orderId.toString());
+      });
+      setSelectedOrders(newSelectedOrders);
+
+      toast.success(
+        `${selectedSuccessfulOrders.length} order(s) sent to ${selectedLabPartner.name} successfully!`
+      );
+
+      setSelectedLabPartner(null);
+      await fetchInvestigations();
+    } catch (error) {
+      console.error("Lab order send failed:", error);
+      toast.error(`Failed to send lab order: ${error.message}`);
+    } finally {
+      setLabOrderSending(false);
+    }
+  };
+
   return (
     <div className="investigations-component max-w-6xl mx-auto p-6">
       <div className="bg-gradient-to-r from-green-500 to-green-700 px-6 py-6 rounded-t-2xl mb-6">
@@ -651,66 +467,6 @@ const handleSendLabOrder = async () => {
         )}
       </div>
 
-      {/* Recent Tests Warning */}
-      {!investigationsLoading &&
-        allInvestigationOrders.length > 0 &&
-        (() => {
-          const recentTests = getRecentTests();
-          return recentTests.size > 0 ? (
-            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-yellow-500 p-2 rounded-full">
-                  <svg
-                    className="w-5 h-5 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-yellow-800">
-                    Recently Completed Tests
-                  </h3>
-                  <p className="text-sm text-yellow-700 mb-2">
-                    The following tests were completed within the last 30 days
-                    and cannot be repeated:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(recentTests.entries()).map(
-                      ([testName, info]) => {
-                        const daysSince = Math.ceil(
-                          (new Date() - info.date) / (1000 * 60 * 60 * 24)
-                        );
-                        const remainingDays = 30 - daysSince;
-                        return (
-                          <span
-                            key={testName}
-                            className="inline-flex items-center px-2 py-1 text-xs bg-yellow-200 text-yellow-800 rounded-full"
-                            title={`Completed ${daysSince} days ago in Order #${info.orderId}. Available in ${remainingDays} days.`}
-                          >
-                            {testName}
-                            <span className="ml-1 text-yellow-600">
-                              ({remainingDays}d)
-                            </span>
-                          </span>
-                        );
-                      }
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null;
-        })()}
-
-      {/* Payment Controls Section */}
       {(selectedOrders.size > 0 ||
         paidInvestigations.size > 0 ||
         verifyingPayment ||
@@ -734,7 +490,6 @@ const handleSendLabOrder = async () => {
             </div>
           )}
 
-          {/* Selected Orders for Payment Summary */}
           {getSelectedOrdersForPayment().size > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
@@ -743,7 +498,8 @@ const handleSendLabOrder = async () => {
                     Selected Orders for Payment
                   </h3>
                   <p className="text-sm text-blue-600">
-                    {getSelectedOrdersForPayment().size} unpaid order(s) selected
+                    {getSelectedOrdersForPayment().size} unpaid order(s)
+                    selected
                   </p>
                 </div>
                 <div className="text-right">
@@ -756,7 +512,6 @@ const handleSendLabOrder = async () => {
             </div>
           )}
 
-          {/* Selected Orders for Lab Summary */}
           {getSelectedSuccessfulOrders().length > 0 && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
@@ -780,14 +535,14 @@ const handleSendLabOrder = async () => {
                     Selected Orders for Lab Partner
                   </h3>
                   <p className="text-sm text-purple-600">
-                    {getSelectedSuccessfulOrders().length} paid order(s) selected to send to lab
+                    {getSelectedSuccessfulOrders().length} paid order(s)
+                    selected to send to lab
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* All Successful Orders Summary */}
           {!investigationsLoading && getUnsentSuccessfulOrdersCount() > 0 && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
@@ -811,14 +566,14 @@ const handleSendLabOrder = async () => {
                     Total Orders Ready for Lab
                   </h3>
                   <p className="text-sm text-green-600">
-                    {getUnsentSuccessfulOrdersCount()} paid order(s) available to send to lab partners
+                    {getUnsentSuccessfulOrdersCount()} paid order(s) available
+                    to send to lab partners
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Orders Sent to Lab Summary */}
           {!investigationsLoading && sentToLabOrders.size > 0 && (
             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
@@ -842,14 +597,14 @@ const handleSendLabOrder = async () => {
                     Orders Sent to Lab
                   </h3>
                   <p className="text-sm text-indigo-600">
-                    {sentToLabOrders.size} order(s) have been sent to lab partners for processing
+                    {sentToLabOrders.size} order(s) have been sent to lab
+                    partners for processing
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Email Input for Payment */}
           {getSelectedOrdersForPayment().size > 0 && !verifyingPayment && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-orange-800 mb-2">
@@ -897,14 +652,14 @@ const handleSendLabOrder = async () => {
             </div>
           )}
 
-          {/* Select Lab Partner */}
           {getSelectedSuccessfulOrders().length > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-blue-800 mb-2">
                 Select Lab Partner
               </h3>
               <p className="text-sm text-blue-700 mb-3">
-                Choose a lab partner to send your selected successful orders to ({getSelectedSuccessfulOrders().length} orders selected)
+                Choose a lab partner to send your selected successful orders to
+                ({getSelectedSuccessfulOrders().length} orders selected)
               </p>
               <select
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -925,7 +680,6 @@ const handleSendLabOrder = async () => {
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex gap-4">
             {getSelectedOrdersForPayment().size > 0 && !verifyingPayment && (
               <button
@@ -987,14 +741,13 @@ const handleSendLabOrder = async () => {
                         d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                       />
                     </svg>
-                    Send {getSelectedSuccessfulOrders().length} Selected Order(s) to{" "}
-                    {selectedLabPartner?.name || "Lab"}
+                    Send {getSelectedSuccessfulOrders().length} Selected
+                    Order(s) to {selectedLabPartner?.name || "Lab"}
                   </>
                 )}
               </button>
             )}
 
-            {/* Orders Already Sent Button (Disabled) */}
             {!investigationsLoading &&
               sentToLabOrders.size > 0 &&
               getUnsentSuccessfulOrdersCount() === 0 &&
@@ -1026,13 +779,12 @@ const handleSendLabOrder = async () => {
         </div>
       )}
 
-      {/* Content */}
       {investigationsLoading ? (
         <div className="flex items-center justify-center py-12 bg-white rounded-b-2xl">
           <Hourglass
             visible={true}
-            height="60"
-            width="60"
+            height="30"
+            width="30"
             ariaLabel="hourglass-loading"
             colors={["#10b981", "#34d399"]}
           />
@@ -1062,33 +814,21 @@ const handleSendLabOrder = async () => {
             const idStr = order.orderId.toString();
             const isOrderSentToLab = sentToLabOrders.has(idStr);
 
-            // Determine if order is blocked (any item duplicate or already paid)
-            let orderHasDuplicate = false;
             let orderHasPaidItem = false;
             const blockedItemNames = [];
 
             for (let i = 0; i < (order.items?.length || 0); i++) {
               const itemKey = `${order.orderId}-${i}`;
-              const item = order.items[i];
-              const dup = isTestDoneWithinMonth(
-                item.testName,
-                order.orderId,
-                i
-              );
-              if (dup.isDuplicate) {
-                orderHasDuplicate = true;
-                blockedItemNames.push(item.testName);
-              }
               if (paidInvestigations.has(itemKey)) {
                 orderHasPaidItem = true;
+                blockedItemNames.push(order.items[i].testName);
               }
             }
 
             const disabledSelect =
-              (orderHasDuplicate && order.status !== "success") ||
               (orderHasPaidItem && order.status !== "success") ||
               order.status === "completed" ||
-              (order.status === "success" && sentToLabOrders.has(idStr)); // Only prevent if already sent to lab
+              (order.status === "success" && sentToLabOrders.has(idStr));
 
             return (
               <div
@@ -1143,7 +883,8 @@ const handleSendLabOrder = async () => {
                   </div>
                   {order.status === "success" && !isOrderSentToLab && (
                     <p className="text-xs text-green-600 mt-2">
-                      ✓ This order has been paid for successfully and is ready to be sent to a lab partner
+                      ✓ This order has been paid for successfully and is ready
+                      to be sent to a lab partner
                     </p>
                   )}
                   {order.status === "success" && isOrderSentToLab && (
@@ -1151,11 +892,13 @@ const handleSendLabOrder = async () => {
                       ✓ This order has been sent to a lab partner for processing
                     </p>
                   )}
-                  {disabledSelect && orderHasDuplicate && order.status !== "success" && (
-                    <p className="text-xs text-red-600 mt-2">
-                      Blocked for payment: {blockedItemNames.join(", ")}
-                    </p>
-                  )}
+                  {disabledSelect &&
+                    orderHasPaidItem &&
+                    order.status !== "success" && (
+                      <p className="text-xs text-red-600 mt-2">
+                        Blocked for payment: {blockedItemNames.join(", ")}
+                      </p>
+                    )}
                 </div>
 
                 <div className="p-6">
@@ -1164,11 +907,6 @@ const handleSendLabOrder = async () => {
                       const key = `${order.orderId}-${itemIndex}`;
                       const isPaid = paidInvestigations.has(key);
                       const isOrderSuccessful = order.status === "success";
-                      const dup = isTestDoneWithinMonth(
-                        item.testName,
-                        order.orderId,
-                        itemIndex
-                      );
 
                       return (
                         <div
@@ -1176,65 +914,32 @@ const handleSendLabOrder = async () => {
                           className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
                             isPaid || isOrderSuccessful
                               ? "bg-green-50 border-green-200"
-                              : dup.isDuplicate
-                              ? "bg-red-50 border-red-200 opacity-75"
                               : "bg-gray-50 border-gray-200 hover:border-gray-300"
                           }`}
                         >
                           <div>
                             <h4
                               className={`font-medium mb-1 ${
-                                dup.isDuplicate
-                                  ? "text-red-700"
-                                  : isOrderSuccessful
+                                isOrderSuccessful
                                   ? "text-green-700"
                                   : "text-gray-800"
                               }`}
                             >
                               {item.testName}
-                              {dup.isDuplicate && (
-                                <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                                  Recently Done
-                                </span>
-                              )}
                             </h4>
                             <p
                               className={`text-sm ${
-                                dup.isDuplicate
-                                  ? "text-red-600"
-                                  : isOrderSuccessful
+                                isOrderSuccessful
                                   ? "text-green-600"
                                   : "text-gray-600"
                               }`}
                             >
                               {item.instruction}
                             </p>
-                            {dup.isDuplicate && (
-                              <p className="text-xs text-red-600 mt-1">
-                                Last done:{" "}
-                                {Math.ceil(
-                                  (new Date() - dup.lastDoneDate) /
-                                    (1000 * 60 * 60 * 24)
-                                )}{" "}
-                                days ago (Order #{dup.orderId}). Available in{" "}
-                                {30 -
-                                  Math.ceil(
-                                    (new Date() - dup.lastDoneDate) /
-                                      (1000 * 60 * 60 * 24)
-                                  )}{" "}
-                                days.
-                              </p>
-                            )}
                           </div>
 
                           <div className="flex items-center gap-3 ml-4">
-                            <span
-                              className={`text-lg font-semibold ${
-                                dup.isDuplicate
-                                  ? "text-red-600"
-                                  : "text-green-600"
-                              }`}
-                            >
+                            <span className="text-lg font-semibold text-green-600">
                               ₦{item.price?.toLocaleString()}
                             </span>
                             {(isPaid || isOrderSuccessful) && (
@@ -1253,24 +958,6 @@ const handleSendLabOrder = async () => {
                                   />
                                 </svg>
                                 PAID
-                              </div>
-                            )}
-                            {dup.isDuplicate && (
-                              <div className="flex items-center gap-1 text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs font-medium">
-                                <svg
-                                  className="w-3 h-3"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
-                                  />
-                                </svg>
-                                BLOCKED
                               </div>
                             )}
                             {isOrderSentToLab && (

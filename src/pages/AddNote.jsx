@@ -379,17 +379,29 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   };
 
   // 4. Add this function to handle drug selection
+  // const handleDrugSelect = (drug, index) => {
+  //   const updatedForms = [...prescriptionForms];
+  //   updatedForms[index] = {
+  //     ...updatedForms[index],
+  //     drugName: drug.dosageForm, // Use dosageForm as it contains the actual drug name
+  //   };
+  //   setPrescriptionForms(updatedForms);
+  //   setShowDrugDropdown(false);
+  //   setDrugSearchResults([]);
+  //   setActiveDrugSearchIndex(null);
+  // };
+
   const handleDrugSelect = (drug, index) => {
-    const updatedForms = [...prescriptionForms];
-    updatedForms[index] = {
-      ...updatedForms[index],
-      drugName: drug.dosageForm, // Use dosageForm as it contains the actual drug name
-    };
-    setPrescriptionForms(updatedForms);
-    setShowDrugDropdown(false);
-    setDrugSearchResults([]);
-    setActiveDrugSearchIndex(null);
+  const updatedForms = [...prescriptionForms];
+  updatedForms[index] = {
+    ...updatedForms[index],
+    drugName: drug.dosageForm || drug.name || drug.genericName || '', // Fallback to other possible fields
   };
+  setPrescriptionForms(updatedForms);
+  setShowDrugDropdown(false);
+  setDrugSearchResults([]);
+  setActiveDrugSearchIndex(null);
+};
 
   const handleAddMorePrescription = () => {
     setPrescriptionForms([
@@ -538,13 +550,13 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           </button>
           <button
             className={`px-4 py-2 ${
-              activeTab === "lab"
+              activeTab === "investigations"
                 ? "border-b-2 border-blue-500 text-blue-500"
                 : "text-gray-500"
             }`}
-            onClick={() => setActiveTab("lab")}
+            onClick={() => setActiveTab("investigations")}
           >
-            Lab
+            Investigations
           </button>
         </div>
 
@@ -982,7 +994,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             )}
 
             {activeTab === "ViewDocuments" && <ViewDocuments />}
-            {activeTab === "lab" && <Lab doctorId={userData?.id} />}
+            {activeTab === "Investigations" && <Lab doctorId={userData?.id} />}
           </>
         )}
 
@@ -1033,7 +1045,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Drug Name *
                         </label>
-                        <input
+                        {/* <input
                           type="text"
                           name="drugName"
                           value={form.drugName}
@@ -1053,7 +1065,27 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Start typing to search drugs..."
                           required
-                        />
+                        /> */}
+                        <input
+  type="text"
+  name="drugName"
+  value={form.drugName}
+  onChange={(e) => handlePrescriptionChange(e, index)}
+  onFocus={() => {
+    if (form.drugName && form.drugName.length >= 2) {
+      searchDrugs(form.drugName, index);
+    }
+  }}
+  onBlur={() => {
+    setTimeout(() => {
+      setShowDrugDropdown(false);
+      setActiveDrugSearchIndex(null);
+    }, 200);
+  }}
+  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+  placeholder="Start typing to search drugs..."
+  required
+/>
 
                         {/* Drug Search Dropdown */}
                         {showDrugDropdown &&

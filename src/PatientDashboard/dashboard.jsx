@@ -774,7 +774,7 @@ const Dashboard = () => {
       `}</style>
 
       <div className="w-full px-4 py-8 overflow-hidden">
-        <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 xl:grid-cols-3 md:gap-8 mt-4">
+        <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 md:gap-8 mt-4">
           <div onClick={handleCallADoctorClick}>
             <Cards title="Call a Doctor" img={call} />
           </div>
