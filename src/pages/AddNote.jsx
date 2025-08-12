@@ -68,6 +68,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState(null);
 
+  const [drugSearchResults, setDrugSearchResults] = useState([]);
+const [drugSearchLoading, setDrugSearchLoading] = useState(false);
+const [showDrugDropdown, setShowDrugDropdown] = useState(false);
+const [activeDrugSearchIndex, setActiveDrugSearchIndex] = useState(null);
+
   useEffect(() => {
     if (patientId && isOpen && !existingNotes.length) {
       fetchPatientNotes();
@@ -79,6 +84,41 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
       fetchPatientPrescriptions();
     }
   }, [activeTab, patientId]);
+
+  
+const searchDrugs = debounce(async (searchTerm, index) => {
+  if (!searchTerm || searchTerm.length < 2) {
+    setDrugSearchResults([]);
+    setShowDrugDropdown(false);
+    return;
+  }
+
+  setDrugSearchLoading(true);
+  setActiveDrugSearchIndex(index);
+  
+  try {
+    const response = await axios.get(`${baseUrl}/api/drugs/search`, {
+      params: {
+        keyword: searchTerm,
+        page: 0,
+        size: 10
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    
+    setDrugSearchResults(response.data);
+    setShowDrugDropdown(true);
+  } catch (error) {
+    console.error("Error searching drugs:", error);
+    setDrugSearchResults([]);
+    setShowDrugDropdown(false);
+  } finally {
+    setDrugSearchLoading(false);
+  }
+}, 300);
 
   const fetchPatientNotes = async () => {
     setLoading(true);
@@ -334,16 +374,44 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     setIsPrescriptionModalOpen(true);
   };
 
-  const handlePrescriptionChange = (e, index) => {
-    const updatedForms = [...prescriptionForms];
-    updatedForms[index] = {
-      ...updatedForms[index],
-      [e.target.name]: e.target.value,
-    };
-    setPrescriptionForms(updatedForms);
-    setPrescriptionError("");
-  };
+  // const handlePrescriptionChange = (e, index) => {
+  //   const updatedForms = [...prescriptionForms];
+  //   updatedForms[index] = {
+  //     ...updatedForms[index],
+  //     [e.target.name]: e.target.value,
+  //   };
+  //   setPrescriptionForms(updatedForms);
+  //   setPrescriptionError("");
+  // };
 
+  const handlePrescriptionChange = (e, index) => {
+  const updatedForms = [...prescriptionForms];
+  updatedForms[index] = {
+    ...updatedForms[index],
+    [e.target.name]: e.target.value,
+  };
+  setPrescriptionForms(updatedForms);
+  setPrescriptionError("");
+
+  // Trigger drug search when drugName field changes
+  if (e.target.name === 'drugName') {
+    searchDrugs(e.target.value, index);
+  }
+};
+
+// 4. Add this function to handle drug selection
+const handleDrugSelect = (drug, index) => {
+  const updatedForms = [...prescriptionForms];
+  updatedForms[index] = {
+    ...updatedForms[index],
+    drugName: drug.genericName,
+  };
+  setPrescriptionForms(updatedForms);
+  setShowDrugDropdown(false);
+  setDrugSearchResults([]);
+  setActiveDrugSearchIndex(null);
+};
+  
   const handleAddMorePrescription = () => {
     setPrescriptionForms([
       ...prescriptionForms,
@@ -982,7 +1050,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      {/* <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Drug Name *
                         </label>
@@ -994,7 +1062,75 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
                         />
-                      </div>
+                      </div> */}
+                      <div className="relative">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Drug Name *
+  </label>
+  <input
+    type="text"
+    name="drugName"
+    value={form.drugName}
+    onChange={(e) => handlePrescriptionChange(e, index)}
+    onFocus={() => {
+      if (form.drugName && form.drugName.length >= 2) {
+        searchDrugs(form.drugName, index);
+      }
+    }}
+    onBlur={() => {
+      // Delay hiding dropdown to allow for selection
+      setTimeout(() => {
+        setShowDrugDropdown(false);
+        setActiveDrugSearchIndex(null);
+      }, 200);
+    }}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    placeholder="Start typing to search drugs..."
+    required
+  />
+  
+  {/* Drug Search Dropdown */}
+  {showDrugDropdown && activeDrugSearchIndex === index && (
+    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+      {drugSearchLoading ? (
+        <div className="p-3 text-center">
+          <div className="inline-flex items-center">
+            <ColorRing
+              visible={true}
+              height="20"
+              width="20"
+              ariaLabel="loading"
+              wrapperClass="color-ring-wrapper"
+              colors={["#3B82F6", "#3B82F6", "#3B82F6", "#3B82F6", "#3B82F6"]}
+            />
+            <span className="ml-2 text-sm text-gray-500">Searching...</span>
+          </div>
+        </div>
+      ) : drugSearchResults.length > 0 ? (
+        drugSearchResults.map((drug, drugIndex) => (
+          <div
+            key={drugIndex}
+            className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+            onClick={() => handleDrugSelect(drug, index)}
+          >
+            <div className="font-medium text-gray-900">
+              {drug.genericName}
+            </div>
+            {drug.dosageForm && (
+              <div className="text-sm text-gray-500">
+                Form: {drug.dosageForm}
+              </div>
+            )}
+          </div>
+        ))
+      ) : (
+        <div className="p-3 text-sm text-gray-500 text-center">
+          No drugs found
+        </div>
+      )}
+    </div>
+  )}
+</div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
