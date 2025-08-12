@@ -35,6 +35,18 @@ import { PiStethoscope } from "react-icons/pi";
 import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 const localizer = dayjsLocalizer(dayjs);
+
+// Custom calendar styles
+const calendarStyle = {
+  height: 400,
+  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontSize: "14px",
+  backgroundColor: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: "8px",
+  overflow: "hidden",
+};
+
 const modalStyle = {
   position: "absolute",
   top: "50%",
@@ -97,6 +109,7 @@ const specialistCategory = [
     specialization: "UROLOGIST",
   },
 ];
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
@@ -108,8 +121,8 @@ const Dashboard = () => {
   const [isSpecialistsModalOpen, setIsSpecialistsModalOpen] = useState(false);
   const [isCallADoctorModalOpen, setIsCallADoctorModalOpen] = useState(false);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]); // New state for calendar events
   const [videoLink, setVideoLink] = useState(null);
-  // const [meetingLink, setMeetingLink] = useState(null);
   const [videoMeetingUrl, setVideoMeetingUrl] = useState(null);
   const [specialistDetails, setSpecialistDetails] = useState([]);
   const token = getToken();
@@ -134,7 +147,80 @@ const Dashboard = () => {
   const GETSPECIALISTDATA = `${baseUrl}/api/appointments/specialists/slots`;
   const GETUPCOMINGAPPOINTMENTS = `${baseUrl}/api/appointments/upcoming/patient`;
   const BOOK_APPOINTMENT_URL = `${baseUrl}/api/appointments/book`;
-  // const BOOK_MEETING_URL = `${baseUrl}//api/appointment/meetings`;
+
+  // Custom event style getter for calendar
+  const eventStyleGetter = (event, start, end, isSelected) => {
+    const now = new Date();
+    const eventStart = new Date(start);
+    const isUpcoming = eventStart > now;
+    const isToday = dayjs(eventStart).isSame(dayjs(now), "day");
+
+    let backgroundColor = "#3174ad";
+    let borderColor = "#3174ad";
+
+    if (!isUpcoming) {
+      backgroundColor = "#6b7280"; // gray for past appointments
+      borderColor = "#6b7280";
+    } else if (isToday) {
+      backgroundColor = "#10b981"; // green for today's appointments
+      borderColor = "#10b981";
+    }
+
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: "6px",
+        opacity: 0.9,
+        color: "white",
+        border: `1px solid ${borderColor}`,
+        fontSize: "12px",
+        fontWeight: "500",
+        padding: "2px 6px",
+      },
+    };
+  };
+
+  // Custom calendar components
+  const CustomEvent = ({ event }) => (
+    <div className="text-xs font-medium truncate">
+      <div className="font-semibold">Dr. {event.doctorName}</div>
+      <div className="text-xs opacity-90">{event.time}</div>
+    </div>
+  );
+
+  // Transform appointments to calendar events
+  const transformAppointmentsToEvents = (appointments) => {
+    return appointments.map((appointment) => {
+      const startDate = new Date(`${appointment.date}T${appointment.time}`);
+      const endDate = new Date(startDate.getTime() + 30 * 60000); // 30 minutes duration
+
+      return {
+        id: appointment.slotId || appointment.id,
+        title: `Dr. ${appointment.name}`,
+        start: startDate,
+        end: endDate,
+        doctorName: appointment.name,
+        time: formatTime(appointment.time),
+        resource: appointment,
+      };
+    });
+  };
+
+  // Handle calendar event click
+  const handleEventClick = (event) => {
+    const appointment = event.resource;
+    const status = getAppointmentStatus(appointment);
+
+    if (status === "active") {
+      handleJoinCall(appointment.slotId);
+    } else {
+      toast.info(
+        `Appointment with Dr. ${appointment.name} on ${
+          appointment.date
+        } at ${formatTime(appointment.time)}`
+      );
+    }
+  };
 
   // Update current time every minute
   useEffect(() => {
@@ -157,11 +243,11 @@ const Dashboard = () => {
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
     if (minutesDiff > 45) {
-      return "over"; // More than 30 minutes past appointment time
+      return "over";
     } else if (minutesDiff >= -5 && minutesDiff <= 30) {
-      return "active"; // 5 minutes before to 30 minutes after
+      return "active";
     } else {
-      return "upcoming"; // More than 5 minutes before
+      return "upcoming";
     }
   };
 
@@ -196,11 +282,9 @@ const Dashboard = () => {
   const generateMeetingUrl = async (slotId) => {
     const token = getToken();
     if (!userId || !slotId || !token) {
-      // toast.error("Missing required info to generate meeting URL");
       return;
     }
 
-    // Check if URL already exists in state
     if (meetingUrlGenerated.has(slotId)) {
       console.log("URL already generated for this slot");
       return;
@@ -217,14 +301,12 @@ const Dashboard = () => {
         },
       });
 
-      // Store the URL with the slotId
       const meetingUrl = response.data.meetingUrl || response.data.url;
       setVideoMeetingUrl(meetingUrl);
       setMeetingUrlGenerated((prev) => new Map(prev).set(slotId, meetingUrl));
       toast.success("Meeting URL generated! You can join when ready.");
     } catch (error) {
       console.error("Generate URL error:", error);
-      // toast.error("Failed to generate meeting URL");
     } finally {
       setIsLoading(false);
     }
@@ -240,7 +322,6 @@ const Dashboard = () => {
     try {
       setIsLoading(true);
 
-      // Get the meeting URL
       const getUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
       const getResponse = await axios.get(getUrl, {
         headers: {
@@ -255,7 +336,6 @@ const Dashboard = () => {
 
       setVideoMeetingUrl(meetingUrl);
 
-      // Join the meeting
       const postUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/join`;
       await axios.post(
         postUrl,
@@ -285,15 +365,12 @@ const Dashboard = () => {
     if (storedUrl) {
       setVideoMeetingUrl(storedUrl);
       setShowModal(true);
-      // toast.success("Joining meeting...");
       return;
     }
 
-    // If no stored URL, generate one first
     await generateMeetingUrl(slotId);
   };
 
-  // Handle upcoming modal actions
   const handleCloseUpcomingModal = () => {
     setShowUpcomingModal(false);
     setCurrentUpcomingAppointment(null);
@@ -352,19 +429,16 @@ const Dashboard = () => {
       console.log(response);
       toast.success("Appointment booked successfully!");
 
-      // Add the booked slot to our tracking set immediately
       setBookedSlots((prev) => new Set(prev).add(slotId));
 
       handleClosePopover();
       setIsSpecialistsModalOpen(false);
       setIsMainModalOpen(false);
 
-      // Refresh upcoming appointments to get the latest data
       await getUpcomingAppointments();
     } catch (error) {
       console.error("Booking error:", error);
       toast.error("Failed to book appointment");
-      // Remove from bookedSlots if booking failed
       setBookedSlots((prev) => {
         const newSet = new Set(prev);
         newSet.delete(slotId);
@@ -410,7 +484,6 @@ const Dashboard = () => {
       slotGroups: specialist.slotGroups?.map((slotGroup) => ({
         ...slotGroup,
         slots: slotGroup.slots?.sort((a, b) => {
-          // Parse time strings and compare
           const timeA = dayjs(`${a.date}T${a.time}`);
           const timeB = dayjs(`${b.date}T${b.time}`);
           return timeA.isBefore(timeB) ? -1 : timeA.isAfter(timeB) ? 1 : 0;
@@ -435,17 +508,14 @@ const Dashboard = () => {
       const parsedResponse = response?.data || {};
       const specialists = Object.values(parsedResponse).flat();
 
-      // Sort slots by time before setting state
       const sortedSpecialists = sortSlotsByTime(specialists);
       setSpecialistDetails(sortedSpecialists);
 
       console.log(sortedSpecialists);
       setIsLoading(false);
     } catch (error) {
-      // console.error("Error fetching specialists:", error);
       setIsLoading(false);
     }
-    // console.log("Specialist details fetched:", specialistDetails);
   };
 
   const getUpcomingAppointments = async () => {
@@ -462,6 +532,11 @@ const Dashboard = () => {
       );
       const formattedData = response.data;
       setUpcomingAppointments(formattedData);
+
+      // Transform appointments to calendar events
+      const events = transformAppointmentsToEvents(formattedData);
+      setCalendarEvents(events);
+
       setIsLoading(false);
     } catch (error) {
       console.log("Error fetching upcoming appointments:", error);
@@ -512,7 +587,6 @@ const Dashboard = () => {
       const timeDiffToStart = appointmentDateTime.getTime() - now.getTime();
       const minutesDiffToStart = Math.floor(timeDiffToStart / (1000 * 60));
 
-      // Generate URL 5 minutes before appointment
       if (
         minutesDiffToStart === 5 &&
         !meetingUrlGenerated.has(appointment.slotId) &&
@@ -525,7 +599,6 @@ const Dashboard = () => {
         setNotificationShown((prev) => new Set(prev).add(appointment.slotId));
       }
 
-      // Show join option when appointment time arrives
       const minutesPastStart = Math.floor(
         (now.getTime() - appointmentDateTime.getTime()) / (1000 * 60)
       );
@@ -575,16 +648,14 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    // Initialize booked slots from upcoming appointments
     const bookedSlotIds = upcomingAppointments
       .map((apt) => apt.slotId)
-      .filter(Boolean); // Remove any undefined/null slotIds
+      .filter(Boolean);
 
     setBookedSlots(new Set(bookedSlotIds));
   }, [upcomingAppointments]);
 
   const isSlotBooked = (slotId) => {
-    // Check both local state and upcoming appointments
     return bookedSlots.has(slotId) || isSlotBookedFromAppointments(slotId);
   };
 
@@ -608,10 +679,100 @@ const Dashboard = () => {
   const handleRoute = () => {
     navigate("/patient-dashboard/patient-investigations");
   };
-  
+
   return (
     <div className="w-full">
       <ToastContainer />
+
+      {/* Custom Calendar Styles */}
+      <style jsx>{`
+        .rbc-calendar {
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .rbc-header {
+          background: #f9fafb;
+          border-bottom: 1px solid #e5e7eb;
+          font-weight: 600;
+          color: #374151;
+          padding: 12px 8px;
+          font-size: 14px;
+        }
+        .rbc-month-view {
+          border: none;
+        }
+        .rbc-date-cell {
+          overflow-y: auto;
+          padding: 8px 4px;
+          font-size: 13px;
+          color: #6b7280;
+        }
+        .rbc-date-cell.rbc-off-range {
+          color: #d1d5db;
+        }
+        .rbc-today {
+          background-color: #dbeafe !important;
+        }
+        .rbc-day-bg.rbc-today {
+          background-color: #dbeafe;
+        }
+        .rbc-month-row {
+          border-bottom: 1px solid #f3f4f6;
+        }
+        .rbc-date-cell + .rbc-date-cell {
+          border-left: 1px solid #f3f4f6;
+        }
+        .rbc-event {
+          border-radius: 4px;
+          font-size: 11px;
+          line-height: 1.2;
+          margin: 1px 0;
+          padding: 2px 4px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .rbc-event:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .rbc-show-more {
+          color: #3b82f6;
+          font-size: 11px;
+          font-weight: 500;
+        }
+        .rbc-toolbar {
+          padding: 16px;
+          background: #f9fafb;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .rbc-toolbar button {
+          background: white;
+          border: 1px solid #d1d5db;
+          color: #374151; 
+          padding: 6px 12px;
+          overflow-y: scroll;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+        }
+        .rbc-toolbar button:hover {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+        .rbc-toolbar button.rbc-active {
+          background: #3b82f6;
+          border-color: #3b82f6;
+          color: white;
+        }
+        .rbc-toolbar-label {
+          font-size: 18px;
+          font-weight: 600;
+          color: #111827;
+        }
+      `}</style>
+
       <div className="w-full px-4 py-8 overflow-hidden">
         <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 xl:grid-cols-3 md:gap-8 mt-4">
           <div onClick={handleCallADoctorClick}>
@@ -627,24 +788,50 @@ const Dashboard = () => {
               img={calendarIcon}
             />
           </div>
-          <div onClick={() => handleCardClick("Get your test done"), handleRoute}>
-            <Cards title="Get your test done" img={testTube} />
-          </div>
         </div>
 
         <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-6 xl:gap-y-0 xl:flex-row items-start gap-x-8 px-1">
           <div className="w-full xl:w-[68%] rounded-lg border bg-white border-gray-200 p-4">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-blue-900 md:text-xl mb-2">
+                Appointments Calendar
+              </h2>
+              <p className="text-gray-600 text-sm">
+                View and manage your scheduled appointments
+              </p>
+            </div>
             <Calendar
               localizer={localizer}
+              events={calendarEvents}
               startAccessor="start"
               endAccessor="end"
-              style={{
-                height: 400,
-                color: "gray",
-                fontSize: 18,
-                textAlign: "center",
+              onSelectEvent={handleEventClick}
+              eventPropGetter={eventStyleGetter}
+              components={{
+                event: CustomEvent,
+              }}
+              style={calendarStyle}
+              views={["month", "week", "day"]}
+              defaultView="month"
+              popup={true}
+              popupOffset={30}
+              messages={{
+                next: "Next",
+                previous: "Prev",
+                today: "Today",
+                month: "Month",
+                week: "Week",
+                day: "Day",
               }}
             />
+            {calendarEvents.length === 0 && !isLoading && (
+              <div className="text-center text-gray-500 py-8">
+                <p className="text-lg mb-2">📅 No appointments scheduled</p>
+                <p className="text-sm">
+                  Book an appointment with a specialist to see it here
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="w-full xl:w-[32%] h-[435px] rounded-lg border overflow-y-scroll bg-white border-gray-200 p-4">
@@ -699,7 +886,6 @@ const Dashboard = () => {
                             </div>
                           </div>
 
-                          {/* Show Join Button if ACTIVE, otherwise show date/time */}
                           {status === "active" ? (
                             <button
                               onClick={() => handleJoinCall(details.slotId)}
@@ -733,6 +919,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Main Modal for Specialist Categories */}
       <Modal
         open={isMainModalOpen}
         onClose={() => setIsMainModalOpen(false)}
@@ -777,6 +964,7 @@ const Dashboard = () => {
         </Box>
       </Modal>
 
+      {/* Specialists Modal */}
       <Modal
         open={isSpecialistsModalOpen}
         onClose={() => setIsSpecialistsModalOpen(false)}
@@ -934,6 +1122,7 @@ const Dashboard = () => {
         </Box>
       </Modal>
 
+      {/* Call a Doctor Modal */}
       <Modal
         open={isCallADoctorModalOpen}
         onClose={() => setIsCallADoctorModalOpen(false)}
@@ -987,7 +1176,6 @@ const Dashboard = () => {
                 >
                   {videoLink?.roomUrl}
                 </a>
-                {/* {showModal && videoMeetingUrl && ( */}
                 <Link
                   to={`/video-call?roomUrl=${encodeURIComponent(
                     videoLink?.roomUrl
@@ -997,13 +1185,13 @@ const Dashboard = () => {
                     Click to Join the Meeting
                   </button>
                 </Link>
-                {/* )} */}
               </div>
             )}
           </div>
         </Box>
       </Modal>
 
+      {/* Booking Confirmation Popover */}
       <Popover
         open={Boolean(anchorEl)}
         anchorEl={anchorEl}
@@ -1066,6 +1254,7 @@ const Dashboard = () => {
         </div>
       </Popover>
 
+      {/* Join Meeting Modal Overlay */}
       {showModal && videoMeetingUrl && (
         <Link to={`/video-call?roomUrl=${encodeURIComponent(videoMeetingUrl)}`}>
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
@@ -1082,6 +1271,7 @@ const Dashboard = () => {
         </Link>
       )}
 
+      {/* Upcoming Appointment Modal */}
       {showUpcomingModal && currentUpcomingAppointment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">

@@ -21,13 +21,14 @@ const modalStyle = {
   maxHeight: "90vh",
 };
 
+// New modal style for order confirmation
 const orderModalStyle = {
   position: "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: "95%",
-  maxWidth: "900px",
+  maxWidth: "800px",
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 0,
@@ -36,7 +37,7 @@ const orderModalStyle = {
   maxHeight: "95vh",
 };
 
-const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
+const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [medications, setMedications] = useState([]);
   const [showPharmacyDropdown, setShowPharmacyDropdown] = useState(null);
@@ -54,39 +55,11 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
     },
   ];
 
-  const labPartners = [
-    {
-      id: "smartlab",
-      name: "SmartLab",
-      partner: "SMARTLAB",
-    },
-    {
-      id: "degree_360_lab",
-      name: "Degree 360 Lab",
-      partner: "DEGREE_360",
-    },
-  ];
-
+  // New states for order modal
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
-
-  // Updated investigations modal state
-  const [investigationsModalOpen, setInvestigationsModalOpen] = useState(false);
-  const [allInvestigationOrders, setAllInvestigationOrders] = useState([]);
-  const [investigationsLoading, setInvestigationsLoading] = useState(false);
-  const [selectedLabPartner, setSelectedLabPartner] = useState(null);
-  const [labOrderSending, setLabOrderSending] = useState(false);
-
-  // Payment state - updated for multiple selections
-  const [paymentLoading, setPaymentLoading] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
-  const [selectedInvestigations, setSelectedInvestigations] = useState(
-    new Set()
-  );
-  const [paidInvestigations, setPaidInvestigations] = useState(new Set());
-  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   const dropdownRef = useRef(null);
 
@@ -100,11 +73,13 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
   };
 
   const handlePharmacySelect = (pharmacy, patientData) => {
+    // Always open the modal first to see what's happening
     setSelectedPharmacy(pharmacy);
     setSelectedPatient(patientData);
     setOrderModalOpen(true);
     setShowPharmacyDropdown(null);
 
+    // Show warning if no prescriptions, but still open modal
     if (!patientData?.prescriptions || patientData.prescriptions.length === 0) {
       toast.warning("No medications prescribed for this patient");
     }
@@ -146,7 +121,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
         );
       }
 
-      const result = await response.text();
+      const result = await response.text(); // or use try-catch for flexibility
       console.log(result, "results");
 
       toast.success(
@@ -157,274 +132,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
       toast.error(`Failed to order drugs: ${error.message}`);
     } finally {
       setOrderLoading(false);
-    }
-  };
-
-  // Updated function to handle viewing all investigations
-  const handleViewInvestigations = async (patientData) => {
-    setInvestigationsLoading(true);
-    setInvestigationsModalOpen(true);
-    setSelectedPatient(patientData);
-    setSelectedLabPartner(null);
-    setSelectedInvestigations(new Set());
-
-    try {
-      const token = getToken();
-      if (!patientId) {
-        throw new Error("Patient ID not provided");
-      }
-
-      const response = await fetch(
-        `${baseUrl}/api/investigations/orders/patient/${patientId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch investigation orders");
-      }
-
-      const orders = await response.json();
-
-      // Sort orders by date (most recent first)
-      const sortedOrders = orders.sort(
-        (a, b) => new Date(b.createdDate) - new Date(a.createdDate)
-      );
-
-      setAllInvestigationOrders(sortedOrders);
-    } catch (error) {
-      toast.error(`Failed to fetch investigation orders: ${error.message}`);
-      setAllInvestigationOrders([]);
-    } finally {
-      setInvestigationsLoading(false);
-    }
-  };
-
-  // Function to toggle investigation selection
-  const toggleInvestigationSelection = (orderId, itemIndex) => {
-    const key = `${orderId}-${itemIndex}`;
-    const newSelected = new Set(selectedInvestigations);
-
-    if (newSelected.has(key)) {
-      newSelected.delete(key);
-    } else {
-      newSelected.add(key);
-    }
-
-    setSelectedInvestigations(newSelected);
-  };
-
-  // Function to calculate total cost of selected investigations
-  const getSelectedTotal = () => {
-    let total = 0;
-    selectedInvestigations.forEach((key) => {
-      const [orderId, itemIndex] = key.split("-");
-      const order = allInvestigationOrders.find(
-        (o) => o.orderId.toString() === orderId
-      );
-      if (order && order.items[parseInt(itemIndex)]) {
-        total += order.items[parseInt(itemIndex)].price;
-      }
-    });
-    return total;
-  };
-
-  // Payment verification function
-  const verifyPayment = async (reference) => {
-    try {
-      setVerifyingPayment(true);
-      const token = getToken();
-      const response = await fetch(
-        `${baseUrl}/api/investigations/verify-payment?reference=${reference}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const verificationResult = await response.json();
-
-      if (
-        verificationResult.status === "success" ||
-        verificationResult.verified === true
-      ) {
-        // Mark selected investigations as paid
-        const newPaidInvestigations = new Set([
-          ...paidInvestigations,
-          ...selectedInvestigations,
-        ]);
-        setPaidInvestigations(newPaidInvestigations);
-        setSelectedInvestigations(new Set()); // Clear selections after payment
-
-        toast.success("Payment verified successfully!");
-        return true;
-      } else {
-        toast.error("Payment verification failed. Please try again.");
-        return false;
-      }
-    } catch (error) {
-      toast.error(`Failed to verify payment: ${error.message}`);
-      return false;
-    } finally {
-      setVerifyingPayment(false);
-    }
-  };
-
-  // Modified payment function for selected investigations
-  const handleInitiatePayment = async () => {
-    if (selectedInvestigations.size === 0) {
-      toast.warning("Please select investigations to pay for");
-      return;
-    }
-
-    if (!userEmail.trim()) {
-      toast.warning("Please provide your email address");
-      return;
-    }
-
-    setPaymentLoading(true);
-    try {
-      const token = getToken();
-
-      // Prepare payment data for selected investigations
-      const selectedItems = [];
-      selectedInvestigations.forEach((key) => {
-        const [orderId, itemIndex] = key.split("-");
-        const order = allInvestigationOrders.find(
-          (o) => o.orderId.toString() === orderId
-        );
-        if (order && order.items[parseInt(itemIndex)]) {
-          selectedItems.push({
-            orderId: parseInt(orderId),
-            itemIndex: parseInt(itemIndex),
-            item: order.items[parseInt(itemIndex)],
-          });
-        }
-      });
-
-      const response = await fetch(
-        `${baseUrl}/api/investigations/initiate-payment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            selectedInvestigations: selectedItems,
-            email: userEmail.trim(),
-            totalAmount: getSelectedTotal(),
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const paymentData = await response.json();
-
-      // Handle payment similar to original implementation
-      if (paymentData.authorizationUrl || paymentData.authorization_url) {
-        const reference = paymentData.reference || paymentData.access_code;
-
-        const paymentWindow = window.open(
-          paymentData.authorizationUrl || paymentData.authorization_url,
-          "paystack-payment",
-          "width=500,height=600,scrollbars=yes,resizable=yes"
-        );
-
-        const pollPayment = setInterval(async () => {
-          if (paymentWindow.closed) {
-            clearInterval(pollPayment);
-            if (reference) {
-              const verified = await verifyPayment(reference);
-              if (verified) {
-                setPaymentLoading(false);
-              }
-            }
-            setPaymentLoading(false);
-          }
-        }, 1000);
-      } else {
-        // Mock success for demo
-        const mockRef = paymentData.reference || "MOCK_REF_" + Date.now();
-        const verified = await verifyPayment(mockRef);
-        if (verified) {
-          toast.success("Payment completed successfully!");
-        }
-      }
-    } catch (error) {
-      toast.error(`Failed to initiate payment: ${error.message}`);
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
-
-  // Function to send lab order for paid investigations
-  const handleSendLabOrder = async () => {
-    if (!selectedLabPartner) {
-      toast.warning("Please select a lab partner");
-      return;
-    }
-
-    const paidItems = Array.from(paidInvestigations);
-    if (paidItems.length === 0) {
-      toast.warning("No paid investigations to send");
-      return;
-    }
-
-    setLabOrderSending(true);
-    try {
-      const token = getToken();
-
-      // Group paid investigations by orderId for API call
-      const orderIds = [...new Set(paidItems.map((key) => key.split("-")[0]))];
-
-      for (const orderId of orderIds) {
-        const response = await fetch(
-          `${baseUrl}/api/investigations/investigations/select-lab?orderId=${orderId}&labPartner=${selectedLabPartner.partner}`,
-          {
-            method: "POST",
-            headers: {
-              Accept: "*/*",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.message || `HTTP error! status: ${response.status}`
-          );
-        }
-      }
-
-      toast.success(
-        `Lab orders sent to ${selectedLabPartner.name} successfully!`
-      );
-      setInvestigationsModalOpen(false);
-    } catch (error) {
-      toast.error(`Failed to send lab order: ${error.message}`);
-    } finally {
-      setLabOrderSending(false);
     }
   };
 
@@ -454,13 +161,19 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
               {[
                 "Doctor's Full Name",
                 "Visit Date",
-                "Medications",
+                // "Subjective",
+                // "Objective",
+                // "Assessment",
+                // "Plan",
+                "Final diagnosis",
+                // "SOAP comment",
+                "View Medication",
                 "Get Prescription",
-                "Lab Investigations",
+                // "Actions",
               ].map((header, idx) => (
                 <th
                   key={idx}
-                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]"
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   {header}
                 </th>
@@ -471,7 +184,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
           <tbody className="text-center">
             {isLoading ? (
               <tr>
-                <td colSpan="5">
+                <td colSpan="10">
                   <div className="w-full h-[400px] flex items-center justify-center">
                     <Hourglass
                       visible={true}
@@ -485,20 +198,38 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
               </tr>
             ) : data?.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center py-4">
+                <td colSpan="10" className="text-center py-4">
                   {emptyMessage || "No data available"}
                 </td>
               </tr>
             ) : (
               data.map((patient, index) => (
                 <tr key={index} className="border-b border-gray-200">
-                  <td className="px-2 py-2 text-sm text-gray-700 min-w-[150px]">{`${patient?.doctorLastName}, ${patient?.doctorFirstName}`}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700 min-w-[120px]">
+                  <td className="px-2 py-2 text-sm text-gray-700">{`${patient?.doctorLastName}, ${patient?.doctorFirstName}`}</td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
                     {formatDate(patient?.visitDate)}
                   </td>
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.subjective}
+                  </td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.objective}
+                  </td>
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.assessment}
+                  </td> */}
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.plan}
+                  </td> */}
+                  <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.finalDiagnosis}
+                  </td>
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
+                    {patient?.soapComment}
+                  </td> */}
 
                   {/* View Medications */}
-                  <td className="p-4 text-sm min-w-[160px]">
+                  <td className="p-4 text-sm">
                     <button
                       className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 rounded-lg border border-blue-200 transition-all"
                       onClick={() => viewMedications(patient?.prescriptions)}
@@ -528,7 +259,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                   </td>
 
                   {/* Get Prescription with Static Dropdown */}
-                  <td className="px-3 py-3 text-sm relative min-w-[180px]">
+                  <td className="px-3 py-3 text-sm relative">
                     <div className="relative" ref={dropdownRef}>
                       <button
                         className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
@@ -586,6 +317,9 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                                     />
                                   </svg>
                                   {pharmacy.name}
+                                  {/* <span className="text-xs text-blue-500">
+                                    {pharmacy.partner}
+                                  </span> */}
                                 </div>
                               </li>
                             ))}
@@ -593,29 +327,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                         </div>
                       )}
                     </div>
-                  </td>
-
-                  {/* Lab Investigations - Updated to use new modal */}
-                  <td className="px-3 py-3 text-sm relative min-w-[150px]">
-                    <button
-                      className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 hover:from-green-600 hover:via-green-700 hover:to-green-800 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-                      onClick={() => handleViewInvestigations(patient)}
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                        />
-                      </svg>
-                      Investigations
-                    </button>
                   </td>
                 </tr>
               ))
@@ -927,462 +638,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage, patientId }) => {
                 )}
               </button>
             </div>
-          </div>
-        </Box>
-      </Modal>
-
-      {/* New Investigations Modal - Shows all investigations with selection */}
-      <Modal
-        open={investigationsModalOpen}
-        onClose={() =>
-          !labOrderSending &&
-          !paymentLoading &&
-          !verifyingPayment &&
-          setInvestigationsModalOpen(false)
-        }
-        aria-labelledby="investigations-modal-title"
-        aria-describedby="investigations-modal-description"
-      >
-        <Box sx={orderModalStyle}>
-          {/* Modal Header */}
-          <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl">
-            <div className="flex items-center justify-between">
-              <h2
-                id="investigations-modal-title"
-                className="text-xl font-bold text-white flex items-center gap-3"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                  />
-                </svg>
-                All Investigations
-              </h2>
-              {!labOrderSending && !paymentLoading && !verifyingPayment && (
-                <button
-                  onClick={() => setInvestigationsModalOpen(false)}
-                  className="text-white hover:text-gray-200 transition-colors"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Modal Content */}
-          <div className="p-4 md:p-6">
-            {investigationsLoading ? (
-              <div className="w-full h-[400px] flex items-center justify-center">
-                <Hourglass
-                  visible={true}
-                  height="40"
-                  width="40"
-                  ariaLabel="hourglass-loading"
-                  colors={["#306cce", "#72a1ed"]}
-                />
-              </div>
-            ) : allInvestigationOrders?.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <svg
-                  className="w-12 h-12 mx-auto mb-3 text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                  />
-                </svg>
-                <p>No investigation orders available</p>
-                <p className="text-sm mt-2">
-                  No investigations have been ordered for this patient
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Payment verification in progress */}
-                {verifyingPayment && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-blue-500 p-2 rounded-full">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-blue-800">
-                          Verifying Payment
-                        </h3>
-                        <p className="text-sm text-blue-600">
-                          Please wait while we verify your payment...
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Selection Summary */}
-                {selectedInvestigations.size > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-blue-800">
-                          Selected for Payment
-                        </h3>
-                        <p className="text-sm text-blue-600">
-                          {selectedInvestigations.size} investigation(s)
-                          selected
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-800">
-                          ₦{getSelectedTotal().toLocaleString()}
-                        </p>
-                        <p className="text-sm text-blue-600">Total Amount</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Paid Investigations Summary */}
-                {paidInvestigations.size > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-green-500 p-2 rounded-full">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-green-800">
-                          Paid Investigations
-                        </h3>
-                        <p className="text-sm text-green-600">
-                          {paidInvestigations.size} investigation(s) paid for
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Email Input for Payment */}
-                {selectedInvestigations.size > 0 && !verifyingPayment && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-                    <h3 className="text-lg font-semibold text-orange-800 mb-2">
-                      Payment Information
-                    </h3>
-                    <p className="text-sm text-orange-700 mb-3">
-                      Enter your email address to proceed with payment
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <div className="bg-orange-500 p-2 rounded-full">
-                        <svg
-                          className="w-5 h-5 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-orange-800 mb-1">
-                          Email for Payment Receipt
-                        </label>
-                        <input
-                          type="email"
-                          value={userEmail}
-                          onChange={(e) => setUserEmail(e.target.value)}
-                          placeholder="Enter your email address"
-                          className="w-full p-2 border border-orange-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Select Lab Partner - Only shown for paid investigations */}
-                {paidInvestigations.size > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                      Select Lab Partner
-                    </h3>
-                    <p className="text-sm text-blue-700 mb-3">
-                      Choose a lab partner to send your paid investigations to
-                    </p>
-                    <select
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      onChange={(e) =>
-                        setSelectedLabPartner(
-                          labPartners.find((p) => p.id === e.target.value)
-                        )
-                      }
-                      value={selectedLabPartner?.id || ""}
-                    >
-                      <option value="">Choose a lab...</option>
-                      {labPartners.map((lab) => (
-                        <option key={lab.id} value={lab.id}>
-                          {lab.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* All Investigation Orders List */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg
-                      className="w-5 h-5 text-green-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    All Investigation Orders ({allInvestigationOrders.length})
-                  </h3>
-
-                  <div className="max-h-96 overflow-y-auto space-y-4">
-                    {allInvestigationOrders.map((order, orderIndex) => (
-                      <div
-                        key={order.orderId}
-                        className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-                      >
-                        {/* Order Header */}
-                        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
-                          <div className="flex items-center gap-3">
-                            <div className="bg-blue-500 p-2 rounded-full">
-                              <svg
-                                className="w-4 h-4 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-800">
-                                Order #{order.orderId}
-                              </h4>
-                              <div className="text-sm text-gray-600">
-                                <span>Dr. {order.doctorName}</span>
-                                <span className="mx-2">•</span>
-                                <span>{formatDate(order.createdDate)}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-gray-800">
-                              ₦{order.totalCost?.toLocaleString()}
-                            </p>
-                            <p className="text-sm text-gray-600">Total</p>
-                          </div>
-                        </div>
-
-                        {/* Investigation Items */}
-                        <div className="space-y-2">
-                          {order.items?.map((item, itemIndex) => {
-                            const key = `${order.orderId}-${itemIndex}`;
-                            const isSelected = selectedInvestigations.has(key);
-                            const isPaid = paidInvestigations.has(key);
-
-                            return (
-                              <div
-                                key={itemIndex}
-                                className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
-                                  isPaid
-                                    ? "bg-green-50 border-green-200"
-                                    : isSelected
-                                    ? "bg-blue-50 border-blue-200"
-                                    : "bg-gray-50 border-gray-200 hover:border-gray-300"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    disabled={isPaid}
-                                    onChange={() =>
-                                      toggleInvestigationSelection(
-                                        order.orderId,
-                                        itemIndex
-                                      )
-                                    }
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
-                                  />
-                                  <div>
-                                    <p className="font-semibold text-gray-800">
-                                      {item.testName}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {item.instruction}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                  <span className="font-bold text-gray-800">
-                                    ₦{item.price?.toLocaleString()}
-                                  </span>
-                                  {isPaid && (
-                                    <div className="flex items-center gap-1 text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-medium">
-                                      <svg
-                                        className="w-3 h-3"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                      PAID
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-4 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setInvestigationsModalOpen(false)}
-                    disabled={
-                      labOrderSending || paymentLoading || verifyingPayment
-                    }
-                    className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancel
-                  </button>
-
-                  {/* Payment Button - Only shown if selections exist and payment not in progress */}
-                  {selectedInvestigations.size > 0 && !verifyingPayment && (
-                    <button
-                      onClick={handleInitiatePayment}
-                      disabled={
-                        paymentLoading || labOrderSending || !userEmail.trim()
-                      }
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {paymentLoading ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                            />
-                          </svg>
-                          Pay ₦{getSelectedTotal().toLocaleString()}
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {/* Send to Lab Button - Only shown for paid investigations */}
-                  {paidInvestigations.size > 0 && !verifyingPayment && (
-                    <button
-                      onClick={handleSendLabOrder}
-                      disabled={labOrderSending || !selectedLabPartner}
-                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {labOrderSending ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Sending Order...
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                            />
-                          </svg>
-                          Send to {selectedLabPartner?.name || "Lab"}
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
           </div>
         </Box>
       </Modal>

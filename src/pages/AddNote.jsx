@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import debounce from "lodash/debounce";
 import axios from "axios";
 import { baseUrl } from "../env";
 import {
@@ -147,21 +148,23 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const handleAddNote = async (e) => {
     e.preventDefault();
 
+    // const validPrescriptions = prescriptionForms.filter(
+    //   (form) =>
+    //     form.drugName &&
+    //     form.dosage &&
+    //     form.frequency &&
+    //     form.duration &&
+    //     form.instructions
+    // );
+
     const validPrescriptions = prescriptionForms.filter(
       (form) =>
-        form.drugName &&
-        form.dosage &&
-        form.frequency &&
-        form.duration &&
+        form.drugName ||
+        form.dosage ||
+        form.frequency ||
+        form.duration ||
         form.instructions
     );
-
-    if (validPrescriptions.length === 0) {
-      setPrescriptionError(
-        "Please fill in at least one complete prescription."
-      );
-      return;
-    }
 
     const formData = {
       doctorId: userData?.id,
@@ -931,13 +934,8 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
               </div>
             )}
 
-            {activeTab === "ViewDocuments" && (
-            <ViewDocuments />
-            )}
-            {activeTab === "lab" && (
-  <Lab doctorId={userData?.id}
-  />
-)}
+            {activeTab === "ViewDocuments" && <ViewDocuments />}
+            {activeTab === "lab" && <Lab doctorId={userData?.id} />}
           </>
         )}
 
