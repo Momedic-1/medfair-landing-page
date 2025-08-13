@@ -161,14 +161,15 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
               {[
                 "Doctor's Full Name",
                 "Visit Date",
-                "Subjective",
-                "Objective",
-                "Assessment",
-                "Plan",
+                // "Subjective",
+                // "Objective",
+                // "Assessment",
+                // "Plan",
                 "Final diagnosis",
-                "SOAP comment",
-                "Medications",
-                "Actions",
+                // "SOAP comment",
+                "View Medication",
+                "Get Prescription",
+                // "Actions",
               ].map((header, idx) => (
                 <th
                   key={idx}
@@ -208,7 +209,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   <td className="px-2 py-2 text-sm text-gray-700">
                     {formatDate(patient?.visitDate)}
                   </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.subjective}
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
@@ -216,16 +217,16 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   </td>
                   <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.assessment}
-                  </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
+                  </td> */}
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.plan}
-                  </td>
+                  </td> */}
                   <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.finalDiagnosis}
                   </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
+                  {/* <td className="px-2 py-2 text-sm text-gray-700">
                     {patient?.soapComment}
-                  </td>
+                  </td> */}
 
                   {/* View Medications */}
                   <td className="p-4 text-sm">

@@ -71,7 +71,7 @@ const VerificationSuccessful = () => {
           </defs>
         </svg>
 
-        <h1 className='text-2xl font-bold text-gray-800 mb-2'>
+        <h1 className='text-2xl font-bold text-gray-800 mb-0 md:mb-2'>
           Verification Successful!
         </h1>
       </div>
