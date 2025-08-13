@@ -3,7 +3,7 @@ import dashboard from "./assets/dashboard.svg";
 import help from "./assets/help-circle.svg";
 import profile from "./assets/profile (2).svg";
 import subscription from "./assets/subscription.svg";
-import { FaUser } from "react-icons/fa";
+import { FaHandHoldingMedical, FaHospital, FaMoneyBill, FaPhone, FaUser } from "react-icons/fa";
 import Logout from "../Logout";
 import CloseIcon from "../assets/CloseIcon";
 import DashboardIcon from "../assets/DashboardIcon";
@@ -67,7 +67,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
                 onClick={toggleSidebar}
               >
-                <img src={help} alt="Help" />
+                <FaPhone />
                 <span className="ml-3">Contact Us</span>
               </NavLink>
               <NavLink
@@ -75,7 +75,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
                 onClick={toggleSidebar}
               >
-                <img src={subscription} alt="Subscription" />
+                <FaMoneyBill />
                 <span className="ml-3">Subscriptions</span>
               </NavLink>
               <NavLink
@@ -83,7 +83,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
                 onClick={toggleSidebar}
               >
-                <FaUser />
+                <FaHandHoldingMedical />
                 <span className="ml-3">Medications</span>
               </NavLink>
               <NavLink
@@ -91,7 +91,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
                 onClick={toggleSidebar}
               >
-                <FaUser />
+                <FaHospital />
                 <span className="ml-3">Investigations</span>
               </NavLink>
               <NavLink
