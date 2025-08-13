@@ -324,13 +324,13 @@ export default function PatientSignupForm({
                   >
                     Operating Policies
                   </a>{" "}
-                  and{" "}
+                  {/* and{" "}
                   <a
                     href="#"
                     className="text-violet-600 hover:text-violet-700 font-medium transition-colors"
                   >
                     Cookie Policies
-                  </a>{" "}
+                  </a>{" "} */}
                   of Medfair
                 </span>
               </label>
