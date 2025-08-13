@@ -2,8 +2,8 @@ import React from 'react'
 
 const PaymentCheckout = () => {
   return (
-    <div className='flex items-center justify-center min-h-screen bg-white'>
-      <div className='bg-gray-50 p-8 rounded-lg shadow-lg text-center max-w-md w-full'>
+    <div className='flex items-center justify-center md:min-h-screen bg-white'>
+      <div className='bg-gray-50 p-8 my-6 md:my-0 rounded-lg shadow-lg text-center max-w-md w-full'>
         {/* <svg
           className='h-40 w-60 mx-auto mb-4 text-blue-600'
           width='963'
