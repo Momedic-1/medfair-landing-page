@@ -414,7 +414,7 @@ const Investigations = () => {
   };
 
   return (
-    <div className="investigations-component max-w-6xl mx-auto p-6">
+    <div className="investigations-component max-w-6xl mx-auto md:p-6">
       <div className="bg-gradient-to-r from-green-500 to-green-700 px-6 py-6 rounded-t-2xl mb-6">
         <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
           <svg
@@ -437,6 +437,41 @@ const Investigations = () => {
             {allInvestigationOrders.length} orders found
           </p>
         )}
+      </div>
+
+      <div className="mt-8 bg-white rounded-xl p-6 border border-gray-200 mb-4">
+        <h3 className="text-lg text-center lg:text-start font-semibold text-gray-800 mb-4">
+          Summary
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {allInvestigationOrders.length}
+            </div>
+            <div className="text-sm text-gray-600">Total Orders</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {getSuccessfulOrdersCount()}
+            </div>
+            <div className="text-sm text-gray-600">Successful Orders</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-indigo-600">
+              {sentToLabOrders.size}
+            </div>
+            <div className="text-sm text-gray-600">Orders Sent to Lab</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">
+              ₦
+              {allInvestigationOrders
+                .reduce((acc, order) => acc + (order.totalCost || 0), 0)
+                .toLocaleString()}
+            </div>
+            <div className="text-sm text-gray-600">Total Value</div>
+          </div>
+        </div>
       </div>
 
       {(selectedOrders.size > 0 ||
@@ -961,41 +996,6 @@ const Investigations = () => {
               </div>
             );
           })}
-
-          <div className="mt-8 bg-white rounded-xl p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Summary
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {allInvestigationOrders.length}
-                </div>
-                <div className="text-sm text-gray-600">Total Orders</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {getSuccessfulOrdersCount()}
-                </div>
-                <div className="text-sm text-gray-600">Successful Orders</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-indigo-600">
-                  {sentToLabOrders.size}
-                </div>
-                <div className="text-sm text-gray-600">Orders Sent to Lab</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  ₦
-                  {allInvestigationOrders
-                    .reduce((acc, order) => acc + (order.totalCost || 0), 0)
-                    .toLocaleString()}
-                </div>
-                <div className="text-sm text-gray-600">Total Value</div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

@@ -1,8 +1,6 @@
 import { NavLink } from "react-router-dom";
 import dashboard from "./assets/dashboard.svg";
-import help from "./assets/help-circle.svg";
 import profile from "./assets/profile (2).svg";
-import subscription from "./assets/subscription.svg";
 import { FaHandHoldingMedical, FaHospital, FaMoneyBill, FaPhone, FaUser } from "react-icons/fa";
 import Logout from "../Logout";
 import CloseIcon from "../assets/CloseIcon";

@@ -750,7 +750,7 @@ const Dashboard = () => {
         .rbc-toolbar button {
           background: white;
           border: 1px solid #d1d5db;
-          color: #374151; 
+          color: #374151;
           padding: 6px 12px;
           overflow-y: scroll;
           border-radius: 6px;
@@ -773,7 +773,7 @@ const Dashboard = () => {
         }
       `}</style>
 
-      <div className="w-full px-4 py-8 overflow-hidden">
+      <div className="w-full md:px-4 py-8 overflow-hidden">
         <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 md:gap-8 mt-4">
           <div onClick={handleCallADoctorClick}>
             <Cards title="Call a Doctor" img={call} />
@@ -790,8 +790,9 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col gap-6 xl:gap-y-0 xl:flex-row items-start gap-x-8 px-1">
-          <div className="w-full xl:w-[68%] rounded-lg border bg-white border-gray-200 p-4">
+        <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col xl:flex-row gap-6 xl:gap-y-0 gap-x-8 px-1 items-stretch">
+          {/* Calendar Section */}
+          <div className="w-full xl:w-[68%] rounded-lg border bg-white border-gray-200 p-4 flex flex-col">
             <div className="mb-4">
               <h2 className="text-lg font-bold text-blue-900 md:text-xl mb-2">
                 Appointments Calendar
@@ -800,121 +801,130 @@ const Dashboard = () => {
                 View and manage your scheduled appointments
               </p>
             </div>
-            <Calendar
-              localizer={localizer}
-              events={calendarEvents}
-              startAccessor="start"
-              endAccessor="end"
-              onSelectEvent={handleEventClick}
-              eventPropGetter={eventStyleGetter}
-              components={{
-                event: CustomEvent,
-              }}
-              style={calendarStyle}
-              views={["month", "week", "day"]}
-              defaultView="month"
-              popup={true}
-              popupOffset={30}
-              messages={{
-                next: "Next",
-                previous: "Prev",
-                today: "Today",
-                month: "Month",
-                week: "Week",
-                day: "Day",
-              }}
-            />
-            {calendarEvents.length === 0 && !isLoading && (
-              <div className="text-center text-gray-500 py-8">
-                <p className="text-lg mb-2">📅 No appointments scheduled</p>
-                <p className="text-sm">
-                  Book an appointment with a specialist to see it here
-                </p>
-              </div>
-            )}
+
+            <div className="flex-1">
+              <Calendar
+                localizer={localizer}
+                events={calendarEvents}
+                startAccessor="start"
+                endAccessor="end"
+                onSelectEvent={handleEventClick}
+                eventPropGetter={eventStyleGetter}
+                components={{ event: CustomEvent }}
+                style={calendarStyle}
+                views={["month", "week", "day"]}
+                defaultView="month"
+                popup={true}
+                popupOffset={30}
+                messages={{
+                  next: "Next",
+                  previous: "Prev",
+                  today: "Today",
+                  month: "Month",
+                  week: "Week",
+                  day: "Day",
+                }}
+              />
+
+              {calendarEvents.length === 0 && !isLoading && (
+                <div className="text-center text-gray-500 pt-4">
+                  <p className="text-lg mb-2">📅 No appointments scheduled</p>
+                  <p className="text-sm">
+                    Book an appointment with a specialist to see it here
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="w-full xl:w-[32%] h-[435px] rounded-lg border overflow-y-scroll bg-white border-gray-200 p-4">
+          {/* Appointments List */}
+          <div className="w-full xl:w-[32%] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4 flex flex-col">
             <h2 className="text-lg font-bold text-blue-900 md:text-xl">
               Appointments
             </h2>
             <p className="text-gray-950/60 text-sm">
               View your upcoming appointments
             </p>
-            {isLoading
-              ? Array(3)
-                  .fill(0)
-                  .map((_, idx) => (
-                    <div
-                      className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
-                      key={`loading-appointment-${idx}`}
-                    >
-                      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-2/5"></div>
-                    </div>
-                  ))
-              : (() => {
-                  if (upcomingAppointments.length > 0) {
-                    return upcomingAppointments.map((details) => {
-                      const status = getAppointmentStatus(details);
-                      return (
-                        <div
-                          key={
-                            details.slotId ||
-                            details.id ||
-                            `${details.name}-${details.date}-${details.time}`
-                          }
-                          className={`flex items-center justify-between mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${
-                            status === "over"
-                              ? "bg-red-100 border-red-300 opacity-60 cursor-not-allowed pointer-events-none"
-                              : `${getStatusColor(status)} hover:shadow-lg`
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Avatar src={details?.imageUrl} sx={avatarStyle2} />
-                            <div className="flex-1">
-                              <p className="text-sm font-bold text-blue-900">
-                                Dr. {details.name}
-                              </p>
-                              {status !== "upcoming" && (
-                                <div className="text-xs font-semibold text-gray-600 mt-1">
-                                  {getStatusText(status)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
 
-                          {status === "active" ? (
-                            <button
-                              onClick={() => handleJoinCall(details.slotId)}
-                              disabled={isLoading}
-                              className="text-white cursor-pointer bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
-                            >
-                              Join Now
-                            </button>
-                          ) : (
-                            <div className="flex flex-col text-right">
-                              <span className="text-xs text-gray-600">
-                                📅 {details.date}
-                              </span>
-                              <span className="text-xs text-gray-600">
-                                ⏰ {formatTime(details.time)}
-                              </span>
+            <div className="flex-1 overflow-y-auto">
+              {isLoading
+                ? Array(3)
+                    .fill(0)
+                    .map((_, idx) => (
+                      <div
+                        className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
+                        key={`loading-appointment-${idx}`}
+                      >
+                        <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+                        <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                        <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                        <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+                      </div>
+                    ))
+                : (() => {
+                    if (upcomingAppointments.length > 0) {
+                      return upcomingAppointments.map((details) => {
+                        const status = getAppointmentStatus(details);
+                        return (
+                          <div
+                            key={
+                              details.slotId ||
+                              details.id ||
+                              `${details.name}-${details.date}-${details.time}`
+                            }
+                            className={`flex items-center justify-between mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${
+                              status === "over"
+                                ? "bg-red-100 border-red-300 opacity-60 cursor-not-allowed pointer-events-none"
+                                : `${getStatusColor(status)} hover:shadow-lg`
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Avatar
+                                src={details?.imageUrl}
+                                sx={avatarStyle2}
+                              />
+                              <div className="flex-1">
+                                <p className="text-sm font-bold text-blue-900">
+                                  Dr. {details.name}
+                                </p>
+                                {status !== "upcoming" && (
+                                  <div className="text-xs font-semibold text-gray-600 mt-1">
+                                    {getStatusText(status)}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
+
+                            {status === "active" ? (
+                              <button
+                                onClick={() => handleJoinCall(details.slotId)}
+                                disabled={isLoading}
+                                className="text-white cursor-pointer bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
+                              >
+                                Join Now
+                              </button>
+                            ) : (
+                              <div className="flex flex-col text-right">
+                                <span className="text-xs text-gray-600">
+                                  📅 {details.date}
+                                </span>
+                                <span className="text-xs text-gray-600">
+                                  ⏰ {formatTime(details.time)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    } else {
+                      return (
+                        <div className="text-center text-gray-600 text-sm p-4">
+                          No upcoming appointments
                         </div>
                       );
-                    });
-                  } else {
-                    return (
-                      <div className="text-center text-gray-600 text-sm p-4">
-                        No upcoming appointments
-                      </div>
-                    );
-                  }
-                })()}
+                    }
+                  })()}
+            </div>
           </div>
         </div>
       </div>

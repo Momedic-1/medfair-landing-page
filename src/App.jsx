@@ -22,13 +22,15 @@ import ProfileLayout from "./components/ProfileLayout.jsx";
 import ViewProfile from "./components/ViewProfile.jsx";
 import DoctorProfile from "./components/DoctorProfile.jsx";
 import { ToastContainer } from "react-toastify";
-
 import ContactUs from "./pages/ContactUs.jsx";
 import Investigations from "./PatientDashboard/Investigations.jsx";
+import CookieBanner from "./components/CookieBanner.jsx";
+import CookiesPolicy from "./pages/CookiesPolicy.jsx";
 
 const App = () => {
   return (
     <>
+      <CookieBanner />
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -48,6 +50,7 @@ const App = () => {
           <Route path="/otp-verification" element={<OTPVerification />} />
           <Route path="/doctorProfile" element={<DoctorProfile />} />
           <Route path="/editProfile" element={<ViewProfile />} />
+          <Route path="/cookies-policy" element={<CookiesPolicy />} />
           {/* <Route path='/search'element={<Search/>}/> */}
 
           <Route
