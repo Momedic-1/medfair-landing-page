@@ -238,11 +238,13 @@ const Investigations = () => {
     console.log("Paid Investigations:", paidInvestigations);
   }, [paidInvestigations]);
 
-  const handleInitiatePayment = async () => {
-    const ordersForPayment = getSelectedOrdersForPayment();
-
-    if (ordersForPayment.size === 0) {
-      toast.warning("Please select one or more unpaid orders to pay for");
+  const handleInitiatePayment = async (orderId) => {
+    const idStr = orderId.toString();
+    const order = allInvestigationOrders.find(
+      (o) => o.orderId.toString() === idStr
+    );
+    if (!order) {
+      toast.warning("Invalid order selected");
       return;
     }
 
@@ -257,37 +259,13 @@ const Investigations = () => {
       return;
     }
 
-    const toRemove = [];
-    ordersForPayment.forEach((idStr) => {
-      const order = allInvestigationOrders.find(
-        (o) => o.orderId.toString() === idStr
-      );
-      if (!order || order.status === "success") {
-        toRemove.push(idStr);
-        return;
-      }
-
-      for (let i = 0; i < (order.items?.length || 0); i++) {
-        const itemKey = `${order.orderId}-${i}`;
-        if (paidInvestigations.has(itemKey) || order.status === "completed") {
-          toRemove.push(idStr);
-          toast.error(
-            `Removed Order #${order.orderId} from payment - contains ${order.items[i].testName} which is already paid.`,
-            { autoClose: 7000 }
-          );
-          break;
-        }
-      }
-    });
-
-    if (toRemove.length > 0) {
-      const newSel = new Set(selectedOrders);
-      toRemove.forEach((r) => newSel.delete(r));
-      setSelectedOrders(newSel);
-
-      const remainingOrdersForPayment = getSelectedOrdersForPayment();
-      if (remainingOrdersForPayment.size === 0) {
-        toast.warning("No valid orders remaining for payment");
+    for (let i = 0; i < (order.items?.length || 0); i++) {
+      const itemKey = `${order.orderId}-${i}`;
+      if (paidInvestigations.has(itemKey) || order.status === "completed") {
+        toast.error(
+          `Order #${order.orderId} contains ${order.items[i].testName} which is already paid.`,
+          { autoClose: 7000 }
+        );
         return;
       }
     }
@@ -295,13 +273,8 @@ const Investigations = () => {
     setPaymentLoading(true);
     try {
       const token = getToken();
-      const finalOrdersForPayment = getSelectedOrdersForPayment();
-      const orderIds = Array.from(finalOrdersForPayment).map((s) =>
-        parseInt(s)
-      );
-
       const paymentRequest = {
-        orderId: orderIds[0],
+        orderId: order.orderId,
         email: userEmail.trim(),
       };
 
@@ -330,7 +303,7 @@ const Investigations = () => {
       }
 
       const paymentData = await response.json();
-      setPendingPaidOrders(new Set(finalOrdersForPayment));
+      setPendingPaidOrders(new Set([idStr]));
 
       if (paymentData.authorizationUrl || paymentData.authorization_url) {
         const reference = paymentData.reference || paymentData.access_code;
@@ -363,16 +336,22 @@ const Investigations = () => {
     }
   };
 
-  const handleSendLabOrder = async () => {
+  const handleSendLabOrder = async (orderId) => {
     if (!selectedLabPartner) {
       toast.warning("Please select a lab partner");
       return;
     }
 
-    const selectedSuccessfulOrders = getSelectedSuccessfulOrders();
-    if (selectedSuccessfulOrders.length === 0) {
+    const order = allInvestigationOrders.find(
+      (o) => o.orderId.toString() === orderId.toString()
+    );
+    if (
+      !order ||
+      order.status !== "success" ||
+      sentToLabOrders.has(orderId.toString())
+    ) {
       toast.warning(
-        "Please select paid orders that haven't been sent to lab yet"
+        "Please select a valid paid order that hasn't been sent to lab yet"
       );
       return;
     }
@@ -380,55 +359,48 @@ const Investigations = () => {
     setLabOrderSending(true);
     try {
       const token = getToken();
+      const queryParams = new URLSearchParams({
+        orderId: order.orderId.toString(),
+        labPartner: selectedLabPartner.partner,
+      });
 
-      for (const order of selectedSuccessfulOrders) {
-        const queryParams = new URLSearchParams({
-          orderId: order.orderId.toString(),
-          labPartner: selectedLabPartner.partner,
-        });
-
-        const response = await fetch(
-          `${baseUrl}/api/investigations/investigations/select-lab?${queryParams}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "*/*",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          let errorMessage = `HTTP error! status: ${response.status}`;
-          try {
-            const errorText = await response.text();
-            errorMessage = errorText || errorMessage;
-          } catch (parseError) {
-            console.error("Failed to parse error response:", parseError);
-          }
-          throw new Error(
-            `Failed to send order ${order.orderId}: ${errorMessage}`
-          );
+      const response = await fetch(
+        `${baseUrl}/api/investigations/investigations/select-lab?${queryParams}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "*/*",
+          },
         }
+      );
 
-        const responseText = await response.text();
-        console.log(`Order ${order.orderId} response:`, responseText);
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError);
+        }
+        throw new Error(
+          `Failed to send order ${order.orderId}: ${errorMessage}`
+        );
       }
 
+      const responseText = await response.text();
+      console.log(`Order ${order.orderId} response:`, responseText);
+
       const newSentToLab = new Set(sentToLabOrders);
-      selectedSuccessfulOrders.forEach((order) => {
-        newSentToLab.add(order.orderId.toString());
-      });
+      newSentToLab.add(order.orderId.toString());
       setSentToLabOrders(newSentToLab);
 
       const newSelectedOrders = new Set(selectedOrders);
-      selectedSuccessfulOrders.forEach((order) => {
-        newSelectedOrders.delete(order.orderId.toString());
-      });
+      newSelectedOrders.delete(order.orderId.toString());
       setSelectedOrders(newSelectedOrders);
 
       toast.success(
-        `${selectedSuccessfulOrders.length} order(s) sent to ${selectedLabPartner.name} successfully!`
+        `Order #${order.orderId} sent to ${selectedLabPartner.name} successfully!`
       );
 
       setSelectedLabPartner(null);
@@ -651,131 +623,6 @@ const Investigations = () => {
               </div>
             </div>
           )}
-
-          {getSelectedSuccessfulOrders().length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                Select Lab Partner
-              </h3>
-              <p className="text-sm text-blue-700 mb-3">
-                Choose a lab partner to send your selected successful orders to
-                ({getSelectedSuccessfulOrders().length} orders selected)
-              </p>
-              <select
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onChange={(e) =>
-                  setSelectedLabPartner(
-                    labPartners.find((p) => p.id === e.target.value)
-                  )
-                }
-                value={selectedLabPartner?.id || ""}
-              >
-                <option value="">Choose a lab...</option>
-                {labPartners.map((lab) => (
-                  <option key={lab.id} value={lab.id}>
-                    {lab.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="flex gap-4">
-            {getSelectedOrdersForPayment().size > 0 && !verifyingPayment && (
-              <button
-                onClick={handleInitiatePayment}
-                disabled={
-                  paymentLoading || labOrderSending || !userEmail.trim()
-                }
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {paymentLoading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
-                    Pay ₦{getSelectedTotal().toLocaleString()}
-                  </>
-                )}
-              </button>
-            )}
-
-            {getSelectedSuccessfulOrders().length > 0 && !verifyingPayment && (
-              <button
-                onClick={handleSendLabOrder}
-                disabled={labOrderSending || !selectedLabPartner}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {labOrderSending ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Sending Order...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                      />
-                    </svg>
-                    Send {getSelectedSuccessfulOrders().length} Selected
-                    Order(s) to {selectedLabPartner?.name || "Lab"}
-                  </>
-                )}
-              </button>
-            )}
-
-            {!investigationsLoading &&
-              sentToLabOrders.size > 0 &&
-              getUnsentSuccessfulOrdersCount() === 0 &&
-              getSuccessfulOrdersCount() > 0 &&
-              getSelectedOrdersForPayment().size === 0 &&
-              getSelectedSuccessfulOrders().length === 0 &&
-              !verifyingPayment && (
-                <button
-                  disabled={true}
-                  className="flex-1 px-4 py-3 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  All Orders Sent to Lab
-                </button>
-              )}
-          </div>
         </div>
       )}
 
@@ -829,6 +676,19 @@ const Investigations = () => {
               (orderHasPaidItem && order.status !== "success") ||
               order.status === "completed" ||
               (order.status === "success" && sentToLabOrders.has(idStr));
+
+            const isSelected = selectedOrders.has(idStr);
+            const canPay =
+              isSelected &&
+              order.status !== "success" &&
+              !orderHasPaidItem &&
+              !paymentLoading &&
+              !verifyingPayment;
+            const canSendToLab =
+              isSelected &&
+              order.status === "success" &&
+              !isOrderSentToLab &&
+              !verifyingPayment;
 
             return (
               <div
@@ -993,6 +853,109 @@ const Investigations = () => {
                         ₦{order.totalCost?.toLocaleString()}
                       </span>
                     </div>
+
+                    {isSelected && (canPay || canSendToLab) && (
+                      <div className="mt-4 space-y-4">
+                        {canSendToLab && (
+                          <div>
+                            <h3 className="text-sm font-medium text-blue-800 mb-2">
+                              Select Lab Partner
+                            </h3>
+                            <select
+                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              onChange={(e) =>
+                                setSelectedLabPartner(
+                                  labPartners.find(
+                                    (p) => p.id === e.target.value
+                                  )
+                                )
+                              }
+                              value={selectedLabPartner?.id || ""}
+                            >
+                              <option value="">Choose a lab...</option>
+                              {labPartners.map((lab) => (
+                                <option key={lab.id} value={lab.id}>
+                                  {lab.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        <div className="flex gap-4">
+                          {canPay && (
+                            <button
+                              onClick={() =>
+                                handleInitiatePayment(order.orderId)
+                              }
+                              disabled={
+                                paymentLoading ||
+                                labOrderSending ||
+                                !userEmail.trim()
+                              }
+                              className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              {paymentLoading ? (
+                                <>
+                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  Processing...
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                    />
+                                  </svg>
+                                  Pay ₦{order.totalCost?.toLocaleString()}
+                                </>
+                              )}
+                            </button>
+                          )}
+
+                          {canSendToLab && (
+                            <button
+                              onClick={() => handleSendLabOrder(order.orderId)}
+                              disabled={labOrderSending || !selectedLabPartner}
+                              className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              {labOrderSending ? (
+                                <>
+                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  Sending Order...
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                                    />
+                                  </svg>
+                                  Send Order to{" "}
+                                  {selectedLabPartner?.name || "Lab"}
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
