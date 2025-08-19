@@ -123,6 +123,11 @@ const App = () => {
             element={<VerificationSuccessful />}
           />
           <Route path="/login" element={<LoginPage />} />
+          {/*  Patient login (partners) */}
+          <Route
+            path="/patient-dashboard/partners/login"
+            element={<LoginPage isPartnerLogin={true} />}
+          />
           <Route path="/incoming-call" element={<IncomingCalls />} />
           <Route path="/video-call" element={<VideoCall />} />
           <Route path="/verify-payment" element={<VerifyPayment />} />
