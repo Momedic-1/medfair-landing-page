@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import CheckEmailImage from "../assets/CheckEmailImage.jsx";
 import { useNavigate } from "react-router-dom";
 import SignUpTop from "./SignUpTop.jsx";
