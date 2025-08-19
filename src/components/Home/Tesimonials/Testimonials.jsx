@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   FaQuoteLeft,
   FaStar,
@@ -91,7 +91,7 @@ const Testimonials = () => {
             Patient Testimonials
           </h2>
           <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto">
-            Real stories from real patients who've experienced the convenience
+            Real stories from real patients who&#39;ve experienced the convenience
             and quality of our healthcare services
           </p>
         </div>
@@ -99,8 +99,8 @@ const Testimonials = () => {
 
       {/* Testimonials Grid */}
       <div className="px-4 lg:px-20 relative z-10">
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-          {testimonials.map((testimony, index) => (
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8">
+          {testimonials.map((testimony) => (
             <div
               key={testimony.id}
               className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl p-6 lg:p-8 border border-white/60 transition-all duration-500 hover:scale-105 hover:-translate-y-2"
@@ -141,9 +141,8 @@ const Testimonials = () => {
               {/* Testimonial Text */}
               <div className="relative">
                 <p className="text-gray-700 text-base leading-relaxed italic relative z-10">
-                  "{testimony.testimonial}"
+                  &quot;{testimony.testimonial}&quot;
                 </p>
-
                 {/* Bottom accent */}
                 <div
                   className={`absolute bottom-0 left-0 w-12 h-1 bg-gradient-to-r ${testimony.gradient} rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
