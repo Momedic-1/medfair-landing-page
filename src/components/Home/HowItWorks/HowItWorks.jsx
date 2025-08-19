@@ -18,7 +18,8 @@ const HowItWorks = () => {
       icon: "✅",
       title: "Verify Your Account",
       description:
-        "Check your email for the OTP verification code. Enter the code to verify your account and secure your information.",
+        // "Check your email for the OTP verification code. Enter the code to verify your account and secure your information.",
+        "An OTP verification code has been sent to your registered email address. Please enter the code to verify your account. If the email is not in your inbox, kindly check your spam or junk folder.",
       gradient: "from-emerald-500 to-teal-500",
       bgGradient: "from-emerald-50 to-teal-50",
     },
