@@ -41,6 +41,12 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [medications, setMedications] = useState([]);
   const [showPharmacyDropdown, setShowPharmacyDropdown] = useState(null);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [selectedPharmacy, setSelectedPharmacy] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
 
   const partnerPharmacies = [
     {
@@ -54,12 +60,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
       partner: "DEGREE_360",
     },
   ];
-
-  // New states for order modal
-  const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [selectedPharmacy, setSelectedPharmacy] = useState(null);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [orderLoading, setOrderLoading] = useState(false);
 
   const dropdownRef = useRef(null);
 
@@ -152,6 +152,18 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
     };
   }, [showPharmacyDropdown]);
 
+  const totalPages = Math.ceil(data.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const currentData = data.slice(startIndex, startIndex + rowsPerPage);
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
   return (
     <div className="relative w-full h-screen overflow-x-auto">
       <div className="min-w-full bg-white shadow-md rounded-lg overflow-auto">
@@ -196,14 +208,14 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   </div>
                 </td>
               </tr>
-            ) : data?.length === 0 ? (
+            ) : currentData.length === 0 ? (
               <tr>
                 <td colSpan="10" className="text-center py-4">
                   {emptyMessage || "No data available"}
                 </td>
               </tr>
             ) : (
-              data.map((patient, index) => (
+              currentData.map((patient, index) => (
                 <tr key={index} className="border-b border-gray-200">
                   <td className="px-2 py-2 text-sm text-gray-700">{`${patient?.doctorLastName}, ${patient?.doctorFirstName}`}</td>
                   <td className="px-2 py-2 text-sm text-gray-700">
@@ -641,6 +653,30 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
           </div>
         </Box>
       </Modal>
+
+      {data.length > 0 && (
+        <div className="flex justify-between items-center my-6 md:my-10">
+          <button
+            onClick={goToPrevPage}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <span className="text-sm text-gray-700">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -20,11 +20,11 @@ const Lab = ({ doctorId }) => {
   const patientId = localStorage.getItem("patientId");
 
   // Log initial props and localStorage values for debugging
-  useEffect(() => {
-    console.log("Doctor ID:", doctorId);
-    console.log("Patient ID:", patientId);
-    console.log("Token:", token);
-  }, [doctorId, patientId, token]);
+  // useEffect(() => {
+  //   console.log("Doctor ID:", doctorId);
+  //   console.log("Patient ID:", patientId);
+  //   console.log("Token:", token);
+  // }, [doctorId, patientId, token]);
 
   // Debounce search input
   useEffect(() => {
@@ -61,7 +61,7 @@ const Lab = ({ doctorId }) => {
         );
 
         // Log API response for debugging
-        console.log("Investigations API Response:", response.data);
+        // console.log("Investigations API Response:", response.data);
 
         // Handle different possible response formats
         const investigationsData = response.data.content || response.data || [];
@@ -159,11 +159,11 @@ const Lab = ({ doctorId }) => {
       investigationId: item.id,
       instruction: "Perform as per protocol",
     }));
-    console.log("Submit Order Request:", {
-      doctorId,
-      patientId,
-      requestBody,
-    });
+    // console.log("Submit Order Request:", {
+    //   doctorId,
+    //   patientId,
+    //   requestBody,
+    // });
 
     try {
       const response = await axios.post(
@@ -181,7 +181,7 @@ const Lab = ({ doctorId }) => {
         }
       );
 
-      console.log("Submit Order Response:", response.data);
+      // console.log("Submit Order Response:", response.data);
       setSubmitSuccess(
         `Order created successfully! Order ID: ${response.data.orderId}`
       );
@@ -193,7 +193,7 @@ const Lab = ({ doctorId }) => {
           error.response?.data?.message || error.message
         }`
       );
-      console.error("Submit Order Error:", error.response?.data || error);
+      // console.error("Submit Order Error:", error.response?.data || error);
     } finally {
       setSubmitLoading(false);
     }

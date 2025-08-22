@@ -270,15 +270,15 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
     ]);
   };
 
-  const handleDrugChange = (e, index, field) => {
-    const updatedDrugs = [...drugs];
-    updatedDrugs[index][field] = e.target.value;
-    setDrugs(updatedDrugs);
-  };
+  // const handleDrugChange = (e, index, field) => {
+  //   const updatedDrugs = [...drugs];
+  //   updatedDrugs[index][field] = e.target.value;
+  //   setDrugs(updatedDrugs);
+  // };
 
-  const handleAddDrug = () => {
-    setDrugs([...drugs, { name: "", dosage: "" }]);
-  };
+  // const handleAddDrug = () => {
+  //   setDrugs([...drugs, { name: "", dosage: "" }]);
+  // };
 
   const handleViewPrescription = async (prescriptionId) => {
     setCurrentPrescriptionId(prescriptionId);
@@ -392,16 +392,16 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   // };
 
   const handleDrugSelect = (drug, index) => {
-  const updatedForms = [...prescriptionForms];
-  updatedForms[index] = {
-    ...updatedForms[index],
-    drugName: drug.dosageForm || drug.name || drug.genericName || '', // Fallback to other possible fields
+    const updatedForms = [...prescriptionForms];
+    updatedForms[index] = {
+      ...updatedForms[index],
+      drugName: drug.dosageForm || drug.name || drug.genericName || "", // Fallback to other possible fields
+    };
+    setPrescriptionForms(updatedForms);
+    setShowDrugDropdown(false);
+    setDrugSearchResults([]);
+    setActiveDrugSearchIndex(null);
   };
-  setPrescriptionForms(updatedForms);
-  setShowDrugDropdown(false);
-  setDrugSearchResults([]);
-  setActiveDrugSearchIndex(null);
-};
 
   const handleAddMorePrescription = () => {
     setPrescriptionForms([
@@ -994,7 +994,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
             )}
 
             {activeTab === "ViewDocuments" && <ViewDocuments />}
-            {activeTab === "Investigations" && <Lab doctorId={userData?.id} />}
+            {activeTab === "investigations" && <Lab doctorId={userData?.id} />}
           </>
         )}
 
@@ -1067,25 +1067,25 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
                           required
                         /> */}
                         <input
-  type="text"
-  name="drugName"
-  value={form.drugName}
-  onChange={(e) => handlePrescriptionChange(e, index)}
-  onFocus={() => {
-    if (form.drugName && form.drugName.length >= 2) {
-      searchDrugs(form.drugName, index);
-    }
-  }}
-  onBlur={() => {
-    setTimeout(() => {
-      setShowDrugDropdown(false);
-      setActiveDrugSearchIndex(null);
-    }, 200);
-  }}
-  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  placeholder="Start typing to search drugs..."
-  required
-/>
+                          type="text"
+                          name="drugName"
+                          value={form.drugName}
+                          onChange={(e) => handlePrescriptionChange(e, index)}
+                          onFocus={() => {
+                            if (form.drugName && form.drugName.length >= 2) {
+                              searchDrugs(form.drugName, index);
+                            }
+                          }}
+                          onBlur={() => {
+                            setTimeout(() => {
+                              setShowDrugDropdown(false);
+                              setActiveDrugSearchIndex(null);
+                            }, 200);
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Start typing to search drugs..."
+                          required
+                        />
 
                         {/* Drug Search Dropdown */}
                         {showDrugDropdown &&

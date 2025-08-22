@@ -21,6 +21,10 @@ const Investigations = () => {
   const [labOrderSending, setLabOrderSending] = useState(false);
   const [sentToLabOrders, setSentToLabOrders] = useState(new Set());
 
+  // 🔹 Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
+
   const labPartners = [
     { id: "smartlab", name: "SmartLab", partner: "SMARTLAB" },
     { id: "degree_360_lab", name: "Degree 360 Lab", partner: "DEGREE_360" },
@@ -32,13 +36,6 @@ const Investigations = () => {
 
   const getSuccessfulOrdersCount = () => {
     return getSuccessfulOrders().length;
-  };
-
-  const getTotalSuccessfulTests = () => {
-    return getSuccessfulOrders().reduce(
-      (total, order) => total + (order.items?.length || 0),
-      0
-    );
   };
 
   const getUnsentSuccessfulOrders = () => {
@@ -234,10 +231,6 @@ const Investigations = () => {
     }
   };
 
-  useEffect(() => {
-    console.log("Paid Investigations:", paidInvestigations);
-  }, [paidInvestigations]);
-
   const handleInitiatePayment = async (orderId) => {
     const idStr = orderId.toString();
     const order = allInvestigationOrders.find(
@@ -290,8 +283,12 @@ const Investigations = () => {
         }
       );
 
+      console.log("Payment initiation response status:", response);
+      window.location.href = response.url
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
+
+        
         try {
           const errorData = await response.json();
           errorMessage =
@@ -330,7 +327,7 @@ const Investigations = () => {
       }
     } catch (error) {
       console.error("Payment initiation failed:", error);
-      toast.error(`Failed to initiate payment: ${error.message}`);
+      // toast.error(`Failed to initiate payment: ${error.message}`);
     } finally {
       setPaymentLoading(false);
     }
@@ -406,12 +403,26 @@ const Investigations = () => {
       setSelectedLabPartner(null);
       await fetchInvestigations();
     } catch (error) {
-      console.error("Lab order send failed:", error);
       toast.error(`Failed to send lab order: ${error.message}`);
     } finally {
       setLabOrderSending(false);
     }
   };
+
+  // Get paginated slice
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = allInvestigationOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+
+  const totalPages = Math.ceil(allInvestigationOrders.length / ordersPerPage);
+
+  // Reset to page 1 whenever new data arrives
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [allInvestigationOrders]);
 
   return (
     <div className="investigations-component max-w-6xl mx-auto md:p-6">
@@ -692,7 +703,7 @@ const Investigations = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {allInvestigationOrders.map((order) => {
+          {currentOrders.map((order) => {
             const idStr = order.orderId.toString();
             const isOrderSentToLab = sentToLabOrders.has(idStr);
 
@@ -998,6 +1009,27 @@ const Investigations = () => {
           })}
         </div>
       )}
+
+      {/* --- PAGINATION CONTROLS --- */}
+      <div className="flex justify-center items-center gap-3 mt-6">
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-gray-100 rounded-lg disabled:opacity-50"
+        >
+          Prev
+        </button>
+        <span className="text-gray-700">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-gray-100 rounded-lg disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

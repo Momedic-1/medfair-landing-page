@@ -43,7 +43,7 @@ const PatientNotes = () => {
 
   return (
     <div className="h-screen flex ">
-      <div className="p-4 md:p-8 w-full">
+      <div className="md:p-4 w-full">
         <Table
           data={results}
           isLoading={loading}
