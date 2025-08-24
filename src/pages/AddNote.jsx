@@ -74,6 +74,14 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const [activeDrugSearchIndex, setActiveDrugSearchIndex] = useState(null);
 
   useEffect(() => {
+    if (isOpen && !visitDate) {
+      const today = new Date();
+      const formattedDate = today.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+      setVisitDate(formattedDate);
+    }
+  }, [isOpen, visitDate]);
+
+  useEffect(() => {
     if (patientId && isOpen && !existingNotes.length) {
       fetchPatientNotes();
     }
