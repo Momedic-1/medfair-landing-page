@@ -137,6 +137,8 @@ const Dashboard = () => {
   const [notificationShown, setNotificationShown] = useState(new Set());
   const [bookedSlots, setBookedSlots] = useState(new Set());
   const [showUpcomingModal, setShowUpcomingModal] = useState(false);
+  const [hasSubscription, setHasSubscription] = useState(null);
+  const [subscriptionMessage, setSubscriptionMessage] = useState(""); // store API message
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
 
@@ -616,6 +618,33 @@ const Dashboard = () => {
     showModal,
   ]);
 
+  const checkSubscriptionStatus = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/subscription/status/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setHasSubscription(response.data.subscribed); // boolean
+      setSubscriptionMessage(response.data.message || ""); // message
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      setHasSubscription(false);
+      setSubscriptionMessage(
+        "Unable to check subscription status. Please try again."
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (userId && token) {
+      checkSubscriptionStatus();
+    }
+  }, [userId, token]);
+
   useEffect(() => {
     const currentSlotIds = new Set(
       upcomingAppointments.map((apt) => apt.slotId)
@@ -772,6 +801,39 @@ const Dashboard = () => {
           color: #111827;
         }
       `}</style>
+
+      {/* Subscription Status Box */}
+      {hasSubscription === false && (
+        <div className="w-full bg-red-500 text-white p-4 rounded-lg shadow-lg">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <h3 className="font-semibold text-lg">Subscription Required</h3>
+                <p className="text-sm text-red-100">{subscriptionMessage}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate("/patient-dashboard/subscription")}
+              className="w-full md:w-auto mt-4 md:mt-0 bg-white text-red-500 px-6 py-2 rounded-lg cursor-pointer font-semibold hover:bg-red-50 transition-colors"
+            >
+              Subscribe Now
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Loading state for subscription check */}
+      {hasSubscription === null && (
+        <div className="w-full bg-gray-100 p-4 mb-6 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="animate-pulse flex items-center gap-2">
+              <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
+              <div className="h-4 bg-gray-300 rounded w-48"></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="w-full md:px-4 py-8 overflow-hidden">
         <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 md:gap-8 mt-4">

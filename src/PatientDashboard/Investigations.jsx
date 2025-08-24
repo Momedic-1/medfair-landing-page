@@ -177,7 +177,7 @@ const Investigations = () => {
         `${baseUrl}/api/investigations/verify-payment?reference=${reference}`,
         {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}`},
         }
       );
 

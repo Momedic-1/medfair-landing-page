@@ -2,8 +2,8 @@ import DoctorImg from "../../../assets/doctor.png";
 // import call from '../../../assets/call.svg';
 import "./WelcomeBack.css";
 import { useEffect, useRef, useState } from "react";
-// import { baseUrl } from "../../../env";
-// import axios from "axios";
+import { baseUrl } from "../../../env";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
@@ -14,7 +14,7 @@ function WelcomeBack({ status }) {
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null);
-  // const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem("userData"));
   const online = "Online";
   const navigate = useNavigate();
@@ -29,10 +29,10 @@ function WelcomeBack({ status }) {
       JSON.parse(localStorage.getItem("pickedCalls")) || [];
     setPickedCalls(new Set(storedPickedCalls));
 
-    // viewAllPendingCalls();
+    viewAllPendingCalls();
     enableAudio();
     pollingInterval.current = setInterval(() => {
-      // viewAllPendingCalls();
+      viewAllPendingCalls();
     }, 5000);
 
     return () => {
@@ -88,31 +88,31 @@ function WelcomeBack({ status }) {
     }
   };
 
-  // const viewAllPendingCalls = async () => {
-  //   try {
-  //     const response = await axios.get(
-  //       `${baseUrl}/api/v1/video/broadcast-calls/${userData.id}`,
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
+  const viewAllPendingCalls = async () => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/v1/video/broadcast-calls/${userData.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-  //     // Get latest picked calls from localStorage
-  //     const storedPickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
+      // Get latest picked calls from localStorage
+      const storedPickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
 
-  //     // Filter out picked calls using callId
-  //     const filteredCalls = response?.data.filter(call => !storedPickedCalls.includes(call.callId)) || [];
-  //     setActiveCalls(filteredCalls);
-  //     setIsActive(filteredCalls.length > 0);
+      // Filter out picked calls using callId
+      const filteredCalls = response?.data.filter(call => !storedPickedCalls.includes(call.callId)) || [];
+      setActiveCalls(filteredCalls);
+      setIsActive(filteredCalls.length > 0);
 
-  //     if (filteredCalls.length > 0 && status === online) {
-  //       playRingtone();
-  //     } else {
-  //       stopRingtone();
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     stopRingtone();
-  //   }
-  // };
+      if (filteredCalls.length > 0 && status === online) {
+        playRingtone();
+      } else {
+        stopRingtone();
+      }
+    } catch (error) {
+      console.error(error);
+      stopRingtone();
+    }
+  };
 
   const stopRingtone = () => {
     if (audioRef.current) {
