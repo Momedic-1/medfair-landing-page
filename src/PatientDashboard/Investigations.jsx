@@ -283,12 +283,9 @@ const Investigations = () => {
         }
       );
 
-      console.log("Payment initiation response status:", response);
-      window.location.href = response.url
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
 
-        
         try {
           const errorData = await response.json();
           errorMessage =
@@ -303,35 +300,58 @@ const Investigations = () => {
       setPendingPaidOrders(new Set([idStr]));
 
       if (paymentData.authorizationUrl || paymentData.authorization_url) {
+        // Redirect to payment page in the same window
+        const paymentUrl = paymentData.authorizationUrl || paymentData.authorization_url;
+        
+        // Store the reference for verification when user returns
         const reference = paymentData.reference || paymentData.access_code;
-        const paymentWindow = window.open(
-          paymentData.authorizationUrl || paymentData.authorization_url,
-          "paystack-payment",
-          "width=500,height=600,scrollbars=yes,resizable=yes"
-        );
-
-        const pollPayment = setInterval(async () => {
-          if (paymentWindow.closed) {
-            clearInterval(pollPayment);
-            if (reference) {
-              const verified = await verifyPayment(reference);
-              if (verified) setPaymentLoading(false);
-            }
-            setPaymentLoading(false);
-          }
-        }, 1000);
+        if (reference) {
+          // Store reference in sessionStorage to verify payment when user returns
+          sessionStorage.setItem('pendingPaymentReference', reference);
+          sessionStorage.setItem('pendingOrderId', idStr);
+        }
+        
+        // Redirect to payment page
+        window.location.href = paymentUrl;
       } else {
+        // Handle mock payment or direct verification
         const mockRef = paymentData.reference || "MOCK_REF_" + Date.now();
         const verified = await verifyPayment(mockRef);
         if (verified) toast.success("Payment completed successfully!");
       }
     } catch (error) {
       console.error("Payment initiation failed:", error);
-      // toast.error(`Failed to initiate payment: ${error.message}`);
+      toast.error(`Failed to initiate payment: ${error.message}`);
     } finally {
       setPaymentLoading(false);
     }
   };
+
+  // Check for returning payment verification on component mount
+  useEffect(() => {
+    const checkPaymentReturn = async () => {
+      const reference = sessionStorage.getItem('pendingPaymentReference');
+      const orderIdStr = sessionStorage.getItem('pendingOrderId');
+      
+      if (reference && orderIdStr) {
+        // Clear stored values
+        sessionStorage.removeItem('pendingPaymentReference');
+        sessionStorage.removeItem('pendingOrderId');
+        
+        // Set pending order for verification
+        setPendingPaidOrders(new Set([orderIdStr]));
+        
+        // Verify payment
+        toast.info("Verifying your payment...");
+        await verifyPayment(reference);
+      }
+    };
+
+    // Only check on initial load, not on every patientId change
+    if (patientId && !investigationsLoading) {
+      checkPaymentReturn();
+    }
+  }, [patientId, investigationsLoading]);
 
   const handleSendLabOrder = async (orderId) => {
     if (!selectedLabPartner) {
