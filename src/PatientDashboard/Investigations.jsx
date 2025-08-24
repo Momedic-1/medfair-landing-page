@@ -169,34 +169,84 @@ const Investigations = () => {
     return successfulOrders;
   };
 
-  const verifyPayment = async (reference) => {
-    try {
-      setVerifyingPayment(true);
-      const token = getToken();
-      const response = await fetch(
-        `${baseUrl}/api/investigations/verify-payment?reference=${reference}`,
-        {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}`},
-        }
-      );
+  // Add this state to your component
+const [debugInfo, setDebugInfo] = useState(null);
 
-      const contentType = response.headers.get("content-type");
-      let verificationResult;
+const verifyPayment = async (reference) => {
+  try {
+    setVerifyingPayment(true);
+    const token = getToken();
+    
+    const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+    const encodedReference = encodeURIComponent(reference);
+    const verificationUrl = `${cleanBaseUrl}/api/investigations/verify-payment?reference=${encodedReference}`;
+    
+    console.log('🚀 CALLING VERIFICATION URL:', verificationUrl);
+    
+    const response = await fetch(verificationUrl, {
+      method: "GET",
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Accept': 'application/json'
+      },
+    });
 
-      if (contentType && contentType.includes("application/json")) {
-        verificationResult = await response.json();
-      } else {
-        const text = await response.text();
-        throw new Error(
-          text || `Unexpected response format (${response.status})`
+    console.log('📥 RESPONSE:', {
+      status: response.status,
+      url: response.url
+    });
+
+    // Check if the response URL indicates success
+    // This handles the case where backend redirects successful payments
+    if (response.url.includes('paymentStatus=success') && response.url.includes(reference)) {
+      console.log('✅ PAYMENT SUCCESS DETECTED FROM URL');
+      
+      // Mark orders as paid
+      const newPaid = new Set(paidInvestigations);
+      pendingPaidOrders.forEach((orderIdStr) => {
+        const order = allInvestigationOrders.find(
+          (o) => o.orderId.toString() === orderIdStr
         );
-      }
+        if (order) {
+          console.log(`💰 Marking order ${orderIdStr} as paid`);
+          for (let i = 0; i < (order.items?.length || 0); i++) {
+            newPaid.add(`${order.orderId}-${i}`);
+          }
+        }
+      });
 
+      setPaidInvestigations(newPaid);
+      setSelectedOrders(new Set());
+      setPendingPaidOrders(new Set());
+
+      await fetchInvestigations();
+
+      toast.success("Payment verified successfully! Please select a lab partner.");
+      return true;
+    }
+
+    // Try to get response text/JSON
+    const responseText = await response.text();
+    console.log('📄 Response preview:', responseText.substring(0, 200));
+
+    // If response is HTML, it means we got redirected to frontend
+    if (responseText.includes('<!DOCTYPE html>')) {
+      console.log('⚠️ Received HTML - assuming payment failed or needs different handling');
+      toast.error("Payment verification inconclusive. Please check with support if payment was deducted.");
+      return false;
+    }
+
+    // Try to parse as JSON
+    try {
+      const verificationResult = JSON.parse(responseText);
+      console.log('✅ JSON Response:', verificationResult);
+      
       if (
         verificationResult.status === "success" ||
-        verificationResult.verified === true
+        verificationResult.verified === true ||
+        verificationResult.data?.status === "success"
       ) {
+        // Mark orders as paid
         const newPaid = new Set(paidInvestigations);
         pendingPaidOrders.forEach((orderIdStr) => {
           const order = allInvestigationOrders.find(
@@ -215,21 +265,89 @@ const Investigations = () => {
 
         await fetchInvestigations();
 
-        toast.success(
-          "Payment verified successfully! Please select a lab partner."
-        );
+        toast.success("Payment verified successfully! Please select a lab partner.");
         return true;
       } else {
-        toast.error("Payment verification failed. Please try again.");
+        toast.error(`Payment verification failed: ${verificationResult.message || 'Payment not successful'}`);
         return false;
       }
-    } catch (error) {
-      toast.error(`Failed to verify payment: ${error.message}`);
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError);
+      toast.error("Payment verification failed - invalid response format");
       return false;
-    } finally {
-      setVerifyingPayment(false);
     }
-  };
+    
+  } catch (error) {
+    console.error('💥 PAYMENT VERIFICATION ERROR:', error);
+    toast.error(`Failed to verify payment: ${error.message}`);
+    return false;
+  } finally {
+    setVerifyingPayment(false);
+  }
+};
+
+
+  // const verifyPayment = async (reference) => {
+  //   try {
+  //     setVerifyingPayment(true);
+  //     const token = getToken();
+  //     const response = await fetch(
+  //       `${baseUrl}/api/investigations/verify-payment?reference=${reference}`,
+  //       {
+  //         method: "GET",
+  //         headers: { Authorization: `Bearer ${token}`},
+  //       }
+  //     );
+
+  //     const contentType = response.headers.get("content-type");
+  //     let verificationResult;
+
+  //     if (contentType && contentType.includes("application/json")) {
+  //       verificationResult = await response.json();
+  //     } else {
+  //       const text = await response.text();
+  //       throw new Error(
+  //         text || `Unexpected response format (${response.status})`
+  //       );
+  //     }
+
+  //     if (
+  //       verificationResult.status === "success" ||
+  //       verificationResult.verified === true
+  //     ) {
+  //       const newPaid = new Set(paidInvestigations);
+  //       pendingPaidOrders.forEach((orderIdStr) => {
+  //         const order = allInvestigationOrders.find(
+  //           (o) => o.orderId.toString() === orderIdStr
+  //         );
+  //         if (order) {
+  //           for (let i = 0; i < (order.items?.length || 0); i++) {
+  //             newPaid.add(`${order.orderId}-${i}`);
+  //           }
+  //         }
+  //       });
+
+  //       setPaidInvestigations(newPaid);
+  //       setSelectedOrders(new Set());
+  //       setPendingPaidOrders(new Set());
+
+  //       await fetchInvestigations();
+
+  //       toast.success(
+  //         "Payment verified successfully! Please select a lab partner."
+  //       );
+  //       return true;
+  //     } else {
+  //       toast.error("Payment verification failed. Please try again.");
+  //       return false;
+  //     }
+  //   } catch (error) {
+  //     toast.error(`Failed to verify payment: ${error.message}`);
+  //     return false;
+  //   } finally {
+  //     setVerifyingPayment(false);
+  //   }
+  // };
 
   const handleInitiatePayment = async (orderId) => {
     const idStr = orderId.toString();
@@ -444,6 +562,53 @@ const Investigations = () => {
     setCurrentPage(1);
   }, [allInvestigationOrders]);
 
+       // Add this debug component to your JSX (place it somewhere in your render)
+const DebugInfoDisplay = () => {
+  if (!debugInfo) return null;
+  
+  return (
+    <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm mb-4">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-white font-semibold">Debug Info - Payment Verification</h3>
+        <button 
+          onClick={() => setDebugInfo(null)}
+          className="text-gray-400 hover:text-white"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="space-y-1">
+        <div><span className="text-yellow-400">Timestamp:</span> {debugInfo.timestamp}</div>
+        <div><span className="text-yellow-400">Base URL:</span> {debugInfo.baseUrl}</div>
+        <div><span className="text-yellow-400">Clean URL:</span> {debugInfo.cleanBaseUrl}</div>
+        <div><span className="text-yellow-400">Reference:</span> {debugInfo.reference}</div>
+        <div><span className="text-yellow-400">Encoded Ref:</span> {debugInfo.encodedReference}</div>
+        <div><span className="text-yellow-400">Full URL:</span> <span className="text-blue-400 break-all">{debugInfo.fullUrl}</span></div>
+        {debugInfo.responseStatus && (
+          <div><span className="text-yellow-400">Response:</span> {debugInfo.responseStatus} {debugInfo.responseStatusText}</div>
+        )}
+        {debugInfo.responseUrl && debugInfo.responseUrl !== debugInfo.fullUrl && (
+          <div><span className="text-yellow-400">Final URL:</span> <span className="text-blue-400 break-all">{debugInfo.responseUrl}</span></div>
+        )}
+        {debugInfo.alternativeUrl && (
+          <div><span className="text-yellow-400">Alternative URL:</span> <span className="text-blue-400 break-all">{debugInfo.alternativeUrl}</span></div>
+        )}
+        {debugInfo.successfulUrl && (
+          <div><span className="text-green-400">Successful URL:</span> <span className="text-blue-400 break-all">{debugInfo.successfulUrl}</span></div>
+        )}
+        {debugInfo.redirectLocation && (
+          <div><span className="text-red-400">Redirect To:</span> <span className="text-blue-400 break-all">{debugInfo.redirectLocation}</span></div>
+        )}
+        <div><span className="text-yellow-400">Status:</span> {debugInfo.status}</div>
+        {debugInfo.error && (
+          <div><span className="text-red-400">Error:</span> {debugInfo.error}</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
   return (
     <div className="investigations-component max-w-6xl mx-auto md:p-6">
       <div className="bg-gradient-to-r from-green-500 to-green-700 px-6 py-6 rounded-t-2xl mb-6">
@@ -504,6 +669,9 @@ const Investigations = () => {
           </div>
         </div>
       </div>
+
+ 
+      <DebugInfoDisplay />
 
       {(selectedOrders.size > 0 ||
         paidInvestigations.size > 0 ||
