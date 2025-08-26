@@ -26,8 +26,8 @@ const Investigations = () => {
   const ordersPerPage = 10;
 
   const labPartners = [
-    { id: "smartlab", name: "SmartLab", partner: "SMARTLAB" },
-    { id: "degree_360_lab", name: "Degree 360 Lab", partner: "DEGREE_360" },
+    { id: "silahealth", name: "Sila Health", partner: "SILAHEALTH" },
+    { id: "medfair_lab", name: "MedFair Lab", partner: "MedFair_Lab" },
   ];
 
   const getSuccessfulOrders = () => {
@@ -170,7 +170,6 @@ const Investigations = () => {
   };
 
   // Add this state to your component
-  // const [debugInfo, setDebugInfo] = useState(null);
 
   const verifyPayment = async (reference) => {
     try {
@@ -299,68 +298,6 @@ const Investigations = () => {
       setVerifyingPayment(false);
     }
   };
-
-  // const verifyPayment = async (reference) => {
-  //   try {
-  //     setVerifyingPayment(true);
-  //     const token = getToken();
-  //     const response = await fetch(
-  //       `${baseUrl}/api/investigations/verify-payment?reference=${reference}`,
-  //       {
-  //         method: "GET",
-  //         headers: { Authorization: `Bearer ${token}`},
-  //       }
-  //     );
-
-  //     const contentType = response.headers.get("content-type");
-  //     let verificationResult;
-
-  //     if (contentType && contentType.includes("application/json")) {
-  //       verificationResult = await response.json();
-  //     } else {
-  //       const text = await response.text();
-  //       throw new Error(
-  //         text || `Unexpected response format (${response.status})`
-  //       );
-  //     }
-
-  //     if (
-  //       verificationResult.status === "success" ||
-  //       verificationResult.verified === true
-  //     ) {
-  //       const newPaid = new Set(paidInvestigations);
-  //       pendingPaidOrders.forEach((orderIdStr) => {
-  //         const order = allInvestigationOrders.find(
-  //           (o) => o.orderId.toString() === orderIdStr
-  //         );
-  //         if (order) {
-  //           for (let i = 0; i < (order.items?.length || 0); i++) {
-  //             newPaid.add(`${order.orderId}-${i}`);
-  //           }
-  //         }
-  //       });
-
-  //       setPaidInvestigations(newPaid);
-  //       setSelectedOrders(new Set());
-  //       setPendingPaidOrders(new Set());
-
-  //       await fetchInvestigations();
-
-  //       toast.success(
-  //         "Payment verified successfully! Please select a lab partner."
-  //       );
-  //       return true;
-  //     } else {
-  //       toast.error("Payment verification failed. Please try again.");
-  //       return false;
-  //     }
-  //   } catch (error) {
-  //     toast.error(`Failed to verify payment: ${error.message}`);
-  //     return false;
-  //   } finally {
-  //     setVerifyingPayment(false);
-  //   }
-  // };
 
   const handleInitiatePayment = async (orderId) => {
     const idStr = orderId.toString();
@@ -561,6 +498,10 @@ const Investigations = () => {
     }
   };
 
+  const getOrdersSentToLabCount = () => {
+    return allInvestigationOrders.filter((order) => order.sentToLab).length;
+  };
+
   // Get paginated slice
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
@@ -575,52 +516,6 @@ const Investigations = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [allInvestigationOrders]);
-
-  // Add this debug component to your JSX (place it somewhere in your render)
-  // const DebugInfoDisplay = () => {
-  //   if (!debugInfo) return null;
-
-  //   return (
-  //     <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm mb-4">
-  //       <div className="flex justify-between items-center mb-2">
-  //         <h3 className="text-white font-semibold">Debug Info - Payment Verification</h3>
-  //         <button
-  //           onClick={() => setDebugInfo(null)}
-  //           className="text-gray-400 hover:text-white"
-  //         >
-  //           ✕
-  //         </button>
-  //       </div>
-  //       <div className="space-y-1">
-  //         <div><span className="text-yellow-400">Timestamp:</span> {debugInfo.timestamp}</div>
-  //         <div><span className="text-yellow-400">Base URL:</span> {debugInfo.baseUrl}</div>
-  //         <div><span className="text-yellow-400">Clean URL:</span> {debugInfo.cleanBaseUrl}</div>
-  //         <div><span className="text-yellow-400">Reference:</span> {debugInfo.reference}</div>
-  //         <div><span className="text-yellow-400">Encoded Ref:</span> {debugInfo.encodedReference}</div>
-  //         <div><span className="text-yellow-400">Full URL:</span> <span className="text-blue-400 break-all">{debugInfo.fullUrl}</span></div>
-  //         {debugInfo.responseStatus && (
-  //           <div><span className="text-yellow-400">Response:</span> {debugInfo.responseStatus} {debugInfo.responseStatusText}</div>
-  //         )}
-  //         {debugInfo.responseUrl && debugInfo.responseUrl !== debugInfo.fullUrl && (
-  //           <div><span className="text-yellow-400">Final URL:</span> <span className="text-blue-400 break-all">{debugInfo.responseUrl}</span></div>
-  //         )}
-  //         {debugInfo.alternativeUrl && (
-  //           <div><span className="text-yellow-400">Alternative URL:</span> <span className="text-blue-400 break-all">{debugInfo.alternativeUrl}</span></div>
-  //         )}
-  //         {debugInfo.successfulUrl && (
-  //           <div><span className="text-green-400">Successful URL:</span> <span className="text-blue-400 break-all">{debugInfo.successfulUrl}</span></div>
-  //         )}
-  //         {debugInfo.redirectLocation && (
-  //           <div><span className="text-red-400">Redirect To:</span> <span className="text-blue-400 break-all">{debugInfo.redirectLocation}</span></div>
-  //         )}
-  //         <div><span className="text-yellow-400">Status:</span> {debugInfo.status}</div>
-  //         {debugInfo.error && (
-  //           <div><span className="text-red-400">Error:</span> {debugInfo.error}</div>
-  //         )}
-  //       </div>
-  //     </div>
-  //   );
-  // };
 
   return (
     <div className="investigations-component max-w-6xl mx-auto md:p-6">
@@ -667,7 +562,7 @@ const Investigations = () => {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-indigo-600">
-              {sentToLabOrders.size}
+              {getOrdersSentToLabCount()}
             </div>
             <div className="text-sm text-gray-600">Orders Sent to Lab</div>
           </div>
@@ -682,8 +577,6 @@ const Investigations = () => {
           </div>
         </div>
       </div>
-
-      {/* <DebugInfoDisplay /> */}
 
       {(selectedOrders.size > 0 ||
         paidInvestigations.size > 0 ||
@@ -829,7 +722,7 @@ const Investigations = () => {
                 Payment Information
               </h3>
               <p className="text-sm text-orange-700 mb-3">
-                Confirm or update your email address for the payment receipt
+                Payment receipt will be sent to your email address.
               </p>
               <div className="flex items-center gap-3">
                 <div className="bg-orange-500 p-2 rounded-full">
@@ -921,7 +814,8 @@ const Investigations = () => {
             const disabledSelect =
               (orderHasPaidItem && order.status !== "success") ||
               order.status === "completed" ||
-              (order.status === "success" && sentToLabOrders.has(idStr));
+              (order.status === "success" &&
+                (isOrderSentToLab || order.sentToLab));
 
             const isSelected = selectedOrders.has(idStr);
             const canPay =
@@ -941,9 +835,9 @@ const Investigations = () => {
                 key={order.orderId}
                 className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-xl">
+                <div className="bg-gray-50 px-4 md:px-6 py-4 border-b border-gray-200 rounded-t-xl">
                   <div className="flex justify-between items-start flex-wrap gap-4">
-                    <div className="flex items-center gap-4">
+                    <div className="flex w-[200px] md:w-full items-center gap-4">
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -968,9 +862,9 @@ const Investigations = () => {
                       <p className="text-xs text-gray-500">
                         {formatDate(order.createdDate)}
                       </p>
-                      <div className="w-[70px] flex flex-col gap-1 mt-1">
+                      <div className=" flex flex-col gap-1 mt-1">
                         <span
-                          className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                          className={`inline-block px-3 py-1 text-xs text-center font-medium rounded-full ${
                             order.status === "pending"
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-green-100 text-green-800"
@@ -978,6 +872,18 @@ const Investigations = () => {
                         >
                           {order.status.charAt(0).toUpperCase() +
                             order.status.slice(1)}
+                        </span>
+                        <span
+                          className={`w-full inline-flex items-center px-2 py-1 text-xs font-medium rounded-full 
+            ${
+              order.sentToLab
+                ? "bg-green-100 text-green-700"
+                : "bg-yellow-100 text-yellow-700"
+            }`}
+                        >
+                          {order.sentToLab
+                            ? "Order Sent to Lab"
+                            : "Order Not Sent Yet"}
                         </span>
                         {isOrderSentToLab && (
                           <span className="inline-block px-1 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
