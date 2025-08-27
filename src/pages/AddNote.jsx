@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import debounce from "lodash/debounce";
 import axios from "axios";
 import { baseUrl } from "../env";
@@ -19,6 +19,8 @@ import {
   Pill,
   Clock,
   Eye,
+  TestTube,
+  FileText,
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -49,6 +51,13 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const patientId = localStorage.getItem("patientId");
   const [activeTab, setActiveTab] = useState("SOAP");
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+
+  const tabs = [
+    { id: "SOAP", label: "SOAP", icon: FileText },
+    { id: "Medication", label: "Medication", icon: Pill },
+    { id: "ViewDocuments", label: "Documents", icon: Eye },
+    { id: "investigations", label: "Lab Tests", icon: TestTube },
+  ];
 
   // Enhanced prescription form to handle multiple prescriptions
   const [prescriptionForms, setPrescriptionForms] = useState([
@@ -525,7 +534,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           </button>
         </div>
 
-        <div className="flex border-b mb-4">
+        {/* <div className="flex border-b mb-4">
           <button
             className={`px-4 py-2 ${
               activeTab === "SOAP"
@@ -566,6 +575,26 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
           >
             Investigations
           </button>
+        </div> */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-lg transition-colors ${
+                activeTab === tab.id
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {React.createElement(tab.icon, {
+                className: `h-5 w-5 ${
+                  activeTab === tab.id ? "text-white" : "text-gray-500"
+                }`,
+              })}
+              <span className="text-xs font-medium">{tab.label}</span>
+            </button>
+          ))}
         </div>
 
         {isViewNotesOpen && (
