@@ -106,6 +106,7 @@ import ContactUs from "./pages/ContactUs.jsx";
 import Investigations from "./PatientDashboard/Investigations.jsx";
 import CookieBanner from "./components/CookieBanner.jsx";
 import CookiesPolicy from "./pages/CookiesPolicy.jsx";
+import 'preline'
 
 const App = () => {
   return (
