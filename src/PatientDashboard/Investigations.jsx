@@ -180,8 +180,6 @@ const Investigations = () => {
       const encodedReference = encodeURIComponent(reference);
       const verificationUrl = `${cleanBaseUrl}/api/investigations/verify-payment?reference=${encodedReference}`;
 
-      console.log("🚀 CALLING VERIFICATION URL:", verificationUrl);
-
       const response = await fetch(verificationUrl, {
         method: "GET",
         headers: {
@@ -190,18 +188,12 @@ const Investigations = () => {
         },
       });
 
-      console.log("📥 RESPONSE:", {
-        status: response.status,
-        url: response.url,
-      });
-
       // Check if the response URL indicates success
       // This handles the case where backend redirects successful payments
       if (
         response.url.includes("paymentStatus=success") &&
         response.url.includes(reference)
       ) {
-        console.log("✅ PAYMENT SUCCESS DETECTED FROM URL");
 
         // Mark orders as paid
         const newPaid = new Set(paidInvestigations);
@@ -210,7 +202,6 @@ const Investigations = () => {
             (o) => o.orderId.toString() === orderIdStr
           );
           if (order) {
-            console.log(`💰 Marking order ${orderIdStr} as paid`);
             for (let i = 0; i < (order.items?.length || 0); i++) {
               newPaid.add(`${order.orderId}-${i}`);
             }
@@ -231,23 +222,15 @@ const Investigations = () => {
 
       // Try to get response text/JSON
       const responseText = await response.text();
-      console.log("📄 Response preview:", responseText.substring(0, 200));
 
       // If response is HTML, it means we got redirected to frontend
       if (responseText.includes("<!DOCTYPE html>")) {
-        console.log(
-          "⚠️ Received HTML - assuming payment failed or needs different handling"
-        );
-        toast.error(
-          "Payment verification inconclusive. Please check with support if payment was deducted."
-        );
         return false;
       }
 
       // Try to parse as JSON
       try {
         const verificationResult = JSON.parse(responseText);
-        console.log("✅ JSON Response:", verificationResult);
 
         if (
           verificationResult.status === "success" ||
@@ -286,12 +269,10 @@ const Investigations = () => {
           return false;
         }
       } catch (parseError) {
-        console.error("Failed to parse response:", parseError);
         toast.error("Payment verification failed - invalid response format");
         return false;
       }
     } catch (error) {
-      console.error("💥 PAYMENT VERIFICATION ERROR:", error);
       toast.error(`Failed to verify payment: ${error.message}`);
       return false;
     } finally {
@@ -359,7 +340,7 @@ const Investigations = () => {
           errorMessage =
             errorData.message || errorData.exceptionMessage || errorMessage;
         } catch (parseError) {
-          console.error("Failed to parse error response:", parseError);
+          // console.error("Failed to parse error response:", parseError);
         }
         throw new Error(errorMessage);
       }
@@ -389,7 +370,6 @@ const Investigations = () => {
         if (verified) toast.success("Payment completed successfully!");
       }
     } catch (error) {
-      console.error("Payment initiation failed:", error);
       toast.error(`Failed to initiate payment: ${error.message}`);
     } finally {
       setPaymentLoading(false);
@@ -467,7 +447,7 @@ const Investigations = () => {
           const errorText = await response.text();
           errorMessage = errorText || errorMessage;
         } catch (parseError) {
-          console.error("Failed to parse error response:", parseError);
+          // console.error("Failed to parse error response:", parseError);
         }
         throw new Error(
           `Failed to send order ${order.orderId}: ${errorMessage}`
