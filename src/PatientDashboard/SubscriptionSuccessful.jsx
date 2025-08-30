@@ -129,16 +129,34 @@ export default function SubscriptionSuccessful() {
     try {
       const token = getToken();
 
+      console.log("Making request to:", `${baseUrl}/api/payment/verify?reference=${ref}`);
+      console.log("Token:", token ? "Present" : "Missing");
+      console.log("Base URL:", baseUrl);
+
       const res = await axios.get(
         `${baseUrl}/api/payment/verify?reference=${ref}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
         }
       );
 
       // Add debugging - remove this after fixing
+      console.log("Full response:", res);
+      console.log("Response status:", res.status);
+      console.log("Response headers:", res.headers);
       console.log("API Response:", res.data);
       console.log("Status from API:", res.data?.status);
+
+      // Check if response is HTML (indicates error)
+      if (typeof res.data === 'string' && res.data.includes('<!DOCTYPE html>')) {
+        setVerified(false);
+        setError("API returned HTML instead of JSON - check endpoint URL and authentication");
+        return;
+      }
 
       // Check multiple possible response formats
       if (
@@ -155,8 +173,20 @@ export default function SubscriptionSuccessful() {
     } catch (error) {
       console.error("Payment verification failed:", error);
       console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      console.error("Error headers:", error.response?.headers);
+      
       setVerified(false);
-      setError(error.response?.data?.message || error.message || "Unknown error");
+      
+      if (error.response?.status === 404) {
+        setError("API endpoint not found - check your baseUrl and endpoint path");
+      } else if (error.response?.status === 401) {
+        setError("Authentication failed - check your token");
+      } else if (error.response?.status === 403) {
+        setError("Access forbidden - check your permissions");
+      } else {
+        setError(error.response?.data?.message || error.message || "Unknown error");
+      }
     } finally {
       setLoading(false);
     }
