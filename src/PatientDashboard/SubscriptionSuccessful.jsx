@@ -110,7 +110,6 @@ export default function SubscriptionSuccessful() {
   const [reference, setReference] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Extract reference from query string
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const ref = params.get("reference");
@@ -118,55 +117,37 @@ export default function SubscriptionSuccessful() {
       setReference(ref);
       verifyPayment(ref);
     } else {
-      // No reference found, redirect to dashboard
       setLoading(false);
-      navigate("/patient-dashboard");
     }
-  }, [location.search, navigate]);
+  }, [location.search]);
 
-  // Verify payment API
   const verifyPayment = async (ref) => {
     try {
       const token = getToken();
-
       const res = await axios.get(
         `${baseUrl}/api/payment/verify?reference=${ref}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Check if payment was successful
-      if (res.data?.status === "success") {
-        setLoading(false);
-      } else {
-        // Payment failed or status is a URL (unsuccessful), redirect to unsuccessful page
-        const failureUrl = typeof res.data?.status === 'string' && res.data.status.startsWith('http') 
-          ? res.data.status 
-          : "/patient-dashboard/subscription-unsuccessful";
-        window.location.href = failureUrl;
+      // If API returns failed, redirect to unsuccessful page
+      if (res.data?.message === "Payment verification failed") {
+        window.location.href = res.data?.status; // redirect to unsuccessful page
+        return;
       }
+
+      // Otherwise, show success
     } catch (error) {
-      console.error("Payment verification failed:", error);
-      // Redirect to unsuccessful page on error
-      navigate("/patient-dashboard/subscription-unsuccessful");
+      console.error("Payment verification error:", error);
+      window.location.href = "/subscription-unsuccessful?status=error";
+    } finally {
+      setLoading(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="flex justify-center">
-            <div className="w-20 h-20 border-4 border-gray-200 border-t-green-500 rounded-full animate-spin"></div>
-          </div>
-          <h1 className="mt-6 text-2xl md:text-3xl font-bold text-gray-800">
-            Verifying Payment...
-          </h1>
-          <p className="mt-3 text-gray-600 text-sm md:text-base">
-            Please wait while we confirm your payment.
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-700 font-medium">Verifying Payment...</p>
       </div>
     );
   }
@@ -181,7 +162,7 @@ export default function SubscriptionSuccessful() {
 
         {/* Title */}
         <h1 className="mt-6 text-2xl md:text-3xl font-bold text-gray-800">
-          Payment Successful!
+          Payment Successful
         </h1>
 
         {/* Transaction Reference */}
