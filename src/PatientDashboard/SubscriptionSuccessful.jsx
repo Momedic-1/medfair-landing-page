@@ -283,15 +283,15 @@ import React, { useState, useEffect } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { getToken } from "../utils";
 import { baseUrl } from "../env";
-
-const navigate = useNavigate();
-
+import { useNavigate } from "react-router-dom";
 
 
 export default function SubscriptionSuccessful() {
   const [reference, setReference] = useState("");
   const [isVerifying, setIsVerifying] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
+
+  const navigate = useNavigate();
 
   // Verify payment function using your utils
 const verifyPayment = async (reference) => {
