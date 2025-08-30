@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import axios from "axios";
-import { getToken, getUserData } from "../utils";
+import { getToken } from "../utils";
 import { baseUrl } from "../env";
 
 export default function SubscriptionSuccessful() {
@@ -28,7 +28,6 @@ export default function SubscriptionSuccessful() {
   const verifyPayment = async (ref) => {
     try {
       const token = getToken();
-    //   const user = getUserData();
 
       const res = await axios.get(
         `${baseUrl}/api/payment/verify?reference=${ref}`,
