@@ -26,8 +26,11 @@ const CheckEmail = () => {
 
         <h1 className="text-2xl font-bold text-gray-800 ">Check your email!</h1>
         <p className="text-gray-500">
-          A verification code was sent to you <br />
-          <p>({email ? email : "Please check your email"}).</p>
+          A verification code has been sent to{" "}
+          <span className="font-medium">({email})</span>. If you do not receive
+          it, please check your spam or junk folder.
+          <br />
+          {/* <p>({email ? email : "Please check your email"}).</p> */}
         </p>
       </div>
     </div>

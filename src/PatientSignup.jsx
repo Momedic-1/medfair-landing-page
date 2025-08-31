@@ -30,17 +30,13 @@ const PatientSignup = () => {
 
     // If partner slug exists, add it to form data
     if (partnerSlug) {
-      // console.log("Adding partner slug to form data:", partnerSlug);
       setFormData((prev) => {
         const updatedData = {
           ...prev,
           partnerSlug: partnerSlug,
         };
-        // console.log("Updated form data with partner:", updatedData);
         return updatedData;
       });
-    } else {
-      // console.log("No partner slug found - regular signup");
     }
   }, [partnerSlug]);
 
@@ -54,6 +50,51 @@ const PatientSignup = () => {
   }, [successMessage]);
 
   const stepLabels = ["Account", "Verification", "Login"];
+
+  // Function to check if step 1 form is valid
+  const isStep1FormValid = () => {
+    const requiredFields = [
+      'firstName',
+      'lastName', 
+      'emailAddress',
+      'phoneNumber',
+      'gender',
+      'password',
+      'confirmedPassword'
+    ];
+
+    // Check if all required fields are filled
+    const allFieldsFilled = requiredFields.every(field => 
+      formData[field] && formData[field].toString().trim() !== ''
+    );
+
+    // Check if passwords match
+    const passwordsMatch = formData.password && formData.confirmedPassword && 
+                          formData.password === formData.confirmedPassword;
+
+    return allFieldsFilled && passwordsMatch;
+  };
+
+  // Function to check if step 2 verification token is valid
+  const isStep2FormValid = () => {
+    return verificationToken && verificationToken.trim().length > 0;
+  };
+
+  // Function to determine if Next button should be disabled
+  const isNextButtonDisabled = () => {
+    if (loading) return true;
+    
+    switch (currentStep) {
+      case 1:
+        return !isStep1FormValid();
+      case 2:
+        return !isStep2FormValid();
+      case 3:
+        return false;
+      default:
+        return true;
+    }
+  };
 
   const handleResendSuccess = (message) => {
     setSuccessMessage(message);
@@ -70,7 +111,7 @@ const PatientSignup = () => {
           <PatientSignupForm
             formData={formData}
             setFormData={setFormData}
-            partnerSlug={partnerSlug} // Pass partner slug to form component
+            partnerSlug={partnerSlug}
           />
         );
       case 2:
@@ -123,8 +164,6 @@ const PatientSignup = () => {
       // Only include partnerSlug if it exists
       if (partnerSlug) {
         payload.partnerSlug = partnerSlug;
-      } else {
-        // console.log("No partnerSlug to add to payload");
       }
 
       const response = await fetch(
@@ -157,8 +196,6 @@ const PatientSignup = () => {
       setLoading(false);
       setErrorMessage("Error submitting form. Please try again.");
       return false;
-    } finally {
-      // console.log("=== END FORM VALIDATION DEBUG ===");
     }
   }
 
@@ -249,23 +286,14 @@ const PatientSignup = () => {
 
           {!showCheckEmail && (
             <div className="mt-4 md:mt-10 flex flex-col sm:flex-row justify-between gap-4">
-              {/* {currentStep !== 1 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentStep((prev) => Math.max(prev - 1, 1))
-                  }
-                  className="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Back
-                </button>
-              )} */}
               <button
                 type="button"
                 onClick={handleNextClick}
-                disabled={loading}
-                className={`w-full sm:w-auto inline-flex justify-center ml-auto items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 focus:ring-2 focus:ring-indigo-400 transition ${
-                  loading ? "opacity-70 cursor-not-allowed" : ""
+                disabled={isNextButtonDisabled()}
+                className={`w-full sm:w-auto inline-flex justify-center ml-auto items-center px-6 py-2 text-sm font-medium text-white rounded-lg focus:ring-2 focus:ring-indigo-400 transition ${
+                  isNextButtonDisabled()
+                    ? "bg-gray-400 cursor-not-allowed opacity-60" 
+                    : "bg-indigo-600 hover:bg-indigo-500"
                 }`}
               >
                 {loading ? (

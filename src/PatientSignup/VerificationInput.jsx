@@ -88,7 +88,10 @@ const VerificationInput = ({
     <div className="bg-white p-2 md:p-6 rounded-lg">
       <h2 className="text-xl font-bold text-center mb-4">Check your email!</h2>
       <p className="text-sm text-center text-gray-400 font-medium mb-4">
-        A verification code was sent to your email.
+        {/* A verification code was sent to your email. */}
+        A verification code has been sent to <span className="font-medium">({email})</span>. If you
+        do not receive it, please check your spam or junk
+        folder.
       </p>
       <p className="text-sm text-center mb-4 font-medium text-gray-400">
         Enter the 5-digit code to verify your Medfair account
@@ -119,7 +122,7 @@ const VerificationInput = ({
         )}
       </div>
 
-      <div className="flex justify-center space-x-2 mb-8 md:mb-16">
+      <div className="flex justify-center space-x-2">
         {code.map((digit, index) => (
           <input
             key={index}
