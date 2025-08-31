@@ -713,6 +713,12 @@ const Dashboard = () => {
     navigate("/patient-dashboard/patient-investigations");
   };
 
+  const isSlotExpired = (slot) => {
+    const now = dayjs();
+    const slotDateTime = dayjs(`${slot.date}T${slot.time}`);
+    return slotDateTime.isBefore(now);
+  };
+
   return (
     <div className="w-full">
       <ToastContainer />
@@ -779,6 +785,11 @@ const Dashboard = () => {
           padding: 16px;
           background: #f9fafb;
           border-bottom: 1px solid #e5e7eb;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
         }
         .rbc-toolbar button {
           background: white;
@@ -1144,7 +1155,7 @@ const Dashboard = () => {
                                 <p className="text-sm font-bold text-center mb-2">
                                   {dayjs(slotGroup.date).format("ddd, MMM D")}
                                 </p>
-                                <div className="flex flex-wrap gap-2 justify-center">
+                                {/* <div className="flex flex-wrap gap-2 justify-center">
                                   {slotGroup.slots?.map((slot) => {
                                     const isBooked = isSlotBooked(slot.slotId);
                                     return (
@@ -1172,6 +1183,48 @@ const Dashboard = () => {
                                         {isBooked && (
                                           <span className="block text-xs text-red-200 font-medium">
                                             Booked
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div> */}
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                  {slotGroup.slots?.map((slot) => {
+                                    const isBooked = isSlotBooked(slot.slotId);
+                                    const isExpired = isSlotExpired(slot);
+                                    const isDisabled = isBooked || isExpired;
+
+                                    return (
+                                      <button
+                                        key={slot.slotId}
+                                        className={`text-xs px-3 py-1 rounded-lg transition ${
+                                          isDisabled
+                                            ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
+                                            : "bg-[#020E7C] text-white hover:bg-blue-600"
+                                        }`}
+                                        onClick={(e) =>
+                                          !isDisabled &&
+                                          handleOpenPopover(
+                                            e,
+                                            specialist,
+                                            `${slot.date}T${slot.time}`,
+                                            slot.slotId
+                                          )
+                                        }
+                                        disabled={isDisabled}
+                                      >
+                                        {dayjs(
+                                          `${slot.date}T${slot.time}`
+                                        ).format("h:mm A")}
+                                        {isBooked && (
+                                          <span className="block text-xs text-red-200 font-medium">
+                                            Booked
+                                          </span>
+                                        )}
+                                        {isExpired && !isBooked && (
+                                          <span className="block text-xs text-gray-200 font-medium">
+                                            Expired
                                           </span>
                                         )}
                                       </button>
