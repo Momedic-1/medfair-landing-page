@@ -64,12 +64,10 @@ export default function PatientSignupForm({
 
   const navigateToLogin = () => {
     navigate("/login");
-    // This would normally use navigate("/login")
-    console.log("Navigate to login");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-blue-50 rounded-lg py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-blue-50 rounded-lg py-8 md:px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -168,6 +166,7 @@ export default function PatientSignupForm({
                 </label>
                 <div className="relative">
                   <input
+                    required
                     type="tel"
                     name="phoneNumber"
                     value={formData.phoneNumber || ""}
