@@ -28,21 +28,15 @@ const PatientSignup = () => {
       Preline.HSStepperJS.init();
     }
 
-    // Debug: Log URL parameters and partner info
-    console.log("=== PARTNER SIGNUP DEBUG ===");
-    console.log("Full URL:", window.location.href);
-    console.log("Search params:", Object.fromEntries(searchParams));
-    console.log("Partner slug from URL:", partnerSlug);
-
     // If partner slug exists, add it to form data
     if (partnerSlug) {
-      console.log("Adding partner slug to form data:", partnerSlug);
+      // console.log("Adding partner slug to form data:", partnerSlug);
       setFormData((prev) => {
         const updatedData = {
           ...prev,
           partnerSlug: partnerSlug,
         };
-        console.log("Updated form data with partner:", updatedData);
+        // console.log("Updated form data with partner:", updatedData);
         return updatedData;
       });
     } else {
@@ -156,7 +150,7 @@ const PatientSignup = () => {
         return true;
       } else {
         setLoading(false);
-        setErrorMessage(result.message || "Form submission failed.");
+        setErrorMessage(result.exceptionMessage || "Form submission failed.");
         return false;
       }
     } catch (error) {
@@ -207,7 +201,7 @@ const PatientSignup = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-6 md:py-12">
       <div className="w-full max-w-5xl bg-white shadow-xl rounded-2xl overflow-hidden">
-        <div className="px-4 md:px-6 py-10">
+        <div className="px-2 md:px-6 py-10">
           <h2 className="text-3xl font-bold text-center text-indigo-900">
             Create Patient Account
             {partnerSlug && (

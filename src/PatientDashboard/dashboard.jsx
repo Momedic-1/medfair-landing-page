@@ -439,8 +439,12 @@ const Dashboard = () => {
 
       await getUpcomingAppointments();
     } catch (error) {
-      console.error("Booking error:", error);
-      toast.error("Failed to book appointment");
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to book appointment";
+      toast.error(errorMessage);
+
       setBookedSlots((prev) => {
         const newSet = new Set(prev);
         newSet.delete(slotId);
