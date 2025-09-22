@@ -7,6 +7,7 @@ function Income() {
   const [incomeData, setIncomeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchIncome = async () => {
@@ -49,9 +50,9 @@ function Income() {
   }
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg h-52 mb-8 bg-gradient-to-br from-blue-50 via-white to-blue-100 shadow-md">
+    <div className="w-full bg-white p-6 rounded-lg h-62 mb-8 bg-gradient-to-br from-blue-50 via-white to-blue-100 shadow-md">
       <div className="flex justify-between items-center">
-       <h3 className="font-semibold text-[#020e7c] text-lg">
+        <h3 className="font-semibold text-[#020e7c] text-lg">
           Current Balance
         </h3>
       </div>
@@ -67,9 +68,37 @@ function Income() {
         </div>
       </div>
 
-      <button className="w-56 h-10 bg-[#020e7c] text-white py-2 rounded-lg">
+      <button
+        onClick={() => setShowModal(true)}
+        className="w-56 h-10 bg-[#020e7c] text-white py-2 rounded-lg"
+      >
         Request for Withdrawal
       </button>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 text-center flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-lg font-semibold text-[#020e7c] mb-4">
+              Withdrawal Request
+            </h2>
+            <p className="text-gray-700 mb-6">
+              Please send your withdrawal request with your email address and the amount to:
+              <span className="font-bold text-[#020e7c] block mt-2">
+                medfairfinance@gmail.com
+              </span>
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-200 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
