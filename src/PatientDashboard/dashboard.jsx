@@ -99,7 +99,7 @@ const specialistCategory = [
     name: "Ear, Nose, and Throat (ENT) Specialist",
     count: 0,
     icon: "❤️",
-    specialization: "ENT",
+    specialization: "EAR_NOSE_THROAT_SPECIALIST",
   },
   {
     id: 5,
