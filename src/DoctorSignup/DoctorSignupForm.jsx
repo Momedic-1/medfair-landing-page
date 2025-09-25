@@ -17,7 +17,7 @@ const specialization = [
   "CLINICAL_PSYCHOLOGIST",
   "RELATIONSHIP_THERAPIST",
   "UROLOGIST",
-  "SEX_THERAPIST",
+  "Ear, Nose, and Throat (ENT) Specialist",
 ];
 export default function DoctorSignupForm() {
   const formatSpecialization = (specialization) => {
