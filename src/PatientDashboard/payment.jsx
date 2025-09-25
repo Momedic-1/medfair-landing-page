@@ -10,7 +10,7 @@ export default function PaymentPage() {
   const subscriptionPlans = {
     instant: { name: 'Instant', price: 1500 },
     monthly: { name: 'Monthly', price: 4500 },
-    ent:{ name: '6 Months', price: 30000 },
+    ent:{ name: 'Per consultation', price: 30000 },
     yearly: { name: 'Yearly', price: 45000 },
     specialist: { name: 'Specialist', price: 5000 },
   };
