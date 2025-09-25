@@ -60,10 +60,10 @@ const specialistCategory = [
   },
   {
     id: 4,
-    name: "Sex Therapist",
+    name: "Sex Ear, Nose, and Throat (ENT) Specialist",
     count: 0,
     icon: "❤️",
-    specialization: "SEX_THERAPIST",
+    specialization: "ENT",
   },
 ];
 

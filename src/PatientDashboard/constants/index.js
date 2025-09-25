@@ -44,4 +44,18 @@ export const ActiveSlide = [
     buttonText: "Subscribe",
     buttonLink: "/payment",
   },
+  {
+    title: "Ear, Nose, and Throat (ENT) Specialist",
+    subTitle: 30000,
+    content: [
+      "One-off consultation with an ENT doctor.",
+      "Video consultation with experienced specialists.",
+      "Diagnosis and management of ear, nose, and throat conditions.",
+      "Personalized treatment plans for your specific needs.",
+      "Follow-up reviews to track recovery and progress.",
+      "Referral support for advanced care or surgery if needed.",
+    ],
+    buttonText: "Subscribe",
+    buttonLink: "/payment",
+  }
 ];
