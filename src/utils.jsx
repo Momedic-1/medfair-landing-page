@@ -21,9 +21,23 @@ export const formatAppointmentDate = (dateString) => {
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
 };
-export const transformName = (name) => {
-  return name?.toUpperCase().replace(/\s+/g, '_');
+
+export const transformName = (categoryName) => {
+  // Create a mapping from display names to backend enum values
+  const specializationMapping = {
+    "Mental Health Specialist": "MENTAL_HEALTH_SPECIALIST",
+    "Clinical Psychologist": "CLINICAL_PSYCHOLOGIST", 
+    "Relationship Therapist": "RELATIONSHIP_THERAPIST",
+    "Ear, Nose, and Throat Specialist": "EAR_NOSE_THROAT_SPECIALIST",
+    "Urologist": "UROLOGIST"
+  };
+  
+  // Return the mapped enum value, or fallback to the original transformation
+  return specializationMapping[categoryName] || categoryName.toUpperCase().replace(/[^A-Z0-9]/g, '_');
 };
+// export const transformName = (name) => {
+//   return name?.toUpperCase().replace(/\s+/g, '_');
+// };
 
 export const formatSpecialization = (text) => {
   return text
