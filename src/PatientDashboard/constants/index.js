@@ -45,7 +45,7 @@ export const ActiveSlide = [
     buttonLink: "/payment",
   },
   {
-    title: "Ear, Nose, and Throat (ENT) Specialist",
+    title: "EAR_NOSE_THROAT_SPECIALIST",
     subTitle: 30000,
     content: [
       "One-off consultation with an ENT doctor.",

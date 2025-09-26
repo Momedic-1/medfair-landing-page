@@ -96,18 +96,18 @@ const specialistCategory = [
   },
   {
     id: 4,
-    name: "Ear, Nose, and Throat (ENT) Specialist",
-    count: 0,
-    icon: "❤️",
-    specialization: "EAR_NOSE_THROAT_SPECIALIST",
-  },
-  {
-    id: 5,
     name: "Urologist",
     count: 0,
     icon: "🫁",
     specialization: "UROLOGIST",
   },
+  {
+    id: 5,
+    name: "Ear, Nose, and Throat Specialist",
+    count: 0,
+    icon: "👂🏼",
+    specialization: "EAR_NOSE_THROAT_SPECIALIST",
+  }
 ];
 
 const Dashboard = () => {

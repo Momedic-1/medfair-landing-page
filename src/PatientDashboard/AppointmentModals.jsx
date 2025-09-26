@@ -36,36 +36,36 @@ const avatarStyle = {
   height: 100,
 };
 
-const specialistCategory = [
-  {
-    id: 1,
-    name: "Mental Health Specialist",
-    count: 0,
-    icon: "🧠",
-    specialization: "MENTAL_HEALTH_SPECIALIST",
-  },
-  {
-    id: 2,
-    name: "Clinical Psychologist",
-    count: 0,
-    icon: "🎯",
-    specialization: "CLINICAL_PSYCHOLOGIST",
-  },
-  {
-    id: 3,
-    name: "Relationship Therapist",
-    count: 0,
-    icon: "💭",
-    specialization: "RELATIONSHIP_THERAPIST",
-  },
-  {
-    id: 4,
-    name: "Ear, Nose, and Throat (ENT) Specialist",
-    count: 0,
-    icon: "👂🏼",
-    specialization: "EAR_NOSE_THROAT_SPECIALIST",
-  },
-];
+// const specialistCategory = [
+//   {
+//     id: 1,
+//     name: "Mental Health Specialist",
+//     count: 0,
+//     icon: "🧠",
+//     specialization: "MENTAL_HEALTH_SPECIALIST",
+//   },
+//   {
+//     id: 2,
+//     name: "Clinical Psychologist",
+//     count: 0,
+//     icon: "🎯",
+//     specialization: "CLINICAL_PSYCHOLOGIST",
+//   },
+//   {
+//     id: 3,
+//     name: "Relationship Therapist",
+//     count: 0,
+//     icon: "💭",
+//     specialization: "RELATIONSHIP_THERAPIST",
+//   },
+//   {
+//     id: 4,
+//     name: "Ear, Nose, and Throat (ENT) Specialist",
+//     count: 0,
+//     icon: "👂🏼",
+//     specialization: "EAR_NOSE_THROAT_SPECIALIST",
+//   },
+// ];
 
 const AppointmentModals = ({
   isMainModalOpen,
