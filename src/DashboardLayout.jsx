@@ -20,7 +20,7 @@ const DashboardLayout = () => {
           <Route path="/notes" element={<Search />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/finances" element={<Finances />} />
-          <Route path="doctor-profile" element={<DoctorProfile />} />
+          <Route path="/doctor-profile" element={<DoctorProfile />} />
         </Routes>
       </div>
     </div>
