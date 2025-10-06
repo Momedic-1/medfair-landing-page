@@ -319,11 +319,17 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     ? "/patient-dashboard/partners"
                     : "/patient-dashboard"
                 }
-                className="flex items-center p-3 m-3 py-2 px-4 rounded bg-white hover:text-[#020E7C]"
+                className={({ isActive }) =>
+                  `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                    isActive
+                      ? "bg-white text-[#020E7C]"
+                      : "hover:bg-white hover:text-[#020E7C]"
+                  }`
+                }
                 onClick={toggleSidebar}
               >
                 <img src={dashboard} alt="Dashboard" />
-                <span className="ml-3 text-black">Dashboard</span>
+                <span className="ml-3">Dashboard</span>
               </NavLink>
 
               <NavLink
@@ -332,7 +338,13 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     ? "/patient-dashboard/partners/profile"
                     : "/patient-dashboard/profile"
                 }
-                className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
+                className={({ isActive }) =>
+                  `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                    isActive
+                      ? "bg-white text-[#020E7C]"
+                      : "hover:bg-white hover:text-[#020E7C]"
+                  }`
+                }
                 onClick={toggleSidebar}
               >
                 <img src={profile} alt="Profile" />
@@ -344,31 +356,58 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 <>
                   <NavLink
                     to="/patient-dashboard/contact-us"
-                    className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
                     onClick={toggleSidebar}
                   >
                     <FaPhone />
                     <span className="ml-3">Contact Us</span>
                   </NavLink>
+
                   <NavLink
                     to="/patient-dashboard/subscription"
-                    className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
                     onClick={toggleSidebar}
                   >
                     <FaMoneyBill />
                     <span className="ml-3">Subscriptions</span>
                   </NavLink>
+
                   <NavLink
                     to="/patient-dashboard/patient-notes"
-                    className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
                     onClick={toggleSidebar}
                   >
                     <FaHandHoldingMedical />
                     <span className="ml-3">Medications</span>
                   </NavLink>
+
                   <NavLink
                     to="/patient-dashboard/patient-investigations"
-                    className="flex items-center p-3 m-3 py-2 px-4 rounded hover:bg-white hover:text-[#020E7C]"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
                     onClick={toggleSidebar}
                   >
                     <FaHospital />
@@ -408,22 +447,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 data-hs-accordion-always-open
               >
                 <ul className="flex flex-col space-y-6 mt-6">
-                  <li>
-                    <NavLink
-                      to="/doctor-dashboard"
-                      onClick={toggleSidebar}
-                      className={({ isActive }) =>
-                        `flex items-center p-2 rounded-lg ${
-                          isActive
-                            ? "bg-blue-100 text-blue-800"
-                            : "text-gray-100 hover:bg-gray-100"
-                        }`
-                      }
-                    >
-                      <DashboardIcon />
-                      Dashboard
-                    </NavLink>
-                  </li>
+                  <li></li>
                   <li>
                     <NavLink
                       to="/view-profile"

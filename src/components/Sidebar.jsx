@@ -161,7 +161,7 @@ const Sidebar = () => {
                     href="#"
                   >
                     <CalendarIcon />
-                    View Profile
+                    {/* View Profile */}
                   </a>
                 </li>
                 <li>

@@ -141,6 +141,7 @@ const Dashboard = () => {
   const [subscriptionMessage, setSubscriptionMessage] = useState(""); // store API message
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
+  const [activeMeeting, setActiveMeeting] = useState(null); // persisted quick-call meeting
 
   const patientId = getId();
 
@@ -313,6 +314,54 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
+
+  // --- Quick-call rejoin helpers ---
+  const ACTIVE_MEETING_KEY = "activeMeeting";
+
+  const loadActiveMeetingFromStorage = () => {
+    try {
+      const raw = localStorage.getItem(ACTIVE_MEETING_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.roomUrl || !parsed?.expiresAt) return null;
+      if (Date.now() > parsed.expiresAt) {
+        localStorage.removeItem(ACTIVE_MEETING_KEY);
+        return null;
+      }
+      return parsed;
+    } catch (_e) {
+      return null;
+    }
+  };
+
+  const saveActiveMeetingToStorage = (roomUrl, durationMinutes = 40) => {
+    const expiresAt = Date.now() + durationMinutes * 60 * 1000;
+    const payload = { roomUrl, expiresAt };
+    localStorage.setItem(ACTIVE_MEETING_KEY, JSON.stringify(payload));
+    setActiveMeeting(payload);
+  };
+
+  const clearActiveMeeting = () => {
+    localStorage.removeItem(ACTIVE_MEETING_KEY);
+    setActiveMeeting(null);
+  };
+
+  // Initialize active meeting from storage on mount
+  useEffect(() => {
+    const stored = loadActiveMeetingFromStorage();
+    if (stored) setActiveMeeting(stored);
+  }, []);
+
+  // Reaper to clear expired active meetings
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const stored = loadActiveMeetingFromStorage();
+      if (!stored && activeMeeting) {
+        setActiveMeeting(null);
+      }
+    }, 30000); // check every 30s
+    return () => clearInterval(interval);
+  }, [activeMeeting]);
 
   const handleJoinCall = async (slotId) => {
     const token = getToken();
@@ -570,6 +619,10 @@ const Dashboard = () => {
       );
 
       setVideoLink(response.data);
+      if (response.data?.roomUrl) {
+        // persist for 40 minutes to enable rejoin
+        saveActiveMeetingToStorage(response.data.roomUrl, 40);
+      }
 
       return response.data;
     } catch (err) {
@@ -818,6 +871,21 @@ const Dashboard = () => {
       `}</style>
 
       {/* Subscription Status Box */}
+      {/* Quick-call Rejoin Banner (top of page) */}
+      {activeMeeting?.roomUrl && (
+        <Link to={`/video-call?roomUrl=${encodeURIComponent(activeMeeting.roomUrl)}`}>
+          <div className="w-full mt-2 mb-2">
+            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+              <div className="w-56 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
+                <p className="text-white font-semibold text-center mb-2">Rejoin Call</p>
+                <LiaPhoneVolumeSolid className="shake text-yellow-500" fontSize={28} />
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Subscription Status Box */}
       {hasSubscription === false && (
         <div className="w-full bg-red-500 text-white p-4 rounded-lg shadow-lg">
           <div className="flex flex-col md:flex-row items-center justify-between">
@@ -852,7 +920,17 @@ const Dashboard = () => {
 
       <div className="w-full md:px-4 py-8 overflow-hidden">
         <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 md:gap-8 mt-4">
-          <div onClick={handleCallADoctorClick}>
+          <div
+            onClick={() => {
+              if (activeMeeting?.roomUrl) {
+                // Disable starting another quick-call while active one exists
+                toast.info("You already have an active call. Use the Rejoin button above.");
+                return;
+              }
+              handleCallADoctorClick();
+            }}
+            className={activeMeeting?.roomUrl ? "opacity-60 cursor-not-allowed pointer-events-none" : ""}
+          >
             <Cards title="Call a Doctor" img={call} />
           </div>
           <div

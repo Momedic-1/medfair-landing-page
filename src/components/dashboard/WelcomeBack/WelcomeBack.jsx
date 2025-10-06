@@ -6,6 +6,8 @@ import { baseUrl } from "../../../env";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { LiaPhoneVolumeSolid } from "react-icons/lia";
+import { useDispatch } from "react-redux";
+import { setCall, setRoomUrl } from "../../../features/authSlice";
 
 function WelcomeBack({ status }) {
   const [activeCalls, setActiveCalls] = useState([]);
@@ -14,10 +16,12 @@ function WelcomeBack({ status }) {
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null);
+  const [rejoinData, setRejoinData] = useState(null);
   const token = JSON.parse(localStorage.getItem('authToken'))?.token;
   const userData = JSON.parse(localStorage.getItem("userData"));
   const online = "Online";
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const audioRef = useRef(null);
   const pollingInterval = useRef(null);
   const ringtone =
@@ -28,6 +32,22 @@ function WelcomeBack({ status }) {
     const storedPickedCalls =
       JSON.parse(localStorage.getItem("pickedCalls")) || [];
     setPickedCalls(new Set(storedPickedCalls));
+
+    // Initialize rejoin banner from localStorage.activeCall
+    const rawActiveCall = localStorage.getItem("activeCall");
+    if (rawActiveCall) {
+      try {
+        const parsed = JSON.parse(rawActiveCall);
+        const now = Date.now();
+        if (parsed?.expiresAt && now < parsed.expiresAt) {
+          setRejoinData(parsed);
+        } else {
+          localStorage.removeItem("activeCall");
+        }
+      } catch (_) {
+        localStorage.removeItem("activeCall");
+      }
+    }
 
     viewAllPendingCalls();
     enableAudio();
@@ -67,6 +87,33 @@ function WelcomeBack({ status }) {
         })
         .catch((error) => console.error("Audio initialization failed:", error));
     }
+  };
+
+  const handleRejoin = () => {
+    try {
+      const raw = localStorage.getItem("activeCall");
+      if (!raw) return;
+      const active = JSON.parse(raw);
+      const now = Date.now();
+      if (active?.expiresAt && now >= active.expiresAt) {
+        localStorage.removeItem("activeCall");
+        setRejoinData(null);
+        return;
+      }
+      if (active?.patientId) {
+        localStorage.setItem("patientId", active.patientId);
+      }
+      if (active?.joinRoomUrl) dispatch(setRoomUrl(active.joinRoomUrl));
+      if (active?.call) dispatch(setCall(active.call));
+      navigate("/video-call");
+    } catch (_) {
+      // fail silently
+    }
+  };
+
+  const dismissRejoin = () => {
+    localStorage.removeItem("activeCall");
+    setRejoinData(null);
   };
 
   const playRingtone = () => {
@@ -181,6 +228,19 @@ function WelcomeBack({ status }) {
   return (
     <div className="w-full relative px-2">
       <audio ref={audioRef} src={ringtone} preload="auto" loop />
+      {rejoinData ? (
+        <div className="fixed top-2 left-32 md:left-64 z-50">
+          <div className="w-40 h-24 border rounded-lg py-3 px-3 grid place-items-center bg-blue-700 cursor-pointer">
+            <div className="w-full text-center text-white text-sm">
+              Rejoin Call
+            </div>
+            <div className="flex gap-2 mt-1">
+              <button onClick={handleRejoin} className="bg-white text-blue-700 px-2 py-0.5 rounded text-xs">Rejoin</button>
+              <button onClick={dismissRejoin} className="bg-blue-500 text-white px-2 py-0.5 rounded text-xs border border-white/30">Dismiss</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {!audioInitialized && (
         <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-lg">
           <button
