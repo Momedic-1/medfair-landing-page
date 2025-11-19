@@ -59,36 +59,6 @@ const VideoCall = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // const leaveRoom = async () => {
-  //   try {
-  //     if (isVideoOn) {
-  //       await toggleCamera();
-  //       setIsVideoOn(false);
-  //     }
-  //     if (isAudioOn) {
-  //       await toggleMicrophone();
-  //       setIsAudioOn(false);
-  //     }
-
-  //     await actions.leaveRoom();
-
-  //     if (localParticipant?.stream) {
-  //       localParticipant.stream.getTracks().forEach((track) => {
-  //         track.stop();
-  //       });
-  //     }
-
-  //     dispatch(setRoomUrl(null));
-  //     dispatch(setCall(null));
-
-  //     navigate("/doctor-dashboard");
-  //     window.location.reload();
-  //   } catch (error) {
-  //     console.error("Error leaving room:", error);
-  //     navigate("/doctor-dashboard");
-  //   }
-  // };
-
   const notifyCallEnd = async (meetingId) => {
     try {
       await axios.post(
@@ -116,29 +86,35 @@ const VideoCall = () => {
         await toggleMicrophone();
         setIsAudioOn(false);
       }
-  
+
       await actions.leaveRoom();
-  
+
       if (localParticipant?.stream) {
         localParticipant.stream.getTracks().forEach((track) => {
           track.stop();
         });
       }
-  
+
       // Notify backend if patient is ending the call
       if (userData?.role === "PATIENT" && call?.meetingId) {
         await notifyCallEnd(call.meetingId);
       }
-  
+
       dispatch(setRoomUrl(null));
       dispatch(setCall(null));
-  
-      const redirectPath = userData?.role === "DOCTOR" ? "/doctor-dashboard" : "/patient-dashboard";
+
+      const redirectPath =
+        userData?.role === "DOCTOR"
+          ? "/doctor-dashboard"
+          : "/patient-dashboard";
       navigate(redirectPath);
       window.location.reload();
     } catch (error) {
       console.error("Error leaving room:", error);
-      const redirectPath = userData?.role === "DOCTOR" ? "/doctor-dashboard" : "/patient-dashboard";
+      const redirectPath =
+        userData?.role === "DOCTOR"
+          ? "/doctor-dashboard"
+          : "/patient-dashboard";
       navigate(redirectPath);
     }
   };
@@ -170,7 +146,10 @@ const VideoCall = () => {
     } else if (userRole === "DOCTOR" && call) {
       setDisplayInfo({
         label: "Patient",
-        firstName: capitalizeFirstLetter(call.name) || capitalizeFirstLetter(call.patientFirstName) || "N/A",
+        firstName:
+          capitalizeFirstLetter(call.name) ||
+          capitalizeFirstLetter(call.patientFirstName) ||
+          "N/A",
         lastName: capitalizeFirstLetter(call.patientLastName) || "",
         dob: call.dob || userData?.dob || "N/A",
         age: calculateAge(call.dob || userData?.dob),
