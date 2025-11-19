@@ -619,48 +619,14 @@ const Dashboard = () => {
     }
   };
 
-  // const createMeeting = async () => {
-  //   setIsLoading(true);
-
-  //   try {
-  //     if (!patientId) {
-  //       throw new Error("Patient ID not found");
-  //     }
-
-  //     const response = await axios.post(
-  //       `${CREATE_MEETING}?patientId=${patientId}`,
-  //       {},
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     setVideoLink(response.data);
-  //     if (response.data?.roomUrl) {
-  //       // persist for 40 minutes to enable rejoin
-  //       saveActiveMeetingToStorage(response.data.roomUrl, 40);
-  //     }
-
-  //     return response.data;
-  //   } catch (err) {
-  //     toast.error(err.response?.data?.error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  
   const createMeeting = async () => {
     setIsLoading(true);
-  
+
     try {
       if (!patientId) {
         throw new Error("Patient ID not found");
       }
-  
+
       const response = await axios.post(
         `${CREATE_MEETING}?patientId=${patientId}`,
         {},
@@ -671,31 +637,33 @@ const Dashboard = () => {
           },
         }
       );
-  
+
       setVideoLink(response.data);
-      
+
       // Extract meetingId (which is the callId)
       const callId = response.data.meetingId;
-  
+
       if (!callId) {
         throw new Error("Meeting ID not found in response");
       }
-  
+
       setCurrentCallId(callId);
       setCallStatus("WAITING");
-  
+
       // Start polling for doctor join
       const interval = setInterval(async () => {
         const status = await pollCallStatus(callId);
-        
+
         if (status === "DOCTOR_JOINED") {
           setCallStatus("DOCTOR_JOINED");
           clearInterval(interval);
-          
+
           // Auto-join the call
           if (response.data?.roomUrl) {
             saveActiveMeetingToStorage(response.data.roomUrl, 40);
-            navigate(`/video-call?roomUrl=${encodeURIComponent(response.data.roomUrl)}`);
+            navigate(
+              `/video-call?roomUrl=${encodeURIComponent(response.data.roomUrl)}`
+            );
           }
         } else if (status === "ENDED") {
           setCallStatus("ENDED");
@@ -706,7 +674,7 @@ const Dashboard = () => {
           toast.error("Call ended by doctor");
         }
       }, 3000); // Poll every 3 seconds
-  
+
       setPollingInterval(interval);
       return response.data;
     } catch (err) {
@@ -977,8 +945,6 @@ const Dashboard = () => {
         }
       `}</style>
 
-      {/* Subscription Status Box */}
-      {/* Quick-call Rejoin Banner (top of page) */}
       {activeMeeting?.roomUrl && (
         <Link
           to={`/video-call?roomUrl=${encodeURIComponent(
@@ -1450,75 +1416,6 @@ const Dashboard = () => {
           </List>
         </Box>
       </Modal>
-
-      {/* Call a Doctor Modal */}
-      {/* <Modal
-        open={isCallADoctorModalOpen}
-        onClose={() => setIsCallADoctorModalOpen(false)}
-        aria-labelledby="specialists-modal-title"
-      >
-        <Box
-          sx={{
-            width: 400,
-            height: 200,
-            overflowY: "auto",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-            position: "absolute",
-            top: "40%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <div className="w-full h-full flex flex-col gap-y-8 px-4">
-            {videoLink === null ? (
-              <>
-                <p className="text-lg text-center font-medium">
-                  Want to call a doctor?
-                </p>
-                <button
-                  className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full"
-                  onClick={createMeeting}
-                >
-                  {isLoading ? (
-                    <ColorRing
-                      height="40"
-                      width="40"
-                      ariaLabel="color-ring-loading"
-                      wrapperStyle={{}}
-                      wrapperClass="color-ring-wrapper"
-                      colors={["white", "white", "white", "white", "white"]}
-                    />
-                  ) : (
-                    "Create Meeting"
-                  )}
-                </button>
-              </>
-            ) : (
-              <div className="w-full h-full flex flex-col gap-y-4">
-                <p className="text-xl font-medium">Your meeting link is:</p>
-                <a
-                  href={videoLink?.roomUrl}
-                  className="text-[12px] cursor-pointer font-medium text-blue-800"
-                >
-                  {videoLink?.roomUrl}
-                </a>
-                <Link
-                  to={`/video-call?roomUrl=${encodeURIComponent(
-                    videoLink?.roomUrl
-                  )}`}
-                >
-                  <button className="bg-blue-500 w-full h-10 text-white rounded-full">
-                    Click to Join the Meeting
-                  </button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </Box>
-      </Modal> */}
 
       {/* Call a Doctor Modal */}
       <Modal
