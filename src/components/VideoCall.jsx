@@ -11,6 +11,8 @@ import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
 import { capitalizeFirstLetter } from "../utils";
 import { setRoomUrl, setCall } from "../features/authSlice";
+import axios from "axios";
+import { baseUrl } from "../env";
 
 const VideoCall = () => {
   const [userData] = useState(() => {
@@ -57,6 +59,23 @@ const VideoCall = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const notifyCallEnd = async (callId) => {
+    try {
+      await axios.post(
+        `${baseUrl}/api/v1/video/${callId}/status`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error notifying call end:", error);
+    }
+  };
+
+  // Modify leaveRoom function
   const leaveRoom = async () => {
     try {
       if (isVideoOn) {
@@ -76,14 +95,27 @@ const VideoCall = () => {
         });
       }
 
+      // Notify backend if patient is ending the call
+      if (userData?.role === "PATIENT" && call?.meetingId) {
+        await notifyCallEnd(call.meetingId);
+      }
+
       dispatch(setRoomUrl(null));
       dispatch(setCall(null));
 
-      navigate("/doctor-dashboard");
+      const redirectPath =
+        userData?.role === "DOCTOR"
+          ? "/doctor-dashboard"
+          : "/patient-dashboard";
+      navigate(redirectPath);
       window.location.reload();
     } catch (error) {
       console.error("Error leaving room:", error);
-      navigate("/doctor-dashboard");
+      const redirectPath =
+        userData?.role === "DOCTOR"
+          ? "/doctor-dashboard"
+          : "/patient-dashboard";
+      navigate(redirectPath);
     }
   };
 
@@ -114,7 +146,10 @@ const VideoCall = () => {
     } else if (userRole === "DOCTOR" && call) {
       setDisplayInfo({
         label: "Patient",
-        firstName: capitalizeFirstLetter(call.name) || capitalizeFirstLetter(call.patientFirstName) || "N/A",
+        firstName:
+          capitalizeFirstLetter(call.name) ||
+          capitalizeFirstLetter(call.patientFirstName) ||
+          "N/A",
         lastName: capitalizeFirstLetter(call.patientLastName) || "",
         dob: call.dob || userData?.dob || "N/A",
         age: calculateAge(call.dob || userData?.dob),

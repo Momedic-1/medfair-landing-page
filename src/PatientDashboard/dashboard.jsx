@@ -107,7 +107,7 @@ const specialistCategory = [
     count: 0,
     icon: "👂🏼",
     specialization: "EAR_NOSE_THROAT_SPECIALIST",
-  }
+  },
 ];
 
 const Dashboard = () => {
@@ -142,6 +142,9 @@ const Dashboard = () => {
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null); // persisted quick-call meeting
+  const [callStatus, setCallStatus] = useState(null);
+  const [pollingInterval, setPollingInterval] = useState(null);
+  const [currentCallId, setCurrentCallId] = useState(null);
 
   const patientId = getId();
 
@@ -599,6 +602,23 @@ const Dashboard = () => {
     }
   };
 
+  const pollCallStatus = async (callId) => {
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/v1/video/${callId}/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data.status;
+    } catch (error) {
+      console.error("Error polling call status:", error);
+      return null;
+    }
+  };
+
   const createMeeting = async () => {
     setIsLoading(true);
 
@@ -619,17 +639,72 @@ const Dashboard = () => {
       );
 
       setVideoLink(response.data);
-      if (response.data?.roomUrl) {
-        // persist for 40 minutes to enable rejoin
-        saveActiveMeetingToStorage(response.data.roomUrl, 40);
+
+      // Extract meetingId (which is the callId)
+      const callId = response.data.meetingId;
+
+      if (!callId) {
+        throw new Error("Meeting ID not found in response");
       }
 
+      setCurrentCallId(callId);
+      setCallStatus("WAITING");
+
+      // Start polling for doctor join
+      const interval = setInterval(async () => {
+        const status = await pollCallStatus(callId);
+
+        if (status === "DOCTOR_JOINED") {
+          setCallStatus("DOCTOR_JOINED");
+          clearInterval(interval);
+
+          // Auto-join the call
+          if (response.data?.roomUrl) {
+            saveActiveMeetingToStorage(response.data.roomUrl, 40);
+            navigate(
+              `/video-call?roomUrl=${encodeURIComponent(response.data.roomUrl)}`
+            );
+          }
+        } else if (status === "ENDED") {
+          setCallStatus("ENDED");
+          clearInterval(interval);
+          setVideoLink(null);
+          setCurrentCallId(null);
+          setIsCallADoctorModalOpen(false);
+          toast.error("Call ended by doctor");
+        }
+      }, 3000); // Poll every 3 seconds
+
+      setPollingInterval(interval);
       return response.data;
     } catch (err) {
-      toast.error(err.response?.data?.error);
+      console.error("Create meeting error:", err);
+      toast.error(err.response?.data?.error || "Failed to create meeting");
+      setCallStatus(null);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
+
+  // Handle cancel waiting
+  const handleCancelWaiting = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    setCallStatus(null);
+    setVideoLink(null);
+    setCurrentCallId(null);
+    setIsCallADoctorModalOpen(false);
   };
 
   useEffect(() => {
@@ -870,15 +945,22 @@ const Dashboard = () => {
         }
       `}</style>
 
-      {/* Subscription Status Box */}
-      {/* Quick-call Rejoin Banner (top of page) */}
       {activeMeeting?.roomUrl && (
-        <Link to={`/video-call?roomUrl=${encodeURIComponent(activeMeeting.roomUrl)}`}>
+        <Link
+          to={`/video-call?roomUrl=${encodeURIComponent(
+            activeMeeting.roomUrl
+          )}`}
+        >
           <div className="w-full mt-2 mb-2">
             <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
               <div className="w-56 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
-                <p className="text-white font-semibold text-center mb-2">Rejoin Call</p>
-                <LiaPhoneVolumeSolid className="shake text-yellow-500" fontSize={28} />
+                <p className="text-white font-semibold text-center mb-2">
+                  Rejoin Call
+                </p>
+                <LiaPhoneVolumeSolid
+                  className="shake text-yellow-500"
+                  fontSize={28}
+                />
               </div>
             </div>
           </div>
@@ -924,12 +1006,18 @@ const Dashboard = () => {
             onClick={() => {
               if (activeMeeting?.roomUrl) {
                 // Disable starting another quick-call while active one exists
-                toast.info("You already have an active call. Use the Rejoin button above.");
+                toast.info(
+                  "You already have an active call. Use the Rejoin button above."
+                );
                 return;
               }
               handleCallADoctorClick();
             }}
-            className={activeMeeting?.roomUrl ? "opacity-60 cursor-not-allowed pointer-events-none" : ""}
+            className={
+              activeMeeting?.roomUrl
+                ? "opacity-60 cursor-not-allowed pointer-events-none"
+                : ""
+            }
           >
             <Cards title="Call a Doctor" img={call} />
           </div>
@@ -1332,13 +1420,19 @@ const Dashboard = () => {
       {/* Call a Doctor Modal */}
       <Modal
         open={isCallADoctorModalOpen}
-        onClose={() => setIsCallADoctorModalOpen(false)}
+        onClose={() => {
+          if (callStatus === "WAITING") {
+            handleCancelWaiting();
+          } else {
+            setIsCallADoctorModalOpen(false);
+          }
+        }}
         aria-labelledby="specialists-modal-title"
       >
         <Box
           sx={{
             width: 400,
-            height: 200,
+            height: callStatus === "WAITING" ? 250 : 200,
             overflowY: "auto",
             bgcolor: "background.paper",
             boxShadow: 24,
@@ -1351,7 +1445,36 @@ const Dashboard = () => {
           }}
         >
           <div className="w-full h-full flex flex-col gap-y-8 px-4">
-            {videoLink === null ? (
+            {callStatus === "WAITING" ? (
+              <>
+                <div className="flex flex-col items-center gap-4">
+                  <ColorRing
+                    height="60"
+                    width="60"
+                    ariaLabel="color-ring-loading"
+                    colors={[
+                      "#3b82f6",
+                      "#3b82f6",
+                      "#3b82f6",
+                      "#3b82f6",
+                      "#3b82f6",
+                    ]}
+                  />
+                  <p className="text-lg text-center font-medium">
+                    Please wait while we connect you with a doctor
+                  </p>
+                  <p className="text-sm text-center text-gray-600">
+                    You will be automatically joined once a doctor is available
+                  </p>
+                </div>
+                <button
+                  className="bg-red-500 flex justify-center items-center w-full h-12 text-white rounded-full hover:bg-red-600"
+                  onClick={handleCancelWaiting}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : videoLink === null ? (
               <>
                 <p className="text-lg text-center font-medium">
                   Want to call a doctor?
@@ -1365,8 +1488,6 @@ const Dashboard = () => {
                       height="40"
                       width="40"
                       ariaLabel="color-ring-loading"
-                      wrapperStyle={{}}
-                      wrapperClass="color-ring-wrapper"
                       colors={["white", "white", "white", "white", "white"]}
                     />
                   ) : (
@@ -1374,26 +1495,7 @@ const Dashboard = () => {
                   )}
                 </button>
               </>
-            ) : (
-              <div className="w-full h-full flex flex-col gap-y-4">
-                <p className="text-xl font-medium">Your meeting link is:</p>
-                <a
-                  href={videoLink?.roomUrl}
-                  className="text-[12px] cursor-pointer font-medium text-blue-800"
-                >
-                  {videoLink?.roomUrl}
-                </a>
-                <Link
-                  to={`/video-call?roomUrl=${encodeURIComponent(
-                    videoLink?.roomUrl
-                  )}`}
-                >
-                  <button className="bg-blue-500 w-full h-10 text-white rounded-full">
-                    Click to Join the Meeting
-                  </button>
-                </Link>
-              </div>
-            )}
+            ) : null}
           </div>
         </Box>
       </Modal>
