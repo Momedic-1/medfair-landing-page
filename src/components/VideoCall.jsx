@@ -59,10 +59,10 @@ const VideoCall = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const notifyCallEnd = async (meetingId) => {
+  const notifyCallEnd = async (callId) => {
     try {
       await axios.post(
-        `${baseUrl}/api/v1/video/${meetingId}/end`,
+        `${baseUrl}/api/v1/video/${callId}/status`,
         {},
         {
           headers: {
