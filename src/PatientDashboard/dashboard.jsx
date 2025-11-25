@@ -696,15 +696,37 @@ const Dashboard = () => {
   }, [pollingInterval]);
 
   // Handle cancel waiting
-  const handleCancelWaiting = () => {
+  const handleCancelWaiting = async () => {
+    // Clear polling interval
     if (pollingInterval) {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
+
+    // Notify backend that the call is being cancelled
+    if (currentCallId) {
+      try {
+        await axios.post(
+          `${baseUrl}/api/v1/video/${currentCallId}/status`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error canceling call:", error);
+        // Continue with cleanup even if API call fails
+      }
+    }
+
+    // Reset all state
     setCallStatus(null);
     setVideoLink(null);
     setCurrentCallId(null);
     setIsCallADoctorModalOpen(false);
+    toast.info("Call cancelled");
   };
 
   useEffect(() => {
@@ -1432,7 +1454,7 @@ const Dashboard = () => {
         <Box
           sx={{
             width: 400,
-            height: callStatus === "WAITING" ? 250 : 200,
+            height: callStatus === "WAITING" ? 300 : 200,
             overflowY: "auto",
             bgcolor: "background.paper",
             boxShadow: 24,
@@ -1444,7 +1466,7 @@ const Dashboard = () => {
             transform: "translate(-50%, -50%)",
           }}
         >
-          <div className="w-full h-full flex flex-col gap-y-8 px-4">
+          <div className="w-full h-full flex flex-col gap-y-6 px-4">
             {callStatus === "WAITING" ? (
               <>
                 <div className="flex flex-col items-center gap-4">
@@ -1468,10 +1490,10 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <button
-                  className="bg-red-500 flex justify-center items-center w-full h-12 text-white rounded-full hover:bg-red-600"
+                  className="bg-red-500 flex justify-center p-2 items-center w-full h-12 text-white rounded-full hover:bg-red-600 transition-colors font-medium"
                   onClick={handleCancelWaiting}
                 >
-                  Cancel
+                  Cancel Call
                 </button>
               </>
             ) : videoLink === null ? (
