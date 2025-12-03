@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ActiveSlide } from "./constants";
-import { getToken, getUserData } from "../utils";
+import { getToken, getUserData, getId } from "../utils";
 import { baseUrl } from "../env";
 import { Hourglass } from "react-loader-spinner";
 import {
@@ -16,6 +16,9 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import LockIcon from "@mui/icons-material/Lock";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import CardMembershipIcon from "@mui/icons-material/CardMembership";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -25,6 +28,8 @@ const Subscription = () => {
   const [paymentLink, setPaymentLink] = React.useState(null);
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [subscriptionData, setSubscriptionData] = React.useState([]);
+  const [subscriptionLoading, setSubscriptionLoading] = React.useState(true);
   const token = getToken();
   const user = getUserData();
 
@@ -35,6 +40,57 @@ const Subscription = () => {
   const formatPrice = (price) => {
     return price.toFixed(2);
   };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const fetchActiveSubscription = async () => {
+    const currentUserId = getId();
+    const currentToken = getToken();
+
+    if (!currentUserId || !currentToken) {
+      setSubscriptionLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/subscription/active/${currentUserId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+          },
+        }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        // Filter only active subscriptions
+        const activeSubscriptions = response.data.filter(
+          (sub) => sub.active === true
+        );
+        setSubscriptionData(activeSubscriptions);
+      } else {
+        setSubscriptionData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching active subscription:", error);
+      setSubscriptionData([]);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubscription = async (e, amount) => {
     e.preventDefault();
@@ -85,6 +141,113 @@ const Subscription = () => {
           />
         </div>
       )}
+
+      {/* Active Subscription Info Card */}
+      {subscriptionLoading ? (
+        <div className="w-full max-w-6xl mx-auto mt-6 mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg border border-blue-200">
+          <div className="flex items-center justify-center">
+            <Hourglass
+              visible={true}
+              height="30"
+              width="30"
+              ariaLabel="hourglass-loading"
+              colors={["#306cce", "#72a1ed"]}
+            />
+            <span className="ml-3 text-gray-600">
+              Loading subscription details...
+            </span>
+          </div>
+        </div>
+      ) : subscriptionData && subscriptionData.length > 0 ? (
+        <div className="w-full max-w-6xl mx-auto mt-6 mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg border border-blue-200">
+          <div className="flex items-center mb-4">
+            <CardMembershipIcon
+              sx={{ fontSize: 32, color: "#020E7C", mr: 2 }}
+            />
+            <h2 className="text-2xl font-bold text-[#020E7C]">
+              Your Active Subscriptions{" "}
+              {subscriptionData.length > 1 && `(${subscriptionData.length})`}
+            </h2>
+          </div>
+
+          {/* Total Consultations Summary */}
+          {subscriptionData.length > 1 && (
+            <div className="mb-4 p-4 bg-white rounded-lg shadow-md border-2 border-blue-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <AccountBalanceWalletIcon
+                    sx={{ fontSize: 24, color: "#FF9800", mr: 2 }}
+                  />
+                  <span className="text-lg font-semibold text-gray-700">
+                    Total Consultations Available:
+                  </span>
+                </div>
+                <span className="text-2xl font-bold text-[#020E7C]">
+                  {subscriptionData.reduce(
+                    (total, sub) => total + (sub.consultationsLeft || 0),
+                    0
+                  )}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Individual Subscription Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {subscriptionData.map((subscription, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-lg p-5 shadow-md border border-gray-200 hover:shadow-lg transition-shadow"
+              >
+                <div className="mb-4 pb-3 border-b border-gray-200">
+                  <div className="flex items-center mb-2">
+                    <CardMembershipIcon
+                      sx={{ fontSize: 20, color: "#4CAF50", mr: 1 }}
+                    />
+                    <span className="text-sm text-gray-600 font-medium">
+                      Plan
+                    </span>
+                  </div>
+                  <p className="text-xl font-bold text-[#020E7C]">
+                    {subscription.planName}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center mb-1">
+                      <AccountBalanceWalletIcon
+                        sx={{ fontSize: 18, color: "#FF9800", mr: 1 }}
+                      />
+                      <span className="text-xs text-gray-600 font-medium">
+                        Consultations Left
+                      </span>
+                    </div>
+                    <p className="text-lg font-bold text-[#020E7C] ml-7">
+                      {subscription.consultationsLeft}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center mb-1">
+                      <CalendarTodayIcon
+                        sx={{ fontSize: 18, color: "#2196F3", mr: 1 }}
+                      />
+                      <span className="text-xs text-gray-600 font-medium">
+                        Expiry Date
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#020E7C] ml-7">
+                      {formatDate(subscription.expirationDate)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <h1 className="text-3xl text-[#020E7C] font-extrabold mt-5 text-center">
         Choose a Subscription Plan
       </h1>

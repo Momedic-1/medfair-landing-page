@@ -294,7 +294,7 @@ function WelcomeBack({ status }) {
           <img
             src={DoctorImg}
             loading="lazy"
-            alt="Doctor A. Buchi"
+            alt={userData?.firstName + " " + userData?.lastName}
             className="w-full object-cover h-full rounded-lg"
           />
         </div>
