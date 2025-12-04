@@ -1,20 +1,13 @@
 
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useCallback} from 'react';
 import payment from './assets/payment.svg';
 import { useNavigate,useLocation } from 'react-router-dom';
 import axios from 'axios';
 import DesignedSideBar from '../components/reuseables/DesignedSideBar';
 import {baseUrl} from "../env.jsx";
+import {getId} from "../utils";
 
 export default function PaymentPage() {
-  const subscriptionPlans = {
-    instant: { name: 'Instant', price: 1500 },
-    monthly: { name: 'Monthly', price: 4500 },
-    ent:{ name: 'Per consultation', price: 30000 },
-    yearly: { name: 'Yearly', price: 45000 },
-    specialist: { name: 'Specialist', price: 5000 },
-  };
-
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     cardName: '',
@@ -24,10 +17,11 @@ export default function PaymentPage() {
   });
   
   const location = useLocation();
-  const initialPlan = location.state?.selectedPlan || 'monthly';
-  const [selectedPlan, setSelectedPlan] = useState(initialPlan); 
-  const [selectedPrice, setSelectedPrice] = useState(subscriptionPlans[selectedPlan].price);
-  const [discount, setDiscount] = useState(0);
+  const [subscriptionPlans, setSubscriptionPlans] = useState({});
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState(null); 
+  const [selectedPrice, setSelectedPrice] = useState(0);
+  const [discount] = useState(0);
   const [isNewCard, setIsNewCard] = useState(false); 
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
@@ -39,17 +33,93 @@ export default function PaymentPage() {
       [name]: value,
     }));
   };
-  useEffect( () => {
-  
-    viewPaymentPrice()
-  },[])
-  const viewPaymentPrice = async () => {
-
+  const fetchPlans = useCallback(async () => {
     const userData = JSON.parse(localStorage.getItem('authToken'));
-    const token = userData.token;
+    const token = userData?.token;
+    const userId = getId();
+
+    if (!token || !userId) {
+      setPlansLoading(false);
+      return;
+    }
 
     try {
-      const response = await axios.get(`${baseUrl}/api/payment/payment-price/view`, {
+      const response = await axios.get(
+        `${baseUrl}/api/subscription/get-plans-for-user?userId=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        // Map API response to the format expected by the component
+        const plansMap = {};
+        response.data.forEach((plan) => {
+          // Create a key based on plan name (lowercase, replace spaces with underscores)
+          const key = plan.name.toLowerCase().replace(/\s+/g, '_');
+          // Handle special cases
+          let planKey = key;
+          if (key.includes('instant')) {
+            planKey = 'instant';
+          } else if (key.includes('monthly')) {
+            planKey = 'monthly';
+          } else if (key.includes('yearly')) {
+            planKey = 'yearly';
+          } else if (key.includes('specialist') && key.includes('single')) {
+            planKey = 'specialist';
+          } else if (key.includes('ent') || key.includes('ear_nose_throat')) {
+            planKey = 'ent';
+          }
+          
+          plansMap[planKey] = {
+            id: plan.id,
+            name: plan.name,
+            price: plan.price,
+            consultationCount: plan.consultationCount,
+          };
+        });
+
+        setSubscriptionPlans(plansMap);
+
+        // Set initial selected plan
+        const locationPlan = location.state?.selectedPlan;
+        if (locationPlan && plansMap[locationPlan]) {
+          setSelectedPlan(locationPlan);
+          setSelectedPrice(plansMap[locationPlan].price);
+        } else {
+          // Default to first available plan
+          const firstPlanKey = Object.keys(plansMap)[0];
+          if (firstPlanKey) {
+            setSelectedPlan(firstPlanKey);
+            setSelectedPrice(plansMap[firstPlanKey].price);
+          }
+        }
+      } else {
+        setSubscriptionPlans({});
+      }
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      setSubscriptionPlans({});
+    } finally {
+      setPlansLoading(false);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    fetchPlans();
+    viewPaymentPrice();
+  }, [fetchPlans]);
+
+  const viewPaymentPrice = async () => {
+    const userData = JSON.parse(localStorage.getItem('authToken'));
+    const token = userData?.token;
+
+    if (!token) return;
+
+    try {
+      await axios.get(`${baseUrl}/api/payment/payment-price/view`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -61,17 +131,25 @@ export default function PaymentPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedPlan || !subscriptionPlans[selectedPlan]) {
+      console.error('No plan selected');
+      return;
+    }
+
     formData.plan = selectedPlan;
     formData.amount = `${selectedPrice}.00`;
     
-    // const token = JSON.parse(localStorage.getItem('authToken'));
     const userData = JSON.parse(localStorage.getItem('userData'));
 
+    if (!userData) {
+      console.error('User data not found');
+      return;
+    }
     
     formData.email = userData.emailAddress;
 
     try {
-      const response = await axios.post(`${baseUrl}/api/payment/initialize-payment`, formData);
+      await axios.post(`${baseUrl}/api/payment/initialize-payment`, formData);
 
       setPaymentSuccess(true);
     } catch (error) {
@@ -95,7 +173,9 @@ export default function PaymentPage() {
           <div className="bg-white p-6 border border-gray-300 shadow-lg rounded-md w-full max-w-md text-center">
             <img src={payment} alt="Payment Success" className="h-32 w-32 mx-auto mb-4" />
             <p className="text-lg font-semibold text-green-500">Payment Successful!</p>
-            <p className="text-gray-600 mt-2">Thank you for subscribing to the {subscriptionPlans[selectedPlan].name} Plan.</p>
+            <p className="text-gray-600 mt-2">
+              Thank you for subscribing to the {selectedPlan && subscriptionPlans[selectedPlan] ? subscriptionPlans[selectedPlan].name : 'Plan'} Plan.
+            </p>
             <p className="text-lg font-bold mt-4">Total Paid: N{total.toLocaleString()}</p>
           </div>
           <button
@@ -104,6 +184,17 @@ export default function PaymentPage() {
           >
             Return to Dashboard
           </button>
+        </div>
+      ) : plansLoading ? (
+        <div className="w-full lg:w-3/5 flex flex-col items-center justify-center p-4 lg:p-0">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600">Loading subscription plans...</span>
+          </div>
+        </div>
+      ) : Object.keys(subscriptionPlans).length === 0 ? (
+        <div className="w-full lg:w-3/5 flex flex-col items-center justify-center p-4 lg:p-0">
+          <p className="text-gray-600">No subscription plans available at the moment.</p>
         </div>
       ) : (
         <div className="w-full lg:w-3/5 flex flex-col items-center justify-center p-4 lg:p-0">
@@ -115,7 +206,7 @@ export default function PaymentPage() {
               const plan = subscriptionPlans[planKey];
               return (
                 <div
-                  key={plan.name}
+                  key={plan.id || planKey}
                   className={`p-4 border rounded-md cursor-pointer mb-4 lg:mb-0 ${
                     selectedPlan === planKey ? 'bg-blue-500 text-white' : 'bg-gray-100'
                   }`}
@@ -200,7 +291,7 @@ export default function PaymentPage() {
 
             <div className="flex flex-col lg:flex-row justify-between items-center mb-6 space-y-4 lg:space-y-0">
               <div className="flex flex-col">
-                <p>Subtotal: <span className="font-bold">N{selectedPrice.toLocaleString()}</span></p>
+                <p>Subtotal: <span className="font-bold">N{selectedPrice ? selectedPrice.toLocaleString() : '0'}</span></p>
                 <p>Discount: <span className="font-bold text-red-500">{discount}%</span></p>
                 <p>Total: <span className="font-bold">N{total.toLocaleString()}</span></p>
               </div>
@@ -217,7 +308,11 @@ export default function PaymentPage() {
               </div>
             </div>
 
-            <button type="submit" className="bg-blue-600 text-white p-3 mt-5 rounded-md w-full">
+            <button 
+              type="submit" 
+              className="bg-blue-600 text-white p-3 mt-5 rounded-md w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={!selectedPlan || selectedPrice === 0}
+            >
               Checkout
             </button>
           </form>
