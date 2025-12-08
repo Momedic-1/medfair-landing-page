@@ -697,36 +697,60 @@ const Dashboard = () => {
 
   // Handle cancel waiting
   const handleCancelWaiting = async () => {
-    // Clear polling interval
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
+    if (!currentCallId) {
+      toast.info("No active call to cancel");
+      setIsCallADoctorModalOpen(false);
+      return;
     }
 
-    // Notify backend that the call is being cancelled
-    if (currentCallId) {
-      try {
-        await axios.post(
-          `${baseUrl}/api/v1/video/${currentCallId}/status`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error canceling call:", error);
-        // Continue with cleanup even if API call fails
+    try {
+      setIsLoading(true);
+      
+      // Call the API to end the call
+      await axios.post(
+        `${baseUrl}/api/v1/video/${currentCallId}/end`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Clean up polling interval
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
       }
-    }
 
-    // Reset all state
-    setCallStatus(null);
-    setVideoLink(null);
-    setCurrentCallId(null);
-    setIsCallADoctorModalOpen(false);
-    toast.info("Call cancelled");
+      // Reset call-related state
+      setCallStatus(null);
+      setCurrentCallId(null);
+      setVideoLink(null);
+      setIsCallADoctorModalOpen(false);
+
+      toast.success("Call cancelled successfully");
+    } catch (error) {
+      console.error("Error cancelling call:", error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to cancel call";
+      toast.error(errorMessage);
+
+      // Still clean up local state even if API call fails
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+      setCallStatus(null);
+      setCurrentCallId(null);
+      setVideoLink(null);
+      setIsCallADoctorModalOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
