@@ -59,22 +59,6 @@ const VideoCall = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const notifyCallEnd = async (callId) => {
-    try {
-      await axios.post(
-        `${baseUrl}/api/v1/video/${callId}/status`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Error notifying call end:", error);
-    }
-  };
-
   // Modify leaveRoom function
   const leaveRoom = async () => {
     try {
@@ -93,11 +77,6 @@ const VideoCall = () => {
         localParticipant.stream.getTracks().forEach((track) => {
           track.stop();
         });
-      }
-
-      // Notify backend if patient is ending the call
-      if (userData?.role === "PATIENT" && call?.meetingId) {
-        await notifyCallEnd(call.meetingId);
       }
 
       dispatch(setRoomUrl(null));
