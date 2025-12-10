@@ -449,7 +449,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               >
                 <ul className="flex flex-col space-y-6 mt-6">
                   <li></li>
-                  <li>
+                  <li className="hover:bg-gray-100/10 rounded-lg transition-colors duration-200">
                     <NavLink
                       to="/view-profile"
                       onClick={toggleSidebar}
@@ -465,7 +465,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       View Profile
                     </NavLink>
                   </li>
-                  <li>
+                  <li className="hover:bg-gray-100/10 rounded-lg transition-colors duration-200">
                     <NavLink
                       to="/doctor-dashboard/documents"
                       onClick={toggleSidebar}
@@ -481,7 +481,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       Documents
                     </NavLink>
                   </li>
-                  <li>
+                  <li className="hover:bg-gray-100/10 rounded-lg transition-colors duration-200">
                     <NavLink
                       to="/doctor-dashboard/finances"
                       onClick={toggleSidebar}
@@ -497,7 +497,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       Finances
                     </NavLink>
                   </li>
-                  <li>
+                  <li className="hover:bg-gray-100/10 rounded-lg transition-colors duration-200">
                     <NavLink
                       to="/doctor-dashboard/settings"
                       onClick={toggleSidebar}
@@ -513,7 +513,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       Settings
                     </NavLink>
                   </li>
-                  <li>
+                  <li className="hover:bg-gray-100/10 rounded-lg transition-colors duration-200">
                     <NavLink
                       to="/doctor-dashboard/contact-us"
                       onClick={toggleSidebar}
@@ -529,7 +529,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       Contact Us
                     </NavLink>
                   </li>
-                  <li>
+                  <li className="hover:bg-gray-100/10 rounded-lg transition-colors duration-200">
                     <NavLink
                       to="/doctor-dashboard/notes"
                       onClick={toggleSidebar}
@@ -545,7 +545,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       Notes
                     </NavLink>
                   </li>
-                  <li>
+                  <li className="hover:bg-gray-100/10 rounded-lg transition-colors duration-200">
                     <NavLink
                       to="/login"
                       onClick={toggleSidebar}
