@@ -319,6 +319,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     ? "/patient-dashboard/partners"
                     : "/patient-dashboard"
                 }
+                end
                 className={({ isActive }) =>
                   `flex items-center p-3 m-3 py-2 px-4 rounded ${
                     isActive
