@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Cards from "../components/reuseables/Cards";
 import call from "./assets/call (2).svg";
 import calendarIcon from "../assets/calendarIcon.jpeg";
-import testTube from "../assets/test.jpeg";
+// import testTube from "../assets/test.jpeg"
 import { Calendar, dayjsLocalizer } from "react-big-calendar";
 import dayjs from "dayjs";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -142,6 +142,7 @@ const Dashboard = () => {
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null); // persisted quick-call meeting
+  const [isCancelCallConfirmOpen, setIsCancelCallConfirmOpen] = useState(false);
   const [callStatus, setCallStatus] = useState(null);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [currentCallId, setCurrentCallId] = useState(null);
@@ -671,7 +672,6 @@ const Dashboard = () => {
           setVideoLink(null);
           setCurrentCallId(null);
           setIsCallADoctorModalOpen(false);
-          toast.error("Call ended by doctor");
         }
       }, 3000); // Poll every 3 seconds
 
@@ -695,38 +695,74 @@ const Dashboard = () => {
     };
   }, [pollingInterval]);
 
-  // Handle cancel waiting
-  const handleCancelWaiting = async () => {
-    // Clear polling interval
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
+  // Handle cancel waiting - shows confirmation modal
+  const handleCancelWaiting = () => {
+    if (!currentCallId) {
+      toast.info("No active call to cancel");
+      setIsCallADoctorModalOpen(false);
+      return;
+    }
+    setIsCancelCallConfirmOpen(true);
+  };
+
+  // Confirm and actually cancel the call
+  const confirmCancelCall = async () => {
+    if (!currentCallId) {
+      toast.info("No active call to cancel");
+      setIsCancelCallConfirmOpen(false);
+      setIsCallADoctorModalOpen(false);
+      return;
     }
 
-    // Notify backend that the call is being cancelled
-    if (currentCallId) {
-      try {
-        await axios.post(
-          `${baseUrl}/api/v1/video/${currentCallId}/status`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error canceling call:", error);
-        // Continue with cleanup even if API call fails
+    try {
+      setIsLoading(true);
+
+      // Call the API to end the call
+      await axios.post(
+        `${baseUrl}/api/v1/video/end-call-by-patient/${currentCallId}`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Clean up polling interval
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
       }
-    }
 
-    // Reset all state
-    setCallStatus(null);
-    setVideoLink(null);
-    setCurrentCallId(null);
-    setIsCallADoctorModalOpen(false);
-    toast.info("Call cancelled");
+      // Reset call-related state
+      setCallStatus(null);
+      setCurrentCallId(null);
+      setVideoLink(null);
+      setIsCallADoctorModalOpen(false);
+      setIsCancelCallConfirmOpen(false);
+
+      toast.success("Call cancelled successfully");
+    } catch (error) {
+      console.error("Error cancelling call:", error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to cancel call";
+      toast.error(errorMessage);
+
+      // Still clean up local state even if API call fails
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+      setCallStatus(null);
+      setCurrentCallId(null);
+      setVideoLink(null);
+      setIsCallADoctorModalOpen(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -1518,6 +1554,68 @@ const Dashboard = () => {
                 </button>
               </>
             ) : null}
+          </div>
+        </Box>
+      </Modal>
+
+      {/* Cancel Call Confirmation Modal */}
+      <Modal
+        open={isCancelCallConfirmOpen}
+        onClose={() => setIsCancelCallConfirmOpen(false)}
+        aria-labelledby="cancel-call-confirm-title"
+      >
+        <Box
+          sx={{
+            width: 400,
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className="flex flex-col gap-4">
+            <h2
+              id="cancel-call-confirm-title"
+              className="text-xl font-semibold text-gray-900"
+            >
+              Cancel Call?
+            </h2>
+            <p className="text-gray-600">
+              Are you sure you want to end this call? This action cannot be
+              undone.
+            </p>
+            <div className="flex justify-end gap-3 mt-4">
+              <Button
+                variant="outlined"
+                onClick={() => setIsCancelCallConfirmOpen(false)}
+                disabled={isLoading}
+              >
+                No, Keep Waiting
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={confirmCancelCall}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ColorRing
+                    height="20"
+                    width="20"
+                    ariaLabel="color-ring-loading"
+                    wrapperStyle={{}}
+                    wrapperClass="color-ring-wrapper"
+                    colors={["white", "white", "white", "white", "white"]}
+                  />
+                ) : (
+                  "Yes, End Call"
+                )}
+              </Button>
+            </div>
           </div>
         </Box>
       </Modal>
