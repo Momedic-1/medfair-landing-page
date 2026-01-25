@@ -295,9 +295,8 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed lg:static top-0 left-0 h-full w-3/4 sm:w-1/2 lg:w-full bg-[#020E7C] text-white flex flex-col z-20 transform transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
+        className={`fixed lg:static top-0 left-0 h-full w-3/4 sm:w-1/2 lg:w-full bg-[#020E7C] text-white flex flex-col z-20 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0`}
       >
         {role === "PATIENT" ? (
           <div className="w-full">
@@ -320,10 +319,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     : "/patient-dashboard"
                 }
                 className={({ isActive }) =>
-                  `flex items-center p-3 m-3 py-2 px-4 rounded ${
-                    isActive
-                      ? "bg-white text-[#020E7C]"
-                      : "hover:bg-white hover:text-[#020E7C]"
+                  `flex items-center p-3 m-3 py-2 px-4 rounded ${isActive
+                    ? "bg-white text-[#020E7C]"
+                    : "hover:bg-white hover:text-[#020E7C]"
                   }`
                 }
                 onClick={toggleSidebar}
@@ -339,10 +337,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     : "/patient-dashboard/profile"
                 }
                 className={({ isActive }) =>
-                  `flex items-center p-3 m-3 py-2 px-4 rounded ${
-                    isActive
-                      ? "bg-white text-[#020E7C]"
-                      : "hover:bg-white hover:text-[#020E7C]"
+                  `flex items-center p-3 m-3 py-2 px-4 rounded ${isActive
+                    ? "bg-white text-[#020E7C]"
+                    : "hover:bg-white hover:text-[#020E7C]"
                   }`
                 }
                 onClick={toggleSidebar}
@@ -357,10 +354,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                   <NavLink
                     to="/patient-dashboard/contact-us"
                     className={({ isActive }) =>
-                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
-                        isActive
-                          ? "bg-white text-[#020E7C]"
-                          : "hover:bg-white hover:text-[#020E7C]"
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${isActive
+                        ? "bg-white text-[#020E7C]"
+                        : "hover:bg-white hover:text-[#020E7C]"
                       }`
                     }
                     onClick={toggleSidebar}
@@ -372,10 +368,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                   <NavLink
                     to="/patient-dashboard/subscription"
                     className={({ isActive }) =>
-                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
-                        isActive
-                          ? "bg-white text-[#020E7C]"
-                          : "hover:bg-white hover:text-[#020E7C]"
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${isActive
+                        ? "bg-white text-[#020E7C]"
+                        : "hover:bg-white hover:text-[#020E7C]"
                       }`
                     }
                     onClick={toggleSidebar}
@@ -387,10 +382,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                   <NavLink
                     to="/patient-dashboard/patient-notes"
                     className={({ isActive }) =>
-                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
-                        isActive
-                          ? "bg-white text-[#020E7C]"
-                          : "hover:bg-white hover:text-[#020E7C]"
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${isActive
+                        ? "bg-white text-[#020E7C]"
+                        : "hover:bg-white hover:text-[#020E7C]"
                       }`
                     }
                     onClick={toggleSidebar}
@@ -400,12 +394,25 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                   </NavLink>
 
                   <NavLink
+                    to="/patient-dashboard/add-dependent"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${isActive
+                        ? "bg-white text-[#020E7C]"
+                        : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
+                    onClick={toggleSidebar}
+                  >
+                    <FaHandHoldingMedical />
+                    <span className="ml-3">Add Dependent</span>
+                  </NavLink>
+
+                  <NavLink
                     to="/patient-dashboard/patient-investigations"
                     className={({ isActive }) =>
-                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
-                        isActive
-                          ? "bg-white text-[#020E7C]"
-                          : "hover:bg-white hover:text-[#020E7C]"
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${isActive
+                        ? "bg-white text-[#020E7C]"
+                        : "hover:bg-white hover:text-[#020E7C]"
                       }`
                     }
                     onClick={toggleSidebar}
@@ -453,10 +460,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       to="/view-profile"
                       onClick={toggleSidebar}
                       className={({ isActive }) =>
-                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
-                          isActive
-                            ? "bg-blue-100 text-blue-800"
-                            : "text-gray-100 hover:bg-gray-100 hover:text-[#020E7C]"
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:bg-gray-100 hover:text-[#020E7C]"
                         }`
                       }
                     >
@@ -469,10 +475,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       to="/doctor-dashboard/documents"
                       onClick={toggleSidebar}
                       className={({ isActive }) =>
-                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
-                          isActive
-                            ? "bg-blue-100 text-blue-800"
-                            : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
                         }`
                       }
                     >
@@ -485,10 +490,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       to="/doctor-dashboard/finances"
                       onClick={toggleSidebar}
                       className={({ isActive }) =>
-                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
-                          isActive
-                            ? "bg-blue-100 text-blue-800"
-                            : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
                         }`
                       }
                     >
@@ -501,10 +505,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       to="/doctor-dashboard/settings"
                       onClick={toggleSidebar}
                       className={({ isActive }) =>
-                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
-                          isActive
-                            ? "bg-blue-100 text-blue-800"
-                            : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
                         }`
                       }
                     >
@@ -517,10 +520,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       to="/doctor-dashboard/contact-us"
                       onClick={toggleSidebar}
                       className={({ isActive }) =>
-                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
-                          isActive
-                            ? "bg-blue-100 text-blue-800"
-                            : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
                         }`
                       }
                     >
@@ -533,10 +535,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       to="/doctor-dashboard/notes"
                       onClick={toggleSidebar}
                       className={({ isActive }) =>
-                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
-                          isActive
-                            ? "bg-blue-100 text-blue-800"
-                            : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
                         }`
                       }
                     >

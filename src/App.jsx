@@ -109,6 +109,7 @@ import CookiesPolicy from "./pages/CookiesPolicy.jsx";
 import 'preline'
 import SubscriptionSuccessful from "./PatientDashboard/SubscriptionSuccessful.jsx";
 import SubscriptionNotSuccessful from "./PatientDashboard/SubscriptionNotSuccessful.jsx";
+import AddDependents from "./PatientDashboard/AddDependents.jsx";
 
 const App = () => {
   return (
@@ -149,6 +150,7 @@ const App = () => {
             <Route path="profile" element={<Profile />} />
             <Route path="patient-notes" element={<PatientNotes />} />
             <Route path="patient-investigations" element={<Investigations />} />
+            <Route path="add-dependent" element={<AddDependents />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="subscription-success" element={<SubscriptionSuccessful />} />
             <Route path="subscription-unsuccessful" element={<SubscriptionNotSuccessful />} />
