@@ -445,7 +445,7 @@ const Dashboard = () => {
   };
 
   const handleCardClick = (title) => {
-    if (title === "Schedule an Appointment with a Specialist") {
+    if (title === "Schedule an Appointment") {
       setIsMainModalOpen(true);
     }
   };
@@ -1087,11 +1087,11 @@ const Dashboard = () => {
           </div>
           <div
             onClick={() =>
-              handleCardClick("Schedule an Appointment with a Specialist")
+              handleCardClick("Schedule an Appointment")
             }
           >
             <Cards
-              title="Schedule an Appointment with a Specialist"
+              title="Schedule an Appointment"
               img={calendarIcon}
             />
           </div>
