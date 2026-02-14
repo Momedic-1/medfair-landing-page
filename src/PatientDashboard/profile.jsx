@@ -82,16 +82,14 @@ export default function Profile() {
   const userId = userData.id;
 
   useEffect(() => {
-    if (!token) {
-      // Assuming navigate is defined elsewhere
-      // navigate('/login');
+    if (!token || !userId) {
       return;
     }
     fetchProfileData();
     fetchEmergencyContact();
     fetchAddress();
     fetchDocuments(); // Add this to fetch documents on component mount
-  }, [token]);
+  }, [token, userId]);
 
   const fetchProfileData = async () => {
     try {
@@ -143,31 +141,45 @@ export default function Profile() {
   };
 
   const fetchAddress = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/patient/address/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    if (!token || !userId) return;
+    const urlsToTry = [
+      `${baseUrl}/api/v1/patient/address/${userId}`,
+      `${baseUrl}/api/patient/address/${userId}`,
+    ];
+    const headers = { Authorization: `Bearer ${token}` };
+    let lastError;
+    for (const url of urlsToTry) {
+      try {
+        const response = await axios.get(url, { headers });
+        if (response.data) {
+          setProfileData((prev) => ({
+            ...prev,
+            address: {
+              street: response.data.streetAddress ?? response.data.street ?? "",
+              city: response.data.city ?? "",
+              state: response.data.state ?? "",
+              country: response.data.country ?? "",
+              postalCode: response.data.zipCode ?? response.data.postalCode ?? "",
+            },
+          }));
+          return;
         }
-      );
-      if (response.data) {
-        setProfileData((prev) => ({
-          ...prev,
-          address: {
-            street: response.data.streetAddress,
-            city: response.data.city,
-            state: response.data.state,
-            country: response.data.country,
-            postalCode: response.data.zipCode,
-          },
-        }));
+      } catch (err) {
+        lastError = err;
+        const status = err.response?.status;
+        if (status === 403) {
+          toast.error("You don't have permission to view address. Please contact support or log in again.");
+          return;
+        }
+        if (status === 401) {
+          toast.error("Please log in again.");
+          return;
+        }
+        if (status !== 404) continue;
       }
-    } catch (error) {
-      console.error("Error fetching address:", error);
-      // toast.error("Failed to fetch address")
     }
+    if (lastError?.response?.status === 403) return;
+    console.error("Error fetching address:", lastError);
   };
 
   // Add this new function to fetch documents
@@ -451,21 +463,33 @@ export default function Profile() {
           toast.info("Documents are uploaded immediately when selected");
           break;
         case 4: // Address
-          response = await axios.put(
-            `${baseUrl}/api/patient/address/${userId}`,
-            {
-              country: profileData.address.country,
-              state: profileData.address.state,
-              city: profileData.address.city,
-              streetAddress: profileData.address.street,
-              zipCode: profileData.address.postalCode,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
+          try {
+            response = await axios.put(
+              `${baseUrl}/api/v1/patient/address/${userId}`,
+              {
+                country: profileData.address.country,
+                state: profileData.address.state,
+                city: profileData.address.city,
+                streetAddress: profileData.address.street,
+                zipCode: profileData.address.postalCode,
               },
-            }
-          );
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          } catch (e) {
+            if (e.response?.status === 404) {
+              response = await axios.put(
+                `${baseUrl}/api/patient/address/${userId}`,
+                {
+                  country: profileData.address.country,
+                  state: profileData.address.state,
+                  city: profileData.address.city,
+                  streetAddress: profileData.address.street,
+                  zipCode: profileData.address.postalCode,
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+            } else throw e;
+          }
           break;
         case 2: // Medical History
           response = await axios.post(

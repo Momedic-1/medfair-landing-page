@@ -98,7 +98,6 @@ import VideoCall from "./components/VideoCall.jsx";
 import Subscription from "./PatientDashboard/Subscription.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
 import OTPVerification from "./OTPVerification.jsx";
-import ProfileLayout from "./components/ProfileLayout.jsx";
 import ViewProfile from "./components/ViewProfile.jsx";
 import DoctorProfile from "./components/DoctorProfile.jsx";
 import { ToastContainer } from "react-toastify";
@@ -164,7 +163,6 @@ const App = () => {
 
           <Route element={<ProtectedRoute role="DOCTOR" />}>
             <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />
-            <Route path="/view-profile/*" element={<ProfileLayout />} />
           </Route>
         </Routes>
       </Router>

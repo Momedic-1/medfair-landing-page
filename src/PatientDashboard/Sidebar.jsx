@@ -131,7 +131,7 @@
 //                             ? "bg-blue-100 text-blue-800"
 //                             : "text-gray-100 hover:bg-gray-100"
 //                         }`
-//                       }
+//                       }x
 //                     >
 //                       <DashboardIcon />
 //                       Dashboard
@@ -267,7 +267,7 @@ import {
 import Logout from "../Logout";
 import CloseIcon from "../assets/CloseIcon";
 import DashboardIcon from "../assets/DashboardIcon";
-import { CalendarIcon } from "lucide-react";
+import { Pencil, UserCircle } from "lucide-react";
 import DocumentsIcon from "../assets/DocumentIcon";
 import FinanceIcon from "../assets/FinanceIcon";
 import SettingsIcon from "../assets/SettingsIcon";
@@ -454,10 +454,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 data-hs-accordion-always-open
               >
                 <ul className="flex flex-col space-y-6 mt-6">
-                  <li></li>
                   <li>
                     <NavLink
-                      to="/view-profile"
+                      to="/doctor-dashboard"
                       onClick={toggleSidebar}
                       className={({ isActive }) =>
                         `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
@@ -466,11 +465,41 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                         }`
                       }
                     >
-                      <CalendarIcon />
+                      <DashboardIcon />
+                      Dashboard
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink
+                      to="/doctor-dashboard/view-profile"
+                      onClick={toggleSidebar}
+                      className={({ isActive }) =>
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:bg-gray-100 hover:text-[#020E7C]"
+                        }`
+                      }
+                    >
+                      <UserCircle className="w-5 h-5" />
                       View Profile
                     </NavLink>
                   </li>
                   <li>
+                    <NavLink
+                      to="/doctor-dashboard/edit-profile"
+                      onClick={toggleSidebar}
+                      className={({ isActive }) =>
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${isActive
+                          ? "bg-blue-100 text-blue-800"
+                          : "text-gray-100 hover:bg-gray-100 hover:text-[#020E7C]"
+                        }`
+                      }
+                    >
+                      <Pencil className="w-5 h-5" />
+                      Edit Profile
+                    </NavLink>
+                  </li>
+                  {/* <li>
                     <NavLink
                       to="/doctor-dashboard/documents"
                       onClick={toggleSidebar}
@@ -484,7 +513,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       <DocumentsIcon />
                       Documents
                     </NavLink>
-                  </li>
+                  </li> */}
                   <li>
                     <NavLink
                       to="/doctor-dashboard/finances"
@@ -500,7 +529,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       Finances
                     </NavLink>
                   </li>
-                  <li>
+                  {/* <li>
                     <NavLink
                       to="/doctor-dashboard/settings"
                       onClick={toggleSidebar}
@@ -514,7 +543,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       <SettingsIcon />
                       Settings
                     </NavLink>
-                  </li>
+                  </li> */}
                   <li>
                     <NavLink
                       to="/doctor-dashboard/contact-us"
