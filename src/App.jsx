@@ -98,7 +98,6 @@ import VideoCall from "./components/VideoCall.jsx";
 import Subscription from "./PatientDashboard/Subscription.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
 import OTPVerification from "./OTPVerification.jsx";
-import ProfileLayout from "./components/ProfileLayout.jsx";
 import ViewProfile from "./components/ViewProfile.jsx";
 import DoctorProfile from "./components/DoctorProfile.jsx";
 import { ToastContainer } from "react-toastify";
@@ -109,6 +108,7 @@ import CookiesPolicy from "./pages/CookiesPolicy.jsx";
 import 'preline'
 import SubscriptionSuccessful from "./PatientDashboard/SubscriptionSuccessful.jsx";
 import SubscriptionNotSuccessful from "./PatientDashboard/SubscriptionNotSuccessful.jsx";
+import AddDependents from "./PatientDashboard/AddDependents.jsx";
 
 const App = () => {
   return (
@@ -149,6 +149,7 @@ const App = () => {
             <Route path="profile" element={<Profile />} />
             <Route path="patient-notes" element={<PatientNotes />} />
             <Route path="patient-investigations" element={<Investigations />} />
+            <Route path="add-dependent" element={<AddDependents />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="subscription-success" element={<SubscriptionSuccessful />} />
             <Route path="subscription-unsuccessful" element={<SubscriptionNotSuccessful />} />
@@ -162,7 +163,6 @@ const App = () => {
 
           <Route element={<ProtectedRoute role="DOCTOR" />}>
             <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />
-            <Route path="/view-profile/*" element={<ProfileLayout />} />
           </Route>
         </Routes>
       </Router>

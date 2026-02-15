@@ -7,17 +7,29 @@ import { useEffect, useCallback, useState } from 'react';
 import { Hourglass } from 'react-loader-spinner';
 
 
+const getStoredUserData = () => {
+  try {
+    return JSON.parse(localStorage.getItem('userData') || 'null');
+  } catch {
+    return null;
+  }
+};
+
 const ProfileLayout = () => {
   const [loading, setLoading] = useState(true);
-  const { userData } = useSelector((state) => state.auth);
+  const { userData: reduxUserData } = useSelector((state) => state.auth);
+  // Fallback to localStorage when Redux is empty (e.g. after page refresh)
+  const userData = reduxUserData ?? getStoredUserData();
   const token = getToken();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (userData) {
+    if (userData?.id) {
       checkProfile();
+    } else {
+      setLoading(false);
     }
-  }, []);
+  }, [userData?.id]);
 
   const checkProfile = useCallback(async () => {
     setLoading(true);

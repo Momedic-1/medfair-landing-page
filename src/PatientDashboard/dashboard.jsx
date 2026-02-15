@@ -75,34 +75,41 @@ const avatarStyle2 = {
 const specialistCategory = [
   {
     id: 1,
+    name: "General Practitioner",
+    count: 0,
+    icon: "🩺",
+    specialization: "GENERAL_PRACTITIONER",
+  },
+  {
+    id: 2,
     name: "Mental Health Specialist",
     count: 0,
     icon: "🧠",
     specialization: "MENTAL_HEALTH_SPECIALIST",
   },
   {
-    id: 2,
+    id: 3,
     name: "Clinical Psychologist",
     count: 0,
     icon: "🎯",
     specialization: "CLINICAL_PSYCHOLOGIST",
   },
   {
-    id: 3,
+    id: 4,
     name: "Relationship Therapist",
     count: 0,
     icon: "💑",
     specialization: "RELATIONSHIP_THERAPIST",
   },
   {
-    id: 4,
+    id: 5,
     name: "Urologist",
     count: 0,
     icon: "🫁",
     specialization: "UROLOGIST",
   },
   {
-    id: 5,
+    id: 6,
     name: "Ear, Nose, and Throat Specialist",
     count: 0,
     icon: "👂🏼",
@@ -222,8 +229,7 @@ const Dashboard = () => {
       handleJoinCall(appointment.slotId);
     } else {
       toast.info(
-        `Appointment with Dr. ${appointment.name} on ${
-          appointment.date
+        `Appointment with Dr. ${appointment.name} on ${appointment.date
         } at ${formatTime(appointment.time)}`
       );
     }
@@ -439,7 +445,7 @@ const Dashboard = () => {
   };
 
   const handleCardClick = (title) => {
-    if (title === "Schedule an Appointment with a Specialist") {
+    if (title === "Schedule an Appointment") {
       setIsMainModalOpen(true);
     }
   };
@@ -1077,15 +1083,15 @@ const Dashboard = () => {
                 : ""
             }
           >
-            <Cards title="Call a Doctor" img={call} />
+            <Cards title="Call a General Practitioner" img={call} />
           </div>
           <div
             onClick={() =>
-              handleCardClick("Schedule an Appointment with a Specialist")
+              handleCardClick("Schedule an Appointment")
             }
           >
             <Cards
-              title="Schedule an Appointment with a Specialist"
+              title="Schedule an Appointment"
               img={calendarIcon}
             />
           </div>
@@ -1150,81 +1156,80 @@ const Dashboard = () => {
             <div className="flex-1 overflow-y-auto">
               {isLoading
                 ? Array(3)
-                    .fill(0)
-                    .map((_, idx) => (
-                      <div
-                        className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
-                        key={`loading-appointment-${idx}`}
-                      >
-                        <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
-                        <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                        <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
-                        <div className="h-4 bg-gray-300 rounded w-2/5"></div>
-                      </div>
-                    ))
+                  .fill(0)
+                  .map((_, idx) => (
+                    <div
+                      className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
+                      key={`loading-appointment-${idx}`}
+                    >
+                      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-2/5"></div>
+                    </div>
+                  ))
                 : (() => {
-                    if (upcomingAppointments.length > 0) {
-                      return upcomingAppointments.map((details) => {
-                        const status = getAppointmentStatus(details);
-                        return (
-                          <div
-                            key={
-                              details.slotId ||
-                              details.id ||
-                              `${details.name}-${details.date}-${details.time}`
-                            }
-                            className={`flex items-center justify-between mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${
-                              status === "over"
-                                ? "bg-red-100 border-red-300 opacity-60 cursor-not-allowed pointer-events-none"
-                                : `${getStatusColor(status)} hover:shadow-lg`
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Avatar
-                                src={details?.imageUrl}
-                                sx={avatarStyle2}
-                              />
-                              <div className="flex-1">
-                                <p className="text-sm font-bold text-blue-900">
-                                  Dr. {details.name}
-                                </p>
-                                {status !== "upcoming" && (
-                                  <div className="text-xs font-semibold text-gray-600 mt-1">
-                                    {getStatusText(status)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {status === "active" ? (
-                              <button
-                                onClick={() => handleJoinCall(details.slotId)}
-                                disabled={isLoading}
-                                className="text-white cursor-pointer bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
-                              >
-                                Join Now
-                              </button>
-                            ) : (
-                              <div className="flex flex-col text-right">
-                                <span className="text-xs text-gray-600">
-                                  📅 {details.date}
-                                </span>
-                                <span className="text-xs text-gray-600">
-                                  ⏰ {formatTime(details.time)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      });
-                    } else {
+                  if (upcomingAppointments.length > 0) {
+                    return upcomingAppointments.map((details) => {
+                      const status = getAppointmentStatus(details);
                       return (
-                        <div className="text-center text-gray-600 text-sm p-4">
-                          No upcoming appointments
+                        <div
+                          key={
+                            details.slotId ||
+                            details.id ||
+                            `${details.name}-${details.date}-${details.time}`
+                          }
+                          className={`flex items-center justify-between mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${status === "over"
+                            ? "bg-red-100 border-red-300 opacity-60 cursor-not-allowed pointer-events-none"
+                            : `${getStatusColor(status)} hover:shadow-lg`
+                            }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Avatar
+                              src={details?.imageUrl}
+                              sx={avatarStyle2}
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-blue-900">
+                                Dr. {details.name}
+                              </p>
+                              {status !== "upcoming" && (
+                                <div className="text-xs font-semibold text-gray-600 mt-1">
+                                  {getStatusText(status)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {status === "active" ? (
+                            <button
+                              onClick={() => handleJoinCall(details.slotId)}
+                              disabled={isLoading}
+                              className="text-white cursor-pointer bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
+                            >
+                              Join Now
+                            </button>
+                          ) : (
+                            <div className="flex flex-col text-right">
+                              <span className="text-xs text-gray-600">
+                                📅 {details.date}
+                              </span>
+                              <span className="text-xs text-gray-600">
+                                ⏰ {formatTime(details.time)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       );
-                    }
-                  })()}
+                    });
+                  } else {
+                    return (
+                      <div className="text-center text-gray-600 text-sm p-4">
+                        No upcoming appointments
+                      </div>
+                    );
+                  }
+                })()}
             </div>
           </div>
         </div>
@@ -1422,11 +1427,10 @@ const Dashboard = () => {
                                     return (
                                       <button
                                         key={slot.slotId}
-                                        className={`text-xs px-3 py-1 rounded-lg transition ${
-                                          isDisabled
-                                            ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
-                                            : "bg-[#020E7C] text-white hover:bg-blue-600"
-                                        }`}
+                                        className={`text-xs px-3 py-1 rounded-lg transition ${isDisabled
+                                          ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
+                                          : "bg-[#020E7C] text-white hover:bg-blue-600"
+                                          }`}
                                         onClick={(e) =>
                                           !isDisabled &&
                                           handleOpenPopover(

@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import Select from "react-select";
 import { baseUrl } from "../env";
-import { getToken } from "../utils";
+import { getToken, getUserData } from "../utils";
 
 const ViewProfile = () => {
   const token = getToken();
@@ -66,83 +66,87 @@ const ViewProfile = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
 
+  const normalizeLanguages = (raw) => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map((l) => (typeof l === "object" && l?.value != null ? l : { value: l, label: l }));
+    const str = typeof raw === "string" ? raw : String(raw);
+    return str.split(",").map((s) => ({ value: s.trim(), label: s.trim() })).filter((o) => o.value);
+  };
+
+  const normalizeQualifications = (raw) => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map((q) => (typeof q === "object" && q?.value != null ? q : { value: q, label: q }));
+    const str = typeof raw === "string" ? raw : String(raw);
+    return str.split(",").map((s) => ({ value: s.trim(), label: s.trim() })).filter((o) => o.value);
+  };
+
+  const applyApiProfileToState = (data, prevState = {}) => {
+    const raw = data?.data ?? data;
+    const dateOfBirth = raw?.dateOfBirth
+      ? new Date(raw.dateOfBirth).toISOString().split("T")[0]
+      : prevState.dateOfBirth ?? "";
+    return {
+      ...prevState,
+      firstName: raw?.firstName ?? prevState.firstName ?? "",
+      lastName: raw?.lastName ?? prevState.lastName ?? "",
+      medicalSpecialization: raw?.medicalSpecialization ?? prevState.medicalSpecialization ?? "",
+      dateOfBirth,
+      imageUrl: raw?.imageUrl ?? prevState.imageUrl ?? "",
+      title: raw?.title ?? prevState.title ?? "",
+      gender: raw?.gender ?? prevState.gender ?? "",
+      languages: normalizeLanguages(raw?.languages ?? prevState.languages),
+      qualifications: normalizeQualifications(raw?.qualifications ?? prevState.qualifications),
+      practiceName: raw?.practiceName ?? prevState.practiceName ?? "",
+      licenseLocation: raw?.licenseLocation ?? prevState.licenseLocation ?? "",
+      about: raw?.about ?? prevState.about ?? "",
+    };
+  };
+
   useEffect(() => {
-    // Fetch existing profile data if available
-    fetchProfileData();
+    let cancelled = false;
+    const userData = getUserData();
+    const doctorId = userData?.id;
 
-    // Check if profileEdit is true and DoctorsProfile exists
-    const profileEdit = localStorage.getItem("profileEdit") === "true";
-    const doctorsProfile = localStorage.getItem("DoctorsProfile");
+    const loadProfile = async () => {
+      if (!token || !doctorId) {
+        setDataLoading(false);
+        fetchProfileData();
+        return;
+      }
+      try {
+        const response = await axios.get(
+          `${baseUrl}/api/v1/doctor-profile/profile-full/${doctorId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!cancelled && response?.data) {
+          setProfileData((prev) => applyApiProfileToState(response.data, prev));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          fetchProfileData();
+        }
+      } finally {
+        if (!cancelled) setDataLoading(false);
+      }
+    };
 
-    if (profileEdit && doctorsProfile) {
-      const parsedDoctorsProfile = JSON.parse(doctorsProfile);
+    loadProfile();
+    return () => { cancelled = true; };
+  }, [token]);
 
-      const formattedDate = parsedDoctorsProfile.dateOfBirth
-        ? new Date(parsedDoctorsProfile.dateOfBirth).toISOString().split("T")[0]
-        : "";
-
-      const formattedLanguages = Array.isArray(parsedDoctorsProfile.languages)
-        ? parsedDoctorsProfile.languages.map((lang) => ({
-            value: lang,
-            label: lang,
-          }))
-        : parsedDoctorsProfile.languages
-        ? [{ value: parsedDoctorsProfile.languages, label: parsedDoctorsProfile.languages }]
-        : [];
-
-      const formattedQualifications = Array.isArray(parsedDoctorsProfile.qualifications)
-        ? parsedDoctorsProfile.qualifications.map((qual) => ({
-            value: qual,
-            label: qual,
-          }))
-        : parsedDoctorsProfile.qualifications
-        ? [{ value: parsedDoctorsProfile.qualifications, label: parsedDoctorsProfile.qualifications }]
-        : [];
-
-      setProfileData((prevState) => ({
-        ...prevState,
-        ...parsedDoctorsProfile,
-        dateOfBirth: formattedDate,
-        languages: formattedLanguages,
-        qualifications: formattedQualifications,
-      }));
-
-      // Make all fields optional and remove readOnly
-      document.querySelectorAll("input, select, textarea").forEach((field) => {
-        field.removeAttribute("required");
-        field.removeAttribute("readOnly");
-      });
-    }
-  }, []);
-
-  const fetchProfileData = async () => {
+  const fetchProfileData = () => {
     const profile = localStorage.getItem("doctorProfile");
-    const parsedProfile = JSON.parse(profile);
-
-    if (parsedProfile) {
-      setProfileData((prevState) => ({
-        ...prevState,
-        firstName: parsedProfile.firstName || "",
-        lastName: parsedProfile.lastName || "",
-        medicalSpecialization: parsedProfile.medicalSpecialization,
-        // Preserve other fields if they exist in the parsed profile
-        dateOfBirth: parsedProfile.dateOfBirth || prevState.dateOfBirth,
-        imageUrl: parsedProfile.imageUrl || prevState.imageUrl,
-        title: parsedProfile.title || prevState.title,
-        gender: parsedProfile.gender || prevState.gender,
-        languages: parsedProfile.languages || prevState.languages,
-        practiceName: parsedProfile.practiceName || prevState.practiceName,
-        licenseLocation:
-          parsedProfile.licenseLocation || prevState.licenseLocation,
-        about: parsedProfile.about || prevState.about,
-        qualifications:
-          parsedProfile.qualifications || prevState.qualifications,
-      }));
-    }
-    console.log(parsedProfile.medicalSpecialization, "medicalSpecialization");
+    if (profile == null) return;
+    try {
+      const parsed = JSON.parse(profile);
+      if (parsed) {
+        setProfileData((prev) => applyApiProfileToState(parsed, prev));
+      }
+    } catch (_) {}
   };
 
   const handleChange = (e) => {
@@ -237,6 +241,14 @@ const ViewProfile = () => {
       setLoading(false);
     }
   };
+
+  if (dataLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 flex items-center justify-center min-h-[200px]">
+        <p className="text-[#020E7C]">Loading profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">

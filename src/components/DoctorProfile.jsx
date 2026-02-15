@@ -1,13 +1,45 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { PiStethoscope } from "react-icons/pi";
+import { Pencil } from "lucide-react";
+import axios from "axios";
+import { baseUrl } from "../env";
+import { getToken, getUserData } from "../utils";
 
 const DoctorProfile = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const profile = location.state?.profileData;
+  const stateProfile = location.state?.profileData;
+  const [profile, setProfile] = useState(stateProfile ?? null);
+  const [profileLoading, setProfileLoading] = useState(!stateProfile);
   const [activeTab, setActiveTab] = useState("Availability");
   const [appointments, setAppointments] = useState([]);
+
+  useEffect(() => {
+    if (stateProfile) {
+      setProfile(stateProfile);
+      setProfileLoading(false);
+      return;
+    }
+    const userData = getUserData();
+    const doctorId = userData?.id;
+    const token = getToken();
+    if (!doctorId || !token) {
+      setProfileLoading(false);
+      return;
+    }
+    let cancelled = false;
+    axios
+      .get(`${baseUrl}/api/v1/doctor-profile/profile-full/${doctorId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        if (!cancelled && res?.data) setProfile(res.data);
+      })
+      .catch(() => { if (!cancelled) setProfile(null); })
+      .finally(() => { if (!cancelled) setProfileLoading(false); });
+    return () => { cancelled = true; };
+  }, [stateProfile]);
 
   useEffect(() => {
     const storedAppointments = localStorage.getItem("appointments");
@@ -35,19 +67,41 @@ const DoctorProfile = () => {
     });
   };
 
-  console.log(profile);
+  if (profileLoading) {
+    return (
+      <div className="max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-lg flex items-center justify-center min-h-[200px]">
+        <p className="text-gray-600">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!profile?.data) {
+    return (
+      <div className="max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-lg">
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => navigate("/doctor-dashboard")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Back
+          </button>
+        </div>
+        <p className="text-gray-600">No profile data found.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-lg">
       {/* Back Button */}
-      <div className="flex justify-end mb-4">
+      {/* <div className="flex justify-end mb-4">
         <button
           onClick={() => navigate("/doctor-dashboard")}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Back
         </button>
-      </div>
+      </div> */}
 
       <div className="relative bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-8 rounded-2xl border border-blue-100 mb-8 overflow-hidden">
         {/* Background Pattern */}
@@ -121,29 +175,15 @@ const DoctorProfile = () => {
               <button
                 onClick={() => {
                   localStorage.setItem("profileEdit", "true");
-                  localStorage.setItem(
-                    "DoctorsProfile",
-                    JSON.stringify(profile.data)
-                  );
-                  navigate("/editProfile");
+                  if (profile?.data) {
+                    localStorage.setItem("DoctorsProfile", JSON.stringify(profile.data));
+                  }
+                  navigate("/doctor-dashboard/edit-profile");
                 }}
                 title="Edit your profile"
                 className="group relative p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 hover:border-blue-300"
               >
-                <svg
-                  className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-
+                <Pencil className="w-5 h-5 text-gray-600 group-hover:text-blue-600 transition-colors" />
                 {/* Tooltip */}
                 <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                   Edit Profile

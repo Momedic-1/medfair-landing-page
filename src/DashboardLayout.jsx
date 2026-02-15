@@ -6,6 +6,7 @@ import Search from "./pages/Search";
 import Finances from "./pages/Finances";
 import ContactUs from "./pages/ContactUs";
 import DoctorProfile from "./components/DoctorProfile";
+import ViewProfile from "./components/ViewProfile";
 
 const DashboardLayout = () => {
   return (
@@ -14,9 +15,8 @@ const DashboardLayout = () => {
       <div className="flex-1 overflow-auto p-0 lg:ml-8 bg-gray-100">
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          {/* Uncomment and add other routes */}
-          {/* <Route path="/dashboard/profile" element={<Profile />} /> */}
-          {/* <Route path="/dashboard/messages" element={<Messages />} /> */}
+          <Route path="view-profile" element={<DoctorProfile />} />
+          <Route path="edit-profile" element={<ViewProfile />} />
           <Route path="/notes" element={<Search />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/finances" element={<Finances />} />
