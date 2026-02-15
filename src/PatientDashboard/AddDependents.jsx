@@ -6,10 +6,12 @@ import { baseUrl } from "../env";
 import { getToken, getId } from "../utils";
 import { ColorRing } from "react-loader-spinner";
 import { User, Mail, Phone, Users } from "lucide-react";
+import DependentsList from "./DependentsList";
 
 const AddDependents = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [dependentsRefreshTrigger, setDependentsRefreshTrigger] = useState(0);
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -117,6 +119,7 @@ const AddDependents = () => {
             );
 
             toast.success("Dependent added successfully!");
+            setDependentsRefreshTrigger((t) => t + 1);
 
             // Reset form
             setFormData({
@@ -335,6 +338,11 @@ const AddDependents = () => {
                             </button>
                         </div>
                     </form>
+                </div>
+
+                {/* Dependents list */}
+                <div className="mt-8">
+                    <DependentsList refreshTrigger={dependentsRefreshTrigger} />
                 </div>
             </div>
         </div>
