@@ -25,5 +25,5 @@ dist-ssr
 yarn.lock
 package-lock.json
 .env
-src/env.jsx
+src/.env.jsx
 .qodo
