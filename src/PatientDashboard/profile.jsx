@@ -92,66 +92,67 @@ export default function Profile() {
   }, [token, userId]);
 
   const fetchProfileData = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/patient-profile/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    const urlsToTry = [
+      `${baseUrl}/api/v1/patient-profile/${userId}`,
+      `${baseUrl}/api/patient-profile/${userId}`,
+    ];
+    const headers = { Authorization: `Bearer ${token}` };
+    for (const url of urlsToTry) {
+      try {
+        const response = await axios.get(url, { headers });
+        if (response?.data) {
+          setProfileData((prev) => ({ ...prev, ...response.data }));
+          return;
         }
-      );
-      if (response.data) {
-        setProfileData((prev) => ({
-          ...prev,
-          ...response.data,
-        }));
+      } catch (error) {
+        if (error.response?.status === 404) continue;
+        console.error("Error fetching profile:", error);
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      // toast.error("Failed to fetch profile data")
     }
   };
 
   const fetchEmergencyContact = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/patient/emergency-contact/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    const urlsToTry = [
+      `${baseUrl}/api/v1/patient/emergency-contact/${userId}`,
+      `${baseUrl}/api/patient/emergency-contact/${userId}`,
+    ];
+    const headers = { Authorization: `Bearer ${token}` };
+    for (const url of urlsToTry) {
+      try {
+        const response = await axios.get(url, { headers });
+        if (response?.data) {
+          setProfileData((prev) => ({
+            ...prev,
+            emergencyContact: {
+              name: response.data.fullName,
+              relationship: response.data.relationship,
+              phoneNumber: response.data.phoneNumber,
+              email: response.data.email,
+            },
+          }));
+          return;
         }
-      );
-      if (response.data) {
-        setProfileData((prev) => ({
-          ...prev,
-          emergencyContact: {
-            name: response.data.fullName,
-            relationship: response.data.relationship,
-            phoneNumber: response.data.phoneNumber,
-            email: response.data.email,
-          },
-        }));
+      } catch (error) {
+        if (error.response?.status === 403 || error.response?.status === 404) continue;
+        console.error("Error fetching emergency contact:", error);
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching emergency contact:", error);
-      // toast.error("Failed to fetch emergency contact")
     }
   };
 
   const fetchAddress = async () => {
     if (!token || !userId) return;
     const urlsToTry = [
-      `${baseUrl}/api/v1/patient/address/${userId}`,
       `${baseUrl}/api/patient/address/${userId}`,
+      `${baseUrl}/api/v1/patient/address/${userId}`,
     ];
     const headers = { Authorization: `Bearer ${token}` };
     let lastError;
     for (const url of urlsToTry) {
       try {
         const response = await axios.get(url, { headers });
-        if (response.data) {
+        if (response?.data) {
           setProfileData((prev) => ({
             ...prev,
             address: {
@@ -167,19 +168,14 @@ export default function Profile() {
       } catch (err) {
         lastError = err;
         const status = err.response?.status;
-        if (status === 403) {
-          toast.error("You don't have permission to view address. Please contact support or log in again.");
-          return;
-        }
         if (status === 401) {
           toast.error("Please log in again.");
           return;
         }
-        if (status !== 404) continue;
+        if (status === 403 || status === 404) continue;
       }
     }
-    if (lastError?.response?.status === 403) return;
-    console.error("Error fetching address:", lastError);
+    if (lastError) console.error("Error fetching address:", lastError);
   };
 
   // Add this new function to fetch documents
