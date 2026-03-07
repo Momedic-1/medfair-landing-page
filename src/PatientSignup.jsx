@@ -68,11 +68,14 @@ const PatientSignup = () => {
       formData[field] && formData[field].toString().trim() !== ''
     );
 
+    // Password minimum 8 characters
+    const passwordValid = formData.password && formData.password.length >= 8;
+
     // Check if passwords match
-    const passwordsMatch = formData.password && formData.confirmedPassword && 
+    const passwordsMatch = formData.password && formData.confirmedPassword &&
                           formData.password === formData.confirmedPassword;
 
-    return allFieldsFilled && passwordsMatch;
+    return allFieldsFilled && passwordValid && passwordsMatch;
   };
 
   // Function to check if step 2 verification token is valid
