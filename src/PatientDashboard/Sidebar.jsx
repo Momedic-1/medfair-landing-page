@@ -267,7 +267,7 @@ import {
 import Logout from "../Logout";
 import CloseIcon from "../assets/CloseIcon";
 import DashboardIcon from "../assets/DashboardIcon";
-import { Pencil, UserCircle } from "lucide-react";
+import { Pencil, UserCircle, Users } from "lucide-react";
 import DocumentsIcon from "../assets/DocumentIcon";
 import FinanceIcon from "../assets/FinanceIcon";
 import SettingsIcon from "../assets/SettingsIcon";
@@ -403,7 +403,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     }
                     onClick={toggleSidebar}
                   >
-                    <FaHandHoldingMedical />
+                    <Users className="w-5 h-5" />
                     <span className="ml-3">Add Dependent</span>
                   </NavLink>
 

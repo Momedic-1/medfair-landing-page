@@ -21,6 +21,12 @@ export default function Profile() {
   const [filePreview, setFilePreview] = useState(null);
   const [showFileModal, setShowFileModal] = useState(false);
   const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [newMedicalEntry, setNewMedicalEntry] = useState({
+    condition: "",
+    allergy: "",
+    description: "",
+    diagnosedDate: "",
+  });
 
   const fileModalStyle = {
     position: "absolute",
@@ -54,18 +60,15 @@ export default function Profile() {
     bloodGroup: "",
     genotype: "",
     imageUrl: "",
+    fullName: "",
+    email: "",
     emergencyContact: {
       name: "",
       relationship: "",
       phoneNumber: "",
       email: "",
     },
-    medicalHistory: {
-      condition: "",
-      allergy: "",
-      description: "",
-      diagnosedDate: "",
-    },
+    medicalHistory: [],
     address: {
       street: "",
       city: "",
@@ -74,6 +77,7 @@ export default function Profile() {
       postalCode: "",
     },
     documents: [],
+    documentCategories: [],
     documentCategory: "",
   });
 
@@ -85,119 +89,68 @@ export default function Profile() {
     if (!token || !userId) {
       return;
     }
-    fetchProfileData();
-    fetchEmergencyContact();
-    fetchAddress();
-    fetchDocuments(); // Add this to fetch documents on component mount
+    fetchFullProfile();
   }, [token, userId]);
 
-  const fetchProfileData = async () => {
-    const urlsToTry = [
-      `${baseUrl}/api/v1/patient-profile/${userId}`,
-      `${baseUrl}/api/patient-profile/${userId}`,
-    ];
-    const headers = { Authorization: `Bearer ${token}` };
-    for (const url of urlsToTry) {
-      try {
-        const response = await axios.get(url, { headers });
-        if (response?.data) {
-          setProfileData((prev) => ({ ...prev, ...response.data }));
-          return;
-        }
-      } catch (error) {
-        if (error.response?.status === 404) continue;
-        console.error("Error fetching profile:", error);
-        return;
-      }
-    }
-  };
-
-  const fetchEmergencyContact = async () => {
-    const urlsToTry = [
-      `${baseUrl}/api/v1/patient/emergency-contact/${userId}`,
-      `${baseUrl}/api/patient/emergency-contact/${userId}`,
-    ];
-    const headers = { Authorization: `Bearer ${token}` };
-    for (const url of urlsToTry) {
-      try {
-        const response = await axios.get(url, { headers });
-        if (response?.data) {
-          setProfileData((prev) => ({
-            ...prev,
-            emergencyContact: {
-              name: response.data.fullName,
-              relationship: response.data.relationship,
-              phoneNumber: response.data.phoneNumber,
-              email: response.data.email,
-            },
-          }));
-          return;
-        }
-      } catch (error) {
-        if (error.response?.status === 403 || error.response?.status === 404) continue;
-        console.error("Error fetching emergency contact:", error);
-        return;
-      }
-    }
-  };
-
-  const fetchAddress = async () => {
-    if (!token || !userId) return;
-    const urlsToTry = [
-      `${baseUrl}/api/patient/address/${userId}`,
-      `${baseUrl}/api/v1/patient/address/${userId}`,
-    ];
-    const headers = { Authorization: `Bearer ${token}` };
-    let lastError;
-    for (const url of urlsToTry) {
-      try {
-        const response = await axios.get(url, { headers });
-        if (response?.data) {
-          setProfileData((prev) => ({
-            ...prev,
-            address: {
-              street: response.data.streetAddress ?? response.data.street ?? "",
-              city: response.data.city ?? "",
-              state: response.data.state ?? "",
-              country: response.data.country ?? "",
-              postalCode: response.data.zipCode ?? response.data.postalCode ?? "",
-            },
-          }));
-          return;
-        }
-      } catch (err) {
-        lastError = err;
-        const status = err.response?.status;
-        if (status === 401) {
-          toast.error("Please log in again.");
-          return;
-        }
-        if (status === 403 || status === 404) continue;
-      }
-    }
-    if (lastError) console.error("Error fetching address:", lastError);
-  };
-
-  // Add this new function to fetch documents
-  const fetchDocuments = async () => {
+  /** Single API: GET /api/patient-profile/{userId} returns profile, address, emergencyContact, medicalHistory, documents, documentCategories */
+  const fetchFullProfile = async () => {
     try {
       const response = await axios.get(
-        `${baseUrl}/api/patient/documents/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `${baseUrl}/api/patient-profile/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (response.data) {
-        setProfileData((prev) => ({
-          ...prev,
-          documents: response.data,
-        }));
-      }
+      const data = response?.data;
+      if (!data) return;
+
+      const profile = data.profile || {};
+      const address = data.address || {};
+      const emergencyContact = data.emergencyContact || {};
+      const medicalHistory = Array.isArray(data.medicalHistory) ? data.medicalHistory : [];
+      const docUrls = Array.isArray(data.documents) ? data.documents : [];
+      const docCategories = Array.isArray(data.documentCategories) ? data.documentCategories : [];
+
+      const documents = docUrls.map((url, i) => ({
+        fileUrl: typeof url === "string" ? url : url?.fileUrl || url?.url,
+        url: typeof url === "string" ? url : url?.fileUrl || url?.url,
+        category: docCategories[i] || "",
+        documentCategory: docCategories[i] || "",
+        fileName: `Document ${i + 1}`,
+        name: `Document ${i + 1}`,
+      }));
+
+      setProfileData((prev) => ({
+        ...prev,
+        fullName: profile.fullName ?? prev.fullName,
+        email: profile.email ?? prev.email,
+        dateOfBirth: profile.dateOfBirth ?? prev.dateOfBirth,
+        age: profile.age ?? prev.age,
+        weight: profile.weight ?? prev.weight,
+        bloodGroup: profile.bloodGroup ?? prev.bloodGroup,
+        genotype: profile.genotype ?? prev.genotype,
+        imageUrl: profile.imageUrl ?? prev.imageUrl,
+        emergencyContact: {
+          name: emergencyContact.fullName ?? prev.emergencyContact.name,
+          relationship: emergencyContact.relationship ?? prev.emergencyContact.relationship,
+          phoneNumber: emergencyContact.phoneNumber ?? prev.emergencyContact.phoneNumber,
+          email: emergencyContact.email ?? prev.emergencyContact.email,
+        },
+        address: {
+          street: address.streetAddress ?? address.street ?? prev.address.street,
+          city: address.city ?? prev.address.city,
+          state: address.state ?? prev.address.state,
+          country: address.country ?? prev.address.country,
+          postalCode: address.zipCode ?? address.postalCode ?? prev.address.postalCode,
+        },
+        medicalHistory,
+        documents,
+        documentCategories: docCategories,
+      }));
     } catch (error) {
-      console.error("Error fetching documents:", error);
-      // toast.error("Failed to fetch documents")
+      if (error.response?.status === 401) {
+        toast.error("Please log in again.");
+        return;
+      }
+      console.error("Error fetching profile:", error);
     }
   };
 
@@ -412,7 +365,11 @@ export default function Profile() {
     event.target.value = "";
   };
 
-  const fullName = userData.lastName + " " + userData.firstName;
+  const fullName =
+    profileData.fullName ||
+    [userData.firstName, userData.lastName].filter(Boolean).join(" ") ||
+    "";
+  const displayEmail = profileData.email || userData.emailAddress || "";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -487,14 +444,14 @@ export default function Profile() {
             } else throw e;
           }
           break;
-        case 2: // Medical History
+        case 2: // Medical History (add new entry)
           response = await axios.post(
             `${baseUrl}/api/patient/medical-history/${userId}`,
             {
-              condition: profileData.medicalHistory.condition,
-              allergy: profileData.medicalHistory.allergy,
-              description: profileData.medicalHistory.description,
-              diagnosedDate: profileData.medicalHistory.diagnosedDate,
+              condition: newMedicalEntry.condition,
+              allergy: newMedicalEntry.allergy,
+              description: newMedicalEntry.description,
+              diagnosedDate: newMedicalEntry.diagnosedDate || null,
             },
             {
               headers: {
@@ -502,6 +459,10 @@ export default function Profile() {
               },
             }
           );
+          if (response) {
+            setNewMedicalEntry({ condition: "", allergy: "", description: "", diagnosedDate: "" });
+            fetchFullProfile();
+          }
           break;
         default:
           break;
@@ -566,7 +527,7 @@ export default function Profile() {
                             type="text"
                             name="fullName"
                             readOnly
-                            value={fullName}
+                            value={fullName || "—"}
                             className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:ring-opacity-50 transition-colors duration-200"
                           />
                         </div>
@@ -578,7 +539,7 @@ export default function Profile() {
                             type="text"
                             name="email"
                             readOnly
-                            value={userData.emailAddress}
+                            value={displayEmail || "—"}
                             className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200"
                           />
                         </div>
@@ -778,71 +739,163 @@ export default function Profile() {
 
                   {/* Medical History Tab */}
                   <Tab.Panel>
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                      <div className="space-y-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Allergies
-                          </label>
-                          <textarea
-                            name="medicalHistory.allergy"
-                            value={profileData.medicalHistory.allergy}
-                            onChange={handleChange}
-                            rows={3}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 min-h-[100px] resize-y"
-                            placeholder="Enter any allergies"
-                          />
+                    <div className="space-y-8">
+                      {/* Existing medical history from API */}
+                      {Array.isArray(profileData.medicalHistory) &&
+                        profileData.medicalHistory.length > 0 && (
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-800 mb-3">
+                              Recorded medical history
+                            </h3>
+                            <div className="space-y-4">
+                              {profileData.medicalHistory.map((entry, index) => {
+                                const hasContent =
+                                  entry.condition ||
+                                  entry.allergy ||
+                                  entry.description ||
+                                  entry.diagnosedDate;
+                                if (!hasContent) return null;
+                                return (
+                                  <div
+                                    key={index}
+                                    className="rounded-lg border border-gray-200 bg-gray-50/50 p-4"
+                                  >
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                      {entry.condition && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Condition
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {entry.condition}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {entry.allergy && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Allergy
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {entry.allergy}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {entry.description && (
+                                        <div className="sm:col-span-2">
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Description
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {entry.description}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {entry.diagnosedDate && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Diagnosed date
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {new Date(
+                                              entry.diagnosedDate
+                                            ).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Add new medical history entry */}
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <h3 className="text-sm font-semibold text-gray-800">
+                          Add new entry
+                        </h3>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Allergies
+                            </label>
+                            <textarea
+                              value={newMedicalEntry.allergy}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  allergy: e.target.value,
+                                }))
+                              }
+                              rows={2}
+                              className="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 resize-y"
+                              placeholder="Enter any allergies"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Chronic conditions
+                            </label>
+                            <textarea
+                              value={newMedicalEntry.condition}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  condition: e.target.value,
+                                }))
+                              }
+                              rows={2}
+                              className="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 resize-y"
+                              placeholder="Enter any chronic conditions"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Description
+                            </label>
+                            <textarea
+                              value={newMedicalEntry.description}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  description: e.target.value,
+                                }))
+                              }
+                              rows={2}
+                              className="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 resize-y"
+                              placeholder="Enter description"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Diagnosed date
+                            </label>
+                            <input
+                              type="date"
+                              value={newMedicalEntry.diagnosedDate}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  diagnosedDate: e.target.value,
+                                }))
+                              }
+                              className="block w-full h-12 rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Chronic Conditions
-                          </label>
-                          <textarea
-                            name="medicalHistory.condition"
-                            value={profileData.medicalHistory.condition}
-                            onChange={handleChange}
-                            rows={3}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 min-h-[100px] resize-y"
-                            placeholder="Enter any chronic conditions"
-                          />
+                        <div className="flex justify-end pt-2">
+                          <button
+                            type="submit"
+                            disabled={loading}
+                            className="inline-flex justify-center items-center rounded-lg border border-transparent bg-[#020E7C] h-12 px-6 text-base font-medium text-white shadow-sm hover:bg-[#1a2a9c] focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {loading ? "Saving..." : "Add entry"}
+                          </button>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Description
-                          </label>
-                          <textarea
-                            name="medicalHistory.description"
-                            value={profileData.medicalHistory.description}
-                            onChange={handleChange}
-                            rows={3}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 min-h-[100px] resize-y"
-                            placeholder="Enter description"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Diagnosed Date
-                          </label>
-                          <input
-                            type="date"
-                            name="medicalHistory.diagnosedDate"
-                            value={profileData.medicalHistory.diagnosedDate}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter diagnosed date"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end pt-4">
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="inline-flex justify-center items-center rounded-lg border border-transparent bg-[#020E7C] h-12 px-6 text-base font-medium text-white shadow-sm hover:bg-[#1a2a9c] focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {loading ? "Saving..." : "Save Changes"}
-                        </button>
-                      </div>
-                    </form>
+                      </form>
+                    </div>
                   </Tab.Panel>
 
                   {/* File Upload Tab */}
@@ -1221,9 +1274,13 @@ export default function Profile() {
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between mb-1">
                                         <p className="text-sm font-medium text-gray-900 truncate">
-                                          {capitalizeFirstLetter(
-                                            doc.category || doc.documentCategory
-                                          )}
+                                          {typeof doc === "string"
+                                            ? "Document"
+                                            : capitalizeFirstLetter(
+                                                doc.category ||
+                                                  doc.documentCategory ||
+                                                  ""
+                                              )}
                                         </p>
                                         <svg
                                           className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors duration-200"
@@ -1239,8 +1296,10 @@ export default function Profile() {
                                           />
                                         </svg>
                                       </div>
-                                      <p className="text-sm font-medium text-gray-700 truncate mb-1">
-                                        {doc.fileName || doc.name || "Document"}
+                                        <p className="text-sm font-medium text-gray-700 truncate mb-1">
+                                        {typeof doc === "string"
+                                          ? "Document"
+                                          : doc.fileName || doc.name || "Document"}
                                       </p>
                                       <p className="text-xs text-gray-500">
                                         Click to view document
@@ -1389,8 +1448,10 @@ export default function Profile() {
                             {selectedDocument && (
                               <iframe
                                 src={
-                                  selectedDocument.fileUrl ||
-                                  selectedDocument.url
+                                  typeof selectedDocument === "string"
+                                    ? selectedDocument
+                                    : selectedDocument.fileUrl ||
+                                      selectedDocument.url
                                 }
                                 title="Document Viewer"
                                 className="w-full h-[500px] border rounded"
