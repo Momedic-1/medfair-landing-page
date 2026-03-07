@@ -40,9 +40,11 @@ export default function PatientSignupForm({
     setFormData(updatedFormData);
 
     if (name === "password" || name === "confirmedPassword") {
-      if (formData.password !== value && name === "confirmedPassword") {
-        setError("Passwords do not match");
-      } else if (formData.confirmedPassword !== value && name === "password") {
+      const password = name === "password" ? value : formData.password;
+      const confirmed = name === "confirmedPassword" ? value : formData.confirmedPassword;
+      if (password && password.length < 8) {
+        setError("Password must be at least 8 characters");
+      } else if (password !== confirmed && password && confirmed) {
         setError("Passwords do not match");
       } else {
         setError("");
@@ -243,11 +245,12 @@ export default function PatientSignupForm({
                 <div className="relative">
                   <input
                     required
+                    minLength={8}
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password || ""}
                     onChange={handleChange}
-                    placeholder="Create a strong password"
+                    placeholder="Minimum 8 characters"
                     className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                   />
                   <button
@@ -262,6 +265,10 @@ export default function PatientSignupForm({
                     )}
                   </button>
                 </div>
+                <p className="text-xs text-gray-500">Minimum 8 characters required</p>
+                {error && error.includes("8 characters") && (
+                  <p className="text-sm text-red-500">{error}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -291,7 +298,7 @@ export default function PatientSignupForm({
                     )}
                   </button>
                 </div>
-                {error && (
+                {error && error.includes("match") && (
                   <div className="flex items-center space-x-2 text-red-500 text-sm">
                     <span>⚠</span>
                     <span>Passwords do not match</span>
