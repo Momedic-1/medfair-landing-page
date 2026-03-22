@@ -263,7 +263,7 @@ export default function DoctorSignupForm() {
                 onChange={handleChange}
                 minLength={8}
                 className="w-full p-4 pr-12 border border-gray-300 rounded text-sm"
-                placeholder="Minimum 8 characters"
+                placeholder="Password"
                 required
               />
               <button
