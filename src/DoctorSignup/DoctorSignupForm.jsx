@@ -105,7 +105,7 @@ export default function DoctorSignupForm() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       toast.success(response.data.message);
 
@@ -280,7 +280,9 @@ export default function DoctorSignupForm() {
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Minimum 8 characters required</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Minimum 8 characters required
+            </p>
             {error && error.includes("8 characters") && (
               <p className="text-red-500 text-sm mt-1">{error}</p>
             )}
