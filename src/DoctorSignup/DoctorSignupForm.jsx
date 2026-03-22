@@ -9,6 +9,7 @@ import { baseUrl } from "../env.jsx";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { ColorRing } from "react-loader-spinner";
+import { Eye, EyeOff } from "lucide-react";
 
 const specialization = [
   "Select specialization",
@@ -43,19 +44,25 @@ export default function DoctorSignupForm() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData({
+    const nextFormData = {
       ...formData,
       [name]: value,
-    });
+    };
+    setFormData(nextFormData);
 
     if (name === "password" || name === "confirmedPassword") {
-      if (formData.password !== value && name === "confirmedPassword") {
-        setError("Passwords do not match");
-      } else if (formData.confirmedPassword !== value && name === "password") {
+      const password = name === "password" ? value : nextFormData.password;
+      const confirmed =
+        name === "confirmedPassword" ? value : nextFormData.confirmedPassword;
+      if (password && password.length < 8) {
+        setError("Password must be at least 8 characters");
+      } else if (password !== confirmed && password && confirmed) {
         setError("Passwords do not match");
       } else {
         setError("");
@@ -72,11 +79,18 @@ export default function DoctorSignupForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    if (formData.password !== formData.confirmedPassword) {
-      setError("Passwords do not match");
+    if (!formData.password || formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      toast.error("Password must be at least 8 characters");
       return;
     }
+    if (formData.password !== formData.confirmedPassword) {
+      setError("Passwords do not match");
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
 
     // if (!formData.acceptTerms) {
     //   setError('You must accept the terms and conditions');
@@ -241,30 +255,70 @@ export default function DoctorSignupForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
-              placeholder="Password"
-              required
-            />
+            <div className="relative mt-2">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                minLength={8}
+                className="w-full p-4 pr-12 border border-gray-300 rounded text-sm"
+                placeholder="Minimum 8 characters"
+                required
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#020E7C] p-1"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Minimum 8 characters required</p>
+            {error && error.includes("8 characters") && (
+              <p className="text-red-500 text-sm mt-1">{error}</p>
+            )}
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Confirm Password
             </label>
-            <input
-              type="password"
-              name="confirmedPassword"
-              value={formData.confirmedPassword}
-              onChange={handleChange}
-              className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
-              placeholder="Confirm Password"
-              required
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className="relative mt-2">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmedPassword"
+                value={formData.confirmedPassword}
+                onChange={handleChange}
+                minLength={8}
+                className="w-full p-4 pr-12 border border-gray-300 rounded text-sm"
+                placeholder="Confirm your password"
+                required
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#020E7C] p-1"
+                aria-label={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+            {error && error.includes("match") && (
+              <p className="text-red-500 text-sm mt-1">{error}</p>
+            )}
           </div>
         </div>
 
@@ -312,6 +366,12 @@ export default function DoctorSignupForm() {
 
         <button
           type="submit"
+          disabled={
+            loading ||
+            !formData.password ||
+            formData.password.length < 8 ||
+            formData.password !== formData.confirmedPassword
+          }
           className="w-[300px] mt-4 lg:w-[97%] md:w-[95%] p-4 py-2 px-3 inline-flex items-center justify-center text-sm font-semibold rounded-lg border border-transparent bg-[#020E7C] text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
         >
           {loading ? <ColorRing color="#fff" height={20} width={20} /> : "Next"}
