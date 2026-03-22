@@ -343,7 +343,7 @@ export default function DoctorSignupForm() {
           </select>
         </div>
         <div className="flex space-x-10 flex-col md:flex-row mt-4">
-          <Modal />
+          {/* <Modal /> */}
           <a onClick={() => navigate("/login")} className="text-sm font-medium">
             Already have an account?{" "}
             <span className="text-[#020E7C] cursor-pointer">Login here</span>
