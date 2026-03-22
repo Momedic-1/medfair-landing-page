@@ -8,7 +8,7 @@ import { getToken, getUserData } from "../utils";
 
 const ViewProfile = () => {
   const token = getToken();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const qualificationOptions = [
     { value: "HLL", label: "HLL" },
@@ -72,34 +72,49 @@ const ViewProfile = () => {
 
   const normalizeLanguages = (raw) => {
     if (!raw) return [];
-    if (Array.isArray(raw)) return raw.map((l) => (typeof l === "object" && l?.value != null ? l : { value: l, label: l }));
+    if (Array.isArray(raw))
+      return raw.map((l) =>
+        typeof l === "object" && l?.value != null ? l : { value: l, label: l },
+      );
     const str = typeof raw === "string" ? raw : String(raw);
-    return str.split(",").map((s) => ({ value: s.trim(), label: s.trim() })).filter((o) => o.value);
+    return str
+      .split(",")
+      .map((s) => ({ value: s.trim(), label: s.trim() }))
+      .filter((o) => o.value);
   };
 
   const normalizeQualifications = (raw) => {
     if (!raw) return [];
-    if (Array.isArray(raw)) return raw.map((q) => (typeof q === "object" && q?.value != null ? q : { value: q, label: q }));
+    if (Array.isArray(raw))
+      return raw.map((q) =>
+        typeof q === "object" && q?.value != null ? q : { value: q, label: q },
+      );
     const str = typeof raw === "string" ? raw : String(raw);
-    return str.split(",").map((s) => ({ value: s.trim(), label: s.trim() })).filter((o) => o.value);
+    return str
+      .split(",")
+      .map((s) => ({ value: s.trim(), label: s.trim() }))
+      .filter((o) => o.value);
   };
 
   const applyApiProfileToState = (data, prevState = {}) => {
     const raw = data?.data ?? data;
     const dateOfBirth = raw?.dateOfBirth
       ? new Date(raw.dateOfBirth).toISOString().split("T")[0]
-      : prevState.dateOfBirth ?? "";
+      : (prevState.dateOfBirth ?? "");
     return {
       ...prevState,
       firstName: raw?.firstName ?? prevState.firstName ?? "",
       lastName: raw?.lastName ?? prevState.lastName ?? "",
-      medicalSpecialization: raw?.medicalSpecialization ?? prevState.medicalSpecialization ?? "",
+      medicalSpecialization:
+        raw?.medicalSpecialization ?? prevState.medicalSpecialization ?? "",
       dateOfBirth,
       imageUrl: raw?.imageUrl ?? prevState.imageUrl ?? "",
       title: raw?.title ?? prevState.title ?? "",
       gender: raw?.gender ?? prevState.gender ?? "",
       languages: normalizeLanguages(raw?.languages ?? prevState.languages),
-      qualifications: normalizeQualifications(raw?.qualifications ?? prevState.qualifications),
+      qualifications: normalizeQualifications(
+        raw?.qualifications ?? prevState.qualifications,
+      ),
       practiceName: raw?.practiceName ?? prevState.practiceName ?? "",
       licenseLocation: raw?.licenseLocation ?? prevState.licenseLocation ?? "",
       about: raw?.about ?? prevState.about ?? "",
@@ -120,7 +135,7 @@ const ViewProfile = () => {
       try {
         const response = await axios.get(
           `${baseUrl}/api/v1/doctor-profile/profile-full/${doctorId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         if (!cancelled && response?.data) {
           setProfileData((prev) => applyApiProfileToState(response.data, prev));
@@ -135,7 +150,9 @@ const ViewProfile = () => {
     };
 
     loadProfile();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   const fetchProfileData = () => {
@@ -188,7 +205,7 @@ const ViewProfile = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       console.log(response);
 
@@ -256,7 +273,10 @@ const ViewProfile = () => {
       <p className="font-bold text-[#020E7C] mb-6">
         Please complete your profile
       </p>
-      <form onSubmit={handleSubmit} className="space-y-6 p-8 border rounded-lg shadow-md bg-white">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 p-8 border rounded-lg shadow-md bg-white"
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700">
