@@ -597,7 +597,11 @@ const Investigations = () => {
         <h3 className="text-lg text-center lg:text-start font-semibold text-gray-800 mb-4">
           Summary
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div
+          className={`grid grid-cols-1 gap-6 ${
+            isFirstCareHospitalPartner ? "md:grid-cols-3" : "md:grid-cols-4"
+          }`}
+        >
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">
               {allInvestigationOrders.length}
@@ -616,15 +620,17 @@ const Investigations = () => {
             </div>
             <div className="text-sm text-gray-600">Orders Sent to Lab</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              ₦
-              {allInvestigationOrders
-                .reduce((acc, order) => acc + (order.totalCost || 0), 0)
-                .toLocaleString()}
+          {!isFirstCareHospitalPartner && (
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                ₦
+                {allInvestigationOrders
+                  .reduce((acc, order) => acc + (order.totalCost || 0), 0)
+                  .toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">Total Value</div>
             </div>
-            <div className="text-sm text-gray-600">Total Value</div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -1038,9 +1044,11 @@ const Investigations = () => {
                           </div>
 
                           <div className="flex items-center gap-3 ml-4">
-                            <span className="text-lg font-semibold text-green-600">
-                              ₦{item.price?.toLocaleString()}
-                            </span>
+                            {!isFirstCareHospitalPartner && (
+                              <span className="text-lg font-semibold text-green-600">
+                                ₦{item.price?.toLocaleString()}
+                              </span>
+                            )}
                             {showPaidBadge && (
                               <div className="flex items-center gap-1 text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-medium">
                                 <svg
@@ -1102,14 +1110,16 @@ const Investigations = () => {
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-medium text-gray-700">
-                        Total Cost:
-                      </span>
-                      <span className="text-xl font-bold text-green-600">
-                        ₦{order.totalCost?.toLocaleString()}
-                      </span>
-                    </div>
+                    {!isFirstCareHospitalPartner && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-medium text-gray-700">
+                          Total Cost:
+                        </span>
+                        <span className="text-xl font-bold text-green-600">
+                          ₦{order.totalCost?.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
 
                     {isSelected && (canPay || canSendToLab) && (
                       <div className="mt-4 space-y-4">
