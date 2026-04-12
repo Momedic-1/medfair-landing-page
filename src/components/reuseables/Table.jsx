@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { formatDate, getToken } from "../../utils";
+import { usePartnerLocations } from "../../context/PartnerLocationsContext";
 import { Hourglass } from "react-loader-spinner";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -38,6 +39,14 @@ const orderModalStyle = {
 };
 
 const Table = ({ data = [], isLoading = false, emptyMessage }) => {
+  const {
+    partnerPharmacies,
+    locationsLoading,
+    pharmaciesError,
+    networkError,
+    setSelectedPharmacyCode,
+  } = usePartnerLocations();
+
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [medications, setMedications] = useState([]);
   const [showPharmacyDropdown, setShowPharmacyDropdown] = useState(null);
@@ -47,19 +56,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   const [orderLoading, setOrderLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
-
-  const partnerPharmacies = [
-    {
-      id: "smartpharm",
-      name: "SmartPharm",
-      partner: "SMARTPHARM",
-    },
-    {
-      id: "degree_360",
-      name: "Degree 360 Pharmacy",
-      partner: "DEGREE_360",
-    },
-  ];
 
   const dropdownRef = useRef(null);
 
@@ -73,7 +69,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   };
 
   const handlePharmacySelect = (pharmacy, patientData) => {
-    // Always open the modal first to see what's happening
+    setSelectedPharmacyCode(pharmacy.partner);
     setSelectedPharmacy(pharmacy);
     setSelectedPatient(patientData);
     setOrderModalOpen(true);
@@ -166,7 +162,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
 
   return (
     <div className="relative w-full h-screen overflow-x-auto">
-      <div className="min-w-full bg-white shadow-md rounded-lg overflow-auto">
+      <div className="min-w-full bg-white h-screen shadow-md rounded-lg overflow-auto">
         <table className="min-w-full leading-normal text-center">
           <thead className="bg-gray-50 sticky top-0 z-10 py-4">
             <tr>
@@ -270,7 +266,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                     </button>
                   </td>
 
-                  {/* Get Prescription with Static Dropdown */}
+                  {/* Get Prescription — pharmacies from GET /api/partners/pharmacies */}
                   <td className="px-3 py-3 text-sm relative">
                     <div className="relative" ref={dropdownRef}>
                       <button
@@ -304,38 +300,52 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                           <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white rounded-t-2xl">
                             Available Pharmacies
                           </div>
-                          <ul className="divide-y divide-gray-100">
-                            {partnerPharmacies.map((pharmacy, idx) => (
-                              <li
-                                key={idx}
-                                className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm text-gray-700 transition-colors"
-                                onClick={() =>
-                                  handlePharmacySelect(pharmacy, patient)
-                                }
-                                onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <svg
-                                    className="w-4 h-4 text-orange-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                    />
-                                  </svg>
-                                  {pharmacy.name}
-                                  {/* <span className="text-xs text-blue-500">
-                                    {pharmacy.partner}
-                                  </span> */}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
+                          {locationsLoading ? (
+                            <div className="px-4 py-6 text-sm text-gray-600 text-center">
+                              Loading pharmacies…
+                            </div>
+                          ) : partnerPharmacies.length === 0 ? (
+                            <div className="px-4 py-4 text-sm text-red-600">
+                              {pharmaciesError ||
+                                "No pharmacies available for your account."}
+                            </div>
+                          ) : (
+                            <ul className="divide-y divide-gray-100">
+                              {partnerPharmacies.map((pharmacy) => (
+                                <li
+                                  key={pharmacy.id}
+                                  className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm text-gray-700 transition-colors"
+                                  onClick={() =>
+                                    handlePharmacySelect(pharmacy, patient)
+                                  }
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <svg
+                                      className="w-4 h-4 text-orange-500"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                      />
+                                    </svg>
+                                    {pharmacy.name}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {networkError && !locationsLoading && (
+                            <p className="px-4 pb-3 text-xs text-amber-700">
+                              Partner list could not be refreshed; showing
+                              default options.
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
