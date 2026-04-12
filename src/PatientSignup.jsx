@@ -7,6 +7,7 @@ import VerificationSuccessful from "./PatientSignup/VerificationSuccessful";
 import CheckEmail from "./PatientSignup/CheckEmail";
 import ErrorModal from "./components/ErrorModal";
 import { baseUrl } from "./env";
+import { setPatientPartnerSlug } from "./utils";
 import LoadingLoop from "./assets/LoadingLoop.jsx";
 
 const PatientSignup = () => {
@@ -28,8 +29,9 @@ const PatientSignup = () => {
       Preline.HSStepperJS.init();
     }
 
-    // If partner slug exists, add it to form data
+    // If partner slug exists, add it to form data and persist for post-login flows
     if (partnerSlug) {
+      setPatientPartnerSlug(partnerSlug);
       setFormData((prev) => {
         const updatedData = {
           ...prev,

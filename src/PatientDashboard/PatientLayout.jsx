@@ -301,6 +301,39 @@ import "react-toastify/dist/ReactToastify.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { baseUrl } from "../env.jsx";
+import {
+  PartnerLocationsProvider,
+  usePartnerLocations,
+} from "../context/PartnerLocationsContext";
+import { getPatientPartnerSlug } from "../utils";
+
+const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
+const LOGO_SRC = "/logo.jpeg";
+
+function FirstCareHospitalLogo() {
+  const { apiLabs } = usePartnerLocations();
+  const slugNorm = String(getPatientPartnerSlug() || "")
+    .toLowerCase()
+    .trim();
+  const firstCareLabsFromPartnerApi =
+    Array.isArray(apiLabs) &&
+    apiLabs.length > 0 &&
+    apiLabs.some((row) =>
+      String(row?.code ?? "")
+        .toUpperCase()
+        .startsWith("FIRST_CARE_")
+    );
+  const showLogo =
+    slugNorm === FIRST_CARE_HOSPITAL_SLUG || firstCareLabsFromPartnerApi;
+  if (!showLogo) return null;
+  return (
+    <img
+      src={LOGO_SRC}
+      alt="First Care Hospital"
+      className="h-10 w-auto max-w-[7.5rem] object-contain"
+    />
+  );
+}
 
 export default function PatientLayout() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -395,36 +428,39 @@ export default function PatientLayout() {
     userData?.firstName.slice(1).toLowerCase();
 
   return (
-    <div className="w-full h-screen flex flex-col lg:flex-row">
-      <ToastContainer />
+    <PartnerLocationsProvider>
+      <div className="w-full h-screen flex flex-col lg:flex-row">
+        <ToastContainer />
 
-      {/* Sidebar */}
-      <div className="lg:w-[20%] flex-shrink-0 bg-white">
-        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      </div>
+        {/* Sidebar */}
+        <div className="lg:w-[20%] flex-shrink-0 bg-white">
+          <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        </div>
 
-      {/* Main Content */}
-      <div className="lg:w-[80%] flex flex-col bg-gray-100">
-        {/* Header */}
-        <header className="w-full p-2 h-16 bg-white flex justify-between items-center shadow px-4 flex-shrink-0">
-          <button
-            className="lg:hidden text-2xl p-2 focus:outline-none"
-            onClick={toggleSidebar}
-          >
-            ☰
-          </button>
-          <div className="flex items-center gap-4">
-            <span className="font-bold text-[#020E7C] hidden lg:block">
-              Welcome, {userName}
-            </span>
+        {/* Main Content */}
+        <div className="lg:w-[80%] flex flex-col bg-gray-100">
+          {/* Header */}
+          <header className="w-full px-4 py-6 h-16 bg-white flex justify-between items-center shadow flex-shrink-0">
+            <button
+              className="lg:hidden text-2xl p-2 focus:outline-none"
+              onClick={toggleSidebar}
+            >
+              ☰
+            </button>
+            <div className="flex justify-between w-full items-center gap-4">
+              <FirstCareHospitalLogo />
+              <span className="font-bold text-[#020E7C] hidden lg:block">
+                Welcome, {userName}
+              </span>
+            </div>
+          </header>
+
+          {/* Scrollable Outlet */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <Outlet />
           </div>
-        </header>
-
-        {/* Scrollable Outlet */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <Outlet />
         </div>
       </div>
-    </div>
+    </PartnerLocationsProvider>
   );
 }

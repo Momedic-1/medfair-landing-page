@@ -93,3 +93,47 @@ export const getUserData = () => {
 export const getId = () =>{
   return JSON.parse(localStorage.getItem('userData'))?.id
 }
+
+/** localStorage key — set at partner signup and on login when API returns partnerSlug */
+export const PATIENT_PARTNER_SLUG_STORAGE_KEY = "patientPartnerSlug";
+
+export function setPatientPartnerSlug(slug) {
+  if (slug == null || String(slug).trim() === "") return;
+  try {
+    localStorage.setItem(PATIENT_PARTNER_SLUG_STORAGE_KEY, String(slug).trim());
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Partner slug for the logged-in patient (e.g. first-care-hospital).
+ * Prefer dedicated storage, then common fields on userData from login.
+ */
+export function getPatientPartnerSlug() {
+  try {
+    const stored = localStorage.getItem(PATIENT_PARTNER_SLUG_STORAGE_KEY);
+    if (stored != null && String(stored).trim() !== "") {
+      return String(stored).trim();
+    }
+
+    const user = getUserData();
+    if (!user || typeof user !== "object") return null;
+
+    const candidates = [
+      user.partnerSlug,
+      user.partner_slug,
+      user.partnerOrganizationSlug,
+      user.organizationPartnerSlug,
+      user.partner?.slug,
+      user.organization?.partnerSlug,
+      user.organization?.slug,
+    ];
+    for (const c of candidates) {
+      if (c != null && String(c).trim() !== "") return String(c).trim();
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}

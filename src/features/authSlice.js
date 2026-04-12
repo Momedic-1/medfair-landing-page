@@ -3,6 +3,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { baseUrl } from '../env';
+import { setPatientPartnerSlug, PATIENT_PARTNER_SLUG_STORAGE_KEY } from '../utils';
 
 export const login = createAsyncThunk(
   'auth/login',
@@ -35,6 +36,7 @@ const authSlice = createSlice({
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
       localStorage.removeItem('roleType');
+      localStorage.removeItem(PATIENT_PARTNER_SLUG_STORAGE_KEY);
     },
     clearError(state) {
       state.error = null;
@@ -64,6 +66,11 @@ const authSlice = createSlice({
         // localStorage.setItem('authToken', state?.token);
         localStorage.setItem('userData', JSON.stringify(state.userData));
         localStorage.setItem('roleType', state.userData.role);
+        if (state.userData?.partnerSlug != null && String(state.userData.partnerSlug).trim() !== '') {
+          setPatientPartnerSlug(state.userData.partnerSlug);
+        } else if (state.userData?.partner_slug != null && String(state.userData.partner_slug).trim() !== '') {
+          setPatientPartnerSlug(state.userData.partner_slug);
+        }
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;

@@ -1,13 +1,46 @@
 import { useState, useEffect } from "react";
-import { formatDate, getId, getToken, getUserData } from "../utils";
+import {
+  formatDate,
+  getId,
+  getToken,
+  getUserData,
+  getPatientPartnerSlug,
+} from "../utils";
+import { usePartnerLocations } from "../context/PartnerLocationsContext";
 import { Hourglass } from "react-loader-spinner";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { baseUrl } from "../env";
 
+const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
+
 const Investigations = () => {
   const patientId = getId();
   const user = getUserData();
+  const {
+    labPartners,
+    apiLabs,
+    locationsLoading: partnerLocationsLoading,
+    labsError,
+    networkError: partnerLocationsNetworkError,
+    setSelectedLabCode,
+  } = usePartnerLocations();
+
+  /** Slug from signup/login storage + user object; API may omit partnerSlug on user. */
+  const partnerSlugNorm = String(getPatientPartnerSlug() || "")
+    .toLowerCase()
+    .trim();
+  /** Backend returns FIRST_CARE_* lab codes for this partner — use as fallback when slug missing on user. */
+  const firstCareLabsFromPartnerApi =
+    Array.isArray(apiLabs) &&
+    apiLabs.length > 0 &&
+    apiLabs.some((row) =>
+      String(row?.code ?? "")
+        .toUpperCase()
+        .startsWith("FIRST_CARE_")
+    );
+  const isFirstCareHospitalPartner =
+    partnerSlugNorm === FIRST_CARE_HOSPITAL_SLUG || firstCareLabsFromPartnerApi;
 
   const [allInvestigationOrders, setAllInvestigationOrders] = useState([]);
   const [investigationsLoading, setInvestigationsLoading] = useState(true);
@@ -24,11 +57,6 @@ const Investigations = () => {
   // 🔹 Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 10;
-
-  const labPartners = [
-    { id: "silahealth", name: "Sila Health", partner: "SILAHEALTH" },
-    { id: "medfair_lab", name: "MedFair Lab", partner: "MedFair_Lab" },
-  ];
 
   const getSuccessfulOrders = () => {
     return allInvestigationOrders.filter((order) => order.status === "success");
@@ -145,6 +173,7 @@ const Investigations = () => {
 
   const getSelectedOrdersForPayment = () => {
     const ordersForPayment = new Set();
+    if (isFirstCareHospitalPartner) return ordersForPayment;
     selectedOrders.forEach((idStr) => {
       const order = allInvestigationOrders.find(
         (o) => o.orderId.toString() === idStr
@@ -156,17 +185,35 @@ const Investigations = () => {
     return ordersForPayment;
   };
 
-  const getSelectedSuccessfulOrders = () => {
-    const successfulOrders = [];
+  /** Orders selected that are allowed to be sent to a lab (paid success for others; First Care = any non-completed, not yet sent). */
+  const getSelectedLabReadyOrders = () => {
+    const list = [];
     selectedOrders.forEach((idStr) => {
       const order = allInvestigationOrders.find(
         (o) => o.orderId.toString() === idStr
       );
-      if (order && order.status === "success" && !sentToLabOrders.has(idStr)) {
-        successfulOrders.push(order);
+      if (!order || sentToLabOrders.has(idStr)) return;
+      if (isFirstCareHospitalPartner) {
+        if (order.status !== "completed" && !order.sentToLab) {
+          list.push(order);
+        }
+      } else if (order.status === "success") {
+        list.push(order);
       }
     });
-    return successfulOrders;
+    return list;
+  };
+
+  const getUnsentLabReadyOrdersCount = () => {
+    if (isFirstCareHospitalPartner) {
+      return allInvestigationOrders.filter(
+        (order) =>
+          order.status !== "completed" &&
+          !order.sentToLab &&
+          !sentToLabOrders.has(order.orderId.toString())
+      ).length;
+    }
+    return getUnsentSuccessfulOrdersCount();
   };
 
   // Add this state to your component
@@ -411,11 +458,21 @@ const Investigations = () => {
     const order = allInvestigationOrders.find(
       (o) => o.orderId.toString() === orderId.toString()
     );
-    if (
-      !order ||
-      order.status !== "success" ||
-      sentToLabOrders.has(orderId.toString())
-    ) {
+    const idKey = orderId.toString();
+    if (!order || sentToLabOrders.has(idKey)) {
+      toast.warning(
+        "Please select an order that hasn't been sent to the lab yet"
+      );
+      return;
+    }
+    if (isFirstCareHospitalPartner) {
+      if (order.status === "completed" || order.sentToLab) {
+        toast.warning(
+          "This order cannot be sent to the lab in its current state"
+        );
+        return;
+      }
+    } else if (order.status !== "success") {
       toast.warning(
         "Please select a valid paid order that hasn't been sent to lab yet"
       );
@@ -425,13 +482,14 @@ const Investigations = () => {
     setLabOrderSending(true);
     try {
       const token = getToken();
+      // Must match OpenAPI: POST /api/investigations/select-lab?orderId=&labPartner= (not .../investigations/investigations/...)
       const queryParams = new URLSearchParams({
         orderId: order.orderId.toString(),
         labPartner: selectedLabPartner.partner,
       });
 
       const response = await fetch(
-        `${baseUrl}/api/investigations/investigations/select-lab?${queryParams}`,
+        `${baseUrl}/api/investigations/select-lab?${queryParams}`,
         {
           method: "POST",
           headers: {
@@ -442,12 +500,24 @@ const Investigations = () => {
       );
 
       if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorMessage = `HTTP ${response.status}`;
         try {
           const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        } catch (parseError) {
-          // console.error("Failed to parse error response:", parseError);
+          if (errorText) {
+            try {
+              const j = JSON.parse(errorText);
+              errorMessage =
+                j.message ||
+                j.error ||
+                j.exceptionMessage ||
+                j.detail ||
+                (typeof j === "string" ? j : errorText);
+            } catch {
+              errorMessage = errorText.slice(0, 400);
+            }
+          }
+        } catch {
+          /* keep status message */
         }
         throw new Error(
           `Failed to send order ${order.orderId}: ${errorMessage}`
@@ -527,7 +597,11 @@ const Investigations = () => {
         <h3 className="text-lg text-center lg:text-start font-semibold text-gray-800 mb-4">
           Summary
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div
+          className={`grid grid-cols-1 gap-6 ${
+            isFirstCareHospitalPartner ? "md:grid-cols-3" : "md:grid-cols-4"
+          }`}
+        >
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">
               {allInvestigationOrders.length}
@@ -546,22 +620,24 @@ const Investigations = () => {
             </div>
             <div className="text-sm text-gray-600">Orders Sent to Lab</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              ₦
-              {allInvestigationOrders
-                .reduce((acc, order) => acc + (order.totalCost || 0), 0)
-                .toLocaleString()}
+          {!isFirstCareHospitalPartner && (
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                ₦
+                {allInvestigationOrders
+                  .reduce((acc, order) => acc + (order.totalCost || 0), 0)
+                  .toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">Total Value</div>
             </div>
-            <div className="text-sm text-gray-600">Total Value</div>
-          </div>
+          )}
         </div>
       </div>
 
       {(selectedOrders.size > 0 ||
         paidInvestigations.size > 0 ||
         verifyingPayment ||
-        getUnsentSuccessfulOrdersCount() > 0) && (
+        getUnsentLabReadyOrdersCount() > 0) && (
         <div className="mb-6 space-y-4">
           {verifyingPayment && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -581,7 +657,8 @@ const Investigations = () => {
             </div>
           )}
 
-          {getSelectedOrdersForPayment().size > 0 && (
+          {!isFirstCareHospitalPartner &&
+            getSelectedOrdersForPayment().size > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -603,7 +680,7 @@ const Investigations = () => {
             </div>
           )}
 
-          {getSelectedSuccessfulOrders().length > 0 && (
+          {getSelectedLabReadyOrders().length > 0 && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <div className="bg-purple-500 p-2 rounded-full">
@@ -626,15 +703,18 @@ const Investigations = () => {
                     Selected Orders for Lab Partner
                   </h3>
                   <p className="text-sm text-purple-600">
-                    {getSelectedSuccessfulOrders().length} paid order(s)
-                    selected to send to lab
+                    {getSelectedLabReadyOrders().length} order(s) selected to
+                    send to lab
+                    {isFirstCareHospitalPartner
+                      ? " (no upfront payment required)"
+                      : " — paid order(s)"}
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {!investigationsLoading && getUnsentSuccessfulOrdersCount() > 0 && (
+          {!investigationsLoading && getUnsentLabReadyOrdersCount() > 0 && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <div className="bg-green-500 p-2 rounded-full">
@@ -657,8 +737,10 @@ const Investigations = () => {
                     Total Orders Ready for Lab
                   </h3>
                   <p className="text-sm text-green-600">
-                    {getUnsentSuccessfulOrdersCount()} paid order(s) available
-                    to send to lab partners
+                    {getUnsentLabReadyOrdersCount()}{" "}
+                    {isFirstCareHospitalPartner
+                      ? "order(s) available to send to lab partners (no upfront payment)"
+                      : "paid order(s) available to send to lab partners"}
                   </p>
                 </div>
               </div>
@@ -696,7 +778,9 @@ const Investigations = () => {
             </div>
           )}
 
-          {getSelectedOrdersForPayment().size > 0 && !verifyingPayment && (
+          {!isFirstCareHospitalPartner &&
+            getSelectedOrdersForPayment().size > 0 &&
+            !verifyingPayment && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-orange-800 mb-2">
                 Payment Information
@@ -795,10 +879,13 @@ const Investigations = () => {
               (orderHasPaidItem && order.status !== "success") ||
               order.status === "completed" ||
               (order.status === "success" &&
-                (isOrderSentToLab || order.sentToLab));
+                (isOrderSentToLab || order.sentToLab)) ||
+              (isFirstCareHospitalPartner &&
+                (order.sentToLab || isOrderSentToLab));
 
             const isSelected = selectedOrders.has(idStr);
             const canPay =
+              !isFirstCareHospitalPartner &&
               isSelected &&
               order.status !== "success" &&
               !orderHasPaidItem &&
@@ -806,9 +893,11 @@ const Investigations = () => {
               !verifyingPayment;
             const canSendToLab =
               isSelected &&
-              order.status === "success" &&
               !isOrderSentToLab &&
-              !verifyingPayment;
+              !verifyingPayment &&
+              (isFirstCareHospitalPartner
+                ? order.status !== "completed" && !order.sentToLab
+                : order.status === "success");
 
             return (
               <div
@@ -873,12 +962,23 @@ const Investigations = () => {
                       </div>
                     </div>
                   </div>
-                  {order.status === "success" && !isOrderSentToLab && (
-                    <p className="text-xs text-green-600 mt-2">
-                      ✓ This order has been paid for successfully and is ready
-                      to be sent to a lab partner
-                    </p>
-                  )}
+                  {order.status === "success" &&
+                    !isOrderSentToLab &&
+                    !isFirstCareHospitalPartner && (
+                      <p className="text-xs text-green-600 mt-2">
+                        ✓ This order has been paid for successfully and is ready
+                        to be sent to a lab partner
+                      </p>
+                    )}
+                  {isFirstCareHospitalPartner &&
+                    order.status !== "completed" &&
+                    !order.sentToLab &&
+                    !isOrderSentToLab && (
+                      <p className="text-xs text-teal-700 mt-2">
+                        ✓ No upfront payment — select a lab partner and send
+                        this order when you are ready.
+                      </p>
+                    )}
                   {order.status === "success" && isOrderSentToLab && (
                     <p className="text-xs text-indigo-600 mt-2">
                       ✓ This order has been sent to a lab partner for processing
@@ -899,12 +999,25 @@ const Investigations = () => {
                       const key = `${order.orderId}-${itemIndex}`;
                       const isPaid = paidInvestigations.has(key);
                       const isOrderSuccessful = order.status === "success";
+                      const firstCareSentToLab =
+                        isFirstCareHospitalPartner &&
+                        (isOrderSentToLab || order.sentToLab);
+                      const showPaidBadge =
+                        !isFirstCareHospitalPartner &&
+                        (isPaid || isOrderSuccessful);
+                      const rowCompleteStyling =
+                        (!isFirstCareHospitalPartner &&
+                          (isPaid || isOrderSuccessful)) ||
+                        firstCareSentToLab;
+                      const titleSuccessStyling =
+                        (!isFirstCareHospitalPartner && isOrderSuccessful) ||
+                        firstCareSentToLab;
 
                       return (
                         <div
                           key={itemIndex}
                           className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
-                            isPaid || isOrderSuccessful
+                            rowCompleteStyling
                               ? "bg-green-50 border-green-200"
                               : "bg-gray-50 border-gray-200 hover:border-gray-300"
                           }`}
@@ -912,7 +1025,7 @@ const Investigations = () => {
                           <div>
                             <h4
                               className={`font-medium mb-1 ${
-                                isOrderSuccessful
+                                titleSuccessStyling
                                   ? "text-green-700"
                                   : "text-gray-800"
                               }`}
@@ -921,7 +1034,7 @@ const Investigations = () => {
                             </h4>
                             <p
                               className={`text-sm ${
-                                isOrderSuccessful
+                                titleSuccessStyling
                                   ? "text-green-600"
                                   : "text-gray-600"
                               }`}
@@ -931,10 +1044,12 @@ const Investigations = () => {
                           </div>
 
                           <div className="flex items-center gap-3 ml-4">
-                            <span className="text-lg font-semibold text-green-600">
-                              ₦{item.price?.toLocaleString()}
-                            </span>
-                            {(isPaid || isOrderSuccessful) && (
+                            {!isFirstCareHospitalPartner && (
+                              <span className="text-lg font-semibold text-green-600">
+                                ₦{item.price?.toLocaleString()}
+                              </span>
+                            )}
+                            {showPaidBadge && (
                               <div className="flex items-center gap-1 text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-medium">
                                 <svg
                                   className="w-3 h-3"
@@ -952,7 +1067,25 @@ const Investigations = () => {
                                 PAID
                               </div>
                             )}
-                            {isOrderSentToLab && (
+                            {firstCareSentToLab && (
+                              <div className="flex items-center gap-1 text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full text-xs font-medium">
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                                  />
+                                </svg>
+                                SENT
+                              </div>
+                            )}
+                            {isOrderSentToLab && !isFirstCareHospitalPartner && (
                               <div className="flex items-center gap-1 text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full text-xs font-medium">
                                 <svg
                                   className="w-3 h-3"
@@ -977,14 +1110,16 @@ const Investigations = () => {
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-medium text-gray-700">
-                        Total Cost:
-                      </span>
-                      <span className="text-xl font-bold text-green-600">
-                        ₦{order.totalCost?.toLocaleString()}
-                      </span>
-                    </div>
+                    {!isFirstCareHospitalPartner && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-medium text-gray-700">
+                          Total Cost:
+                        </span>
+                        <span className="text-xl font-bold text-green-600">
+                          ₦{order.totalCost?.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
 
                     {isSelected && (canPay || canSendToLab) && (
                       <div className="mt-4 space-y-4">
@@ -995,22 +1130,40 @@ const Investigations = () => {
                             </h3>
                             <select
                               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              onChange={(e) =>
-                                setSelectedLabPartner(
-                                  labPartners.find(
-                                    (p) => p.id === e.target.value
-                                  )
-                                )
-                              }
+                              disabled={partnerLocationsLoading}
+                              onChange={(e) => {
+                                const lab = labPartners.find(
+                                  (p) => p.id === e.target.value
+                                );
+                                setSelectedLabPartner(lab || null);
+                                setSelectedLabCode(lab?.partner ?? null);
+                              }}
                               value={selectedLabPartner?.id || ""}
                             >
-                              <option value="">Choose a lab...</option>
+                              <option value="">
+                                {partnerLocationsLoading
+                                  ? "Loading labs…"
+                                  : "Choose a lab..."}
+                              </option>
                               {labPartners.map((lab) => (
                                 <option key={lab.id} value={lab.id}>
                                   {lab.name}
                                 </option>
                               ))}
                             </select>
+                            {labsError && labPartners.length === 0 && (
+                              <p className="mt-2 text-sm text-red-600">
+                                {labsError}
+                              </p>
+                            )}
+                            {partnerLocationsNetworkError &&
+                              !partnerLocationsLoading &&
+                              labPartners.length > 0 && (
+                                <p className="mt-2 text-xs text-amber-700">
+                                  Partner lab list could not be refreshed;
+                                  showing default options.
+                                </p>
+                              )}
                           </div>
                         )}
 
