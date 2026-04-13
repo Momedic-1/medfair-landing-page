@@ -310,7 +310,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               </button>
             </div>
 
-            <nav className="flex flex-col gap-6">
+            <nav className="flex flex-col gap-6 overflow-y-auto">
               {/* Always show dashboard + profile */}
               <NavLink
                 to={
