@@ -310,7 +310,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               </button>
             </div>
 
-            <nav className="flex flex-col gap-4 overflow-y-auto">
+            <nav className="flex flex-col p-4">
               {/* Always show dashboard + profile */}
               <NavLink
                 to={
@@ -453,7 +453,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 className="hs-accordion-group p-3 w-full flex flex-col flex-wrap"
                 data-hs-accordion-always-open
               >
-                <ul className="flex flex-col space-y-5 mt-6">
+                <ul className="flex flex-col space-y-6 mt-6">
                   <li>
                     <NavLink
                       to="/doctor-dashboard"
