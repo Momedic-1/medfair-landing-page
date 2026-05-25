@@ -1,38 +1,36 @@
 import { useEffect, useState } from "react";
-import Cards from "../components/reuseables/Cards";
-import call from "./assets/call (2).svg";
-import calendarIcon from "../assets/calendarIcon.jpeg";
+import PatientDashboardTop from "./PatientDashboardTop";
 // import testTube from "../assets/test.jpeg"
 import { Calendar, dayjsLocalizer } from "react-big-calendar";
 import dayjs from "dayjs";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import {
-  Modal,
-  Box,
-  List,
-  ListItem,
-  ListItemButton,
-  Avatar,
-  Button,
-  Popover,
-} from "@mui/material";
+import { Modal, Box, Button } from "@mui/material";
+import PatientBookingModals from "./components/PatientBookingModals";
+import CallDoctorModal from "./components/CallDoctorModal";
+import { confirmModalSx } from "./components/bookingModalStyles";
 import { baseUrl } from "../env";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { ColorRing } from "react-loader-spinner";
+import { formatTime, getId, getToken, transformName } from "../utils";
 import {
-  formatSpecialization,
-  formatTime,
-  getId,
-  getToken,
-  transformName,
-} from "../utils";
-import Skeleton from "react-loading-skeleton";
+  isSlotDateTimeExpired,
+  nowInBookingZone,
+  slotWithDate,
+} from "../utils/slotDateTime";
+import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
+import {
+  joinScheduledAppointment,
+  parseJoinError,
+} from "../utils/joinScheduledAppointment";
+import {
+  getAppointmentDateTime,
+  getAppointmentStatus,
+} from "../utils/appointmentStatus";
+import UpcomingAppointmentsList from "../components/appointments/UpcomingAppointmentsList";
+import UpcomingAppointmentJoinModal from "../components/appointments/UpcomingAppointmentJoinModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "react-loading-skeleton/dist/skeleton.css";
-import { PiStethoscope } from "react-icons/pi";
-import { LiaPhoneVolumeSolid } from "react-icons/lia";
 
 const localizer = dayjsLocalizer(dayjs);
 
@@ -47,30 +45,7 @@ const calendarStyle = {
   overflow: "hidden",
 };
 
-const modalStyle = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "90%",
-  maxWidth: "650px",
-  bgcolor: "background.paper",
-  boxShadow: 24,
-  p: 4,
-  borderRadius: "8px",
-  overflowY: "auto",
-  maxHeight: "90vh",
-};
-
-const avatarStyle = {
-  width: 100,
-  height: 100,
-};
-
-const avatarStyle2 = {
-  width: 35,
-  height: 35,
-};
+const CALL_WAIT_TIMEOUT_MS = 5 * 60 * 1000;
 
 const specialistCategory = [
   {
@@ -122,6 +97,9 @@ const Dashboard = () => {
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const userId = userData.id;
   const [isLoading, setIsLoading] = useState(false);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [joiningSlotId, setJoiningSlotId] = useState(null);
+  const [specialistsLoading, setSpecialistsLoading] = useState(false);
   const [specialistCategories, setSpecialistCategories] =
     useState(specialistCategory);
   const [isMainModalOpen, setIsMainModalOpen] = useState(false);
@@ -132,12 +110,9 @@ const Dashboard = () => {
   const [videoLink, setVideoLink] = useState(null);
   const [videoMeetingUrl, setVideoMeetingUrl] = useState(null);
   const [specialistDetails, setSpecialistDetails] = useState([]);
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const token = getToken();
-  const [selectedTime, setSelectedTime] = useState(null);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [isBooking, setIsBooking] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
   const [meetingUrlGenerated, setMeetingUrlGenerated] = useState(new Set());
@@ -244,53 +219,6 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Get appointment status based on current time
-  const getAppointmentStatus = (appointment) => {
-    if (!appointment.date || !appointment.time) return "unknown";
-
-    const now = new Date();
-    const appointmentDateTime = new Date(
-      `${appointment.date}T${appointment.time}`
-    );
-    const timeDiff = now.getTime() - appointmentDateTime.getTime();
-    const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-
-    if (minutesDiff > 45) {
-      return "over";
-    } else if (minutesDiff >= -5 && minutesDiff <= 30) {
-      return "active";
-    } else {
-      return "upcoming";
-    }
-  };
-
-  // Get status-based styling
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "over":
-        return "bg-red-100 border-red-300";
-      case "active":
-        return "bg-green-100 border-green-300";
-      case "upcoming":
-        return "bg-blue-100 border-blue-300";
-      default:
-        return "bg-gray-100";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case "over":
-        return "⏰ Appointment Over";
-      case "active":
-        return "🟢 Active";
-      case "upcoming":
-        return "⏳ Upcoming";
-      default:
-        return "";
-    }
-  };
-
   // Generate meeting URL (call 5 minutes before)
   const generateMeetingUrl = async (slotId) => {
     const token = getToken();
@@ -373,51 +301,30 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [activeMeeting]);
 
-  const handleJoinCall = async (slotId) => {
+  const handleJoinCall = async (appointment) => {
+    const slotId = appointment?.slotId ?? appointment;
     const token = getToken();
     if (!userId || !slotId || !token) {
       toast.error("Missing required info to join call");
       return;
     }
 
+    setJoiningSlotId(slotId);
     try {
-      setIsLoading(true);
-
-      const getUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/url`;
-      const getResponse = await axios.get(getUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const { meetingUrl } = await joinScheduledAppointment({
+        slotId,
+        userId,
+        token,
+        call: typeof appointment === "object" ? appointment : { slotId },
+        patientIdForStorage: patientId,
       });
-
-      const meetingUrl = getResponse.data.meetingUrl;
-      if (!meetingUrl) {
-        throw new Error("Meeting URL not available");
-      }
-
       setVideoMeetingUrl(meetingUrl);
-
-      const postUrl = `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/join`;
-      await axios.post(
-        postUrl,
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      toast.success("Joined call successfully!");
-      setShowModal(true);
+      toast.success("Opening your consultation in a new tab.");
     } catch (error) {
       console.error("Join call error:", error);
-      const errorMessage =
-        error?.response?.data?.message || "Failed to join call";
-      toast.error(errorMessage);
+      toast.error(parseJoinError(error));
     } finally {
-      setIsLoading(false);
+      setJoiningSlotId(null);
     }
   };
 
@@ -437,11 +344,10 @@ const Dashboard = () => {
     setCurrentUpcomingAppointment(null);
   };
 
-  const handleJoinFromUpcomingModal = () => {
-    if (currentUpcomingAppointment) {
-      joinMeeting(currentUpcomingAppointment.slotId);
-      handleCloseUpcomingModal();
-    }
+  const handleJoinFromUpcomingModal = async () => {
+    if (!currentUpcomingAppointment) return;
+    await handleJoinCall(currentUpcomingAppointment);
+    handleCloseUpcomingModal();
   };
 
   const handleCardClick = (title) => {
@@ -454,23 +360,39 @@ const Dashboard = () => {
     setIsCallADoctorModalOpen(true);
   };
 
-  const handleOpenPopover = (event, doctor, slotTime, slotId) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedTime(slotTime);
-    setSelectedDoctor(doctor);
-    setSelectedSlotId(slotId);
-  };
-
-  const handleClosePopover = () => {
-    setAnchorEl(null);
-    setSelectedTime(null);
-    setSelectedDoctor(null);
-  };
-
   const handleCategoryClick = (categoryId) => {
     const category = specialistCategories.find((cat) => cat.id === categoryId);
+    setSelectedCategoryName(category?.name || "");
     getSpecialistsDetails(category.name);
+    setIsMainModalOpen(false);
     setIsSpecialistsModalOpen(true);
+  };
+
+  const clearCallPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+  };
+
+  const handleOpenBookFromCall = () => {
+    clearCallPolling();
+    setIsCallADoctorModalOpen(false);
+    setCallStatus(null);
+    setCurrentCallId(null);
+    setVideoLink(null);
+    setIsMainModalOpen(true);
+  };
+
+  const handleTryCallAgain = () => {
+    clearCallPolling();
+    setCallStatus(null);
+    setCurrentCallId(null);
+    setVideoLink(null);
+  };
+
+  const handleConfirmBooking = (e, slotId) => {
+    handleBookAppointment(e, slotId, patientId);
   };
 
   const handleBookAppointment = async (e, slotId, patientId) => {
@@ -492,7 +414,6 @@ const Dashboard = () => {
 
       setBookedSlots((prev) => new Set(prev).add(slotId));
 
-      handleClosePopover();
       setIsSpecialistsModalOpen(false);
       setIsMainModalOpen(false);
 
@@ -548,21 +469,23 @@ const Dashboard = () => {
       ...specialist,
       slotGroups: specialist.slotGroups?.map((slotGroup) => ({
         ...slotGroup,
-        slots: slotGroup.slots?.sort((a, b) => {
-          const timeA = dayjs(`${a.date}T${a.time}`);
-          const timeB = dayjs(`${b.date}T${b.time}`);
-          return timeA.isBefore(timeB) ? -1 : timeA.isAfter(timeB) ? 1 : 0;
-        }),
+        slots: slotGroup.slots
+          ?.map((s) => slotWithDate(s, slotGroup.date))
+          ?.sort((a, b) => {
+            const timeA = dayjs(`${a.date}T${a.time}`);
+            const timeB = dayjs(`${b.date}T${b.time}`);
+            return timeA.isBefore(timeB) ? -1 : timeA.isAfter(timeB) ? 1 : 0;
+          }),
       })),
     }));
   };
 
   const getSpecialistsDetails = async (categoryName) => {
-    setIsLoading(true);
+    setSpecialistsLoading(true);
     try {
       const transformedName = transformName(categoryName);
       const response = await axios.get(
-        `${GETSPECIALISTDATA}?specialization=${transformedName}`,
+        `${GETSPECIALISTDATA}?specialization=${transformedName}&_=${Date.now()}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -575,19 +498,19 @@ const Dashboard = () => {
 
       const sortedSpecialists = sortSlotsByTime(specialists);
       setSpecialistDetails(sortedSpecialists);
-
-      console.log(sortedSpecialists);
-      setIsLoading(false);
     } catch (error) {
-      setIsLoading(false);
+      toast.error("Could not load specialists. Please try again.");
+    } finally {
+      setSpecialistsLoading(false);
     }
   };
 
   const getUpcomingAppointments = async () => {
-    setIsLoading(true);
+    if (!patientId || !token) return;
+    setAppointmentsLoading(true);
     try {
       const response = await axios.get(
-        `${GETUPCOMINGAPPOINTMENTS}/${patientId}`,
+        `${GETUPCOMINGAPPOINTMENTS}/${patientId}?_=${Date.now()}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -595,17 +518,14 @@ const Dashboard = () => {
           },
         }
       );
-      const formattedData = response.data;
+      const formattedData = response.data || [];
       setUpcomingAppointments(formattedData);
-
-      // Transform appointments to calendar events
-      const events = transformAppointmentsToEvents(formattedData);
-      setCalendarEvents(events);
-
-      setIsLoading(false);
+      setCalendarEvents(transformAppointmentsToEvents(formattedData));
     } catch (error) {
       console.log("Error fetching upcoming appointments:", error);
-      setIsLoading(false);
+      toast.error("Could not load your appointments.");
+    } finally {
+      setAppointmentsLoading(false);
     }
   };
 
@@ -657,6 +577,8 @@ const Dashboard = () => {
       setCurrentCallId(callId);
       setCallStatus("WAITING");
 
+      const waitStartedAt = Date.now();
+
       // Start polling for doctor join
       const interval = setInterval(async () => {
         const status = await pollCallStatus(callId);
@@ -664,22 +586,24 @@ const Dashboard = () => {
         if (status === "DOCTOR_JOINED") {
           setCallStatus("DOCTOR_JOINED");
           clearInterval(interval);
+          setPollingInterval(null);
 
-          // Auto-join the call
           if (response.data?.roomUrl) {
             saveActiveMeetingToStorage(response.data.roomUrl, 40);
-            navigate(
-              `/video-call?roomUrl=${encodeURIComponent(response.data.roomUrl)}`
-            );
+            openVideoCallInNewTab(response.data.roomUrl);
+            toast.success("Call opened in a new tab.");
           }
-        } else if (status === "ENDED") {
-          setCallStatus("ENDED");
-          clearInterval(interval);
-          setVideoLink(null);
-          setCurrentCallId(null);
           setIsCallADoctorModalOpen(false);
+          setCallStatus(null);
+        } else if (
+          status === "ENDED" ||
+          Date.now() - waitStartedAt >= CALL_WAIT_TIMEOUT_MS
+        ) {
+          clearInterval(interval);
+          setPollingInterval(null);
+          setCallStatus("NO_DOCTOR");
         }
-      }, 3000); // Poll every 3 seconds
+      }, 3000);
 
       setPollingInterval(interval);
       return response.data;
@@ -775,44 +699,33 @@ const Dashboard = () => {
     const now = new Date();
 
     upcomingAppointments.forEach((appointment) => {
-      if (!appointment.date || !appointment.time) return;
+      const id = appointment.slotId;
+      if (!id) return;
 
-      const appointmentDateTime = new Date(
-        `${appointment.date}T${appointment.time}`
-      );
-      if (isNaN(appointmentDateTime.getTime())) return;
+      const status = getAppointmentStatus(appointment, now);
+      const dt = getAppointmentDateTime(appointment);
+      if (!dt) return;
 
-      const timeDiffToStart = appointmentDateTime.getTime() - now.getTime();
-      const minutesDiffToStart = Math.floor(timeDiffToStart / (1000 * 60));
+      if (status === "upcoming") {
+        const minutesUntil = Math.floor((dt.getTime() - now.getTime()) / 60000);
+        if (
+          minutesUntil <= 5 &&
+          minutesUntil > 0 &&
+          !notificationShown.has(id)
+        ) {
+          setNotificationShown((prev) => new Set(prev).add(id));
+          setCurrentUpcomingAppointment(appointment);
+          setShowUpcomingModal(true);
+        }
+      }
 
-      if (
-        minutesDiffToStart === 5 &&
-        !meetingUrlGenerated.has(appointment.slotId) &&
-        !notificationShown.has(appointment.slotId)
-      ) {
-        generateMeetingUrl(appointment.slotId);
+      if (status === "active" && !notificationShown.has(`active-${id}`)) {
+        setNotificationShown((prev) => new Set(prev).add(`active-${id}`));
         setCurrentUpcomingAppointment(appointment);
         setShowUpcomingModal(true);
-        toast.info(`Meeting URL generated for Dr. ${appointment.name}!`);
-        setNotificationShown((prev) => new Set(prev).add(appointment.slotId));
-      }
-
-      const minutesPastStart = Math.floor(
-        (now.getTime() - appointmentDateTime.getTime()) / (1000 * 60)
-      );
-      const isActive = minutesPastStart >= 0 && minutesPastStart <= 1;
-
-      if (isActive && meetingUrlGenerated.has(appointment.slotId)) {
-        setShowModal(true);
       }
     });
-  }, [
-    currentTime,
-    upcomingAppointments,
-    meetingUrlGenerated,
-    notificationShown,
-    showModal,
-  ]);
+  }, [currentTime, upcomingAppointments, notificationShown]);
 
   const checkSubscriptionStatus = async () => {
     try {
@@ -862,6 +775,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     getUpcomingAppointments();
+    const refresh = setInterval(getUpcomingAppointments, 90000);
+    return () => clearInterval(refresh);
   }, []);
 
   useEffect(() => {
@@ -905,11 +820,8 @@ const Dashboard = () => {
     navigate("/patient-dashboard/patient-investigations");
   };
 
-  const isSlotExpired = (slot) => {
-    const now = dayjs();
-    const slotDateTime = dayjs(`${slot.date}T${slot.time}`);
-    return slotDateTime.isBefore(now);
-  };
+  const isSlotExpired = (slot) =>
+    isSlotDateTimeExpired(slot, nowInBookingZone());
 
   return (
     <div className="w-full">
@@ -1009,105 +921,40 @@ const Dashboard = () => {
         }
       `}</style>
 
-      {activeMeeting?.roomUrl && (
-        <Link
-          to={`/video-call?roomUrl=${encodeURIComponent(
-            activeMeeting.roomUrl
-          )}`}
-        >
-          <div className="w-full mt-2 mb-2">
-            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-              <div className="w-56 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
-                <p className="text-white font-semibold text-center mb-2">
-                  Rejoin Call
-                </p>
-                <LiaPhoneVolumeSolid
-                  className="shake text-yellow-500"
-                  fontSize={28}
-                />
-              </div>
-            </div>
-          </div>
-        </Link>
-      )}
+      <div className="w-full px-2 py-4 sm:px-4 sm:py-6">
+        <PatientDashboardTop
+          userData={userData}
+          hasSubscription={hasSubscription}
+          subscriptionMessage={subscriptionMessage}
+          activeMeeting={activeMeeting}
+          videoMeetingUrl={videoMeetingUrl}
+          showMeetingModal={showModal}
+          upcomingAppointments={upcomingAppointments}
+          isLoading={isLoading}
+          onCallDoctor={handleCallADoctorClick}
+          onScheduleAppointment={() =>
+            handleCardClick("Schedule an Appointment")
+          }
+          onNavigateSubscription={() =>
+            navigate("/patient-dashboard/subscription")
+          }
+          onDismissMeetingChip={() => setShowModal(false)}
+          getAppointmentStatus={getAppointmentStatus}
+          formatTime={formatTime}
+          onJoinAppointment={handleJoinCall}
+        />
 
-      {/* Subscription Status Box */}
-      {hasSubscription === false && (
-        <div className="w-full bg-red-500 text-white p-4 rounded-lg shadow-lg">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">⚠️</span>
-              <div>
-                <h3 className="font-semibold text-lg">Subscription Required</h3>
-                <p className="text-sm text-red-100">{subscriptionMessage}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate("/patient-dashboard/subscription")}
-              className="w-full md:w-auto mt-4 md:mt-0 bg-white text-red-500 px-6 py-2 rounded-lg cursor-pointer font-semibold hover:bg-red-50 transition-colors"
-            >
-              Subscribe Now
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Loading state for subscription check */}
-      {hasSubscription === null && (
-        <div className="w-full bg-gray-100 p-4 mb-6 rounded-lg">
-          <div className="flex items-center gap-3">
-            <div className="animate-pulse flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
-              <div className="h-4 bg-gray-300 rounded w-48"></div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="w-full md:px-4 py-8 overflow-hidden">
-        <div className="w-full grid grid-cols-1 gap-x-8 md:grid-cols-2 md:gap-8 mt-4">
-          <div
-            onClick={() => {
-              if (activeMeeting?.roomUrl) {
-                // Disable starting another quick-call while active one exists
-                toast.info(
-                  "You already have an active call. Use the Rejoin button above."
-                );
-                return;
-              }
-              handleCallADoctorClick();
-            }}
-            className={
-              activeMeeting?.roomUrl
-                ? "opacity-60 cursor-not-allowed pointer-events-none"
-                : ""
-            }
-          >
-            <Cards title="Call a General Practitioner" img={call} />
-          </div>
-          <div
-            onClick={() =>
-              handleCardClick("Schedule an Appointment")
-            }
-          >
-            <Cards
-              title="Schedule an Appointment"
-              img={calendarIcon}
-            />
-          </div>
-        </div>
-
-        <div className="w-full mt-6 py-4 bg-gray-100 flex flex-col xl:flex-row gap-6 xl:gap-y-0 gap-x-8 px-1 items-stretch">
-          {/* Calendar Section */}
-          <div className="w-full xl:w-[68%] rounded-lg border bg-white border-gray-200 p-4 flex flex-col">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold text-blue-900 md:text-xl mb-2">
-                Appointments Calendar
+        <div className="mt-6 flex flex-col gap-6 xl:flex-row">
+          <div className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[68%]">
+            <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
+              <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
+                Appointments calendar
               </h2>
-              <p className="text-gray-600 text-sm">
-                View and manage your scheduled appointments
+              <p className="mt-0.5 text-sm text-gray-500">
+                View and manage your scheduled visits
               </p>
             </div>
+            <div className="flex flex-1 flex-col p-3 sm:p-4">
 
             <div className="flex-1">
               <Calendar
@@ -1142,425 +989,65 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+            </div>
           </div>
 
-          {/* Appointments List */}
-          <div className="w-full xl:w-[32%] rounded-lg border overflow-y-auto bg-white border-gray-200 p-4 flex flex-col">
-            <h2 className="text-lg font-bold text-blue-900 md:text-xl">
-              Appointments
-            </h2>
-            <p className="text-gray-950/60 text-sm">
-              View your upcoming appointments
-            </p>
-
-            <div className="flex-1 overflow-y-auto">
-              {isLoading
-                ? Array(3)
-                  .fill(0)
-                  .map((_, idx) => (
-                    <div
-                      className="mt-4 p-3 border rounded-lg animate-pulse hover:shadow-lg transition-shadow"
-                      key={`loading-appointment-${idx}`}
-                    >
-                      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-2/5"></div>
-                    </div>
-                  ))
-                : (() => {
-                  if (upcomingAppointments.length > 0) {
-                    return upcomingAppointments.map((details) => {
-                      const status = getAppointmentStatus(details);
-                      return (
-                        <div
-                          key={
-                            details.slotId ||
-                            details.id ||
-                            `${details.name}-${details.date}-${details.time}`
-                          }
-                          className={`flex items-center justify-between mt-4 p-2 border-2 rounded-lg transition-all duration-200 ${status === "over"
-                            ? "bg-red-100 border-red-300 opacity-60 cursor-not-allowed pointer-events-none"
-                            : `${getStatusColor(status)} hover:shadow-lg`
-                            }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Avatar
-                              src={details?.imageUrl}
-                              sx={avatarStyle2}
-                            />
-                            <div className="flex-1">
-                              <p className="text-sm font-bold text-blue-900">
-                                Dr. {details.name}
-                              </p>
-                              {status !== "upcoming" && (
-                                <div className="text-xs font-semibold text-gray-600 mt-1">
-                                  {getStatusText(status)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {status === "active" ? (
-                            <button
-                              onClick={() => handleJoinCall(details.slotId)}
-                              disabled={isLoading}
-                              className="text-white cursor-pointer bg-blue-600 hover:bg-blue-700 px-4 py-1 text-xs rounded transition-colors"
-                            >
-                              Join Now
-                            </button>
-                          ) : (
-                            <div className="flex flex-col text-right">
-                              <span className="text-xs text-gray-600">
-                                📅 {details.date}
-                              </span>
-                              <span className="text-xs text-gray-600">
-                                ⏰ {formatTime(details.time)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    });
-                  } else {
-                    return (
-                      <div className="text-center text-gray-600 text-sm p-4">
-                        No upcoming appointments
-                      </div>
-                    );
-                  }
-                })()}
+          <div className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[32%]">
+            <div className="border-b border-gray-100 px-4 py-4">
+              <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
+                Your appointments
+              </h2>
+              <p className="text-sm text-gray-500">
+                Join opens 5 minutes before start time
+              </p>
+            </div>
+            <div className="max-h-[480px] flex-1 overflow-y-auto p-3 sm:p-4">
+              <UpcomingAppointmentsList
+                appointments={upcomingAppointments}
+                loading={appointmentsLoading}
+                personPrefix="Dr."
+                emptyTitle="No upcoming appointments"
+                emptyHint="Schedule a specialist visit to see it here."
+                onJoin={handleJoinCall}
+                isJoiningId={joiningSlotId}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Modal for Specialist Categories */}
-      <Modal
-        open={isMainModalOpen}
-        onClose={() => setIsMainModalOpen(false)}
-        aria-labelledby="category-modal-title"
-      >
-        <Box sx={modalStyle}>
-          <div className="w-full flex justify-between items-center mb-4 bg-gradient-to-r from-blue-500 to-blue-700 p-4 rounded-t-lg">
-            <p className="text-2xl text-white font-semibold">
-              Choose Specialist
-            </p>
-            <button
-              onClick={() => setIsMainModalOpen(false)}
-              className="p-2 hover:bg-blue-600 rounded-full transition-colors"
-            >
-              <span className="text-white">✕</span>
-            </button>
-          </div>
-          {specialistCategories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleCategoryClick(category.id)}
-              className="w-full p-4 mb-4 hover:bg-blue-50 rounded-xl transition-colors border border-gray-100 hover:border-blue-100 group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-2xl">{category.icon}</span>
-                  <div className="text-left">
-                    <div className="font-medium text-gray-900">
-                      {category.name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {category.count} specialists available
-                    </div>
-                  </div>
-                </div>
-                <span className="text-gray-400 group-hover:text-blue-500 transition-colors">
-                  →
-                </span>
-              </div>
-            </button>
-          ))}
-        </Box>
-      </Modal>
-
-      {/* Specialists Modal */}
-      <Modal
-        open={isSpecialistsModalOpen}
-        onClose={() => setIsSpecialistsModalOpen(false)}
-        aria-labelledby="specialists-modal-title"
-      >
-        <Box sx={{ height: 800, overflowY: "auto", ...modalStyle }}>
-          <div className="w-full flex justify-between items-center mb-4">
-            <p className="mb-1 text-2xl text-gray-950/60 font-semibold">
-              Available Specialists
-            </p>
-            <button
-              onClick={() => setIsSpecialistsModalOpen(false)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <span className="text-gray-500">✕</span>
-            </button>
-          </div>
-          <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-            {isLoading ? (
-              Array(5)
-                .fill(0)
-                .map((_, index) => (
-                  <ListItem key={index} disablePadding>
-                    <ListItemButton>
-                      <div className="flex items-center justify-between w-full">
-                        <div className="w-[10%]">
-                          <Skeleton circle={true} height={50} width={50} />
-                        </div>
-                        <div className="w-[50%]">
-                          <Skeleton height={20} width="80%" />
-                          <Skeleton
-                            height={14}
-                            width="60%"
-                            style={{ marginTop: 6 }}
-                          />
-                        </div>
-                        <div className="w-[40%]">
-                          <Skeleton height={20} width="100%" />
-                        </div>
-                      </div>
-                    </ListItemButton>
-                  </ListItem>
-                ))
-            ) : specialistDetails?.length > 0 ? (
-              specialistDetails.map((specialist) => {
-                return (
-                  <ListItem key={specialist.doctorId} disablePadding>
-                    <ListItemButton>
-                      <div className="p-4 border shadow-xl rounded-lg flex flex-col gap-4 w-full">
-                        {/* Doctor info section */}
-                        <div className="flex flex-col md:flex-row md:items-center gap-4">
-                          <div className="flex flex-col items-center md:items-start md:w-1/3">
-                            <Avatar
-                              src={specialist?.doctorProfile?.imageUrl}
-                              sx={avatarStyle}
-                              className="mb-4 md:mb-0"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-2 md:w-2/3">
-                            <p className="text-xl font-sans font-semibold text-gray-900">
-                              {specialist?.doctorProfile?.title +
-                                " " +
-                                specialist?.doctorProfile?.firstName +
-                                " " +
-                                specialist?.doctorProfile?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {specialist?.doctorProfile?.practiceName +
-                                " | " +
-                                specialist?.doctorProfile?.qualifications}
-                            </p>
-                            <div className="flex flex-row items-center gap-1">
-                              <PiStethoscope
-                                style={{
-                                  width: "1.3em",
-                                  height: "1.3em",
-                                  color: "gray",
-                                }}
-                              />
-                              <p className="text-sm text-gray-500">
-                                {formatSpecialization(
-                                  specialist?.doctorProfile
-                                    ?.medicalSpecialization
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Available slots section */}
-                        <div className="border-t pt-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                            Available Slots:
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {specialist.slotGroups?.map((slotGroup) => (
-                              <div
-                                key={slotGroup.date}
-                                className="border rounded-lg p-3 overflow-y-scroll h-[120px]"
-                              >
-                                <p className="text-sm font-bold text-center mb-2">
-                                  {dayjs(slotGroup.date).format("ddd, MMM D")}
-                                </p>
-                                {/* <div className="flex flex-wrap gap-2 justify-center">
-                                  {slotGroup.slots?.map((slot) => {
-                                    const isBooked = isSlotBooked(slot.slotId);
-                                    return (
-                                      <button
-                                        key={slot.slotId}
-                                        className={`text-xs px-3 py-1 rounded-lg transition ${
-                                          isBooked
-                                            ? "bg-red-400 text-white cursor-not-allowed opacity-70"
-                                            : "bg-[#020E7C] text-white hover:bg-blue-600"
-                                        }`}
-                                        onClick={(e) =>
-                                          !isBooked &&
-                                          handleOpenPopover(
-                                            e,
-                                            specialist,
-                                            `${slot.date}T${slot.time}`,
-                                            slot.slotId
-                                          )
-                                        }
-                                        disabled={isBooked}
-                                      >
-                                        {dayjs(
-                                          `${slot.date}T${slot.time}`
-                                        ).format("h:mm A")}
-                                        {isBooked && (
-                                          <span className="block text-xs text-red-200 font-medium">
-                                            Booked
-                                          </span>
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div> */}
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                  {slotGroup.slots?.map((slot) => {
-                                    const isBooked = isSlotBooked(slot.slotId);
-                                    const isExpired = isSlotExpired(slot);
-                                    const isDisabled = isBooked || isExpired;
-
-                                    return (
-                                      <button
-                                        key={slot.slotId}
-                                        className={`text-xs px-3 py-1 rounded-lg transition ${isDisabled
-                                          ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
-                                          : "bg-[#020E7C] text-white hover:bg-blue-600"
-                                          }`}
-                                        onClick={(e) =>
-                                          !isDisabled &&
-                                          handleOpenPopover(
-                                            e,
-                                            specialist,
-                                            `${slot.date}T${slot.time}`,
-                                            slot.slotId
-                                          )
-                                        }
-                                        disabled={isDisabled}
-                                      >
-                                        {dayjs(
-                                          `${slot.date}T${slot.time}`
-                                        ).format("h:mm A")}
-                                        {isBooked && (
-                                          <span className="block text-xs text-red-200 font-medium">
-                                            Booked
-                                          </span>
-                                        )}
-                                        {isExpired && !isBooked && (
-                                          <span className="block text-xs text-gray-200 font-medium">
-                                            Expired
-                                          </span>
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </ListItemButton>
-                  </ListItem>
-                );
-              })
-            ) : (
-              <div className="w-full h-[300px] flex justify-center items-center">
-                <p className="text-2xl text-gray-950/60">
-                  No specialists available
-                </p>
-              </div>
-            )}
-          </List>
-        </Box>
-      </Modal>
-
-      {/* Call a Doctor Modal */}
-      <Modal
-        open={isCallADoctorModalOpen}
-        onClose={() => {
-          if (callStatus === "WAITING") {
-            handleCancelWaiting();
-          } else {
-            setIsCallADoctorModalOpen(false);
-          }
+      <PatientBookingModals
+        isMainModalOpen={isMainModalOpen}
+        setIsMainModalOpen={setIsMainModalOpen}
+        isSpecialistsModalOpen={isSpecialistsModalOpen}
+        setIsSpecialistsModalOpen={setIsSpecialistsModalOpen}
+        specialistCategories={specialistCategories}
+        specialistDetails={specialistDetails}
+        selectedCategoryName={selectedCategoryName}
+        isLoading={specialistsLoading}
+        onCategoryClick={handleCategoryClick}
+        onBackToCategories={() => {
+          setIsSpecialistsModalOpen(false);
+          setIsMainModalOpen(true);
         }}
-        aria-labelledby="specialists-modal-title"
-      >
-        <Box
-          sx={{
-            width: 400,
-            height: callStatus === "WAITING" ? 300 : 200,
-            overflowY: "auto",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-            position: "absolute",
-            top: "40%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <div className="w-full h-full flex flex-col gap-y-6 px-4">
-            {callStatus === "WAITING" ? (
-              <>
-                <div className="flex flex-col items-center gap-4">
-                  <ColorRing
-                    height="60"
-                    width="60"
-                    ariaLabel="color-ring-loading"
-                    colors={[
-                      "#3b82f6",
-                      "#3b82f6",
-                      "#3b82f6",
-                      "#3b82f6",
-                      "#3b82f6",
-                    ]}
-                  />
-                  <p className="text-lg text-center font-medium">
-                    Please wait while we connect you with a doctor
-                  </p>
-                  <p className="text-sm text-center text-gray-600">
-                    You will be automatically joined once a doctor is available
-                  </p>
-                </div>
-                <button
-                  className="bg-red-500 flex justify-center p-2 items-center w-full h-12 text-white rounded-full hover:bg-red-600 transition-colors font-medium"
-                  onClick={handleCancelWaiting}
-                >
-                  Cancel Call
-                </button>
-              </>
-            ) : videoLink === null ? (
-              <>
-                <p className="text-lg text-center font-medium">
-                  Want to call a doctor?
-                </p>
-                <button
-                  className="bg-blue-500 flex justify-center items-center w-full h-14 text-white rounded-full"
-                  onClick={createMeeting}
-                >
-                  {isLoading ? (
-                    <ColorRing
-                      height="40"
-                      width="40"
-                      ariaLabel="color-ring-loading"
-                      colors={["white", "white", "white", "white", "white"]}
-                    />
-                  ) : (
-                    "Create Meeting"
-                  )}
-                </button>
-              </>
-            ) : null}
-          </div>
-        </Box>
-      </Modal>
+        onBookAppointment={handleConfirmBooking}
+        bookedSlots={bookedSlots}
+        isBooking={isBooking}
+        isSlotBooked={isSlotBooked}
+        isSlotExpired={isSlotExpired}
+      />
+
+      <CallDoctorModal
+        open={isCallADoctorModalOpen}
+        callStatus={callStatus}
+        videoLink={videoLink}
+        isLoading={isLoading}
+        onClose={() => setIsCallADoctorModalOpen(false)}
+        onCreateMeeting={createMeeting}
+        onCancelWaiting={handleCancelWaiting}
+        onBookAppointment={handleOpenBookFromCall}
+        onTryAgain={handleTryCallAgain}
+      />
 
       {/* Cancel Call Confirmation Modal */}
       <Modal
@@ -1568,19 +1055,7 @@ const Dashboard = () => {
         onClose={() => setIsCancelCallConfirmOpen(false)}
         aria-labelledby="cancel-call-confirm-title"
       >
-        <Box
-          sx={{
-            width: 400,
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
+        <Box sx={confirmModalSx}>
           <div className="flex flex-col gap-4">
             <h2
               id="cancel-call-confirm-title"
@@ -1592,7 +1067,7 @@ const Dashboard = () => {
               Are you sure you want to end this call? This action cannot be
               undone.
             </p>
-            <div className="flex justify-end gap-3 mt-4">
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
               <Button
                 variant="outlined"
                 onClick={() => setIsCancelCallConfirmOpen(false)}
@@ -1624,134 +1099,27 @@ const Dashboard = () => {
         </Box>
       </Modal>
 
-      {/* Booking Confirmation Popover */}
-      <Popover
-        open={Boolean(anchorEl)}
-        anchorEl={anchorEl}
-        onClose={handleClosePopover}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "center",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "center",
-        }}
-      >
-        <div className="p-4">
-          <p>
-            Confirm booking with{" "}
-            <span className="font-bold">
-              {selectedDoctor?.doctorProfile.title +
-                " " +
-                selectedDoctor?.doctorProfile.firstName +
-                " " +
-                selectedDoctor?.doctorProfile.lastName}
-            </span>
-          </p>
-          <p className="font-bold">
-            {selectedTime &&
-              dayjs(selectedTime).format("MMMM D, YYYY [at] h:mm A")}
-          </p>
-          <div className="flex justify-end gap-2 mt-3">
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleClosePopover}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={(e) =>
-                handleBookAppointment(e, selectedSlotId, patientId)
+      <UpcomingAppointmentJoinModal
+        open={showUpcomingModal}
+        appointment={
+          currentUpcomingAppointment
+            ? {
+                ...currentUpcomingAppointment,
+                name: `Dr. ${currentUpcomingAppointment.name || ""}`.trim(),
               }
-              disabled={isBooking}
-            >
-              {isBooking ? (
-                <ColorRing
-                  height="20"
-                  width="20"
-                  ariaLabel="color-ring-loading"
-                  wrapperStyle={{}}
-                  wrapperClass="color-ring-wrapper"
-                  colors={["white", "white", "white", "white", "white"]}
-                />
-              ) : (
-                "Confirm"
-              )}
-            </Button>
-          </div>
-        </div>
-      </Popover>
-
-      {/* Join Meeting Modal Overlay */}
-      {showModal && videoMeetingUrl && (
-        <Link to={`/video-call?roomUrl=${encodeURIComponent(videoMeetingUrl)}`}>
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-            <div className="w-40 h-28 border rounded-lg py-4 px-4 grid place-items-center bg-green-700 bg-opacity-100 cursor-pointer hover:bg-green-800 transition-colors">
-              <p className="text-white font-semibold text-center mb-2">
-                Join Meeting Room
-              </p>
-              <LiaPhoneVolumeSolid
-                className="shake text-yellow-500"
-                fontSize={28}
-              />
-            </div>
-          </div>
-        </Link>
-      )}
-
-      {/* Upcoming Appointment Modal */}
-      {showUpcomingModal && currentUpcomingAppointment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <div className="text-center">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <LiaPhoneVolumeSolid
-                    className="text-blue-600"
-                    fontSize={32}
-                  />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Upcoming Appointment
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Your appointment with{" "}
-                  <strong>Dr. {currentUpcomingAppointment.name}</strong> starts
-                  in 5 minutes!
-                </p>
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-center text-sm text-gray-500 mb-4">
-                  <p className="text-xs">
-                    📅 {currentUpcomingAppointment.date}
-                  </p>
-                  <p className="text-xs">
-                    ⏰ {formatTime(currentUpcomingAppointment.time)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex space-x-3 justify-center">
-                <button
-                  onClick={handleCloseUpcomingModal}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
-                >
-                  Dismiss
-                </button>
-                <button
-                  onClick={handleJoinFromUpcomingModal}
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                >
-                  Join Call
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            : null
+        }
+        counterpartLabel="your doctor"
+        onDismiss={handleCloseUpcomingModal}
+        onJoin={handleJoinFromUpcomingModal}
+        isJoining={!!joiningSlotId}
+        variant={
+          currentUpcomingAppointment &&
+          getAppointmentStatus(currentUpcomingAppointment) === "active"
+            ? "active"
+            : "reminder"
+        }
+      />
     </div>
   );
 };

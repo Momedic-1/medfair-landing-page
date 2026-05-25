@@ -438,9 +438,9 @@ export default function PatientLayout() {
         </div>
 
         {/* Main Content */}
-        <div className="lg:w-[80%] flex flex-col bg-gray-100">
+        <div className="lg:w-[80%] flex flex-col bg-gradient-to-b from-slate-100 via-gray-50 to-slate-100">
           {/* Header */}
-          <header className="w-full px-4 py-6 h-16 bg-white flex justify-between items-center shadow flex-shrink-0">
+          <header className="w-full flex h-16 shrink-0 items-center justify-between border-b border-gray-200/80 bg-white/90 px-4 py-4 shadow-sm backdrop-blur-sm">
             <button
               className="lg:hidden text-2xl p-2 focus:outline-none"
               onClick={toggleSidebar}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
 import micOn from "../assets/mic_on_image.png";
 import micOff from "../assets/mic_off_image.png";
@@ -11,8 +11,24 @@ import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
 import { capitalizeFirstLetter } from "../utils";
 import { setRoomUrl, setCall } from "../features/authSlice";
-import axios from "axios";
-import { baseUrl } from "../env";
+import ConsultationFeedbackModal from "./ConsultationFeedbackModal";
+
+function getStoredRoomUrl() {
+  try {
+    const activeCall = JSON.parse(localStorage.getItem("activeCall"));
+    if (activeCall?.joinRoomUrl) return activeCall.joinRoomUrl;
+    const activeMeeting = JSON.parse(localStorage.getItem("activeMeeting"));
+    if (activeMeeting?.roomUrl) return activeMeeting.roomUrl;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function clearCallPersistence() {
+  localStorage.removeItem("activeCall");
+  localStorage.removeItem("activeMeeting");
+}
 
 const VideoCall = () => {
   const [userData] = useState(() => {
@@ -32,11 +48,21 @@ const VideoCall = () => {
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
   const [displayInfo, setDisplayInfo] = useState(null);
   const [isLocalVideoFullscreen, setIsLocalVideoFullscreen] = useState(true);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState(null);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const roomUrl =
-    queryParams.get("roomUrl") || useSelector((state) => state.auth.roomUrl);
+  const roomUrlFromQuery = queryParams.get("roomUrl");
+  const roomUrlFromRedux = useSelector((state) => state.auth.roomUrl);
+  const roomUrl = useMemo(
+    () =>
+      roomUrlFromQuery ||
+      roomUrlFromRedux ||
+      getStoredRoomUrl() ||
+      null,
+    [roomUrlFromQuery, roomUrlFromRedux]
+  );
   const call = useSelector((state) => state.auth.call);
 
   const roomConnection = useRoomConnection(roomUrl, {
@@ -79,22 +105,18 @@ const VideoCall = () => {
         });
       }
 
-      dispatch(setRoomUrl(null));
-      dispatch(setCall(null));
-
       const redirectPath =
         userData?.role === "DOCTOR"
           ? "/doctor-dashboard"
           : "/patient-dashboard";
-      navigate(redirectPath);
-      window.location.reload();
+      finishLeaveAndRedirect(redirectPath);
     } catch (error) {
       console.error("Error leaving room:", error);
       const redirectPath =
         userData?.role === "DOCTOR"
           ? "/doctor-dashboard"
           : "/patient-dashboard";
-      navigate(redirectPath);
+      finishLeaveAndRedirect(redirectPath);
     }
   };
 
@@ -184,8 +206,25 @@ const VideoCall = () => {
     setIsLocalVideoFullscreen((prev) => !prev);
   };
 
+  if (!roomUrl) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-gray-700">Loading call...</p>
+      </div>
+    );
+  }
+
+  const feedbackCallId =
+    call?.callId ?? call?.id ?? call?.meetingId ?? null;
+
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden bg-gradient-to-b from-blue-800 via-blue-950/40 to-white/50">
+      <ConsultationFeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={handleFeedbackClose}
+        userData={userData}
+        callId={feedbackCallId}
+      />
       <div className="bg-black h-16 md:h-20 flex flex-col md:flex-row items-start md:items-center justify-start md:justify-between text-white px-2 py-1 md:px-5 md:py-0 space-y-1 md:space-y-0">
         <p className="text-xs sm:text-sm md:text-base">
           <span className="font-bold">Patient: </span>
