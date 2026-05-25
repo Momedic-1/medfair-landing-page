@@ -1,10 +1,11 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { Loader2, Wallet, Mail, X } from "lucide-react";
 import { baseUrl } from "../../env.jsx";
 import { formatNumber, getId, getToken } from "../../utils.jsx";
 
-function Income() {
-  const [incomeData, setIncomeData] = useState(null);
+function Income({ compact = false }) {
+  const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -16,24 +17,20 @@ function Income() {
         const token = getToken();
 
         if (!id || !token) {
-          setError("No ID or token found, unable to fetch earnings.");
+          setError("Sign in to view balance.");
           setLoading(false);
           return;
         }
 
         const response = await axios.get(
           `${baseUrl}/api/earnings/summary/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setIncomeData(response.data.currentBalance);
-        setLoading(false);
-      } catch (error) {
-        setError("Failed to fetch earnings data.");
+        setBalance(response.data?.currentBalance ?? 0);
+      } catch {
+        setError("Could not load balance.");
+      } finally {
         setLoading(false);
       }
     };
@@ -42,64 +39,100 @@ function Income() {
   }, []);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white py-10 text-sm text-gray-500">
+        <Loader2 className="h-5 w-5 animate-spin text-[#020e7c]" />
+        Loading wallet…
+      </div>
+    );
   }
 
   if (error) {
-    return <p>{error}</p>;
+    return (
+      <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {error}
+      </div>
+    );
   }
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg h-62 mb-8 bg-gradient-to-br from-blue-50 via-white to-blue-100 shadow-md">
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-[#020e7c] text-lg">
-          Current Balance
-        </h3>
-      </div>
-      <p className="text-sm text-gray-600 my-2">
-        This is the remaining amount available in your wallet for withdrawal.
-      </p>
-
-      <div className="flex justify-between mb-8">
-        <div>
-          <p className="text-xl font-bold text-[#020e7c]">
-            ₦{incomeData ? formatNumber(incomeData) : 0}
-          </p>
-        </div>
-      </div>
-
-      <button
-        onClick={() => setShowModal(true)}
-        className="w-56 h-10 bg-[#020e7c] text-white py-2 rounded-lg"
+    <>
+      <div
+        className={`overflow-hidden rounded-2xl border border-[#020e7c]/10 bg-gradient-to-br from-[#020e7c]/8 via-white to-blue-50 shadow-sm ${
+          compact ? "p-4" : "p-6"
+        }`}
       >
-        Request for Withdrawal
-      </button>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#020e7c]/10 text-[#020e7c]">
+            <Wallet className="h-5 w-5" />
+          </div>
+        </div>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Available balance
+        </p>
+        <p
+          className={`mt-1 font-bold tabular-nums text-[#020e7c] ${
+            compact ? "text-2xl" : "text-3xl"
+          }`}
+        >
+          ₦{formatNumber(balance)}
+        </p>
+        {!compact && (
+          <p className="mt-2 text-sm text-gray-600">
+            Amount ready for withdrawal from your consultation earnings.
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          className={`mt-4 w-full rounded-xl bg-[#020e7c] text-sm font-semibold text-white transition hover:bg-[#0a1a8f] ${
+            compact ? "py-2.5" : "py-3"
+          }`}
+        >
+          Request withdrawal
+        </button>
+      </div>
 
-      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 text-center flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-lg font-semibold text-[#020e7c] mb-4">
-              Withdrawal Request
-            </h2>
-            <p className="text-gray-700 mb-6">
-              Please send your withdrawal request with your email address and the amount to:
-              <span className="font-bold text-[#020e7c] block mt-2">
-                medfairfinance@gmail.com
-              </span>
-            </p>
-            <div className="flex justify-end gap-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#020e7c]/10 text-[#020e7c]">
+                <Mail className="h-5 w-5" />
+              </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-200 rounded-lg"
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Close"
               >
-                Close
+                <X className="h-5 w-5" />
               </button>
             </div>
+            <h2 className="mt-3 text-lg font-semibold text-gray-900">
+              Withdrawal request
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Email{" "}
+              <a
+                href="mailto:medfairfinance@gmail.com"
+                className="font-semibold text-[#020e7c]"
+              >
+                medfairfinance@gmail.com
+              </a>{" "}
+              with your account email and amount.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="mt-5 w-full rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
