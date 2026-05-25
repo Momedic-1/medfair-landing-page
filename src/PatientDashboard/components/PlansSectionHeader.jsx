@@ -1,15 +1,13 @@
-const PlansSectionHeader = () => {
-  return (
-    <div className="text-center mb-8 sm:mb-12">
-      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 sm:mb-4">
-        Choose Your Plan
-      </h1>
-      <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-        Select the subscription plan that best fits your healthcare needs. All
-        plans include access to certified medical professionals.
-      </p>
-    </div>
-  );
-};
+const PlansSectionHeader = () => (
+  <div className="mb-8 text-center sm:mb-10">
+    <h2 className="text-2xl font-bold text-[#020e7c] sm:text-3xl">
+      Choose your plan
+    </h2>
+    <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-600 sm:text-base">
+      All plans include access to verified medical professionals on Medfair.
+      Pay securely and start booking right away.
+    </p>
+  </div>
+);
 
 export default PlansSectionHeader;

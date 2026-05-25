@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Modal,
   Box,
@@ -7,21 +8,15 @@ import {
 } from "@mui/material";
 import { ColorRing } from "react-loader-spinner";
 import { PiStethoscope } from "react-icons/pi";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight, ExternalLink, X } from "lucide-react";
 import dayjs from "dayjs";
 import Skeleton from "react-loading-skeleton";
 import { formatSpecialization } from "../../utils";
-import {
-  formatSlotTime,
-  isSlotBookedFromApi,
-  isSlotDateTimeExpired,
-  isTodayInBookingZone,
-  nowInBookingZone,
-  slotWithDate,
-} from "../../utils/slotDateTime";
+import { isSlotDateTimeExpired } from "../../utils/slotDateTime";
 import DoctorAvatar, {
   getDoctorDisplayName,
 } from "./DoctorAvatar";
+import DoctorSlotsByDate from "../../components/doctor/DoctorSlotsByDate";
 import { bookingModalSx, specialistsModalSx } from "./bookingModalStyles";
 
 function CategoryCard({ category, onSelect }) {
@@ -68,76 +63,14 @@ function CategoryCard({ category, onSelect }) {
   );
 }
 
-function SlotTimeButton({ slot, specialist, isBooked, isExpired, onSlotClick }) {
-  const isDisabled = isBooked || isExpired;
-
-  let slotClass =
-    "min-w-[4.75rem] rounded-lg px-3 py-2 text-xs font-medium transition ";
-  if (isBooked) {
-    slotClass += "cursor-not-allowed bg-red-400 text-white opacity-80";
-  } else if (isExpired) {
-    slotClass +=
-      "cursor-not-allowed border border-gray-500 bg-gray-400 text-white opacity-80 line-through decoration-white/80";
-  } else {
-    slotClass += "bg-[#020E7C] text-white hover:bg-blue-600";
-  }
-
-  return (
-    <button
-      key={slot.slotId}
-      type="button"
-      disabled={isDisabled}
-      className={slotClass}
-      title={isExpired ? "This time has passed and cannot be booked" : undefined}
-      onClick={(e) =>
-        !isDisabled &&
-        onSlotClick(e, specialist, `${slot.date}T${slot.time}`, slot.slotId)
-      }
-    >
-      {formatSlotTime(slot)}
-      {isBooked && (
-        <span className="mt-0.5 block text-[10px] font-medium text-red-100 no-underline">
-          Booked
-        </span>
-      )}
-      {isExpired && !isBooked && (
-        <span className="mt-0.5 block text-[10px] font-semibold text-gray-100 no-underline">
-          Expired
-        </span>
-      )}
-    </button>
-  );
-}
-
-function DaySlotSection({ title, slots, specialist, isSlotBooked, checkExpired, onSlotClick }) {
-  if (!slots?.length) return null;
-  return (
-    <div className="mb-3">
-      <p className="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-        {title}
-      </p>
-      <div className="flex flex-wrap justify-center gap-2">
-        {slots.map((slot) => (
-          <SlotTimeButton
-            key={slot.slotId}
-            slot={slot}
-            specialist={specialist}
-            isBooked={isSlotBookedFromApi(slot, (id) => isSlotBooked(id))}
-            isExpired={checkExpired(slot)}
-            onSlotClick={onSlotClick}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function SpecialistCard({
   specialist,
   isSlotBooked,
   isSlotExpired,
   onSlotClick,
+  selectedCategoryName,
 }) {
+  const navigate = useNavigate();
   const profile = specialist?.doctorProfile;
   const [, setClockTick] = useState(0);
 
@@ -146,18 +79,36 @@ function SpecialistCard({
     return () => clearInterval(id);
   }, []);
 
-  const checkExpired = (slot) =>
-    isSlotExpired?.(slot) ?? isSlotDateTimeExpired(slot);
+  const viewProfile = () => {
+    if (!specialist?.doctorId) return;
+    navigate(`/patient-dashboard/doctor/${specialist.doctorId}`, {
+      state: { specialist, categoryName: selectedCategoryName },
+    });
+  };
 
   return (
     <article className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-gray-50 bg-gradient-to-b from-slate-50/80 to-white p-4 sm:flex-row sm:items-center sm:p-5">
+      <div className="flex flex-col gap-4 border-b border-gray-50 bg-gradient-to-b from-slate-50/80 to-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-          <DoctorAvatar profile={profile} size="lg" />
+          <button type="button" onClick={viewProfile} className="shrink-0 rounded-full ring-offset-2 hover:ring-2 hover:ring-[#020e7c]/30">
+            <DoctorAvatar profile={profile} size="lg" />
+          </button>
           <div className="text-center sm:text-left">
-            <h3 className="text-lg font-semibold text-gray-900 sm:text-xl">
-              {getDoctorDisplayName(profile)}
-            </h3>
+            <button
+              type="button"
+              onClick={viewProfile}
+              className="group inline-flex items-center gap-1.5 text-left"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 transition group-hover:text-[#020e7c] sm:text-xl">
+                {getDoctorDisplayName(profile)}
+              </h3>
+              <ExternalLink className="h-4 w-4 shrink-0 text-gray-400 opacity-0 transition group-hover:opacity-100 group-hover:text-[#020e7c]" aria-hidden />
+            </button>
+            <p className="mt-0.5 text-xs text-[#020e7c]">
+              <button type="button" onClick={viewProfile} className="font-medium hover:underline">
+                View full profile &amp; slots
+              </button>
+            </p>
             {(profile?.practiceName || profile?.qualifications) && (
               <p className="mt-1 text-sm text-gray-600">
                 {[profile?.practiceName, profile?.qualifications]
@@ -176,83 +127,16 @@ function SpecialistCard({
       </div>
 
       <div className="p-4 sm:p-5">
-        <h4 className="mb-3 text-sm font-semibold text-gray-700">Available times</h4>
-        {specialist.slotGroups?.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {specialist.slotGroups.map((slotGroup) => {
-              const isToday = isTodayInBookingZone(slotGroup.date);
-              const enrichedSlots = (slotGroup.slots || []).map((s) =>
-                slotWithDate(s, slotGroup.date)
-              );
-              const isBookedSlot = (slot) =>
-                isSlotBookedFromApi(slot, (id) => isSlotBooked(id));
-              const available = enrichedSlots.filter(
-                (s) => !isBookedSlot(s) && !checkExpired(s)
-              );
-              const expired = enrichedSlots.filter(
-                (s) => !isBookedSlot(s) && checkExpired(s)
-              );
-              const booked = enrichedSlots.filter((s) => isBookedSlot(s));
-              const hasAny =
-                available.length + expired.length + booked.length > 0;
-
-              return (
-                <div
-                  key={slotGroup.date}
-                  className={`rounded-xl border p-3 ${
-                    isToday
-                      ? "border-amber-300 bg-amber-50/60"
-                      : "border-gray-100 bg-gray-50/50"
-                  }`}
-                >
-                  <p className="mb-2 text-center text-sm font-bold text-[#020e7c]">
-                    {isToday
-                      ? `Today · ${nowInBookingZone().format("ddd, MMM D")}`
-                      : dayjs(slotGroup.date).format("ddd, MMM D")}
-                  </p>
-                  {isToday && expired.length > 0 && (
-                    <p className="mb-2 rounded-lg bg-gray-200/60 px-2 py-1 text-center text-[11px] text-gray-700">
-                      Past times today (Nigeria) are gray and marked Expired
-                    </p>
-                  )}
-                  <div className="max-h-48 overflow-y-auto py-1">
-                    <DaySlotSection
-                      title="Available"
-                      slots={available}
-                      specialist={specialist}
-                      isSlotBooked={isSlotBooked}
-                      checkExpired={checkExpired}
-                      onSlotClick={onSlotClick}
-                    />
-                    <DaySlotSection
-                      title={isToday ? "Expired today" : "Expired"}
-                      slots={expired}
-                      specialist={specialist}
-                      isSlotBooked={isSlotBooked}
-                      checkExpired={checkExpired}
-                      onSlotClick={onSlotClick}
-                    />
-                    <DaySlotSection
-                      title="Booked"
-                      slots={booked}
-                      specialist={specialist}
-                      isSlotBooked={isSlotBooked}
-                      checkExpired={checkExpired}
-                      onSlotClick={onSlotClick}
-                    />
-                  </div>
-                  {!hasAny && (
-                    <p className="text-center text-xs text-gray-500">
-                      No times listed for this day
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">No open slots for this doctor right now.</p>
-        )}
+        <h4 className="mb-1 text-sm font-semibold text-gray-700">Available times</h4>
+        <p className="mb-3 text-xs text-gray-500">Grouped by day — scroll each row on small screens</p>
+        <DoctorSlotsByDate
+          slotGroups={specialist.slotGroups}
+          isSlotBooked={isSlotBooked}
+          isSlotExpired={isSlotExpired ?? isSlotDateTimeExpired}
+          onSlotClick={(e, slot) =>
+            onSlotClick(e, specialist, `${slot.date}T${slot.time}`, slot.slotId)
+          }
+        />
       </div>
     </article>
   );
@@ -395,6 +279,7 @@ export default function PatientBookingModals({
                 <SpecialistCard
                   key={specialist.doctorId}
                   specialist={specialist}
+                  selectedCategoryName={selectedCategoryName}
                   isSlotBooked={isSlotBooked}
                   isSlotExpired={isSlotExpired}
                   onSlotClick={handleOpenPopover}

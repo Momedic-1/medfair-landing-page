@@ -2,10 +2,26 @@ import React, { useState, useEffect } from "react";
 import { Tab, Transition, Dialog } from "@headlessui/react";
 import { toast } from "react-toastify";
 import axios from "axios";
+import {
+  User,
+  Phone,
+  HeartPulse,
+  FileUp,
+  MapPin,
+} from "lucide-react";
 import { baseUrl } from "../env";
 import { capitalizeFirstLetter, getToken } from "../utils";
 import "../styling/profile.css";
 import { Box, Modal } from "@mui/material";
+import {
+  ProfileHero,
+  ProfileSectionCard,
+  ProfileSaveButton,
+  ProfileSkeleton,
+  profileInputClass,
+  profileLabelClass,
+  profileTextareaClass,
+} from "./components/profileUi";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -13,6 +29,7 @@ function classNames(...classes) {
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState(0);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,6 +111,7 @@ export default function Profile() {
 
   /** Single API: GET /api/patient-profile/{userId} returns profile, address, emergencyContact, medicalHistory, documents, documentCategories */
   const fetchFullProfile = async () => {
+    setProfileLoading(true);
     try {
       const response = await axios.get(
         `${baseUrl}/api/patient-profile/${userId}`,
@@ -151,6 +169,9 @@ export default function Profile() {
         return;
       }
       console.error("Error fetching profile:", error);
+      toast.error("Could not load your profile.");
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -479,275 +500,221 @@ export default function Profile() {
   };
 
   const tabs = [
-    { name: "Patient Profile", current: activeTab === 0 },
-    { name: "Emergency Contact", current: activeTab === 1 },
-    { name: "Medical History", current: activeTab === 2 },
-    { name: "File Upload", current: activeTab === 3 },
-    { name: "Address", current: activeTab === 4 },
+    { name: "Profile", icon: User },
+    { name: "Emergency", icon: Phone },
+    { name: "Medical", icon: HeartPulse },
+    { name: "Documents", icon: FileUp },
+    { name: "Address", icon: MapPin },
   ];
 
+  const bloodLabel =
+    bloodGroupOptions.find((o) => o.value === profileData.bloodGroup)?.label ||
+    profileData.bloodGroup;
+  const profileChips = [
+    profileData.age ? { label: "Age", value: `${profileData.age} yrs` } : null,
+    bloodLabel ? { label: "Blood", value: bloodLabel } : null,
+    profileData.genotype
+      ? { label: "Genotype", value: profileData.genotype }
+      : null,
+    profileData.weight
+      ? { label: "Weight", value: `${profileData.weight} kg` }
+      : null,
+  ].filter(Boolean);
+
   return (
-    <div className="flex h-screen">
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col bg-gray-50">
-        {/* Page Content */}
-        <main className="p-4 md:p-6 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-md border border-gray-100">
-            <div className="px-4 py-6 md:px-8 md:py-8">
+    <div className="min-h-full bg-gradient-to-b from-slate-50 to-gray-100/80">
+      <main className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8">
+        {profileLoading ? (
+          <ProfileSkeleton />
+        ) : (
+          <>
+            <ProfileHero
+              fullName={fullName}
+              email={displayEmail}
+              imageUrl={profileData.imageUrl}
+              uploadingImage={uploadingImage}
+              onImageChange={handleImageUpload}
+              chips={profileChips}
+            />
+
+            <div className="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
               <Tab.Group onChange={setActiveTab}>
-                <Tab.List className="flex flex-wrap md:flex-nowrap gap-2 rounded-xl bg-gray-50 p-2.5 overflow-x-auto">
+                <Tab.List className="flex gap-1 overflow-x-auto border-b border-gray-100 p-2 sm:p-3">
                   {tabs.map((tab) => (
                     <Tab
                       key={tab.name}
                       className={({ selected }) =>
                         classNames(
-                          "flex-1 min-w-[140px] rounded-lg py-3.5 px-4 text-sm font-medium leading-5 transition-all duration-200",
-                          "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
+                          "flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#020e7c] focus-visible:ring-offset-2",
                           selected
-                            ? "bg-white shadow-sm text-[#020E7C] border border-gray-100"
-                            : "text-gray-600 hover:bg-white/[0.12] hover:text-[#020E7C]"
+                            ? "bg-[#020e7c] text-white shadow-md"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-[#020e7c]"
                         )
                       }
                     >
-                      {tab.name}
+                      <tab.icon className="h-4 w-4 shrink-0" />
+                      <span className="whitespace-nowrap">{tab.name}</span>
                     </Tab>
                   ))}
                 </Tab.List>
 
-                <Tab.Panels className="mt-8">
-                  {/* Patient Profile Tab */}
+                <Tab.Panels className="p-4 sm:p-6 md:p-8">
                   <Tab.Panel>
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Full name
-                          </label>
-                          <input
-                            type="text"
-                            name="fullName"
-                            readOnly
-                            value={fullName || "—"}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:ring-opacity-50 transition-colors duration-200"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Email address
-                          </label>
-                          <input
-                            type="text"
-                            name="email"
-                            readOnly
-                            value={displayEmail || "—"}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Date of Birth
-                          </label>
-                          <input
-                            type="date"
-                            name="dateOfBirth"
-                            value={profileData.dateOfBirth}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Weight (kg)
-                          </label>
-                          <input
-                            type="number"
-                            name="weight"
-                            value={profileData.weight}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-20"
-                            placeholder="Enter your weight"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Blood Group
-                          </label>
-                          <select
-                            name="bloodGroup"
-                            value={profileData.bloodGroup}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 appearance-none bg-white"
-                          >
-                            <option value="">Select Blood Group</option>
-                            {bloodGroupOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Genotype
-                          </label>
-                          <select
-                            name="genotype"
-                            value={profileData.genotype}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 appearance-none bg-white"
-                          >
-                            <option value="">Select Genotype</option>
-                            {genotypeOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="mt-8">
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Profile Image
-                        </label>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                          <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200 flex-shrink-0">
-                            {profileData.imageUrl ? (
-                              <img
-                                src={profileData.imageUrl || "/placeholder.svg"}
-                                alt="Profile"
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <svg
-                                className="h-full w-full text-gray-300"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                              </svg>
-                            )}
+                    <ProfileSectionCard
+                      title="Personal & health details"
+                      description="Update information your care team may need during consultations."
+                    >
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                          <div>
+                            <label className={profileLabelClass}>Full name</label>
+                            <input
+                              type="text"
+                              readOnly
+                              value={fullName || "—"}
+                              className={`${profileInputClass} cursor-not-allowed opacity-70`}
+                            />
                           </div>
-                          <div className="w-full">
-                            <label
-                              htmlFor="profile-image-upload"
-                              className="flex items-center justify-center w-full h-12 px-4 transition-colors duration-200 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2"
+                          <div>
+                            <label className={profileLabelClass}>Email</label>
+                            <input
+                              type="text"
+                              readOnly
+                              value={displayEmail || "—"}
+                              className={`${profileInputClass} cursor-not-allowed opacity-70`}
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Date of birth</label>
+                            <input
+                              type="date"
+                              name="dateOfBirth"
+                              value={profileData.dateOfBirth}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Weight (kg)</label>
+                            <input
+                              type="number"
+                              name="weight"
+                              value={profileData.weight}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="e.g. 70"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Blood group</label>
+                            <select
+                              name="bloodGroup"
+                              value={profileData.bloodGroup}
+                              onChange={handleChange}
+                              className={`${profileInputClass} appearance-none bg-white`}
                             >
-                              <span className="text-sm font-medium text-gray-700">
-                                {uploadingImage
-                                  ? "Uploading..."
-                                  : "Choose image"}
-                              </span>
-                              <input
-                                id="profile-image-upload"
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="hidden"
-                                disabled={uploadingImage}
-                              />
-                            </label>
-                            <p className="mt-1 text-xs text-gray-500">
-                              PNG, JPG, JPEG up to 5MB
-                            </p>
+                              <option value="">Select blood group</option>
+                              {bloodGroupOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Genotype</label>
+                            <select
+                              name="genotype"
+                              value={profileData.genotype}
+                              onChange={handleChange}
+                              className={`${profileInputClass} appearance-none bg-white`}
+                            >
+                              <option value="">Select genotype</option>
+                              {genotypeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="flex justify-end pt-4">
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="inline-flex justify-center items-center rounded-lg border border-transparent bg-[#020E7C] h-12 px-6 text-base font-medium text-white shadow-sm hover:bg-[#1a2a9c] focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {loading ? "Saving..." : "Save Changes"}
-                        </button>
-                      </div>
-                    </form>
+                        <p className="text-xs text-gray-500">
+                          Profile photo: use the camera button on your banner above.
+                        </p>
+                        <ProfileSaveButton loading={loading} />
+                      </form>
+                    </ProfileSectionCard>
                   </Tab.Panel>
 
-                  {/* Emergency Contact Tab */}
                   <Tab.Panel>
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Name
-                          </label>
-                          <input
-                            type="text"
-                            name="emergencyContact.name"
-                            value={profileData.emergencyContact.name}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter emergency contact name"
-                          />
+                    <ProfileSectionCard
+                      title="Emergency contact"
+                      description="Someone we can reach if you need urgent assistance during care."
+                    >
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                          <div>
+                            <label className={profileLabelClass}>Name</label>
+                            <input
+                              type="text"
+                              name="emergencyContact.name"
+                              value={profileData.emergencyContact.name}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="Full name"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Relationship</label>
+                            <input
+                              type="text"
+                              name="emergencyContact.relationship"
+                              value={capitalizeFirstLetter(
+                                profileData.emergencyContact.relationship
+                              )}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="e.g. Spouse, Parent"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Phone</label>
+                            <input
+                              type="tel"
+                              name="emergencyContact.phoneNumber"
+                              value={profileData.emergencyContact.phoneNumber}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="+234 …"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Email</label>
+                            <input
+                              type="email"
+                              name="emergencyContact.email"
+                              value={profileData.emergencyContact.email}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="email@example.com"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Relationship
-                          </label>
-                          <input
-                            type="text"
-                            name="emergencyContact.relationship"
-                            value={capitalizeFirstLetter(
-                              profileData.emergencyContact.relationship
-                            )}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter relationship"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Phone Number
-                          </label>
-                          <input
-                            type="tel"
-                            name="emergencyContact.phoneNumber"
-                            value={profileData.emergencyContact.phoneNumber}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter phone number"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            name="emergencyContact.email"
-                            value={profileData.emergencyContact.email}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter email"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end pt-4">
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="inline-flex justify-center items-center rounded-lg border border-transparent bg-[#020E7C] h-12 px-6 text-base font-medium text-white shadow-sm hover:bg-[#1a2a9c] focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {loading ? "Saving..." : "Save Changes"}
-                        </button>
-                      </div>
-                    </form>
+                        <ProfileSaveButton loading={loading} />
+                      </form>
+                    </ProfileSectionCard>
                   </Tab.Panel>
 
-                  {/* Medical History Tab */}
                   <Tab.Panel>
-                    <div className="space-y-8">
-                      {/* Existing medical history from API */}
+                    <div className="space-y-6">
                       {Array.isArray(profileData.medicalHistory) &&
                         profileData.medicalHistory.length > 0 && (
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                              Recorded medical history
-                            </h3>
-                            <div className="space-y-4">
+                          <ProfileSectionCard
+                            title="Recorded history"
+                            description="Entries saved to your Medfair health record."
+                          >
+                            <div className="space-y-3">
                               {profileData.medicalHistory.map((entry, index) => {
                                 const hasContent =
                                   entry.condition ||
@@ -758,7 +725,7 @@ export default function Profile() {
                                 return (
                                   <div
                                     key={index}
-                                    className="rounded-lg border border-gray-200 bg-gray-50/50 p-4"
+                                    className="rounded-xl border border-gray-100 bg-gradient-to-r from-slate-50 to-white p-4"
                                   >
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                       {entry.condition && (
@@ -808,19 +775,16 @@ export default function Profile() {
                                 );
                               })}
                             </div>
-                          </div>
+                          </ProfileSectionCard>
                         )}
 
-                      {/* Add new medical history entry */}
-                      <form onSubmit={handleSubmit} className="space-y-6">
-                        <h3 className="text-sm font-semibold text-gray-800">
-                          Add new entry
-                        </h3>
-                        <div className="space-y-4">
+                      <ProfileSectionCard
+                        title="Add new entry"
+                        description="Allergies, conditions, and notes visible to your doctors."
+                      >
+                        <form onSubmit={handleSubmit} className="space-y-5">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Allergies
-                            </label>
+                            <label className={profileLabelClass}>Allergies</label>
                             <textarea
                               value={newMedicalEntry.allergy}
                               onChange={(e) =>
@@ -830,14 +794,12 @@ export default function Profile() {
                                 }))
                               }
                               rows={2}
-                              className="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 resize-y"
-                              placeholder="Enter any allergies"
+                              className={profileTextareaClass}
+                              placeholder="e.g. Penicillin, peanuts"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Chronic conditions
-                            </label>
+                            <label className={profileLabelClass}>Chronic conditions</label>
                             <textarea
                               value={newMedicalEntry.condition}
                               onChange={(e) =>
@@ -847,14 +809,12 @@ export default function Profile() {
                                 }))
                               }
                               rows={2}
-                              className="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 resize-y"
-                              placeholder="Enter any chronic conditions"
+                              className={profileTextareaClass}
+                              placeholder="e.g. Hypertension, asthma"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Description
-                            </label>
+                            <label className={profileLabelClass}>Description</label>
                             <textarea
                               value={newMedicalEntry.description}
                               onChange={(e) =>
@@ -864,14 +824,12 @@ export default function Profile() {
                                 }))
                               }
                               rows={2}
-                              className="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4 py-3 resize-y"
-                              placeholder="Enter description"
+                              className={profileTextareaClass}
+                              placeholder="Additional notes"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Diagnosed date
-                            </label>
+                            <label className={profileLabelClass}>Diagnosed date</label>
                             <input
                               type="date"
                               value={newMedicalEntry.diagnosedDate}
@@ -881,37 +839,21 @@ export default function Profile() {
                                   diagnosedDate: e.target.value,
                                 }))
                               }
-                              className="block w-full h-12 rounded-lg border border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
+                              className={profileInputClass}
                             />
                           </div>
-                        </div>
-                        <div className="flex justify-end pt-2">
-                          <button
-                            type="submit"
-                            disabled={loading}
-                            className="inline-flex justify-center items-center rounded-lg border border-transparent bg-[#020E7C] h-12 px-6 text-base font-medium text-white shadow-sm hover:bg-[#1a2a9c] focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {loading ? "Saving..." : "Add entry"}
-                          </button>
-                        </div>
-                      </form>
+                          <ProfileSaveButton loading={loading} label="Add entry" />
+                        </form>
+                      </ProfileSectionCard>
                     </div>
                   </Tab.Panel>
 
-                  {/* File Upload Tab */}
                   <Tab.Panel>
-                    <div className="space-y-8">
-                      {/* Upload Section */}
-                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 md:p-6">
-                        <div className="mb-6">
-                          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                            Upload Medical Documents
-                          </h2>
-                          <p className="text-sm text-gray-600">
-                            Securely upload your medical records and documents
-                            for easy access
-                          </p>
-                        </div>
+                    <div className="space-y-6">
+                      <ProfileSectionCard
+                        title="Upload medical documents"
+                        description="Securely store lab results, prescriptions, and other records for your care team."
+                      >
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Document Category Selection */}
@@ -1073,7 +1015,7 @@ export default function Profile() {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </ProfileSectionCard>
 
                       {/* Temporary File Preview */}
                       {uploadedFile && (
@@ -1214,21 +1156,13 @@ export default function Profile() {
                       {/* Uploaded Documents Section */}
                       {profileData.documents &&
                         profileData.documents.length > 0 && (
-                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 md:p-6">
-                            <div className="flex items-center justify-between mb-6">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                  Uploaded Documents
-                                </h3>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {profileData.documents.length} document
-                                  {profileData.documents.length !== 1
-                                    ? "s"
-                                    : ""}{" "}
-                                  uploaded
-                                </p>
-                              </div>
-                              <div className="flex items-center text-sm text-gray-500">
+                          <ProfileSectionCard
+                            title="Your documents"
+                            description={`${profileData.documents.length} file${
+                              profileData.documents.length !== 1 ? "s" : ""
+                            } on record — tap to view`}
+                          >
+                            <div className="mb-4 flex items-center justify-end text-sm text-gray-500">
                                 <svg
                                   className="w-4 h-4 mr-1"
                                   fill="currentColor"
@@ -1240,11 +1174,10 @@ export default function Profile() {
                                     clipRule="evenodd"
                                   />
                                 </svg>
-                                Secure & Encrypted
-                              </div>
+                                Secure & encrypted
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                               {profileData.documents.map((doc, index) => (
                                 <div
                                   key={index}
@@ -1320,91 +1253,77 @@ export default function Profile() {
                                 </div>
                               ))}
                             </div>
-                          </div>
+                          </ProfileSectionCard>
                         )}
                     </div>
                   </Tab.Panel>
 
-                  {/* Address Tab */}
                   <Tab.Panel>
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Street Address
-                          </label>
-                          <input
-                            type="text"
-                            name="address.street"
-                            value={profileData.address.street}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter street address"
-                          />
+                    <ProfileSectionCard
+                      title="Home address"
+                      description="Used for records and correspondence when needed."
+                    >
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <label className={profileLabelClass}>Street</label>
+                            <input
+                              type="text"
+                              name="address.street"
+                              value={profileData.address.street}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="Street address"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>City</label>
+                            <input
+                              type="text"
+                              name="address.city"
+                              value={profileData.address.city}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="City"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>State</label>
+                            <input
+                              type="text"
+                              name="address.state"
+                              value={profileData.address.state}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="State"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Country</label>
+                            <input
+                              type="text"
+                              name="address.country"
+                              value={profileData.address.country}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="Country"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Postal code</label>
+                            <input
+                              type="text"
+                              name="address.postalCode"
+                              value={profileData.address.postalCode}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="ZIP / postal code"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            City
-                          </label>
-                          <input
-                            type="text"
-                            name="address.city"
-                            value={profileData.address.city}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter city"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            State
-                          </label>
-                          <input
-                            type="text"
-                            name="address.state"
-                            value={profileData.address.state}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter state"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Country
-                          </label>
-                          <input
-                            type="text"
-                            name="address.country"
-                            value={profileData.address.country}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter country"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Postal Code
-                          </label>
-                          <input
-                            type="text"
-                            name="address.postalCode"
-                            value={profileData.address.postalCode}
-                            onChange={handleChange}
-                            className="block w-full h-12 rounded-lg border-gray-300 shadow-sm focus:border-[#020E7C] focus:ring-[#020E7C] focus:ring-opacity-50 transition-colors duration-200 px-4"
-                            placeholder="Enter postal code"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end pt-4">
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="inline-flex justify-center items-center rounded-lg border border-transparent bg-[#020E7C] h-12 px-6 text-base font-medium text-white shadow-sm hover:bg-[#1a2a9c] focus:outline-none focus:ring-2 focus:ring-[#020E7C] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {loading ? "Saving..." : "Save Changes"}
-                        </button>
-                      </div>
-                    </form>
+                        <ProfileSaveButton loading={loading} />
+                      </form>
+                    </ProfileSectionCard>
                   </Tab.Panel>
                 </Tab.Panels>
               </Tab.Group>
@@ -1487,9 +1406,9 @@ export default function Profile() {
                 </Dialog>
               </Transition>
             </div>
-          </div>
-        </main>
-      </div>
+          </>
+        )}
+      </main>
     </div>
   );
 }

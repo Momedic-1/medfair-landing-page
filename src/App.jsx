@@ -109,6 +109,7 @@ import 'preline'
 import SubscriptionSuccessful from "./PatientDashboard/SubscriptionSuccessful.jsx";
 import SubscriptionNotSuccessful from "./PatientDashboard/SubscriptionNotSuccessful.jsx";
 import AddDependents from "./PatientDashboard/AddDependents.jsx";
+import PatientDoctorProfile from "./PatientDashboard/PatientDoctorProfile.jsx";
 
 const App = () => {
   return (
@@ -147,6 +148,7 @@ const App = () => {
           >
             <Route path="" element={<Dashboard />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="doctor/:doctorId" element={<PatientDoctorProfile />} />
             <Route path="patient-notes" element={<PatientNotes />} />
             <Route path="patient-investigations" element={<Investigations />} />
             <Route path="add-dependent" element={<AddDependents />} />
