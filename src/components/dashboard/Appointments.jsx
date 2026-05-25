@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { FaChevronRight, FaChevronLeft, FaTimes } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../dashboard/Custompage.css';
-import AppointmentRequests from './AppointmentRequests';
 import { Box, Modal } from '@mui/material';
 import TimePicker from '../reuseables/TimePicker';
 import { ToastContainer, toast } from 'react-toastify';
@@ -12,6 +12,10 @@ import { baseUrl } from '../../env';
 import axios from 'axios';
 import { ColorRing } from 'react-loader-spinner';
 import { getId, getToken } from '../../utils';
+import {
+  isDoctorProfileComplete,
+  getMissingProfileFields,
+} from '../../utils/doctorProfileComplete';
 
 const  CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -28,9 +32,40 @@ const  CalendarPage = () => {
   const [existingAppointments, setExistingAppointments] = useState([]);
   const doctorsId = getId();
   const token = getToken();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profilePayload, setProfilePayload] = useState(null);
+
+  const profileComplete = isDoctorProfileComplete(profilePayload);
+  const missingFields = getMissingProfileFields(profilePayload);
 
   const date = new Date();
+
+  const fetchDoctorProfile = useCallback(async () => {
+    if (!doctorsId || !token) {
+      setProfileLoading(false);
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/v1/doctor-profile/profile-full/${doctorsId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProfilePayload(response.data);
+    } catch (error) {
+      console.error('Error fetching doctor profile:', error);
+      setProfilePayload(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  }, [doctorsId, token]);
+
+  const promptCompleteProfile = () => {
+    toast.info('Please complete your profile before creating appointment slots.');
+    navigate('/doctor-dashboard/edit-profile');
+  };
 
   const calendarStyle = {
     width: '100%',
@@ -59,11 +94,31 @@ const  CalendarPage = () => {
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+    fetchDoctorProfile();
+  }, [fetchDoctorProfile]);
+
+  useEffect(() => {
+    if (location.state?.profileUpdated) {
+      fetchDoctorProfile();
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.profileUpdated, fetchDoctorProfile]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchDoctorProfile();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [fetchDoctorProfile]);
 
   const handleDateChange = (date) => {
+    if (profileLoading) return;
+    if (!profileComplete) {
+      promptCompleteProfile();
+      return;
+    }
     setSelectedDate(date);
-    console.log(date);
     handleOpen();
   };
 
@@ -89,6 +144,11 @@ const  CalendarPage = () => {
   };
 
   const handleApply = async () => {
+    if (!profileComplete) {
+      promptCompleteProfile();
+      return;
+    }
+
     const year = selectedDate.getFullYear();
     const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
     const day = selectedDate.getDate().toString().padStart(2, '0');
@@ -156,15 +216,25 @@ const  CalendarPage = () => {
     }
   };
 
-  return (
-    <div className='flex flex-col md:flex-row gap-4 rounded-xl w-full justify-center items-center'>
-      <div className='bg-white rounded-lg shadow-lg relative w-full h-[420px]'>
-        <div className='w-[100%] px-2'>
-          <div className='flex flex-col mb-4 w-full py-2 px-1 md:py-4 md:px-4'>
-            <h2 className='text-lg font-bold text-blue-900 md:text-xl'>Appointments</h2>
-          </div>
+  const calendarDisabled = ({ date: tileDate }) =>
+    isDateInPast(tileDate) || !profileComplete || profileLoading;
 
-          <div className='flex justify-center w-full h-full'>
+  return (
+    <>
+      <ToastContainer position="top-right" autoClose={4000} />
+      <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm">
+        <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
+          <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
+            Your availability
+          </h2>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Select a date to add consultation slots
+          </p>
+        </div>
+        <div className="p-3 sm:p-5">
+          <div
+            className={`flex justify-center ${!profileComplete && !profileLoading ? "pointer-events-none opacity-50" : ""}`}
+          >
             <Calendar
               onChange={handleDateChange}
               value={date}
@@ -189,14 +259,14 @@ const  CalendarPage = () => {
                 }
                 return '';
               }}
-              tileDisabled={({ date }) => isDateInPast(date)}
+              tileDisabled={calendarDisabled}
               className="custom-calendar"
               style={calendarStyle}
             />
           </div>
         </div>
       </div>
-      <div className=''>
+      <div>
         <Modal
           open={open}
           onClose={handleClose}
@@ -206,17 +276,22 @@ const  CalendarPage = () => {
           <Box
             sx={{
               position: 'absolute',
-              top: '40%',
+              top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 400,
+              width: 'min(100vw - 2rem, 420px)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               bgcolor: 'background.paper',
               boxShadow: 24,
-              p: 4,
+              p: { xs: 2, sm: 4 },
               borderRadius: 2,
             }}
           >
             <div className="space-y-4">
+              <p className="text-center text-sm font-semibold text-[#020e7c] sm:text-base">
+                {formatAppointmentData}
+              </p>
 
               {getAppointmentsForSelectedDate().length > 0 && (
                 <div className="mt-4">
@@ -250,16 +325,18 @@ const  CalendarPage = () => {
                 />
               </div>
 
-              <div className='w-full px-4 flex flex-col lg:flex-row justify-between gap-y-4 lg:gap-x-3 lg:mr-9'>
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-end">
                 <button
-                  className='border-gray-500 border lg:ml-0 text-gray-700 w-full lg:w-[120px] h-[45px] font-semibold rounded-md hover:bg-gray-200 transition duration-300 ease-in-out'
+                  type="button"
+                  className="h-11 w-full rounded-lg border border-gray-300 font-semibold text-gray-700 transition hover:bg-gray-100 sm:w-[120px]"
                   onClick={handleClose}
                 >
                   Cancel
                 </button>
 
                 <button
-                  className='bg-blue-900 border lg:ml-0 text-white w-full lg:w-[120px] h-[45px] font-semibold rounded-md hover:bg-blue-400 transition duration-300 ease-in-out'
+                  type="button"
+                  className="h-11 w-full rounded-lg bg-[#020e7c] font-semibold text-white transition hover:bg-blue-800 sm:w-[120px]"
                   onClick={handleApply}
                 >
                   {isLoading ?
@@ -336,7 +413,7 @@ const  CalendarPage = () => {
           </Box>
         </Modal>
       </div>
-    </div>
+    </>
   );
 };
 

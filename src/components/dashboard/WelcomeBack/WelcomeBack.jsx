@@ -1,39 +1,50 @@
-import DoctorImg from "../../../assets/doctor.png";
-// import call from '../../../assets/call.svg';
 import "./WelcomeBack.css";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { baseUrl } from "../../../env";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { LiaPhoneVolumeSolid } from "react-icons/lia";
 import { useDispatch } from "react-redux";
 import { setCall, setRoomUrl } from "../../../features/authSlice";
+import { openVideoCallInNewTab } from "../../../utils/videoCallNavigation";
+import { useIncomingCallSse } from "../../../hooks/useIncomingCallSse";
 
-function WelcomeBack({ status }) {
-  const [activeCalls, setActiveCalls] = useState([]);
+function WelcomeBack({ status, onAlertsChange }) {
   const [pickedCalls, setPickedCalls] = useState(new Set());
-  const [isRinging, setIsRinging] = useState(false);
-  const [audioInitialized, setAudioInitialized] = useState(false);
-  const [isActive, setIsActive] = useState(false);
   const [callTimer, setCallTimer] = useState(null);
   const [rejoinData, setRejoinData] = useState(null);
-  const token = JSON.parse(localStorage.getItem('authToken'))?.token;
+  const token = JSON.parse(localStorage.getItem("authToken"))?.token;
   const userData = JSON.parse(localStorage.getItem("userData"));
   const online = "Online";
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const audioRef = useRef(null);
-  const pollingInterval = useRef(null);
+  const prevCallCountRef = useRef(0);
   const ringtone =
     "https://res.cloudinary.com/da79pzyla/video/upload/v1737819241/galaxy_bells_s25_ywq7j0.mp3";
 
+  const fetchBroadcastCalls = useCallback(async () => {
+    const response = await axios.get(
+      `${baseUrl}/api/v1/video/broadcast-calls/${userData?.id}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response?.data || [];
+  }, [token, userData?.id]);
+
+  const pickedList = [...pickedCalls];
+
+  const { calls: activeCalls, sseConnected } = useIncomingCallSse({
+    doctorId: userData?.id,
+    token,
+    enabled: status === online && !!userData?.id && !!token,
+    pickedCallIds: pickedList,
+    fetchCalls: fetchBroadcastCalls,
+  });
+
   useEffect(() => {
-    // Initialize pickedCalls from localStorage
     const storedPickedCalls =
       JSON.parse(localStorage.getItem("pickedCalls")) || [];
     setPickedCalls(new Set(storedPickedCalls));
 
-    // Initialize rejoin banner from localStorage.activeCall
     const rawActiveCall = localStorage.getItem("activeCall");
     if (rawActiveCall) {
       try {
@@ -49,14 +60,21 @@ function WelcomeBack({ status }) {
       }
     }
 
-    viewAllPendingCalls();
-    enableAudio();
-    pollingInterval.current = setInterval(() => {
-      viewAllPendingCalls();
-    }, 5000);
+    const unlockAudio = () => {
+      if (!audioRef.current) return;
+      audioRef.current
+        .play()
+        .then(() => {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        })
+        .catch(() => {});
+    };
+    unlockAudio();
+    document.addEventListener("click", unlockAudio, { once: true });
 
     return () => {
-      clearInterval(pollingInterval.current);
+      document.removeEventListener("click", unlockAudio);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
@@ -66,28 +84,19 @@ function WelcomeBack({ status }) {
   }, []);
 
   useEffect(() => {
+    if (activeCalls.length > prevCallCountRef.current && status === online) {
+      playRingtone();
+    }
+    prevCallCountRef.current = activeCalls.length;
+
     if (activeCalls.length > 0 && status === online) {
       startCallTimer();
-      setIsActive(true);
-      playRingtone();
+      if (activeCalls.length > 0) playRingtone();
     } else {
       clearCallTimer();
       stopRingtone();
     }
   }, [activeCalls, status]);
-
-  const initializeAudio = () => {
-    if (audioRef.current) {
-      audioRef.current
-        .play()
-        .then(() => {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-          setAudioInitialized(true);
-        })
-        .catch((error) => console.error("Audio initialization failed:", error));
-    }
-  };
 
   const handleRejoin = () => {
     try {
@@ -105,7 +114,7 @@ function WelcomeBack({ status }) {
       }
       if (active?.joinRoomUrl) dispatch(setRoomUrl(active.joinRoomUrl));
       if (active?.call) dispatch(setCall(active.call));
-      navigate("/video-call");
+      openVideoCallInNewTab(active.joinRoomUrl);
     } catch (_) {
       // fail silently
     }
@@ -117,78 +126,27 @@ function WelcomeBack({ status }) {
   };
 
   const playRingtone = () => {
-    if (!audioInitialized) {
-      console.warn("Audio not initialized - requiring user interaction");
-      return;
-    }
-
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch((error) => {
-        if (error.name === "NotAllowedError") {
-          setAudioInitialized(false);
-          alert(
-            'Please click the "Enable Notifications" button to allow call sounds'
-          );
-        }
-      });
-    }
-  };
-
-  const viewAllPendingCalls = async () => {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/v1/video/broadcast-calls/${userData.id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Get latest picked calls from localStorage
-      const storedPickedCalls = JSON.parse(localStorage.getItem('pickedCalls')) || [];
-
-      // Filter out picked calls using callId
-      const filteredCalls = response?.data.filter(call => !storedPickedCalls.includes(call.callId)) || [];
-      setActiveCalls(filteredCalls);
-      setIsActive(filteredCalls.length > 0);
-
-      if (filteredCalls.length > 0 && status === online) {
-        playRingtone();
-      } else {
-        stopRingtone();
-      }
-    } catch (error) {
-      console.error(error);
-      stopRingtone();
-    }
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(() => {});
   };
 
   const stopRingtone = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      setIsRinging(false);
     }
   };
 
-  const navigateToIncomingCalls = (callId) => {
+  const navigateToIncomingCalls = () => {
     stopRingtone();
-    // Update both local state and localStorage
-    const newPickedCalls = new Set([...pickedCalls, callId]);
-    setPickedCalls(newPickedCalls);
-
-    const storedPickedCalls =
-      JSON.parse(localStorage.getItem("pickedCalls")) || [];
-    if (!storedPickedCalls.includes(callId)) {
-      storedPickedCalls.push(callId);
-      localStorage.setItem("pickedCalls", JSON.stringify(storedPickedCalls));
-    }
-
     navigate("/incoming-call");
   };
 
   const startCallTimer = () => {
     clearCallTimer();
     const timer = setTimeout(() => {
-      dropCall();
+      stopRingtone();
     }, 60000);
     setCallTimer(timer);
   };
@@ -200,107 +158,21 @@ function WelcomeBack({ status }) {
     }
   };
 
-  const dropCall = async () => {
-    try {
-      setActiveCalls([]);
-    } catch (error) {
-      console.error("Error dropping the call:", error.message);
-    }
-  };
-
   useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-    };
-  }, []);
+    if (!onAlertsChange) return;
+    const hasIncoming = activeCalls.length > 0 && status === online;
+    onAlertsChange({
+      rejoinData,
+      activeCalls,
+      hasIncoming,
+      sseConnected,
+      onRejoin: handleRejoin,
+      onDismissRejoin: dismissRejoin,
+      onIncomingClick: navigateToIncomingCalls,
+    });
+  }, [rejoinData, activeCalls, status, sseConnected, onAlertsChange]);
 
-  const enableAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.play().catch((error) => {
-        console.error("Error playing audio:", error);
-      });
-    }
-  };
-
-  return (
-    <div className="w-full relative px-2">
-      <audio ref={audioRef} src={ringtone} preload="auto" loop />
-      {rejoinData ? (
-        <div className="fixed top-2 left-32 md:left-64 z-50">
-          <div className="w-40 h-24 border rounded-lg py-3 px-3 grid place-items-center bg-blue-700 cursor-pointer">
-            <div className="w-full text-center text-white text-sm">
-              Rejoin Call
-            </div>
-            <div className="flex gap-2 mt-1">
-              <button onClick={handleRejoin} className="bg-white text-blue-700 px-2 py-0.5 rounded text-xs">Rejoin</button>
-              <button onClick={dismissRejoin} className="bg-blue-500 text-white px-2 py-0.5 rounded text-xs border border-white/30">Dismiss</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-      {!audioInitialized && (
-        <div className="fixed bottom-4 right-4 bg-blue-500 text-white p-4 rounded-lg">
-          <button
-            onClick={initializeAudio}
-            className="underline cursor-pointer"
-          >
-            Click here to enable sound
-          </button>
-        </div>
-      )}
-
-      {activeCalls?.length > 0 &&
-        activeCalls.map((call) => (
-          <div
-            key={call.id}
-            onClick={() => navigateToIncomingCalls(call.id)}
-            className={`image ${isActive ? "active" : "hidden"} ${
-              activeCalls.length > 0 && status === online && "shake bg-red-500"
-            } absolute top-2 left-32 md:left-64 items-center grid place-items-center justify-center mb-12 w-40 h-24 border rounded-lg py-4 mx-auto cursor-pointer`}
-          >
-            <p className="text-white font-semibold text-center">
-              Incoming Call
-            </p>
-
-            <LiaPhoneVolumeSolid
-              className={`${isActive ? "active" : "hidden"} ${
-                activeCalls.length > 0 &&
-                status === online &&
-                "shake text-yellow-500"
-              }`}
-              fontSize={28}
-            />
-          </div>
-        ))}
-
-      <div className="w-full flex flex-row bg-white rounded-lg border border-gray-950/20">
-        <div className="flex flex-1 flex-col justify-center px-8 gap-y-4 w-1/2">
-          <h2 className="mb-1 text-xl font-bold text-[#020e7c] md:text-2xl lg:text-3xl">
-            Welcome Back!
-          </h2>
-
-          <span className="font-bold text-[#020E7C] mb-4 max-w-md text-xl text-left pr-[3rem] sm:pr-[12rem] lg:pr-[7rem] md:pr-[13rem]">
-            Doctor{" "}
-            {userData
-              ? userData.firstName.charAt(0).toUpperCase() +
-                userData.firstName.slice(1).toLowerCase()
-              : ""}
-          </span>
-        </div>
-        <div className="w-full h-44 flex-1 sm:h-[13rem] md:w-1/2">
-          <img
-            src={DoctorImg}
-            loading="lazy"
-            alt={userData?.firstName + " " + userData?.lastName}
-            className="w-full object-cover h-full rounded-lg"
-          />
-        </div>
-      </div>
-    </div>
-  );
+  return <audio ref={audioRef} src={ringtone} preload="auto" loop className="hidden" />;
 }
 
 export default WelcomeBack;

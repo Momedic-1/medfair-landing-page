@@ -250,7 +250,7 @@ const ViewProfile = () => {
         },
       });
       toast.success("Profile updated successfully");
-      navigate("/doctor-dashboard");
+      navigate("/doctor-dashboard", { state: { profileUpdated: true } });
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
