@@ -24,6 +24,13 @@ import {
   flattenSpecialistsFromApi,
 } from "../utils/fetchDoctorForPatient";
 import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
+import { parseApiError } from "../utils/parseApiError";
+import {
+  clearPatientGpCall,
+  isPatientGpCallActive,
+  loadPatientGpCall,
+  savePatientGpCall,
+} from "../utils/patientGpCall";
 import {
   joinScheduledAppointment,
   parseJoinError,
@@ -301,6 +308,56 @@ const Dashboard = () => {
     if (stored) setActiveMeeting(stored);
   }, []);
 
+  // Restore in-progress GP call (prevents duplicate "Start call")
+  useEffect(() => {
+    const storedCall = loadPatientGpCall();
+    if (!storedCall?.callId || !token) return;
+
+    if (storedCall.status !== "WAITING") return;
+
+    const callId = storedCall.callId;
+    setCurrentCallId(callId);
+    setCallStatus("WAITING");
+    if (storedCall.roomUrl) {
+      setVideoLink({ roomUrl: storedCall.roomUrl, meetingId: callId });
+    }
+
+    if (pollingInterval) return undefined;
+
+    const waitStartedAt = storedCall.startedAt || Date.now();
+    const interval = setInterval(async () => {
+      const status = await pollCallStatus(callId);
+      if (status === "DOCTOR_JOINED") {
+        clearInterval(interval);
+        setPollingInterval(null);
+        savePatientGpCall({
+          callId,
+          roomUrl: storedCall.roomUrl,
+          status: "IN_CALL",
+        });
+        if (storedCall.roomUrl) {
+          saveActiveMeetingToStorage(storedCall.roomUrl, 40);
+          openVideoCallInNewTab(storedCall.roomUrl);
+        }
+        setIsCallADoctorModalOpen(false);
+        setCallStatus(null);
+        clearPatientGpCall();
+      } else if (
+        status === "ENDED" ||
+        Date.now() - waitStartedAt >= CALL_WAIT_TIMEOUT_MS
+      ) {
+        clearInterval(interval);
+        setPollingInterval(null);
+        setCallStatus("NO_DOCTOR");
+        clearPatientGpCall();
+      }
+    }, 3000);
+    setPollingInterval(interval);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
   // Reaper to clear expired active meetings
   useEffect(() => {
     const interval = setInterval(() => {
@@ -425,6 +482,7 @@ const Dashboard = () => {
 
   const handleTryCallAgain = () => {
     clearCallPolling();
+    clearPatientGpCall();
     setCallStatus(null);
     setCurrentCallId(null);
     setVideoLink(null);
@@ -593,6 +651,14 @@ const Dashboard = () => {
   };
 
   const createMeeting = async () => {
+    if (callStatus === "WAITING" || isPatientGpCallActive()) {
+      toast.info(
+        "You already have an active call. Cancel it or wait for a doctor before starting another.",
+      );
+      setIsCallADoctorModalOpen(true);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -622,6 +688,11 @@ const Dashboard = () => {
 
       setCurrentCallId(callId);
       setCallStatus("WAITING");
+      savePatientGpCall({
+        callId,
+        roomUrl: response.data?.roomUrl,
+        status: "WAITING",
+      });
 
       const waitStartedAt = Date.now();
 
@@ -633,6 +704,11 @@ const Dashboard = () => {
           setCallStatus("DOCTOR_JOINED");
           clearInterval(interval);
           setPollingInterval(null);
+          savePatientGpCall({
+            callId,
+            roomUrl: response.data?.roomUrl,
+            status: "IN_CALL",
+          });
 
           if (response.data?.roomUrl) {
             saveActiveMeetingToStorage(response.data.roomUrl, 40);
@@ -646,6 +722,7 @@ const Dashboard = () => {
           }
           setIsCallADoctorModalOpen(false);
           setCallStatus(null);
+          clearPatientGpCall();
         } else if (
           status === "ENDED" ||
           Date.now() - waitStartedAt >= CALL_WAIT_TIMEOUT_MS
@@ -653,6 +730,7 @@ const Dashboard = () => {
           clearInterval(interval);
           setPollingInterval(null);
           setCallStatus("NO_DOCTOR");
+          clearPatientGpCall();
         }
       }, 3000);
 
@@ -660,8 +738,11 @@ const Dashboard = () => {
       return response.data;
     } catch (err) {
       console.error("Create meeting error:", err);
-      toast.error(err.response?.data?.error || "Failed to create meeting");
+      toast.error(
+        parseApiError(err, "Failed to create meeting. Please try again in a moment."),
+      );
       setCallStatus(null);
+      clearPatientGpCall();
     } finally {
       setIsLoading(false);
     }
@@ -720,6 +801,7 @@ const Dashboard = () => {
       setCallStatus(null);
       setCurrentCallId(null);
       setVideoLink(null);
+      clearPatientGpCall();
       setIsCallADoctorModalOpen(false);
       setIsCancelCallConfirmOpen(false);
 
@@ -740,6 +822,7 @@ const Dashboard = () => {
       setCallStatus(null);
       setCurrentCallId(null);
       setVideoLink(null);
+      clearPatientGpCall();
       setIsCallADoctorModalOpen(false);
     } finally {
       setIsLoading(false);

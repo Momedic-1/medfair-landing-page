@@ -11,6 +11,7 @@ import NoCalls from "../../../assets/NoCalls";
 import { getToken } from "../../../utils";
 import { openVideoCallPreferNewTab } from "../../../utils/videoCallNavigation";
 import { useIncomingCallSse } from "../../../hooks/useIncomingCallSse";
+import { dismissIncomingCallId } from "../../../utils/dismissedIncomingCalls";
 
 const IncomingCall = () => {
   const [joiningCallId, setJoiningCallId] = useState(null);
@@ -118,6 +119,7 @@ const IncomingCall = () => {
           localStorage.setItem("pickedCalls", JSON.stringify(picked));
           setPickedCalls(picked);
         }
+        dismissIncomingCallId(callId);
 
         try {
           const expiresAt = Date.now() + 40 * 60 * 1000;

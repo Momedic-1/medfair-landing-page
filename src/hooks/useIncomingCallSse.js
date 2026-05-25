@@ -4,6 +4,10 @@ import {
   applyIncomingCallEvent,
   connectIncomingCallSse,
 } from "../utils/incomingCallSse";
+import {
+  dismissIncomingCallId,
+  loadDismissedCallIds,
+} from "../utils/dismissedIncomingCalls";
 
 const FALLBACK_POLL_MS = 30000;
 const RECONNECT_DELAY_MS = 5000;
@@ -25,6 +29,7 @@ export function useIncomingCallSse({
   const pollRef = useRef(null);
   const reconnectRef = useRef(null);
   const pickedRef = useRef(pickedCallIds);
+  const dismissedRef = useRef(loadDismissedCallIds());
 
   pickedRef.current = pickedCallIds;
 
@@ -33,8 +38,9 @@ export function useIncomingCallSse({
     try {
       const data = await fetchCalls();
       const picked = pickedRef.current || [];
+      const dismissed = dismissedRef.current || [];
       setCalls(
-        (data || []).filter((c) => !picked.includes(c.callId))
+        applyIncomingCallEvent(data || [], { type: "REFRESH", calls: data || [] }, picked, dismissed),
       );
     } finally {
       setReady(true);
@@ -43,8 +49,21 @@ export function useIncomingCallSse({
 
   const handleEvent = useCallback((event) => {
     if (event.type === "HEARTBEAT") return;
+    if (event.type === "CALL_ENDED" && event.callId != null) {
+      dismissIncomingCallId(event.callId);
+      dismissedRef.current = loadDismissedCallIds();
+    }
+    if (event.type === "CALL_CLAIMED" && event.callId != null) {
+      dismissIncomingCallId(event.callId);
+      dismissedRef.current = loadDismissedCallIds();
+    }
     setCalls((prev) =>
-      applyIncomingCallEvent(prev, event, pickedRef.current)
+      applyIncomingCallEvent(
+        prev,
+        event,
+        pickedRef.current,
+        dismissedRef.current,
+      ),
     );
   }, []);
 
@@ -88,8 +107,14 @@ export function useIncomingCallSse({
   }, [enabled, connect, loadCalls]);
 
   useEffect(() => {
+    dismissedRef.current = loadDismissedCallIds();
     setCalls((prev) =>
-      prev.filter((c) => !pickedCallIds.includes(c.callId))
+      applyIncomingCallEvent(
+        prev,
+        { type: "REFRESH", calls: prev },
+        pickedCallIds,
+        dismissedRef.current,
+      ),
     );
   }, [pickedCallIds]);
 

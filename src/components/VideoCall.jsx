@@ -14,6 +14,8 @@ import ConsultationFeedbackModal from "./ConsultationFeedbackModal";
 import { getStoredCallContext } from "../utils/videoCallDisplayInfo";
 import { resolveVideoCallRoomUrl } from "../utils/videoCallRoomUrl";
 import { useVideoCallHeader } from "../hooks/useVideoCallHeader";
+import { dismissIncomingCallId } from "../utils/dismissedIncomingCalls";
+import { clearPatientGpCall } from "../utils/patientGpCall";
 
 function formatHeaderParticipantName(displayInfo) {
   if (!displayInfo) return "Loading...";
@@ -104,7 +106,13 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const hasJoinedRef = useRef(false);
 
   const finishLeaveAndRedirect = (redirectPath) => {
+    const endedCallId =
+      call?.callId ?? call?.id ?? call?.meetingId ?? null;
+    if (endedCallId != null) {
+      dismissIncomingCallId(endedCallId);
+    }
     clearCallPersistence();
+    clearPatientGpCall();
     dispatch(setRoomUrl(null));
     dispatch(setCall(null));
 

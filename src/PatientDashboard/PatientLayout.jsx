@@ -306,6 +306,8 @@ import {
   usePartnerLocations,
 } from "../context/PartnerLocationsContext";
 import { getPatientPartnerSlug } from "../utils";
+import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
+import { parseApiError } from "../utils/parseApiError";
 
 const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
 const LOGO_SRC = "/logo.jpeg";
@@ -388,17 +390,16 @@ export default function PatientLayout() {
     try {
       const response = await axios.post(
         `${baseUrl}/api/v1/video/create-meeting?patientId=${patientId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       const roomUrl = response.data?.roomUrl;
       if (roomUrl) {
-        window.open(roomUrl, "_blank", "noopener,noreferrer");
+        openVideoCallInNewTab(roomUrl);
       }
     } catch (error) {
-      if (error.message === "Network Error") makePaymentToast(error.message);
-      const responseData = error.response?.data;
-      if (responseData?.error) makePaymentToast(responseData.error);
+      makePaymentToast(parseApiError(error, "Failed to start call."));
     }
   };
 
