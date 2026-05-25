@@ -1,16 +1,29 @@
 /** Shared appointment window: join from 5 min before until 45 min after start */
 
+function normalizeAppointmentDate(raw) {
+  if (raw == null || raw === "") return null;
+  if (Array.isArray(raw) && raw.length >= 3) {
+    const [y, m, d] = raw;
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  const s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  return s;
+}
+
 export function getAppointmentDateTime(appointment) {
   if (!appointment) return null;
   if (appointment.startTime) {
-    return new Date(appointment.startTime);
+    const parsed = new Date(appointment.startTime);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
-  if (appointment.date && appointment.time) {
+  const dateStr = normalizeAppointmentDate(appointment.date);
+  if (dateStr && appointment.time) {
+    const timeRaw = String(appointment.time).trim().split(".")[0];
     const time =
-      String(appointment.time).length === 5
-        ? `${appointment.time}:00`
-        : appointment.time;
-    return new Date(`${appointment.date}T${time}`);
+      timeRaw.length === 5 ? `${timeRaw}:00` : timeRaw;
+    const parsed = new Date(`${dateStr}T${time}`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
   return null;
 }

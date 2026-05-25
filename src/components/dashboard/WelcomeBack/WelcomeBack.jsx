@@ -5,7 +5,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setCall, setRoomUrl } from "../../../features/authSlice";
-import { openVideoCallInNewTab } from "../../../utils/videoCallNavigation";
+import { openVideoCallPreferNewTab } from "../../../utils/videoCallNavigation";
 import { useIncomingCallSse } from "../../../hooks/useIncomingCallSse";
 
 function WelcomeBack({ status, onAlertsChange }) {
@@ -114,7 +114,7 @@ function WelcomeBack({ status, onAlertsChange }) {
       }
       if (active?.joinRoomUrl) dispatch(setRoomUrl(active.joinRoomUrl));
       if (active?.call) dispatch(setCall(active.call));
-      openVideoCallInNewTab(active.joinRoomUrl);
+      openVideoCallPreferNewTab(active.joinRoomUrl);
     } catch (_) {
       // fail silently
     }

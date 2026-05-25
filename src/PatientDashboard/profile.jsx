@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { baseUrl } from "../env";
 import { capitalizeFirstLetter, getToken } from "../utils";
+import { normalizeDateOfBirth } from "../utils/normalizeDateOfBirth";
 import "../styling/profile.css";
 import { Box, Modal } from "@mui/material";
 import {
@@ -140,7 +141,10 @@ export default function Profile() {
         ...prev,
         fullName: profile.fullName ?? prev.fullName,
         email: profile.email ?? prev.email,
-        dateOfBirth: profile.dateOfBirth ?? prev.dateOfBirth,
+        dateOfBirth:
+          normalizeDateOfBirth(profile.dateOfBirth) ||
+          normalizeDateOfBirth(prev.dateOfBirth) ||
+          "",
         age: profile.age ?? prev.age,
         weight: profile.weight ?? prev.weight,
         bloodGroup: profile.bloodGroup ?? prev.bloodGroup,

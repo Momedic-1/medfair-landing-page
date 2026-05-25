@@ -9,7 +9,7 @@ import { useDispatch } from "react-redux";
 import { setCall, setRoomUrl } from "../../../features/authSlice";
 import NoCalls from "../../../assets/NoCalls";
 import { getToken } from "../../../utils";
-import { openVideoCallInNewTab } from "../../../utils/videoCallNavigation";
+import { openVideoCallPreferNewTab } from "../../../utils/videoCallNavigation";
 import { useIncomingCallSse } from "../../../hooks/useIncomingCallSse";
 
 const IncomingCall = () => {
@@ -96,12 +96,21 @@ const IncomingCall = () => {
           },
         }
       );
-      const { patientId, joinRoomUrl } = response.data;
+      const { patientId, joinRoomUrl, patientFirstName, patientLastName } =
+        response.data || {};
 
       if (joinRoomUrl) {
+        const enrichedCall = {
+          ...call,
+          patientId: patientId ?? call.patientId,
+          patientFirstName: patientFirstName ?? call.patientFirstName,
+          patientLastName: patientLastName ?? call.patientLastName,
+        };
         dispatch(setRoomUrl(joinRoomUrl));
-        dispatch(setCall(call));
-        localStorage.setItem("patientId", patientId);
+        dispatch(setCall(enrichedCall));
+        if (patientId != null) {
+          localStorage.setItem("patientId", String(patientId));
+        }
         const picked =
           JSON.parse(localStorage.getItem("pickedCalls")) || [];
         if (!picked.includes(callId)) {
@@ -112,15 +121,26 @@ const IncomingCall = () => {
 
         try {
           const expiresAt = Date.now() + 40 * 60 * 1000;
-          const activeCall = { call, joinRoomUrl, patientId, expiresAt };
+          const activeCall = {
+            call: enrichedCall,
+            joinRoomUrl,
+            patientId,
+            patientFirstName: enrichedCall.patientFirstName,
+            patientLastName: enrichedCall.patientLastName,
+            expiresAt,
+          };
           localStorage.setItem("activeCall", JSON.stringify(activeCall));
           setRejoinData(activeCall);
         } catch (_) {
           // ignore storage errors
         }
 
-        openVideoCallInNewTab(joinRoomUrl);
-        toast.success("Call opened in a new tab.");
+        const { usedSameTab } = openVideoCallPreferNewTab(joinRoomUrl);
+        toast.success(
+          usedSameTab
+            ? "Call opened in this tab."
+            : "Call opened in a new tab.",
+        );
       } else {
         toast.error("Another doctor has already joined this call.");
       }
@@ -149,7 +169,7 @@ const IncomingCall = () => {
       }
       dispatch(setRoomUrl(active.joinRoomUrl));
       dispatch(setCall(active.call));
-      openVideoCallInNewTab(active.joinRoomUrl);
+      openVideoCallPreferNewTab(active.joinRoomUrl);
     } catch (_) {
       // fail silently
     }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
 import micOn from "../assets/mic_on_image.png";
 import micOff from "../assets/mic_off_image.png";
@@ -9,20 +9,20 @@ import { MdCallEnd, MdSwapHoriz } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
-import { capitalizeFirstLetter } from "../utils";
 import { setRoomUrl, setCall } from "../features/authSlice";
 import ConsultationFeedbackModal from "./ConsultationFeedbackModal";
+import { getStoredCallContext } from "../utils/videoCallDisplayInfo";
+import { resolveVideoCallRoomUrl } from "../utils/videoCallRoomUrl";
+import { useVideoCallHeader } from "../hooks/useVideoCallHeader";
 
-function getStoredRoomUrl() {
-  try {
-    const activeCall = JSON.parse(localStorage.getItem("activeCall"));
-    if (activeCall?.joinRoomUrl) return activeCall.joinRoomUrl;
-    const activeMeeting = JSON.parse(localStorage.getItem("activeMeeting"));
-    if (activeMeeting?.roomUrl) return activeMeeting.roomUrl;
-  } catch {
-    // ignore
-  }
-  return null;
+function formatHeaderParticipantName(displayInfo) {
+  if (!displayInfo) return "Loading...";
+  if (displayInfo.displayName) return displayInfo.displayName;
+  const full = [displayInfo.firstName, displayInfo.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return full || "Loading...";
 }
 
 function clearCallPersistence() {
@@ -30,6 +30,7 @@ function clearCallPersistence() {
   localStorage.removeItem("activeMeeting");
 }
 
+/** Shell: resolve room URL only — Whereby hooks run in VideoCallRoom. */
 const VideoCall = () => {
   const [userData] = useState(() => {
     try {
@@ -39,6 +40,39 @@ const VideoCall = () => {
     }
   });
 
+  const location = useLocation();
+  const roomUrlFromRedux = useSelector((state) => state.auth.roomUrl);
+  const roomUrl = resolveVideoCallRoomUrl({
+    search: location.search,
+    reduxRoomUrl: roomUrlFromRedux,
+  });
+
+  const callFromRedux = useSelector((state) => state.auth.call);
+  const call = callFromRedux || getStoredCallContext();
+
+  if (!roomUrl) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gray-100">
+        <p className="text-center text-gray-700 px-6">
+          No meeting link found. Close this tab, return to your dashboard, and join
+          again.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <VideoCallRoom
+      roomUrl={roomUrl}
+      userData={userData}
+      call={call}
+      callFromRedux={callFromRedux}
+    />
+  );
+};
+
+/** Whereby session — mounts only when roomUrl is valid. */
+function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -46,24 +80,11 @@ const VideoCall = () => {
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
-  const [displayInfo, setDisplayInfo] = useState(null);
   const [isLocalVideoFullscreen, setIsLocalVideoFullscreen] = useState(true);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(null);
 
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const roomUrlFromQuery = queryParams.get("roomUrl");
-  const roomUrlFromRedux = useSelector((state) => state.auth.roomUrl);
-  const roomUrl = useMemo(
-    () =>
-      roomUrlFromQuery ||
-      roomUrlFromRedux ||
-      getStoredRoomUrl() ||
-      null,
-    [roomUrlFromQuery, roomUrlFromRedux]
-  );
-  const call = useSelector((state) => state.auth.call);
+  const displayInfo = useVideoCallHeader(userData, call);
 
   const roomConnection = useRoomConnection(roomUrl, {
     localMediaOptions: {
@@ -72,32 +93,69 @@ const VideoCall = () => {
     },
   });
 
-  const { actions, state } = roomConnection;
-  const { connectionState, localParticipant, remoteParticipants } = state;
-  const { joinRoom, toggleCamera, toggleMicrophone } = actions;
+  const actions = roomConnection?.actions;
+  const state = roomConnection?.state;
+  const localParticipant = state?.localParticipant;
+  const remoteParticipants = state?.remoteParticipants ?? [];
+  const joinRoom = actions?.joinRoom;
+  const toggleCamera = actions?.toggleCamera;
+  const toggleMicrophone = actions?.toggleMicrophone;
+  const canJoin = Boolean(joinRoom);
+  const hasJoinedRef = useRef(false);
 
-  // Join the room only once
+  const finishLeaveAndRedirect = (redirectPath) => {
+    clearCallPersistence();
+    dispatch(setRoomUrl(null));
+    dispatch(setCall(null));
+
+    if (userData?.role === "PATIENT") {
+      setPendingRedirect(redirectPath);
+      setShowFeedbackModal(true);
+      return;
+    }
+    navigate(redirectPath);
+  };
+
+  const handleFeedbackClose = () => {
+    setShowFeedbackModal(false);
+    if (pendingRedirect) {
+      navigate(pendingRedirect);
+      setPendingRedirect(null);
+    }
+  };
+
   useEffect(() => {
+    if (callFromRedux || !call) return;
+    dispatch(setCall(call));
+  }, [call, callFromRedux, dispatch]);
+
+  useEffect(() => {
+    dispatch(setRoomUrl(roomUrl));
+  }, [roomUrl, dispatch]);
+
+  useEffect(() => {
+    if (!canJoin || hasJoinedRef.current) return undefined;
+    hasJoinedRef.current = true;
     joinRoom();
     return () => {
-      actions.leaveRoom();
+      hasJoinedRef.current = false;
+      actions?.leaveRoom?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [roomUrl, canJoin]);
 
-  // Modify leaveRoom function
   const leaveRoom = async () => {
     try {
-      if (isVideoOn) {
+      if (isVideoOn && toggleCamera) {
         await toggleCamera();
         setIsVideoOn(false);
       }
-      if (isAudioOn) {
+      if (isAudioOn && toggleMicrophone) {
         await toggleMicrophone();
         setIsAudioOn(false);
       }
 
-      await actions.leaveRoom();
+      await actions?.leaveRoom?.();
 
       if (localParticipant?.stream) {
         localParticipant.stream.getTracks().forEach((track) => {
@@ -120,76 +178,18 @@ const VideoCall = () => {
     }
   };
 
-  const calculateAge = (dob) => {
-    if (!dob) return "N/A";
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDifference = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDifference < 0 ||
-      (monthDifference === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-    return age;
-  };
-
-  useEffect(() => {
-    const userRole = userData?.role;
-    if (userRole === "PATIENT" && call) {
-      setDisplayInfo({
-        firstName: capitalizeFirstLetter(call.patientFirstName) || "N/A",
-        // lastName: capitalizeFirstLetter(call.patientLastName) || "N/A",
-        dob: "N/A",
-        age: calculateAge(call.doctorDob),
-      });
-    } else if (userRole === "DOCTOR" && call) {
-      setDisplayInfo({
-        label: "Patient",
-        firstName:
-          capitalizeFirstLetter(call.name) ||
-          capitalizeFirstLetter(call.patientFirstName) ||
-          "N/A",
-        lastName: capitalizeFirstLetter(call.patientLastName) || "",
-        dob: call.dob || userData?.dob || "N/A",
-        age: calculateAge(call.dob || userData?.dob),
-      });
-    } else {
-      setDisplayInfo({
-        label: userRole === "DOCTOR" ? "Patient" : "Doctor",
-        firstName: capitalizeFirstLetter(userData?.firstName) || "N/A",
-        lastName: capitalizeFirstLetter(userData?.lastName) || "N/A",
-        dob: userData?.dob || "N/A",
-        age: calculateAge(userData?.dob),
-      });
-    }
-  }, [call, userData]);
-
   const handleToggleAudio = () => {
-    toggleMicrophone();
+    toggleMicrophone?.();
     setIsAudioOn((prev) => !prev);
   };
 
   const handleToggleVideo = () => {
-    toggleCamera();
+    toggleCamera?.();
     setIsVideoOn((prev) => !prev);
   };
 
   const getDisplayName = (id) => {
     return remoteParticipants.find((p) => p.id === id)?.displayName || "Guest";
-  };
-
-  const takeNote = () => {
-    setIsNoteModalOpen(true);
-  };
-
-  const handleNoteModalClose = () => {
-    setIsNoteModalOpen(false);
-  };
-
-  const handleNoteAdded = () => {
-    setIsNoteModalOpen(false);
   };
 
   const handleShareLink = async () => {
@@ -201,18 +201,6 @@ const VideoCall = () => {
       console.error("Failed to copy:", err);
     }
   };
-
-  const toggleVideoView = () => {
-    setIsLocalVideoFullscreen((prev) => !prev);
-  };
-
-  if (!roomUrl) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-gray-700">Loading call...</p>
-      </div>
-    );
-  }
 
   const feedbackCallId =
     call?.callId ?? call?.id ?? call?.meetingId ?? null;
@@ -227,24 +215,25 @@ const VideoCall = () => {
       />
       <div className="bg-black h-16 md:h-20 flex flex-col md:flex-row items-start md:items-center justify-start md:justify-between text-white px-2 py-1 md:px-5 md:py-0 space-y-1 md:space-y-0">
         <p className="text-xs sm:text-sm md:text-base">
-          <span className="font-bold">Patient: </span>
-          {displayInfo
-            ? displayInfo.lastName
-              ? `${displayInfo.firstName} ${displayInfo.lastName}`
-              : displayInfo.firstName
-            : "Loading..."}
-          {/* {displayInfo
-            ? `${displayInfo.firstName} ${displayInfo.lastName}`
-            : "Loading..."} */}
+          <span className="font-bold">
+            {displayInfo?.label ||
+              (userData?.role === "DOCTOR" ? "Patient" : "Doctor")}
+            :{" "}
+          </span>
+          {formatHeaderParticipantName(displayInfo)}
         </p>
-        <p className="text-xs sm:text-sm md:text-base">
-          <span className="font-bold">DOB: </span>
-          {displayInfo ? displayInfo.dob : "Loading..."}
-        </p>
-        <p className="text-xs sm:text-sm md:text-base">
-          <span className="font-bold">Age: </span>
-          {displayInfo ? displayInfo.age : "Loading..."}
-        </p>
+        {displayInfo?.showDob && (
+          <p className="text-xs sm:text-sm md:text-base">
+            <span className="font-bold">DOB: </span>
+            {displayInfo.dob ?? "N/A"}
+          </p>
+        )}
+        {displayInfo?.showAge && (
+          <p className="text-xs sm:text-sm md:text-base">
+            <span className="font-bold">Age: </span>
+            {displayInfo.age ?? "N/A"}
+          </p>
+        )}
       </div>
 
       <div className="relative flex-1 w-full">
@@ -256,7 +245,13 @@ const VideoCall = () => {
                 stream={localParticipant.stream}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
-            ) : null
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gray-900">
+                <p className="px-4 text-center text-sm text-gray-300">
+                  Connecting… Allow camera and microphone when prompted.
+                </p>
+              </div>
+            )
           ) : (
             remoteParticipants.map((participant) => {
               if (!participant.stream) return null;
@@ -303,6 +298,7 @@ const VideoCall = () => {
                   <p className="text-gray-300 text-xs break-all">{roomUrl}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={handleShareLink}
                   className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
                 >
@@ -333,7 +329,8 @@ const VideoCall = () => {
 
         {remoteParticipants.length > 0 && (
           <button
-            onClick={toggleVideoView}
+            type="button"
+            onClick={() => setIsLocalVideoFullscreen((prev) => !prev)}
             className="absolute top-2 left-2 z-20 bg-gray-800/70 hover:bg-gray-700 text-white rounded-full p-2 transition-colors"
             title="Switch view"
           >
@@ -343,21 +340,18 @@ const VideoCall = () => {
       </div>
 
       <div className="absolute bottom-0 w-full py-4 flex justify-center items-center gap-4 md:gap-8 bg-black/30">
-        <div
+        <button
+          type="button"
           className={`rounded-full p-3 cursor-pointer ${
             isAudioOn ? "bg-gray-400" : "bg-red-500"
           } text-white`}
           onClick={handleToggleAudio}
         >
-          <img
-            src={isAudioOn ? micOn : micOff}
-            alt="mic"
-            height={25}
-            width={25}
-          />
-        </div>
+          <img src={isAudioOn ? micOn : micOff} alt="mic" height={25} width={25} />
+        </button>
 
-        <div
+        <button
+          type="button"
           className={`rounded-full p-3 cursor-pointer ${
             isVideoOn ? "bg-gray-400" : "bg-red-500"
           } text-white`}
@@ -369,239 +363,34 @@ const VideoCall = () => {
             height={25}
             width={25}
           />
-        </div>
+        </button>
 
         {userData?.role === "DOCTOR" && (
-          <div
+          <button
+            type="button"
             className="rounded-full p-3 bg-gray-400 cursor-pointer"
-            onClick={takeNote}
+            onClick={() => setIsNoteModalOpen(true)}
           >
             <img src={note} alt="note" height={25} width={25} />
-          </div>
+          </button>
         )}
 
-        <div
+        <button
+          type="button"
           className="rounded-full p-3 bg-red-500 cursor-pointer"
           onClick={leaveRoom}
         >
           <MdCallEnd width={25} height={25} className="text-white" />
-        </div>
+        </button>
       </div>
 
       <AddNoteModal
         isOpen={isNoteModalOpen}
-        onClose={handleNoteModalClose}
-        onNoteAdded={handleNoteAdded}
+        onClose={() => setIsNoteModalOpen(false)}
+        onNoteAdded={() => setIsNoteModalOpen(false)}
       />
     </div>
   );
 };
 
 export default VideoCall;
-
-// import React, { useEffect, useState } from 'react';
-// import { VideoView, useRoomConnection } from "@whereby.com/browser-sdk/react";
-// import micOn from "../assets/mic_on_image.png";
-// import micOff from "../assets/mic_off_image.png";
-// import videoOn from "../assets/video-camera_on.png";
-// import videoOff from "../assets/video-camera_off.png";
-// import note from "../assets/call_note.png";
-// import { MdCallEnd } from "react-icons/md";
-// import { useNavigate } from "react-router-dom";
-// import AddNoteModal from "../pages/AddNote";
-// import { useSelector } from 'react-redux';
-// import { capitalizeFirstLetter } from '../utils';
-
-// const VideoCall = () => {
-//   const userData = JSON.parse(localStorage.getItem('userData'));
-//   const navigate = useNavigate();
-
-//   const [isAudioOn, setIsAudioOn] = useState(true);
-//   const [isVideoOn, setIsVideoOn] = useState(true);
-//   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-//   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-//   const roomUrl = useSelector((state) => state.auth.roomUrl);
-//   const call = useSelector((state) => state.auth.call);
-
-//   const roomConnection = useRoomConnection(roomUrl, {
-//     localMediaOptions: {
-//       audio: true,
-//       video: true,
-//     },
-//   });
-
-//   const { actions, state } = roomConnection;
-//   const { connectionState, localParticipant, remoteParticipants } = state;
-//   const { joinRoom, toggleCamera, toggleMicrophone } = actions;
-
-//   // Handle window resize for responsive layout
-//   useEffect(() => {
-//     const handleResize = () => {
-//       setIsMobile(window.innerWidth < 768);
-//     };
-
-//     window.addEventListener('resize', handleResize);
-//     return () => window.removeEventListener('resize', handleResize);
-//   }, []);
-
-//   useEffect(() => {
-//     joinRoom();
-
-//     return () => {
-//       if (connectionState === "connected") {
-//         actions.leaveRoom();
-//       }
-//     };
-//   }, [joinRoom, connectionState, actions]);
-
-//   const leaveRoom = () => {
-//     actions.leaveRoom();
-//     navigate("/doctor-dashboard");
-//   };
-
-//   const firstName = capitalizeFirstLetter(call?.patientFirstName) || "N/A";
-//   const lastName = capitalizeFirstLetter(call?.patientLastName) || "N/A";
-//   const dob = userData?.dob || "N/A";
-
-//   const calculateAge = (dob) => {
-//     if (!dob) return "N/A";
-//     const birthDate = new Date(dob);
-//     const today = new Date();
-//     let age = today.getFullYear() - birthDate.getFullYear();
-//     const monthDifference = today.getMonth() - birthDate.getMonth();
-//     if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-//       age--;
-//     }
-//     return age;
-//   };
-
-//   const age = calculateAge(dob);
-
-//   const handleToggleAudio = () => {
-//     toggleMicrophone();
-//     setIsAudioOn((prev) => !prev);
-//   };
-
-//   const handleToggleVideo = () => {
-//     toggleCamera();
-//     setIsVideoOn((prev) => !prev);
-//   };
-
-//   const takeNote = () => {
-//     setIsNoteModalOpen(true);
-//   };
-
-//   const handleNoteModalClose = () => {
-//     setIsNoteModalOpen(false);
-//   };
-
-//   const handleNoteAdded = () => {
-//     setIsNoteModalOpen(false);
-//   };
-
-//   // Get the first remote participant (usually the patient)
-//   const mainRemoteParticipant = remoteParticipants.length > 0 ? remoteParticipants[0] : null;
-
-//   return (
-//     <div className="flex flex-col h-screen overflow-hidden">
-//       {/* Header with patient info */}
-//       <div className="bg-black h-16 md:h-20 flex flex-wrap md:flex-nowrap items-center justify-between text-white px-3 md:px-5 z-10">
-//         <p className="text-sm md:text-base"><span className="font-bold">Patient:</span> {`${firstName} ${lastName}`}</p>
-//         <p className="text-sm md:text-base"><span className="font-bold">DOB:</span> {dob}</p>
-//         <p className="text-sm md:text-base"><span className="font-bold">Age:</span> {age}</p>
-//       </div>
-
-//       {/* Main video content area */}
-//       <div className="relative flex-grow w-full bg-gray-900">
-//         {/* Remote participant (patient) - Takes up most of the screen */}
-//         <div className="absolute inset-0">
-//           {
-//           // mainRemoteParticipant && mainRemoteParticipant.stream ? (
-//           //   <VideoView
-//           //     stream={mainRemoteParticipant.stream}
-//           //     className="w-full h-full object-cover"
-//           //   />
-//           // ) : (
-//           //   <div className="w-full h-full flex items-center justify-center">
-//           //     <p className="text-blue-600 text-lg">Waiting for patient to join...</p>
-//           //   </div>
-//           // )
-//           remoteParticipants.map((friend) => {
-//               if(!friend.stream) return null;
-//                 return (
-
-//                     <VideoView stream={friend?.stream}  className="w-full h-full object-cover" key={friend.id}/>
-
-//                 )
-//             })
-//           }
-//         </div>
-
-//         {/* Local participant (doctor) - Positioned differently based on screen size */}
-//         {localParticipant?.stream && (
-//           <div className={`
-//             ${isMobile
-//               ? "absolute bottom-28 right-4 w-1/3 h-1/4 max-h-36"
-//               : "absolute top-6 right-6 w-1/4 h-1/4 max-w-xs max-h-48"
-//             }
-//             rounded-lg overflow-hidden shadow-lg z-20
-//           `}>
-//             <VideoView
-//               muted
-//               stream={localParticipant.stream}
-//               className="w-full h-full object-cover"
-//             />
-//             <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-white text-xs">
-//               You
-//             </div>
-//           </div>
-//         )}
-
-//         {/* Control buttons */}
-//         <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-3 md:gap-6 z-30">
-//           <button
-//             className={`rounded-full p-3 md:p-4 ${isAudioOn ? "bg-gray-700 hover:bg-gray-600" : "bg-red-500 hover:bg-red-600"} transition-colors`}
-//             onClick={handleToggleAudio}
-//             aria-label={isAudioOn ? "Mute microphone" : "Unmute microphone"}
-//           >
-//             <img src={isAudioOn ? micOn : micOff} alt={isAudioOn ? 'Mic on' : 'Mic off'} className="h-5 w-5 md:h-6 md:w-6" />
-//           </button>
-
-//           <button
-//             className={`rounded-full p-3 md:p-4 ${isVideoOn ? "bg-gray-700 hover:bg-gray-600" : "bg-red-500 hover:bg-red-600"} transition-colors`}
-//             onClick={handleToggleVideo}
-//             aria-label={isVideoOn ? "Turn off camera" : "Turn on camera"}
-//           >
-//             <img src={isVideoOn ? videoOn : videoOff} alt={isVideoOn ? 'Video on' : 'Video off'} className="h-5 w-5 md:h-6 md:w-6" />
-//           </button>
-
-//           <button
-//             className="rounded-full p-3 md:p-4 bg-gray-700 hover:bg-gray-600 transition-colors"
-//             onClick={takeNote}
-//             aria-label="Take note"
-//           >
-//             <img src={note} alt='Take note' className="h-5 w-5 md:h-6 md:w-6" />
-//           </button>
-
-//           <button
-//             className="rounded-full p-3 md:p-4 bg-red-500 hover:bg-red-600 transition-colors"
-//             onClick={leaveRoom}
-//             aria-label="End call"
-//           >
-//             <MdCallEnd className="h-5 w-5 md:h-6 md:w-6 text-white" />
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Note Modal */}
-//       <AddNoteModal
-//         isOpen={isNoteModalOpen}
-//         onClose={handleNoteModalClose}
-//         onNoteAdded={handleNoteAdded}
-//       />
-//     </div>
-//   );
-// };
-
-// export default VideoCall;

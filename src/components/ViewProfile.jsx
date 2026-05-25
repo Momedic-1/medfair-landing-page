@@ -5,6 +5,11 @@ import { toast, ToastContainer } from "react-toastify";
 import Select from "react-select";
 import { baseUrl } from "../env";
 import { getToken, getUserData } from "../utils";
+import {
+  getDoctorProfileData,
+  getMissingFieldsFromData,
+} from "../utils/doctorProfileComplete";
+import { resolveDoctorGender } from "../utils/doctorGender";
 
 const ViewProfile = () => {
   const token = getToken();
@@ -53,7 +58,6 @@ const ViewProfile = () => {
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
-    dateOfBirth: "",
     imageUrl: "",
     medicalSpecialization: null,
     title: "",
@@ -98,19 +102,20 @@ const ViewProfile = () => {
 
   const applyApiProfileToState = (data, prevState = {}) => {
     const raw = data?.data ?? data;
-    const dateOfBirth = raw?.dateOfBirth
-      ? new Date(raw.dateOfBirth).toISOString().split("T")[0]
-      : (prevState.dateOfBirth ?? "");
+    const gender =
+      resolveDoctorGender(raw) ||
+      resolveDoctorGender(getUserData()) ||
+      resolveDoctorGender(prevState) ||
+      "";
     return {
       ...prevState,
       firstName: raw?.firstName ?? prevState.firstName ?? "",
       lastName: raw?.lastName ?? prevState.lastName ?? "",
       medicalSpecialization:
         raw?.medicalSpecialization ?? prevState.medicalSpecialization ?? "",
-      dateOfBirth,
       imageUrl: raw?.imageUrl ?? prevState.imageUrl ?? "",
       title: raw?.title ?? prevState.title ?? "",
-      gender: raw?.gender ?? prevState.gender ?? "",
+      gender,
       languages: normalizeLanguages(raw?.languages ?? prevState.languages),
       qualifications: normalizeQualifications(
         raw?.qualifications ?? prevState.qualifications,
@@ -138,7 +143,24 @@ const ViewProfile = () => {
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (!cancelled && response?.data) {
-          setProfileData((prev) => applyApiProfileToState(response.data, prev));
+          setProfileData((prev) => {
+            const next = applyApiProfileToState(response.data, prev);
+            return next;
+          });
+          const flat = getDoctorProfileData(response.data);
+          if (!resolveDoctorGender(flat) && !cancelled) {
+            try {
+              const infoRes = await axios.get(
+                `${baseUrl}/api/v1/doctor-profile/profile-info`,
+                { headers: { Authorization: `Bearer ${token}` } },
+              );
+              if (!cancelled && infoRes?.data) {
+                setProfileData((prev) =>
+                  applyApiProfileToState(infoRes.data, prev),
+                );
+              }
+            } catch (_) {}
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -156,14 +178,25 @@ const ViewProfile = () => {
   }, [token]);
 
   const fetchProfileData = () => {
-    const profile = localStorage.getItem("doctorProfile");
-    if (profile == null) return;
-    try {
-      const parsed = JSON.parse(profile);
-      if (parsed) {
-        setProfileData((prev) => applyApiProfileToState(parsed, prev));
-      }
-    } catch (_) {}
+    const sources = [
+      localStorage.getItem("doctorProfile"),
+      localStorage.getItem("DoctorsProfile"),
+    ];
+    for (const stored of sources) {
+      if (stored == null) continue;
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed) {
+          setProfileData((prev) =>
+            applyApiProfileToState(
+              parsed?.data != null ? parsed : { data: parsed },
+              prev,
+            ),
+          );
+          return;
+        }
+      } catch (_) {}
+    }
   };
 
   const handleChange = (e) => {
@@ -231,6 +264,26 @@ const ViewProfile = () => {
     }));
   };
 
+  const persistProfileCache = (apiPayload) => {
+    const flat = getDoctorProfileData(apiPayload);
+    if (flat) {
+      localStorage.setItem("doctorProfile", JSON.stringify({ data: flat }));
+    }
+  };
+
+  const refetchProfile = async (doctorId) => {
+    const response = await axios.get(
+      `${baseUrl}/api/v1/doctor-profile/profile-full/${doctorId}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (response?.data) {
+      setProfileData((prev) => applyApiProfileToState(response.data, prev));
+      persistProfileCache(response.data);
+      return response.data;
+    }
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -240,15 +293,21 @@ const ViewProfile = () => {
         qualifications: profileData.qualifications
           .map((q) => q.value)
           .join(", "),
-        // medicalSpecialization: profileData.medicalSpecialization?.value || '',
         languages: profileData.languages.map((l) => l.value).join(", "),
       };
-      console.log(submitData);
       await axios.put(`${baseUrl}/api/v1/doctor-profile/profile`, submitData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      const userData = getUserData();
+      if (userData?.id) {
+        await refetchProfile(userData.id);
+      } else {
+        persistProfileCache({ data: submitData });
+      }
+
       toast.success("Profile updated successfully");
       navigate("/doctor-dashboard", { state: { profileUpdated: true } });
     } catch (error) {
@@ -267,12 +326,16 @@ const ViewProfile = () => {
     );
   }
 
+  const missingFields = getMissingFieldsFromData(profileData);
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold text-[#020E7C] mb-6">Doctor Profile</h1>
-      <p className="font-bold text-[#020E7C] mb-6">
-        Please complete your profile
-      </p>
+      {missingFields.length > 0 && (
+        <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+          Please complete: {missingFields.join(", ")}
+        </p>
+      )}
       <form
         onSubmit={handleSubmit}
         className="space-y-6 p-8 border rounded-lg shadow-md bg-white"
@@ -322,19 +385,6 @@ const ViewProfile = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border "
               required
               readOnly
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Date of Birth
-            </label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={profileData.dateOfBirth}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border"
-              required
             />
           </div>
           <div>

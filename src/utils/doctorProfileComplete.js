@@ -22,13 +22,16 @@ export function getDoctorProfileData(apiResponse) {
   return apiResponse.data ?? apiResponse;
 }
 
-export function getMissingProfileFields(apiResponse) {
-  const data = getDoctorProfileData(apiResponse);
+export function getMissingFieldsFromData(data) {
   if (!data) return REQUIRED_PROFILE_FIELDS.map((f) => f.label);
 
-  return REQUIRED_PROFILE_FIELDS.filter(({ key }) => !isFilled(data[key])).map(
-    (f) => f.label
-  );
+  return REQUIRED_PROFILE_FIELDS.filter(
+    ({ key }) => !isFilled(data[key]),
+  ).map((f) => f.label);
+}
+
+export function getMissingProfileFields(apiResponse) {
+  return getMissingFieldsFromData(getDoctorProfileData(apiResponse));
 }
 
 export function isDoctorProfileComplete(apiResponse) {
