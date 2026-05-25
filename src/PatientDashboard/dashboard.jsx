@@ -18,6 +18,11 @@ import {
   nowInBookingZone,
   slotWithDate,
 } from "../utils/slotDateTime";
+import { normalizeSpecialistSlotGroups } from "../utils/normalizeSpecialistSlots";
+import {
+  enrichSpecialistWithSlots,
+  flattenSpecialistsFromApi,
+} from "../utils/fetchDoctorForPatient";
 import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
 import {
   joinScheduledAppointment,
@@ -36,7 +41,8 @@ const localizer = dayjsLocalizer(dayjs);
 
 // Custom calendar styles
 const calendarStyle = {
-  height: 400,
+  height: 520,
+  minHeight: 480,
   fontFamily: "system-ui, -apple-system, sans-serif",
   fontSize: "14px",
   backgroundColor: "#ffffff",
@@ -171,28 +177,33 @@ const Dashboard = () => {
 
   // Custom calendar components
   const CustomEvent = ({ event }) => (
-    <div className="text-xs font-medium truncate">
-      <div className="font-semibold">Dr. {event.doctorName}</div>
-      <div className="text-xs opacity-90">{event.time}</div>
+    <div className="text-[11px] font-medium leading-snug">
+      <div className="font-semibold line-clamp-2">Dr. {event.doctorName}</div>
+      <div className="mt-0.5 opacity-90">{event.time}</div>
     </div>
   );
 
   // Transform appointments to calendar events
   const transformAppointmentsToEvents = (appointments) => {
-    return appointments.map((appointment) => {
-      const startDate = new Date(`${appointment.date}T${appointment.time}`);
-      const endDate = new Date(startDate.getTime() + 30 * 60000); // 30 minutes duration
+    return (appointments || [])
+      .map((appointment) => {
+        const startDate = getAppointmentDateTime(appointment);
+        if (!startDate || Number.isNaN(startDate.getTime())) return null;
 
-      return {
-        id: appointment.slotId || appointment.id,
-        title: `Dr. ${appointment.name}`,
-        start: startDate,
-        end: endDate,
-        doctorName: appointment.name,
-        time: formatTime(appointment.time),
-        resource: appointment,
-      };
-    });
+        const endDate = new Date(startDate.getTime() + 30 * 60000);
+        const doctorLabel = appointment.name || "Specialist";
+
+        return {
+          id: appointment.slotId || appointment.id,
+          title: `Dr. ${doctorLabel}`,
+          start: startDate,
+          end: endDate,
+          doctorName: doctorLabel,
+          time: formatTime(appointment.time),
+          resource: appointment,
+        };
+      })
+      .filter(Boolean);
   };
 
   // Handle calendar event click
@@ -311,15 +322,43 @@ const Dashboard = () => {
 
     setJoiningSlotId(slotId);
     try {
-      const { meetingUrl } = await joinScheduledAppointment({
+      const callPayload =
+        typeof appointment === "object"
+          ? { ...appointment, slotId }
+          : { slotId };
+
+      const { meetingUrl, opened, blocked } = await joinScheduledAppointment({
         slotId,
         userId,
         token,
-        call: typeof appointment === "object" ? appointment : { slotId },
+        call: callPayload,
         patientIdForStorage: patientId,
       });
       setVideoMeetingUrl(meetingUrl);
-      toast.success("Opening your consultation in a new tab.");
+
+      try {
+        localStorage.setItem(
+          "activeCall",
+          JSON.stringify({
+            call: callPayload,
+            joinRoomUrl: meetingUrl,
+            patientId,
+            expiresAt: Date.now() + 40 * 60 * 1000,
+          })
+        );
+      } catch {
+        // ignore
+      }
+      const stored = loadActiveMeetingFromStorage();
+      if (stored) setActiveMeeting(stored);
+
+      if (blocked) {
+        toast.warn(
+          "Allow pop-ups for this site, then click Join again. Your dashboard will stay here."
+        );
+      } else if (opened) {
+        toast.success("Video call opened in a new tab — you can stay on this page.");
+      }
     } catch (error) {
       console.error("Join call error:", error);
       toast.error(parseJoinError(error));
@@ -465,19 +504,22 @@ const Dashboard = () => {
   };
 
   const sortSlotsByTime = (specialists) => {
-    return specialists.map((specialist) => ({
-      ...specialist,
-      slotGroups: specialist.slotGroups?.map((slotGroup) => ({
-        ...slotGroup,
-        slots: slotGroup.slots
-          ?.map((s) => slotWithDate(s, slotGroup.date))
-          ?.sort((a, b) => {
-            const timeA = dayjs(`${a.date}T${a.time}`);
-            const timeB = dayjs(`${b.date}T${b.time}`);
-            return timeA.isBefore(timeB) ? -1 : timeA.isAfter(timeB) ? 1 : 0;
-          }),
-      })),
-    }));
+    return specialists.map((specialist) => {
+      const withGroups = normalizeSpecialistSlotGroups(specialist);
+      return {
+        ...withGroups,
+        slotGroups: withGroups.slotGroups?.map((slotGroup) => ({
+          ...slotGroup,
+          slots: slotGroup.slots
+            ?.map((s) => slotWithDate(s, slotGroup.date))
+            ?.sort((a, b) => {
+              const timeA = dayjs(`${a.date}T${a.time}`);
+              const timeB = dayjs(`${b.date}T${b.time}`);
+              return timeA.isBefore(timeB) ? -1 : timeA.isAfter(timeB) ? 1 : 0;
+            }),
+        })),
+      };
+    });
   };
 
   const getSpecialistsDetails = async (categoryName) => {
@@ -493,11 +535,15 @@ const Dashboard = () => {
           },
         }
       );
-      const parsedResponse = response?.data || {};
-      const specialists = Object.values(parsedResponse).flat();
+      const specialists = flattenSpecialistsFromApi(response?.data);
 
-      const sortedSpecialists = sortSlotsByTime(specialists);
-      setSpecialistDetails(sortedSpecialists);
+      const enriched = await Promise.all(
+        specialists.map((spec) =>
+          enrichSpecialistWithSlots(spec, transformedName, token)
+        )
+      );
+
+      setSpecialistDetails(sortSlotsByTime(enriched));
     } catch (error) {
       toast.error("Could not load specialists. Please try again.");
     } finally {
@@ -590,7 +636,12 @@ const Dashboard = () => {
 
           if (response.data?.roomUrl) {
             saveActiveMeetingToStorage(response.data.roomUrl, 40);
-            openVideoCallInNewTab(response.data.roomUrl);
+            const { blocked } = openVideoCallInNewTab(response.data.roomUrl);
+            if (blocked) {
+              toast.warn(
+                "Allow pop-ups to open the call in a new tab. This page will stay on your dashboard."
+              );
+            }
             toast.success("Call opened in a new tab.");
           }
           setIsCallADoctorModalOpen(false);
@@ -867,14 +918,28 @@ const Dashboard = () => {
         .rbc-date-cell + .rbc-date-cell {
           border-left: 1px solid #f3f4f6;
         }
+        .rbc-month-view .rbc-row-content {
+          min-height: 88px;
+        }
+        .rbc-month-view .rbc-date-cell {
+          min-height: 72px;
+          vertical-align: top;
+        }
         .rbc-event {
-          border-radius: 4px;
+          border-radius: 6px;
           font-size: 11px;
-          line-height: 1.2;
-          margin: 1px 0;
-          padding: 2px 4px;
+          line-height: 1.35;
+          margin: 2px 1px;
+          padding: 4px 6px;
+          min-height: 40px;
           cursor: pointer;
           transition: all 0.2s ease;
+          overflow: visible !important;
+          white-space: normal !important;
+        }
+        .rbc-event-content {
+          white-space: normal !important;
+          overflow: visible !important;
         }
         .rbc-event:hover {
           transform: translateY(-1px);

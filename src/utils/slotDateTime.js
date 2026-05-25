@@ -70,6 +70,15 @@ export function isSlotBookedFromApi(slot, isSlotBookedFn) {
 
 export function isTodayInBookingZone(dateStr) {
   if (!dateStr) return false;
+  const s = String(dateStr).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    return s.slice(0, 10) === nowInBookingZone().format("YYYY-MM-DD");
+  }
+  if (Array.isArray(dateStr) && dateStr.length >= 3) {
+    const [y, m, d] = dateStr;
+    const normalized = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    return normalized === nowInBookingZone().format("YYYY-MM-DD");
+  }
   return dayjs.tz(dateStr, BOOKING_TIMEZONE).isSame(nowInBookingZone(), "day");
 }
 

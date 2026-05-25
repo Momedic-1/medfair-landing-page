@@ -17,7 +17,16 @@ import DoctorAvatar, {
   getDoctorDisplayName,
 } from "./DoctorAvatar";
 import DoctorSlotsByDate from "../../components/doctor/DoctorSlotsByDate";
-import { bookingModalSx, specialistsModalSx } from "./bookingModalStyles";
+import TodaySlotsPreview, {
+  countFutureDays,
+} from "../../components/doctor/TodaySlotsPreview";
+import { getDoctorSubtitleForBookingCard } from "../../utils/doctorDisplayMeta";
+import { normalizeSpecialistSlotGroups } from "../../utils/normalizeSpecialistSlots";
+import {
+  bookingModalSx,
+  specialistsModalBodySx,
+  specialistsModalSx,
+} from "./bookingModalStyles";
 
 function CategoryCard({ category, onSelect }) {
   const isGp = category.specialization === "GENERAL_PRACTITIONER";
@@ -71,7 +80,9 @@ function SpecialistCard({
   selectedCategoryName,
 }) {
   const navigate = useNavigate();
-  const profile = specialist?.doctorProfile;
+  const normalized = normalizeSpecialistSlotGroups(specialist);
+  const profile = normalized?.doctorProfile;
+  const slotGroups = normalized?.slotGroups ?? [];
   const [, setClockTick] = useState(0);
 
   useEffect(() => {
@@ -86,58 +97,116 @@ function SpecialistCard({
     });
   };
 
+  const subtitle = getDoctorSubtitleForBookingCard(profile);
+  const upcomingDays = countFutureDays(slotGroups);
+  const totalSlots = slotGroups.reduce(
+    (n, g) => n + (g.slots?.length || 0),
+    0
+  );
+
   return (
     <article className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-gray-50 bg-gradient-to-b from-slate-50/80 to-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-        <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-          <button type="button" onClick={viewProfile} className="shrink-0 rounded-full ring-offset-2 hover:ring-2 hover:ring-[#020e7c]/30">
-            <DoctorAvatar profile={profile} size="lg" />
+      <div className="flex flex-col gap-4 bg-gradient-to-b from-slate-50/80 to-white p-4 sm:flex-row sm:items-start sm:p-5">
+        <button
+          type="button"
+          onClick={viewProfile}
+          className="mx-auto shrink-0 rounded-full ring-offset-2 hover:ring-2 hover:ring-[#020e7c]/30 sm:mx-0"
+        >
+          <DoctorAvatar profile={profile} size="lg" />
+        </button>
+        <div className="min-w-0 flex-1 text-center sm:text-left">
+          <button
+            type="button"
+            onClick={viewProfile}
+            className="group inline-flex items-center gap-1.5 text-left"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 transition group-hover:text-[#020e7c] sm:text-xl">
+              {getDoctorDisplayName(profile)}
+            </h3>
+            <ExternalLink
+              className="h-4 w-4 shrink-0 text-gray-400 opacity-0 transition group-hover:opacity-100 group-hover:text-[#020e7c]"
+              aria-hidden
+            />
           </button>
-          <div className="text-center sm:text-left">
+          <p className="mt-0.5 text-xs text-[#020e7c]">
             <button
               type="button"
               onClick={viewProfile}
-              className="group inline-flex items-center gap-1.5 text-left"
+              className="font-medium hover:underline"
             >
-              <h3 className="text-lg font-semibold text-gray-900 transition group-hover:text-[#020e7c] sm:text-xl">
-                {getDoctorDisplayName(profile)}
-              </h3>
-              <ExternalLink className="h-4 w-4 shrink-0 text-gray-400 opacity-0 transition group-hover:opacity-100 group-hover:text-[#020e7c]" aria-hidden />
+              View full profile &amp; slots
             </button>
-            <p className="mt-0.5 text-xs text-[#020e7c]">
-              <button type="button" onClick={viewProfile} className="font-medium hover:underline">
-                View full profile &amp; slots
-              </button>
-            </p>
-            {(profile?.practiceName || profile?.qualifications) && (
-              <p className="mt-1 text-sm text-gray-600">
-                {[profile?.practiceName, profile?.qualifications]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-            )}
-            {profile?.medicalSpecialization && (
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
-                <PiStethoscope className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                {formatSpecialization(profile.medicalSpecialization)}
-              </div>
-            )}
-          </div>
+          </p>
+          {subtitle && (
+            <p className="mt-1 text-sm text-gray-600">{subtitle}</p>
+          )}
+          {profile?.medicalSpecialization && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+              <PiStethoscope className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {formatSpecialization(profile.medicalSpecialization)}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="p-4 sm:p-5">
-        <h4 className="mb-1 text-sm font-semibold text-gray-700">Available times</h4>
-        <p className="mb-3 text-xs text-gray-500">Grouped by day — scroll each row on small screens</p>
-        <DoctorSlotsByDate
-          slotGroups={specialist.slotGroups}
+      <div className="border-t border-gray-100 px-4 py-4 sm:px-5">
+        <TodaySlotsPreview
+          slotGroups={slotGroups}
           isSlotBooked={isSlotBooked}
           isSlotExpired={isSlotExpired ?? isSlotDateTimeExpired}
           onSlotClick={(e, slot) =>
-            onSlotClick(e, specialist, `${slot.date}T${slot.time}`, slot.slotId)
+            onSlotClick(
+              e,
+              normalized,
+              `${slot.date}T${slot.time}`,
+              slot.slotId
+            )
           }
+          onViewProfile={viewProfile}
         />
       </div>
+
+      {(upcomingDays > 0 || totalSlots > 0) && (
+      <div className="border-t border-gray-50 p-4 sm:p-5">
+        {upcomingDays > 0 && (
+          <>
+            <h4 className="mb-2 text-sm font-semibold text-gray-700">
+              Upcoming dates
+            </h4>
+            <DoctorSlotsByDate
+              slotGroups={slotGroups}
+              excludeToday
+              isSlotBooked={isSlotBooked}
+              isSlotExpired={isSlotExpired ?? isSlotDateTimeExpired}
+              onSlotClick={(e, slot) =>
+                onSlotClick(
+                  e,
+                  normalized,
+                  `${slot.date}T${slot.time}`,
+                  slot.slotId
+                )
+              }
+              emptyMessage=""
+            />
+          </>
+        )}
+      </div>
+      )}
+
+      {totalSlots === 0 && (
+      <div className="border-t border-gray-50 px-4 pb-4 sm:px-5 sm:pb-5">
+        <p className="text-center text-sm text-gray-500">
+          No open slots —{" "}
+          <button
+            type="button"
+            onClick={viewProfile}
+            className="font-medium text-[#020e7c] hover:underline"
+          >
+            check profile
+          </button>
+        </p>
+      </div>
+      )}
     </article>
   );
 }
@@ -207,15 +276,17 @@ export default function PatientBookingModals({
               <X className="h-5 w-5" />
             </button>
           </div>
-          <div className="flex flex-col gap-3 overflow-y-auto p-4 sm:gap-4 sm:p-5">
-            {specialistCategories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                category={category}
-                onSelect={onCategoryClick}
-              />
-            ))}
-          </div>
+          <Box sx={{ ...specialistsModalBodySx, p: { xs: 2, sm: 2.5 } }}>
+            <div className="flex flex-col gap-3 sm:gap-4">
+              {specialistCategories.map((category) => (
+                <CategoryCard
+                  key={category.id}
+                  category={category}
+                  onSelect={onCategoryClick}
+                />
+              ))}
+            </div>
+          </Box>
         </Box>
       </Modal>
 
@@ -258,7 +329,14 @@ export default function PatientBookingModals({
             )}
           </div>
 
-          <div className="flex flex-col gap-4 overflow-y-auto p-4 sm:p-5">
+          <Box
+            sx={{
+              ...specialistsModalBodySx,
+              px: { xs: 2, sm: 2.5 },
+              py: { xs: 2, sm: 2.5 },
+            }}
+          >
+            <div className="flex flex-col gap-4">
             {isLoading ? (
               Array(3)
                 .fill(0)
@@ -293,7 +371,8 @@ export default function PatientBookingModals({
                 </p>
               </div>
             )}
-          </div>
+            </div>
+          </Box>
         </Box>
       </Modal>
 

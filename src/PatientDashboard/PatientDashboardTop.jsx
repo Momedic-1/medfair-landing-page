@@ -86,15 +86,23 @@ export function PatientDashboardTop({
         {activeMeeting?.roomUrl && (
           <DashboardAlert
             variant="success"
-            title="You have an active call"
-            message="Continue your consultation in a new browser tab."
+            title={
+              nextActive
+                ? "Your consultation is in progress"
+                : "You have an active call"
+            }
+            message={
+              nextActive
+                ? `Dr. ${highlight?.name || "your doctor"} — rejoin your video call in a new tab.`
+                : "Continue your GP consultation in a new browser tab."
+            }
             primaryAction={
               <button
                 type="button"
                 onClick={() => openVideoCallInNewTab(activeMeeting.roomUrl)}
                 className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
               >
-                Rejoin call
+                Rejoin video call
               </button>
             }
           />
@@ -118,7 +126,7 @@ export function PatientDashboardTop({
           />
         )}
 
-        {highlight && (
+        {highlight && !activeMeeting?.roomUrl && (
           <DashboardAlert
             variant={nextActive ? "success" : "info"}
             title={nextActive ? "Appointment happening now" : "Next appointment"}

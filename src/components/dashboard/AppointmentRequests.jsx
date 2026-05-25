@@ -69,7 +69,7 @@ function AppointmentRequests({ appointments }) {
 
     setJoiningSlotId(slotId);
     try {
-      const { meetingUrl } = await joinScheduledAppointment({
+      const { meetingUrl, usedSameTab } = await joinScheduledAppointment({
         slotId,
         userId,
         token,
@@ -78,7 +78,11 @@ function AppointmentRequests({ appointments }) {
       });
       dispatch(setCall(appointment));
       dispatch(setRoomUrl(meetingUrl));
-      toast.success("Opening consultation in a new tab.");
+      toast.success(
+        usedSameTab
+          ? "Opening consultation in this tab."
+          : "Opening consultation in a new tab.",
+      );
     } catch (error) {
       console.error("Join call error:", error);
       toast.error(parseJoinError(error));

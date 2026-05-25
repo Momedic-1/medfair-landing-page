@@ -20,6 +20,16 @@ export const specialistsModalSx = {
   ...bookingModalSx,
   maxWidth: 720,
   width: { xs: "calc(100% - 1rem)", sm: "min(94vw, 720px)" },
+  height: { xs: "92vh", sm: "90vh" },
+  maxHeight: { xs: "92vh", sm: "90vh" },
+};
+
+/** Scrollable body inside a flex column modal */
+export const specialistsModalBodySx = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
 };
 
 export const callDoctorModalSx = {

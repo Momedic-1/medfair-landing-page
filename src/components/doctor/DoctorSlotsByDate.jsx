@@ -3,10 +3,10 @@ import {
   formatSlotTime,
   isSlotBookedFromApi,
   isSlotDateTimeExpired,
-  isTodayInBookingZone,
   nowInBookingZone,
   slotWithDate,
 } from "../../utils/slotDateTime";
+import { isTodayInBookingZone } from "../../utils/slotDateTime";
 
 export function SlotTimeButton({ slot, isBooked, isExpired, disabled, onClick }) {
   const isDisabled = disabled || isBooked || isExpired;
@@ -54,6 +54,7 @@ export default function DoctorSlotsByDate({
   isSlotExpired,
   onSlotClick,
   emptyMessage = "No open slots right now.",
+  excludeToday = false,
 }) {
   const checkExpired = (slot) =>
     isSlotExpired?.(slot) ?? isSlotDateTimeExpired(slot);
@@ -70,6 +71,7 @@ export default function DoctorSlotsByDate({
     <div className="space-y-4">
       {slotGroups.map((slotGroup) => {
         const isToday = isTodayInBookingZone(slotGroup.date);
+        if (excludeToday && isToday) return null;
         const enrichedSlots = (slotGroup.slots || []).map((s) =>
           slotWithDate(s, slotGroup.date)
         );

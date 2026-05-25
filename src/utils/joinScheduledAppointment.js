@@ -1,6 +1,6 @@
 import axios from "axios";
 import { baseUrl } from "../env";
-import { openVideoCallInNewTab } from "./videoCallNavigation";
+import { openVideoCallPreferNewTab } from "./videoCallNavigation";
 
 export function parseJoinError(error) {
   const data = error?.response?.data;
@@ -54,12 +54,20 @@ export async function joinScheduledAppointment({
 
   try {
     const expiresAt = Date.now() + 40 * 60 * 1000;
+    const callPayload = call || { slotId };
     localStorage.setItem(
       "activeCall",
       JSON.stringify({
-        call: call || { slotId },
+        call: callPayload,
         joinRoomUrl: meetingUrl,
         patientId: patientIdForStorage,
+        patientFirstName: callPayload.patientFirstName ?? callPayload.firstName,
+        patientLastName: callPayload.patientLastName ?? callPayload.lastName,
+        patientName:
+          callPayload.patientName ||
+          [callPayload.patientFirstName, callPayload.patientLastName]
+            .filter(Boolean)
+            .join(" "),
         expiresAt,
       })
     );
@@ -71,6 +79,6 @@ export async function joinScheduledAppointment({
     // ignore storage errors
   }
 
-  const opened = openVideoCallInNewTab(meetingUrl);
-  return { meetingUrl, opened };
+  const { opened, blocked, usedSameTab } = openVideoCallPreferNewTab(meetingUrl);
+  return { meetingUrl, opened, blocked, usedSameTab };
 }

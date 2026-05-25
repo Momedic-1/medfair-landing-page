@@ -53,17 +53,20 @@ export default function PatientDoctorProfile() {
       const profileData = await fetchDoctorProfileForPatient(doctorId, token);
       setProfile(profileData);
 
-      if (!location.state?.specialist) {
-        setSlotsLoading(true);
-        const spec =
-          profileData?.medicalSpecialization ||
-          profileData?.specialization;
-        const slots = await fetchDoctorSlotsForPatient({
-          doctorId,
-          specialization: spec,
-          token,
-        });
+      setSlotsLoading(true);
+      const spec =
+        profileData?.medicalSpecialization ||
+        profileData?.specialization ||
+        location.state?.categoryName;
+      const slots = await fetchDoctorSlotsForPatient({
+        doctorId,
+        specialization: spec,
+        token,
+      });
+      if (slots) {
         setSpecialist(slots);
+      } else if (location.state?.specialist) {
+        setSpecialist(sortSpecialistSlotGroups(location.state.specialist));
       }
     } catch {
       toast.error("Could not load doctor profile.");
