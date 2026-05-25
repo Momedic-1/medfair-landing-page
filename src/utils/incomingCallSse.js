@@ -90,23 +90,42 @@ export function connectIncomingCallSse({
   };
 }
 
-/** Apply SSE payload to a call list (CallResponse / VideoCallResponse shape). */
-export function applyIncomingCallEvent(calls, event, pickedCallIds = []) {
-  const list = Array.isArray(calls) ? [...calls] : [];
-  const isPicked = (id) => pickedCallIds.includes(id);
+function normalizeCallId(id) {
+  if (id == null) return null;
+  const n = Number(id);
+  return Number.isFinite(n) ? n : id;
+}
 
-  if (!event?.type) return list;
+function isHiddenCallId(id, hiddenIds) {
+  const normalized = normalizeCallId(id);
+  return hiddenIds.some((h) => normalizeCallId(h) === normalized);
+}
+
+/** Apply SSE payload to a call list (CallResponse / VideoCallResponse shape). */
+export function applyIncomingCallEvent(
+  calls,
+  event,
+  pickedCallIds = [],
+  dismissedCallIds = [],
+) {
+  const list = Array.isArray(calls) ? [...calls] : [];
+  const hiddenIds = [...pickedCallIds, ...dismissedCallIds];
+  const isHidden = (id) => isHiddenCallId(id, hiddenIds);
+
+  if (!event?.type) return list.filter((c) => !isHidden(c.callId));
 
   switch (event.type) {
     case "CONNECTED":
     case "REFRESH":
-      return (event.calls || []).filter((c) => !isPicked(c.callId));
+      return (event.calls || []).filter((c) => !isHidden(c.callId));
     case "NEW_CALL":
-      if (event.call && !isPicked(event.call.callId)) {
-        const exists = list.some((c) => c.callId === event.call.callId);
+      if (event.call && !isHidden(event.call.callId)) {
+        const exists = list.some(
+          (c) => normalizeCallId(c.callId) === normalizeCallId(event.call.callId),
+        );
         if (!exists) list.unshift(event.call);
       }
-      return list;
+      return list.filter((c) => !isHidden(c.callId));
     case "CALL_CLAIMED":
     case "CALL_ENDED":
       return list.filter((c) => c.callId !== event.callId);
