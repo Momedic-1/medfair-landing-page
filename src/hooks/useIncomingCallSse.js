@@ -9,8 +9,10 @@ import {
   loadDismissedCallIds,
 } from "../utils/dismissedIncomingCalls";
 
-const FALLBACK_POLL_MS = 30000;
+const DEFAULT_POLL_MS = 30000;
+const INCOMING_PAGE_POLL_MS = 10000;
 const RECONNECT_DELAY_MS = 5000;
+const FAST_RETRY_MS = 2500;
 
 /**
  * Real-time incoming GP calls via SSE, with polling fallback.
@@ -21,10 +23,15 @@ export function useIncomingCallSse({
   enabled = true,
   pickedCallIds = [],
   fetchCalls,
+  pollIntervalMs,
+  fastRetry = false,
 }) {
   const [calls, setCalls] = useState([]);
   const [sseConnected, setSseConnected] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const pollMs = pollIntervalMs ?? DEFAULT_POLL_MS;
   const disconnectRef = useRef(null);
   const pollRef = useRef(null);
   const reconnectRef = useRef(null);
@@ -93,18 +100,25 @@ export function useIncomingCallSse({
       return undefined;
     }
 
+    setInitialLoading(true);
     loadCalls();
     connect();
 
-    pollRef.current = setInterval(loadCalls, FALLBACK_POLL_MS);
+    let fastRetryTimer;
+    if (fastRetry) {
+      fastRetryTimer = setTimeout(loadCalls, FAST_RETRY_MS);
+    }
+
+    pollRef.current = setInterval(loadCalls, pollMs);
 
     return () => {
       disconnectRef.current?.();
       clearInterval(pollRef.current);
       clearTimeout(reconnectRef.current);
+      if (fastRetryTimer) clearTimeout(fastRetryTimer);
       setSseConnected(false);
     };
-  }, [enabled, connect, loadCalls]);
+  }, [enabled, connect, loadCalls, pollMs, fastRetry]);
 
   useEffect(() => {
     dismissedRef.current = loadDismissedCallIds();
@@ -118,5 +132,15 @@ export function useIncomingCallSse({
     );
   }, [pickedCallIds]);
 
-  return { calls, setCalls, sseConnected, ready, refreshCalls: loadCalls };
+  return {
+    calls,
+    setCalls,
+    sseConnected,
+    ready,
+    initialLoading,
+    loadError,
+    refreshCalls: loadCalls,
+  };
 }
+
+export { INCOMING_PAGE_POLL_MS };

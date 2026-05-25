@@ -178,10 +178,22 @@ function LeftPanel({ status, setStatus }) {
               primaryAction={
                 <button
                   type="button"
-                  onClick={() => callAlerts.onIncomingClick(call.callId)}
-                  className="shake rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+                  onClick={() => callAlerts.onIncomingClick?.(call.callId)}
+                  disabled={callAlerts.answeringCallId === call.callId}
+                  className="shake rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
                 >
-                  Answer now
+                  {callAlerts.answeringCallId === call.callId
+                    ? "Joining…"
+                    : "Answer now"}
+                </button>
+              }
+              secondaryAction={
+                <button
+                  type="button"
+                  onClick={() => callAlerts.onViewAllCalls?.()}
+                  className="rounded-lg border border-white/50 px-3 py-2 text-sm font-medium text-white hover:bg-white/10"
+                >
+                  View queue
                 </button>
               }
             />
