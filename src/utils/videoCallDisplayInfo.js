@@ -65,7 +65,7 @@ export function resolveDoctorDisplayName(call, userData) {
     call.doctorFirstName || call.specialistFirstName,
     call.doctorLastName || call.specialistLastName,
   );
-  if (fromParts) return fromParts;
+  if (fromParts) return `Dr. ${fromParts}`;
 
   const doctorOnlyName = call.doctorName;
   const patientListName = call.name;
@@ -216,6 +216,17 @@ export function buildVideoCallHeaderDisplay(role, call, userData, profileFromApi
 
 export function getStoredCallContext() {
   try {
+    const patientGp = localStorage.getItem("patientGpVideoContext");
+    if (patientGp) {
+      const gpParsed = JSON.parse(patientGp);
+      if (!gpParsed?.expiresAt || Date.now() < gpParsed.expiresAt) {
+        const gpCall = gpParsed?.call;
+        if (gpCall && (gpCall.doctorFirstName || gpCall.doctorLastName || gpCall.callId)) {
+          return { ...gpCall };
+        }
+      }
+    }
+
     const raw = localStorage.getItem("activeCall");
     if (!raw) return null;
     const parsed = JSON.parse(raw);

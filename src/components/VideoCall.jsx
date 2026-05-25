@@ -16,6 +16,10 @@ import { resolveVideoCallRoomUrl } from "../utils/videoCallRoomUrl";
 import { useVideoCallHeader } from "../hooks/useVideoCallHeader";
 import { dismissIncomingCallId } from "../utils/dismissedIncomingCalls";
 import { clearPatientGpCall } from "../utils/patientGpCall";
+import {
+  clearDoctorRejoinSession,
+  clearPatientGpVideoContext,
+} from "../utils/activeCallSession";
 
 function formatHeaderParticipantName(displayInfo) {
   if (!displayInfo) return "Loading...";
@@ -28,8 +32,15 @@ function formatHeaderParticipantName(displayInfo) {
 }
 
 function clearCallPersistence() {
-  localStorage.removeItem("activeCall");
   localStorage.removeItem("activeMeeting");
+}
+
+function clearCallPersistenceForRole(role) {
+  if (role === "DOCTOR") {
+    clearDoctorRejoinSession();
+  } else {
+    clearPatientGpVideoContext();
+  }
 }
 
 /** Shell: resolve room URL only — Whereby hooks run in VideoCallRoom. */
@@ -112,6 +123,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       dismissIncomingCallId(endedCallId);
     }
     clearCallPersistence();
+    clearCallPersistenceForRole(userData?.role);
     clearPatientGpCall();
     dispatch(setRoomUrl(null));
     dispatch(setCall(null));

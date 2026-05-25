@@ -4,16 +4,24 @@ import { baseUrl } from "../../../env";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setCall, setRoomUrl } from "../../../features/authSlice";
-import { openVideoCallPreferNewTab } from "../../../utils/videoCallNavigation";
 import { useIncomingCallSse } from "../../../hooks/useIncomingCallSse";
+import { toast } from "react-toastify";
+import {
+  clearDoctorRejoinSession,
+  loadDoctorRejoinSession,
+} from "../../../utils/activeCallSession";
+import {
+  formatGpJoinError,
+  joinGpCallAsDoctor,
+} from "../../../utils/joinGpCallAsDoctor";
 
 function WelcomeBack({ status, onAlertsChange }) {
   const [pickedCalls, setPickedCalls] = useState(new Set());
   const [callTimer, setCallTimer] = useState(null);
   const [rejoinData, setRejoinData] = useState(null);
+  const [answeringCallId, setAnsweringCallId] = useState(null);
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
-  const userData = JSON.parse(localStorage.getItem("userData"));
+  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const online = "Online";
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -25,7 +33,7 @@ function WelcomeBack({ status, onAlertsChange }) {
   const fetchBroadcastCalls = useCallback(async () => {
     const response = await axios.get(
       `${baseUrl}/api/v1/video/broadcast-calls/${userData?.id}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return response?.data || [];
   }, [token, userData?.id]);
@@ -44,21 +52,7 @@ function WelcomeBack({ status, onAlertsChange }) {
     const storedPickedCalls =
       JSON.parse(localStorage.getItem("pickedCalls")) || [];
     setPickedCalls(new Set(storedPickedCalls));
-
-    const rawActiveCall = localStorage.getItem("activeCall");
-    if (rawActiveCall) {
-      try {
-        const parsed = JSON.parse(rawActiveCall);
-        const now = Date.now();
-        if (parsed?.expiresAt && now < parsed.expiresAt) {
-          setRejoinData(parsed);
-        } else {
-          localStorage.removeItem("activeCall");
-        }
-      } catch (_) {
-        localStorage.removeItem("activeCall");
-      }
-    }
+    setRejoinData(loadDoctorRejoinSession());
 
     const unlockAudio = () => {
       if (!audioRef.current) return;
@@ -91,7 +85,7 @@ function WelcomeBack({ status, onAlertsChange }) {
 
     if (activeCalls.length > 0 && status === online) {
       startCallTimer();
-      if (activeCalls.length > 0) playRingtone();
+      playRingtone();
     } else {
       clearCallTimer();
       stopRingtone();
@@ -99,30 +93,68 @@ function WelcomeBack({ status, onAlertsChange }) {
   }, [activeCalls, status]);
 
   const handleRejoin = () => {
-    try {
-      const raw = localStorage.getItem("activeCall");
-      if (!raw) return;
-      const active = JSON.parse(raw);
-      const now = Date.now();
-      if (active?.expiresAt && now >= active.expiresAt) {
-        localStorage.removeItem("activeCall");
-        setRejoinData(null);
-        return;
-      }
-      if (active?.patientId) {
-        localStorage.setItem("patientId", active.patientId);
-      }
-      if (active?.joinRoomUrl) dispatch(setRoomUrl(active.joinRoomUrl));
-      if (active?.call) dispatch(setCall(active.call));
-      openVideoCallPreferNewTab(active.joinRoomUrl);
-    } catch (_) {
-      // fail silently
+    const active = loadDoctorRejoinSession();
+    if (!active?.joinRoomUrl || !userData?.id || !token) {
+      setRejoinData(null);
+      toast.error("Call session has expired.");
+      return;
     }
+    joinGpCallAsDoctor({
+      call: active.call,
+      doctorId: userData.id,
+      token,
+      dispatch,
+    })
+      .then((result) => {
+        setRejoinData(result.session);
+        toast.success("Rejoining consultation…");
+      })
+      .catch((err) => toast.error(formatGpJoinError(err)));
   };
 
   const dismissRejoin = () => {
-    localStorage.removeItem("activeCall");
+    clearDoctorRejoinSession();
     setRejoinData(null);
+  };
+
+  const answerCall = async (callId) => {
+    stopRingtone();
+    const call = activeCalls.find(
+      (c) => String(c.callId) === String(callId),
+    );
+    if (!call || !userData?.id || !token) {
+      navigate("/incoming-call", { state: { focusCallId: callId } });
+      return;
+    }
+
+    setAnsweringCallId(callId);
+    try {
+      const result = await joinGpCallAsDoctor({
+        call,
+        doctorId: userData.id,
+        token,
+        dispatch,
+      });
+      setRejoinData(result.session);
+      setPickedCalls((prev) => new Set([...prev, callId]));
+      toast.success(
+        result.usedSameTab
+          ? "Call opened in this tab."
+          : "Call opened in a new tab.",
+      );
+    } catch (error) {
+      toast.error(formatGpJoinError(error));
+      navigate("/incoming-call", { state: { focusCallId: callId } });
+    } finally {
+      setAnsweringCallId(null);
+    }
+  };
+
+  const navigateToIncomingCalls = (callId) => {
+    stopRingtone();
+    navigate("/incoming-call", {
+      state: callId != null ? { focusCallId: callId } : undefined,
+    });
   };
 
   const playRingtone = () => {
@@ -136,11 +168,6 @@ function WelcomeBack({ status, onAlertsChange }) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
-  };
-
-  const navigateToIncomingCalls = () => {
-    stopRingtone();
-    navigate("/incoming-call");
   };
 
   const startCallTimer = () => {
@@ -162,15 +189,24 @@ function WelcomeBack({ status, onAlertsChange }) {
     if (!onAlertsChange) return;
     const hasIncoming = activeCalls.length > 0 && status === online;
     onAlertsChange({
-      rejoinData,
+      rejoinData: rejoinData?.doctorJoined ? rejoinData : null,
       activeCalls,
       hasIncoming,
       sseConnected,
+      answeringCallId,
       onRejoin: handleRejoin,
       onDismissRejoin: dismissRejoin,
-      onIncomingClick: navigateToIncomingCalls,
+      onIncomingClick: answerCall,
+      onViewAllCalls: () => navigateToIncomingCalls(),
     });
-  }, [rejoinData, activeCalls, status, sseConnected, onAlertsChange]);
+  }, [
+    rejoinData,
+    activeCalls,
+    status,
+    sseConnected,
+    answeringCallId,
+    onAlertsChange,
+  ]);
 
   return <audio ref={audioRef} src={ringtone} preload="auto" loop className="hidden" />;
 }
