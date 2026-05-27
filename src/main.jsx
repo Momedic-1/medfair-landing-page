@@ -8,6 +8,9 @@ import { NextUIProvider } from '@nextui-org/react'
 import store from './app/store'
 import { Provider } from 'react-redux'
 import { WherebyProvider } from '@whereby.com/browser-sdk/react'
+import { registerSW } from 'virtual:pwa-register'
+
+registerSW({ immediate: true })
 
 ReactDOM.createRoot(document.getElementById('root')).render(
  <Provider store={store}>

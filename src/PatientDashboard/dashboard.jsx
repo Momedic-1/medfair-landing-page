@@ -636,7 +636,11 @@ const Dashboard = () => {
       setCalendarEvents(transformAppointmentsToEvents(formattedData));
     } catch (error) {
       console.log("Error fetching upcoming appointments:", error);
-      toast.error("Could not load your appointments.");
+      const statusCode = error?.response?.status;
+      const onPatientDashboard = window.location.pathname.startsWith("/patient-dashboard");
+      if (onPatientDashboard && statusCode !== 401 && statusCode !== 403) {
+        toast.error("Could not load your appointments.");
+      }
     } finally {
       setAppointmentsLoading(false);
     }

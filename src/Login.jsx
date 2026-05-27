@@ -292,9 +292,18 @@ export default function LoginPage({ isPartnerLogin = false }) {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <DesignedSideBar />
-      <div className="flex w-full flex-1 flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/40 px-4 py-10 lg:w-2/3">
+      <DesignedSideBar className="hidden lg:block" />
+      <div className="flex w-full flex-1 flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/40 px-4 py-8 sm:px-6 sm:py-10 lg:w-2/3">
         <div className="w-full max-w-md">
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-white/80 p-4 text-center shadow-sm backdrop-blur lg:hidden">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#020e7c]/70">
+              Medfair
+            </p>
+            <p className="mt-1 text-sm text-gray-600">
+              Secure telemedicine access on any device.
+            </p>
+          </div>
+
           <div className="mb-8 text-center lg:text-left">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#020e7c]/70">
               {isPartnerLogin ? "Partner access" : "Welcome back"}
@@ -406,7 +415,7 @@ export default function LoginPage({ isPartnerLogin = false }) {
       </div>
 
       <ErrorModal message={error} onClose={handleCloseModal} />
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-center" autoClose={3000} />
     </div>
   );
 }

@@ -69,15 +69,15 @@ export default function PatientSignupForm({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-blue-50 rounded-lg py-8 md:px-4">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-blue-50 py-8 md:px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-bold text-gray-800">
             Create Your Account
           </h1>
           <p className="text-gray-600">
-            Join Medfair and start your healthcare journey
+            Join Medfair and manage your care in one place
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function PatientSignupForm({
         {/* Main Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+          className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl"
         >
           <div className="bg-gradient-to-r from-violet-600 to-blue-600 p-6">
             <h2 className="text-xl font-semibold text-white flex items-center justify-center space-x-2">
@@ -107,7 +107,7 @@ export default function PatientSignupForm({
             </h2>
           </div>
 
-          <div className="p-4 md:p-8 space-y-8">
+          <div className="space-y-8 p-4 md:p-8">
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">

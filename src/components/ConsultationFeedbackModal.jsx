@@ -55,17 +55,24 @@ const ConsultationFeedbackModal = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Rating
             </label>
-            <select
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-            >
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n}>
-                  {n} {n === 1 ? "star" : "stars"}
-                </option>
+            <div className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setRating(n)}
+                  className={`text-2xl leading-none transition ${
+                    n <= rating ? "text-yellow-500" : "text-gray-300"
+                  }`}
+                  aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
+                >
+                  ★
+                </button>
               ))}
-            </select>
+              <span className="ml-2 text-xs font-medium text-gray-500">
+                {rating} / 5
+              </span>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

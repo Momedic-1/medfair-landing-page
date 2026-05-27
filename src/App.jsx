@@ -110,12 +110,14 @@ import SubscriptionSuccessful from "./PatientDashboard/SubscriptionSuccessful.js
 import SubscriptionNotSuccessful from "./PatientDashboard/SubscriptionNotSuccessful.jsx";
 import AddDependents from "./PatientDashboard/AddDependents.jsx";
 import PatientDoctorProfile from "./PatientDashboard/PatientDoctorProfile.jsx";
+import PeriodTracker from "./PatientDashboard/PeriodTracker.jsx";
+import WeightLossProgram from "./PatientDashboard/WeightLossProgram.jsx";
 
 const App = () => {
   return (
     <>
-      <CookieBanner />
       <Router>
+        <CookieBanner />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/doctor_signup/*" element={<DoctorSignupForm />} />
@@ -152,6 +154,8 @@ const App = () => {
             <Route path="patient-notes" element={<PatientNotes />} />
             <Route path="patient-investigations" element={<Investigations />} />
             <Route path="add-dependent" element={<AddDependents />} />
+            <Route path="period-tracker" element={<PeriodTracker />} />
+            <Route path="weight-loss" element={<WeightLossProgram />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="subscription-success" element={<SubscriptionSuccessful />} />
             <Route path="subscription-unsuccessful" element={<SubscriptionNotSuccessful />} />
