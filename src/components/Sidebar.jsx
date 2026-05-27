@@ -118,17 +118,12 @@ const Sidebar = () => {
         aria-label="Sidebar"
       >
         <div className="relative flex flex-col h-full max-h-full">
-          <div className="px-6 pt-4 flex justify-between items-center">
-            <a
-              className="flex items-center space-x-2 flex-none rounded-md text-sm font-semibold focus:outline-none focus:opacity-80"
-              href="#"
-              aria-label="Dashboard"
-            >
-              <span className="text-white">Doctor's Dashboard</span>
-            </a>
+          <div className="flex justify-end px-6 pt-4 lg:hidden">
             <button
+              type="button"
               onClick={toggleSidebar}
-              className="lg:hidden mr-4 mb-20 text-white text-2xl focus:outline-none"
+              className="text-2xl text-white focus:outline-none"
+              aria-label="Close menu"
             >
               <CloseIcon />
             </button>

@@ -113,9 +113,10 @@ const HomePage = () => {
               <button
                 type="button"
                 onClick={handleInstallApp}
-                className="inline-flex w-full animate-pulse items-center justify-center rounded-2xl border-2 border-[#020e7c] bg-yellow-300 px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-[#020e7c] shadow-lg ring-4 ring-yellow-200/80 transition hover:scale-[1.01] hover:bg-yellow-200 sm:w-auto"
+                className="inline-flex w-full animate-pulse items-center justify-center gap-3 rounded-2xl border-2 border-[#020e7c] bg-yellow-300 px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-[#020e7c] shadow-lg ring-4 ring-yellow-200/80 transition hover:scale-[1.01] hover:bg-yellow-200 sm:w-auto"
               >
-                Download Medfair App
+                <img src="/logo.png" alt="" className="h-8 w-auto" aria-hidden />
+                Download MedFair App
               </button>
             )}
             <h1 className="text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
@@ -144,7 +145,7 @@ const HomePage = () => {
                   onClick={handleInstallApp}
                   className="animate-pulse rounded-xl border-2 border-[#020e7c] bg-[#020e7c] px-5 py-3 text-sm font-extrabold text-white shadow-md transition hover:bg-blue-800"
                 >
-                  Install Medfair App
+                  Install MedFair App
                 </button>
               )}
             </div>
