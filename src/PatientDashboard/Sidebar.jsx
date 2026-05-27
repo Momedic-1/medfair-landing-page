@@ -301,11 +301,12 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
       >
         {role === "PATIENT" ? (
           <div className="w-full h-full flex flex-col">
-            <div className="w-full p-4 text-2xl font-bold flex justify-between items-center">
-              <p>Patient Dashboard</p>
+            <div className="flex w-full justify-end p-4 lg:hidden">
               <button
+                type="button"
                 onClick={toggleSidebar}
-                className="lg:hidden text-white text-2xl focus:outline-none"
+                className="text-2xl text-white focus:outline-none"
+                aria-label="Close menu"
               >
                 ✕
               </button>
@@ -474,13 +475,12 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
         ) : (
           // Doctor Sidebar
           <div className="relative flex flex-col h-full max-h-full">
-            <div className="px-6 pt-4 flex justify-between items-center">
-              <a className="flex items-center space-x-2 text-sm font-semibold">
-                <span className="text-white">Doctor&lsquo;s Dashboard</span>
-              </a>
+            <div className="flex justify-end px-6 pt-4 lg:hidden">
               <button
+                type="button"
                 onClick={toggleSidebar}
-                className="lg:hidden mr-4 mb-20 text-white text-2xl focus:outline-none"
+                className="text-2xl text-white focus:outline-none"
+                aria-label="Close menu"
               >
                 <CloseIcon />
               </button>

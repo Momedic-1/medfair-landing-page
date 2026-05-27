@@ -8,13 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.jpeg'],
+      includeAssets: ['logo.jpeg', 'logo.png', 'icons/icon-192.png', 'icons/icon-512.png'],
       workbox: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024
       },
       manifest: {
-        name: 'Medfair',
-        short_name: 'Medfair',
+        name: 'MedFair',
+        short_name: 'MedFair',
         description: 'Medfair telemedicine care platform',
         theme_color: '#020e7c',
         background_color: '#ffffff',
@@ -23,16 +23,22 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: '/icons/icon-192.svg',
+            src: '/icons/icon-192.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
-            src: '/icons/icon-512.svg',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       }
