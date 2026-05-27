@@ -10,8 +10,16 @@ export const login = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${baseUrl}/api/v1/auth/login`, formData);
-      localStorage.setItem('authToken', JSON.stringify({"token":  response?.data?.token}));
-      return response.data.user;
+      const payload =
+        typeof response?.data === "string" ? JSON.parse(response.data) : response?.data;
+      localStorage.setItem(
+        'authToken',
+        JSON.stringify({
+          token: payload?.token,
+          refreshToken: payload?.refreshToken ?? null,
+        }),
+      );
+      return payload?.user;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }

@@ -1,3 +1,6 @@
+import axios from "axios";
+import { baseUrl } from "./env";
+
 export const capitalizeFirstLetter = (name) => {
   if (!name) return '';
   return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
@@ -84,6 +87,88 @@ export const getToken = ()=> {
     return null;
   }
 }
+
+export const getRefreshToken = () => {
+  try {
+    const raw = localStorage.getItem("authToken");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.refreshToken ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const decodeJwtPayload = (token) => {
+  try {
+    const payload = token?.split(".")?.[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = atob(base64);
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+};
+
+export const getTokenExpiryMs = (token) => {
+  const payload = decodeJwtPayload(token);
+  const exp = payload?.exp;
+  return typeof exp === "number" ? exp * 1000 : null;
+};
+
+export const saveAuthTokens = ({ token, refreshToken }) => {
+  if (!token) return;
+  try {
+    const current = JSON.parse(localStorage.getItem("authToken") || "{}");
+    localStorage.setItem(
+      "authToken",
+      JSON.stringify({
+        ...current,
+        token,
+        refreshToken: refreshToken || current?.refreshToken || null,
+      }),
+    );
+  } catch {
+    localStorage.setItem(
+      "authToken",
+      JSON.stringify({ token, refreshToken: refreshToken || null }),
+    );
+  }
+};
+
+export const refreshAccessTokenIfNeeded = async ({
+  force = false,
+  minValidityMs = 5 * 60 * 1000,
+} = {}) => {
+  const token = getToken();
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+
+  const expiry = getTokenExpiryMs(token);
+  const shouldRefresh =
+    force ||
+    !token ||
+    !expiry ||
+    expiry - Date.now() <= minValidityMs;
+
+  if (!shouldRefresh) return token;
+
+  try {
+    const response = await axios.post(`${baseUrl}/api/v1/auth/refresh`, {
+      refreshToken,
+    });
+    const payload =
+      typeof response?.data === "string" ? JSON.parse(response.data) : response?.data;
+    const nextToken = payload?.token;
+    const nextRefreshToken = payload?.refreshToken;
+    if (!nextToken) return null;
+    saveAuthTokens({ token: nextToken, refreshToken: nextRefreshToken });
+    return nextToken;
+  } catch {
+    return null;
+  }
+};
 
 export const formatTime = (time) => {
   const [hours, minutes, seconds] = time.split(':');

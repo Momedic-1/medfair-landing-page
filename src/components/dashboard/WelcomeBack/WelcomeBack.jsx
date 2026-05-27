@@ -14,6 +14,10 @@ import {
   formatGpJoinError,
   joinGpCallAsDoctor,
 } from "../../../utils/joinGpCallAsDoctor";
+import {
+  ensureDoctorPushSubscription,
+  showIncomingCallNotification,
+} from "../../../utils/doctorPushNotifications";
 
 function WelcomeBack({ status, onAlertsChange }) {
   const [pickedCalls, setPickedCalls] = useState(new Set());
@@ -27,6 +31,7 @@ function WelcomeBack({ status, onAlertsChange }) {
   const dispatch = useDispatch();
   const audioRef = useRef(null);
   const prevCallCountRef = useRef(0);
+  const notifiedCallIdsRef = useRef(new Set());
   const ringtone =
     "https://res.cloudinary.com/da79pzyla/video/upload/v1737819241/galaxy_bells_s25_ywq7j0.mp3";
 
@@ -78,9 +83,36 @@ function WelcomeBack({ status, onAlertsChange }) {
   }, []);
 
   useEffect(() => {
+    if (!userData?.id || !token || status !== online) return;
+    ensureDoctorPushSubscription(token).catch(() => {});
+  }, [userData?.id, token, status]);
+
+  useEffect(() => {
     if (activeCalls.length > prevCallCountRef.current && status === online) {
       playRingtone();
     }
+
+    if (status === online && activeCalls.length > 0) {
+      activeCalls.forEach((call) => {
+        const callId = String(call?.callId ?? "");
+        if (!callId || notifiedCallIdsRef.current.has(callId)) return;
+        notifiedCallIdsRef.current.add(callId);
+        const patientName =
+          `${call?.patientFirstName || ""} ${call?.patientLastName || ""}`.trim() || "A patient";
+        showIncomingCallNotification({
+          title: "Incoming patient call",
+          body: `${patientName} is calling now.`,
+          url: "/incoming-call",
+          callId,
+        }).catch(() => {});
+      });
+    }
+
+    const liveIds = new Set(activeCalls.map((c) => String(c?.callId ?? "")));
+    notifiedCallIdsRef.current.forEach((id) => {
+      if (!liveIds.has(id)) notifiedCallIdsRef.current.delete(id);
+    });
+
     prevCallCountRef.current = activeCalls.length;
 
     if (activeCalls.length > 0 && status === online) {

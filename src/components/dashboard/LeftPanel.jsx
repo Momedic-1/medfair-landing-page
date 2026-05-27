@@ -9,30 +9,15 @@ import DashboardAlert from "./shared/DashboardAlert";
 import StatCard from "./shared/StatCard";
 import DashboardSection from "./shared/DashboardSection";
 import { baseUrl } from "../../env";
+import { getAppointmentStatus } from "../../utils/appointmentStatus";
+import { notifyAppointmentReminders } from "../../utils/appointmentReminderNotifications";
+import { useDashboardTheme } from "../../hooks/useDashboardTheme";
+import DarkModeToggle from "../common/DarkModeToggle";
 import {
   isDoctorProfileComplete,
   getMissingProfileFields,
 } from "../../utils/doctorProfileComplete";
 import { getToken } from "../../utils";
-
-function getAppointmentDateTime(appointment) {
-  if (appointment.startTime) return new Date(appointment.startTime);
-  if (appointment.date && appointment.time) {
-    return new Date(`${appointment.date}T${appointment.time}`);
-  }
-  return null;
-}
-
-function getAppointmentStatus(appointment, now = new Date()) {
-  const appointmentTime = getAppointmentDateTime(appointment);
-  if (!appointmentTime) return "unknown";
-  const minutesDiff = Math.floor(
-    (appointmentTime.getTime() - now.getTime()) / 60000
-  );
-  if (minutesDiff > 45) return "over";
-  if (minutesDiff >= -5 && minutesDiff <= 45) return "active";
-  return "upcoming";
-}
 
 function LeftPanel({ status, setStatus }) {
   const navigate = useNavigate();
@@ -41,6 +26,7 @@ function LeftPanel({ status, setStatus }) {
   const [profilePayload, setProfilePayload] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [callAlerts, setCallAlerts] = useState(null);
+  const { isDarkMode, toggleDarkMode } = useDashboardTheme();
 
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const doctorId = userData?.id;
@@ -103,6 +89,14 @@ function LeftPanel({ status, setStatus }) {
     return () => clearInterval(refresh);
   }, [fetchProfile]);
 
+  useEffect(() => {
+    notifyAppointmentReminders({
+      appointments,
+      audience: "doctor",
+      url: "/doctor-dashboard",
+    });
+  }, [appointments]);
+
   const stats = useMemo(() => {
     const now = new Date();
     const active = appointments.filter(
@@ -139,6 +133,12 @@ function LeftPanel({ status, setStatus }) {
         onStatusToggle={toggleStatus}
         profileComplete={profileComplete}
         profileLoading={profileLoading}
+        themeToggle={
+          <DarkModeToggle
+            isDarkMode={isDarkMode}
+            onToggle={toggleDarkMode}
+          />
+        }
       />
 
       <div className="space-y-3">

@@ -78,3 +78,41 @@ select::-ms-expand {
 .appointment-time {
   font-style: italic;
 }
+
+/* Dashboard dark theme */
+body.app-dark {
+  background: #0b1220;
+  color: #e5e7eb;
+}
+
+body.app-dark .dashboard-theme-dark {
+  background: linear-gradient(180deg, #0b1220 0%, #111827 100%) !important;
+}
+
+body.app-dark .dashboard-theme-dark .bg-white,
+body.app-dark .dashboard-theme-dark .bg-white\/90,
+body.app-dark .dashboard-theme-dark .bg-white\/80,
+body.app-dark .dashboard-theme-dark .bg-slate-50,
+body.app-dark .dashboard-theme-dark .bg-slate-100,
+body.app-dark .dashboard-theme-dark .bg-gray-50 {
+  background-color: #111827 !important;
+  color: #e5e7eb !important;
+}
+
+body.app-dark .dashboard-theme-dark .text-gray-900,
+body.app-dark .dashboard-theme-dark .text-gray-800,
+body.app-dark .dashboard-theme-dark .text-gray-700,
+body.app-dark .dashboard-theme-dark .text-gray-600,
+body.app-dark .dashboard-theme-dark .text-gray-500,
+body.app-dark .dashboard-theme-dark .text-slate-900,
+body.app-dark .dashboard-theme-dark .text-slate-700,
+body.app-dark .dashboard-theme-dark .text-slate-600 {
+  color: #d1d5db !important;
+}
+
+body.app-dark .dashboard-theme-dark .border-gray-100,
+body.app-dark .dashboard-theme-dark .border-gray-200,
+body.app-dark .dashboard-theme-dark .border-gray-200\/80,
+body.app-dark .dashboard-theme-dark .border-slate-200 {
+  border-color: #374151 !important;
+}

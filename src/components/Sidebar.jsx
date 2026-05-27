@@ -15,11 +15,14 @@ import HelpIcon from "../assets/HelpIcon.jsx";
 import CloseIcon from "../assets/CloseIcon.jsx";
 import Logout from "../Logout.jsx";
 import { capitalizeFirstLetter } from "../utils";
+import DarkModeToggle from "./common/DarkModeToggle.jsx";
+import { useDashboardTheme } from "../hooks/useDashboardTheme";
 
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
   const userData = JSON.parse(localStorage.getItem("userData"));
+  const { isDarkMode, toggleDarkMode } = useDashboardTheme();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -85,6 +88,7 @@ const Sidebar = () => {
                   capitalizeFirstLetter(userData.lastName)
                 : null}
             </span>
+            <DarkModeToggle isDarkMode={isDarkMode} onToggle={toggleDarkMode} />
             {/* <button
         type='button'
         className='relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
@@ -119,6 +123,11 @@ const Sidebar = () => {
       >
         <div className="relative flex flex-col h-full max-h-full">
           <div className="flex justify-end px-6 pt-4 lg:hidden">
+            <DarkModeToggle
+              isDarkMode={isDarkMode}
+              onToggle={toggleDarkMode}
+              className="mr-3 border-white/30 bg-white/10 text-white hover:bg-white/20"
+            />
             <button
               type="button"
               onClick={toggleSidebar}

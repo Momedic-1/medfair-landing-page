@@ -112,8 +112,19 @@ import AddDependents from "./PatientDashboard/AddDependents.jsx";
 import PatientDoctorProfile from "./PatientDashboard/PatientDoctorProfile.jsx";
 import PeriodTracker from "./PatientDashboard/PeriodTracker.jsx";
 import WeightLossProgram from "./PatientDashboard/WeightLossProgram.jsx";
+import { useEffect } from "react";
+import { refreshAccessTokenIfNeeded } from "./utils";
 
 const App = () => {
+  useEffect(() => {
+    // Keep installed app sessions alive by rotating access tokens with refresh token.
+    refreshAccessTokenIfNeeded({ force: true });
+    const timer = setInterval(() => {
+      refreshAccessTokenIfNeeded();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <>
       <Router>

@@ -272,11 +272,14 @@ import DocumentsIcon from "../assets/DocumentIcon";
 import FinanceIcon from "../assets/FinanceIcon";
 import SettingsIcon from "../assets/SettingsIcon";
 import HelpIcon from "../assets/HelpIcon";
+import DarkModeToggle from "../components/common/DarkModeToggle";
+import { useDashboardTheme } from "../hooks/useDashboardTheme";
 
 function Sidebar({ isSidebarOpen, toggleSidebar }) {
   const userData = JSON.parse(localStorage.getItem("userData"));
   const role = userData?.role;
   const location = useLocation();
+  const { isDarkMode, toggleDarkMode } = useDashboardTheme();
 
   // detect if current route is inside /patient-dashboard/partners
   const isPartnersRoute = location.pathname.startsWith(
@@ -301,6 +304,13 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
       >
         {role === "PATIENT" ? (
           <div className="w-full h-full flex flex-col">
+            <div className="px-4 pt-4">
+              <DarkModeToggle
+                isDarkMode={isDarkMode}
+                onToggle={toggleDarkMode}
+                className="w-full justify-center border-white/30 bg-white/10 text-white hover:bg-white/20"
+              />
+            </div>
             <div className="flex w-full justify-end p-4 lg:hidden">
               <button
                 type="button"
@@ -475,6 +485,13 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
         ) : (
           // Doctor Sidebar
           <div className="relative flex flex-col h-full max-h-full">
+            <div className="px-4 pt-4">
+              <DarkModeToggle
+                isDarkMode={isDarkMode}
+                onToggle={toggleDarkMode}
+                className="w-full justify-center border-white/30 bg-white/10 text-white hover:bg-white/20"
+              />
+            </div>
             <div className="flex justify-end px-6 pt-4 lg:hidden">
               <button
                 type="button"

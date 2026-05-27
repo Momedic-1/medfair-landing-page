@@ -40,6 +40,7 @@ import {
   getAppointmentDateTime,
   getAppointmentStatus,
 } from "../utils/appointmentStatus";
+import { notifyAppointmentReminders } from "../utils/appointmentReminderNotifications";
 import UpcomingAppointmentsList from "../components/appointments/UpcomingAppointmentsList";
 import UpcomingAppointmentJoinModal from "../components/appointments/UpcomingAppointmentJoinModal";
 import { toast, ToastContainer } from "react-toastify";
@@ -645,6 +646,14 @@ const Dashboard = () => {
       setAppointmentsLoading(false);
     }
   };
+
+  useEffect(() => {
+    notifyAppointmentReminders({
+      appointments: upcomingAppointments,
+      audience: "patient",
+      url: "/patient-dashboard",
+    });
+  }, [upcomingAppointments]);
 
   const pollCallStatus = async (callId) => {
     try {
