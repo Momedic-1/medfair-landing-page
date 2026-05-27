@@ -125,14 +125,20 @@ export default function DoctorSignupForm() {
   };
   const stepLabels = ["Account", "Verification", "Login"];
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 pb-10">
       <ToastContainer />
       <SignUpTop />
       <Steps stepLabels={stepLabels} currentStep={1} />
       <form
         onSubmit={handleSubmit}
-        className="mx-auto px-6 lg:px-10 md:w-5/6 lg:w-3/6 lg:p-4 md:border md:border-gray-950/20 md:rounded-xl"
+        className="mx-auto mt-4 w-[95%] max-w-4xl rounded-2xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6 md:w-5/6 lg:w-3/5 lg:p-8"
       >
+        <div className="mb-5 border-b border-slate-100 pb-4">
+          <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">Doctor Registration</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Complete your account details to continue to verification.
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
           <div className="mt-4">
             <h1 className="text-gray-600 font-medium text-sm">First Name</h1>
@@ -142,7 +148,7 @@ export default function DoctorSignupForm() {
               value={formData.firstName}
               onChange={handleChange}
               placeholder="Enter First Name"
-              className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
+              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
               required
             />
           </div>
@@ -154,7 +160,7 @@ export default function DoctorSignupForm() {
               value={formData.lastName}
               onChange={handleChange}
               placeholder="Enter Last Name"
-              className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
+              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
               required
             />
           </div>
@@ -169,7 +175,7 @@ export default function DoctorSignupForm() {
               value={formData.emailAddress}
               onChange={handleChange}
               placeholder="Enter Email"
-              className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
+              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
               required
             />
           </div>
@@ -179,7 +185,13 @@ export default function DoctorSignupForm() {
               country={"ng"}
               value={formData.phoneNumber}
               onChange={handlePhoneChange}
-              inputStyle={{ width: "100%", height: "53px" }}
+              inputStyle={{
+                width: "100%",
+                height: "52px",
+                borderRadius: "12px",
+                borderColor: "#cbd5e1",
+                background: "#f8fafc",
+              }}
               containerStyle={{ width: "100%" }}
             />
           </div>
@@ -221,7 +233,7 @@ export default function DoctorSignupForm() {
               name="medicalSpecialization"
               value={formData.medicalSpecialization}
               onChange={handleChange}
-              className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
+              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
               placeholder="Enter here"
             >
               {specialization.map((specialization, index) => (
@@ -244,7 +256,7 @@ export default function DoctorSignupForm() {
               name="hospital"
               value={formData.hospital}
               onChange={handleChange}
-              className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
+              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
               placeholder="Enter here"
             />
           </div>
@@ -262,7 +274,7 @@ export default function DoctorSignupForm() {
                 value={formData.password}
                 onChange={handleChange}
                 minLength={8}
-                className="w-full p-4 pr-12 border border-gray-300 rounded text-sm"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3.5 pr-12 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
                 placeholder="Password"
                 required
               />
@@ -298,7 +310,7 @@ export default function DoctorSignupForm() {
                 value={formData.confirmedPassword}
                 onChange={handleChange}
                 minLength={8}
-                className="w-full p-4 pr-12 border border-gray-300 rounded text-sm"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3.5 pr-12 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
                 placeholder="Confirm your password"
                 required
               />
@@ -332,7 +344,7 @@ export default function DoctorSignupForm() {
             name="howDidYouHearAboutUs"
             value={formData.howDidYouHearAboutUs}
             onChange={handleChange}
-            className="w-full mt-2 p-4 border border-gray-300 rounded text-sm"
+            className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
           >
             <option value="INSTAGRAM">Instagram</option>
             <option value="FACEBOOK">Facebook</option>
@@ -374,7 +386,7 @@ export default function DoctorSignupForm() {
             formData.password.length < 8 ||
             formData.password !== formData.confirmedPassword
           }
-          className="w-[300px] mt-4 lg:w-[97%] md:w-[95%] p-4 py-2 px-3 inline-flex items-center justify-center text-sm font-semibold rounded-lg border border-transparent bg-[#020E7C] text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
+          className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-xl border border-transparent bg-[#020E7C] px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:pointer-events-none disabled:opacity-50"
         >
           {loading ? <ColorRing color="#fff" height={20} width={20} /> : "Next"}
         </button>
@@ -384,6 +396,6 @@ export default function DoctorSignupForm() {
           <p>Signup as Patient</p>
         </a>
       </div>
-    </>
+    </div>
   );
 }

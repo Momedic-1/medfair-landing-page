@@ -75,7 +75,14 @@ export const formatNumber = (number) => {
 };
 
 export const getToken = ()=> {
-  return JSON.parse(localStorage.getItem('authToken'))?.token;
+  try {
+    const raw = localStorage.getItem('authToken');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.token ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export const formatTime = (time) => {
@@ -87,11 +94,19 @@ export const formatTime = (time) => {
 };
 
 export const getUserData = () => {
-  return JSON.parse(localStorage.getItem('userData'));
+  try {
+    return JSON.parse(localStorage.getItem('userData'));
+  } catch {
+    return null;
+  }
 }
 
 export const getId = () =>{
-  return JSON.parse(localStorage.getItem('userData'))?.id
+  try {
+    return JSON.parse(localStorage.getItem('userData'))?.id
+  } catch {
+    return null;
+  }
 }
 
 /** localStorage key — set at partner signup and on login when API returns partnerSlug */

@@ -41,7 +41,11 @@ export function useIncomingCallSse({
   pickedRef.current = pickedCallIds;
 
   const loadCalls = useCallback(async () => {
-    if (!fetchCalls) return;
+    if (!fetchCalls) {
+      setInitialLoading(false);
+      setLoadError(null);
+      return;
+    }
     try {
       const data = await fetchCalls();
       const picked = pickedRef.current || [];
@@ -49,7 +53,15 @@ export function useIncomingCallSse({
       setCalls(
         applyIncomingCallEvent(data || [], { type: "REFRESH", calls: data || [] }, picked, dismissed),
       );
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(
+        err?.message === "Network Error"
+          ? "Could not load incoming calls. Check your connection."
+          : "Could not load incoming calls. Tap refresh to try again.",
+      );
     } finally {
+      setInitialLoading(false);
       setReady(true);
     }
   }, [fetchCalls]);
@@ -97,6 +109,7 @@ export function useIncomingCallSse({
     if (!enabled) {
       disconnectRef.current?.();
       setSseConnected(false);
+      setInitialLoading(false);
       return undefined;
     }
 

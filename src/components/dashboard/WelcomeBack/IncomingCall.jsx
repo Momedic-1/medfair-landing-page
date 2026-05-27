@@ -45,6 +45,7 @@ const IncomingCall = () => {
 
   const {
     calls: incomingCalls,
+    setCalls,
     sseConnected,
     initialLoading,
     loadError,
@@ -64,6 +65,12 @@ const IncomingCall = () => {
     setPickedCalls(stored);
     setRejoinData(loadDoctorRejoinSession());
   }, []);
+
+  useEffect(() => {
+    const seeded = location.state?.initialCalls;
+    if (!Array.isArray(seeded) || seeded.length === 0) return;
+    setCalls((prev) => (prev?.length ? prev : seeded));
+  }, [location.state, setCalls]);
 
   useEffect(() => {
     if (!focusCallId || incomingCalls.length === 0) return;

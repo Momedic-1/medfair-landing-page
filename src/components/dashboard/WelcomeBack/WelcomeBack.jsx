@@ -153,7 +153,10 @@ function WelcomeBack({ status, onAlertsChange }) {
   const navigateToIncomingCalls = (callId) => {
     stopRingtone();
     navigate("/incoming-call", {
-      state: callId != null ? { focusCallId: callId } : undefined,
+      state: {
+        focusCallId: callId ?? null,
+        initialCalls: activeCalls,
+      },
     });
   };
 
@@ -197,7 +200,7 @@ function WelcomeBack({ status, onAlertsChange }) {
       onRejoin: handleRejoin,
       onDismissRejoin: dismissRejoin,
       onIncomingClick: answerCall,
-      onViewAllCalls: () => navigateToIncomingCalls(),
+      onViewAllCalls: navigateToIncomingCalls,
     });
   }, [
     rejoinData,

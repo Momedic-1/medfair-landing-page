@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 const CookieBanner = () => {
   const [showBanner, setShowBanner] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
+    if (location.pathname !== "/") {
+      setShowBanner(false);
+      return;
+    }
+
     const consent = localStorage.getItem("cookieConsent");
     if (!consent) setShowBanner(true);
-  }, []);
+  }, [location.pathname]);
 
   const handleAccept = () => {
     localStorage.setItem("cookieConsent", "true");
@@ -23,11 +30,7 @@ const CookieBanner = () => {
       <div className="fixed bottom-0 w-full z-40 bg-gray-900 text-white p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <p className="text-sm sm:text-base">
           We use cookies to enhance your browsing experience.{" "}
-          <a
-            href="/cookies-policy"
-            target="_blank"
-            className="underline cursor-pointer"
-          >
+          <a href="/cookies-policy" target="_blank" className="underline cursor-pointer">
             Learn more
           </a>
         </p>

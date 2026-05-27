@@ -267,7 +267,7 @@ import {
 import Logout from "../Logout";
 import CloseIcon from "../assets/CloseIcon";
 import DashboardIcon from "../assets/DashboardIcon";
-import { Pencil, UserCircle, Users } from "lucide-react";
+import { CalendarHeart, Dumbbell, Pencil, UserCircle, Users } from "lucide-react";
 import DocumentsIcon from "../assets/DocumentIcon";
 import FinanceIcon from "../assets/FinanceIcon";
 import SettingsIcon from "../assets/SettingsIcon";
@@ -300,7 +300,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
         } lg:translate-x-0`}
       >
         {role === "PATIENT" ? (
-          <div className="w-full">
+          <div className="w-full h-full flex flex-col">
             <div className="w-full p-4 text-2xl font-bold flex justify-between items-center">
               <p>Patient Dashboard</p>
               <button
@@ -311,7 +311,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               </button>
             </div>
 
-            <nav className="flex flex-col p-4">
+            <nav className="flex flex-1 flex-col overflow-y-auto p-4">
               {/* Always show dashboard + profile */}
               <NavLink
                 to={
@@ -413,6 +413,36 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     <FaHospital />
                     <span className="ml-3">Investigations</span>
                   </NavLink>
+
+                  <NavLink
+                    to="/patient-dashboard/period-tracker"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
+                    onClick={toggleSidebar}
+                  >
+                    <CalendarHeart className="w-5 h-5" />
+                    <span className="ml-3">Period Tracker</span>
+                  </NavLink>
+
+                  <NavLink
+                    to="/patient-dashboard/weight-loss"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
+                    onClick={toggleSidebar}
+                  >
+                    <Dumbbell className="w-5 h-5" />
+                    <span className="ml-3">Weight Loss</span>
+                  </NavLink>
                 </>
               )}
 
@@ -434,7 +464,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               {/* Logout always visible */}
               <NavLink
                 to="/login"
-                className="flex items-center p-3 m-3 py-2 px-2 rounded hover:bg-white hover:text-[#020E7C]"
+                className="mt-auto flex items-center p-3 m-3 py-2 px-2 rounded hover:bg-white hover:text-[#020E7C]"
                 onClick={toggleSidebar}
               >
                 <Logout />
