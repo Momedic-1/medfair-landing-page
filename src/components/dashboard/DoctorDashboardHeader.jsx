@@ -8,6 +8,7 @@ function DoctorDashboardHeader({
   onStatusToggle,
   profileComplete,
   profileLoading,
+  themeToggle,
 }) {
   const firstName = userData?.firstName
     ? userData.firstName.charAt(0).toUpperCase() +
@@ -34,6 +35,7 @@ function DoctorDashboardHeader({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {themeToggle}
             <button
               type="button"
               onClick={onStatusToggle}

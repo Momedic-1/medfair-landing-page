@@ -10,7 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.jpeg', 'logo.png', 'icons/icon-192.png', 'icons/icon-512.png'],
       workbox: {
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        importScripts: ['/push-handlers.js']
       },
       manifest: {
         name: 'MedFair',

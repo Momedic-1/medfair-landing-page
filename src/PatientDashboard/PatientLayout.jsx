@@ -308,6 +308,8 @@ import {
 import { getPatientPartnerSlug } from "../utils";
 import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
 import { parseApiError } from "../utils/parseApiError";
+import { useDashboardTheme } from "../hooks/useDashboardTheme";
+import DarkModeToggle from "../components/common/DarkModeToggle";
 
 const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
 const LOGO_SRC = "/logo.jpeg";
@@ -349,6 +351,7 @@ export default function PatientLayout() {
 
   const token = localStorage.getItem("authToken");
   const userData = JSON.parse(localStorage.getItem("userData"));
+  const { isDarkMode, toggleDarkMode } = useDashboardTheme();
 
   if (!token || !userData) {
     navigate("/login");
@@ -430,7 +433,9 @@ export default function PatientLayout() {
 
   return (
     <PartnerLocationsProvider>
-      <div className="w-full h-screen flex flex-col lg:flex-row">
+      <div
+        className={`w-full h-screen flex flex-col lg:flex-row ${isDarkMode ? "dashboard-theme-dark" : "dashboard-theme-light"}`}
+      >
         <ToastContainer />
 
         {/* Sidebar */}
@@ -453,6 +458,11 @@ export default function PatientLayout() {
               <span className="font-bold text-[#020E7C] hidden lg:block">
                 Welcome, {userName}
               </span>
+              <DarkModeToggle
+                isDarkMode={isDarkMode}
+                onToggle={toggleDarkMode}
+                className="ml-auto"
+              />
             </div>
           </header>
 
