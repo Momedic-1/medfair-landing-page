@@ -1,5 +1,7 @@
-export const baseUrl =
-  import.meta.env.VITE_API_URL?.trim() || "https://backend-h3k6.onrender.com";
+/** Trim trailing slashes so `${baseUrl}/api/...` never produces `//api`. */
+export const baseUrl = (
+  import.meta.env.VITE_API_URL?.trim() || "https://backend-h3k6.onrender.com"
+).replace(/\/+$/, "");
 
 // Development URL - API URL
 // export const baseUrl = "https://backend-1-6g60.onrender.com"

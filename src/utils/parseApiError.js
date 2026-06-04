@@ -18,9 +18,15 @@ function pickMessage(data) {
 
 /** Login and general API errors shown in the UI. */
 export function formatAuthError(payload, fallback = "Sign-in failed. Check your email or phone and password.") {
+  if (payload?.network) {
+    return pickMessage(payload) || fallback;
+  }
   const msg = pickMessage(payload);
   if (msg) {
     const lower = msg.toLowerCase();
+    if (lower.includes("cannot reach the api")) {
+      return msg;
+    }
     if (lower.includes("bad credentials") || lower.includes("invalid credentials")) {
       return "Incorrect email/phone or password. Please try again.";
     }
@@ -30,12 +36,14 @@ export function formatAuthError(payload, fallback = "Sign-in failed. Check your 
     if (lower.includes("verify") && lower.includes("email")) {
       return "Please verify your email before signing in.";
     }
+    if (lower === "an error occurred" && payload?.exceptionMessage) {
+      return payload.exceptionMessage;
+    }
     return msg;
   }
-  if (typeof payload === "number") {
-    if (payload === 401 || payload === 403) {
-      return "Incorrect email/phone or password. Please try again.";
-    }
+  const status = payload?.status ?? (typeof payload === "number" ? payload : null);
+  if (status === 401 || status === 403) {
+    return "Incorrect email/phone or password. Please try again.";
   }
   return fallback;
 }
