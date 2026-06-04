@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, User, Mail, Phone, Lock, Shield } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Phone, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import PartnerOrganizationSelect from "../components/signup/PartnerOrganizationSelect";
+import { setPatientPartnerSlug } from "../utils";
 
 export default function PatientSignupForm({
   formData = {},
   setFormData = () => {},
-  partnerSlug,
+  partnerSlugFromUrl = null,
 }) {
   const navigate = useNavigate();
   const [error, setError] = useState(false);
@@ -22,14 +24,28 @@ export default function PatientSignupForm({
         userRole: "PATIENT",
       };
 
-      // Add partnerSlug if it exists
-      if (partnerSlug) {
-        updatedData.partnerSlug = partnerSlug;
+      if (partnerSlugFromUrl) {
+        updatedData.partnerSlug = partnerSlugFromUrl;
       }
 
       return updatedData;
     });
-  }, [setFormData, partnerSlug]);
+  }, [setFormData, partnerSlugFromUrl]);
+
+  const handlePartnerChange = (slug) => {
+    if (slug) {
+      setPatientPartnerSlug(slug);
+    }
+    setFormData((prev) => {
+      const next = { ...prev };
+      if (slug) {
+        next.partnerSlug = slug;
+      } else {
+        delete next.partnerSlug;
+      }
+      return next;
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,6 +84,9 @@ export default function PatientSignupForm({
     navigate("/login");
   };
 
+  const fieldBoxClass =
+    "h-12 w-full rounded-lg border border-gray-300 bg-gray-50 px-4 text-sm text-gray-900 focus:border-violet-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-blue-50 py-8 md:px-4">
       <div className="max-w-4xl mx-auto">
@@ -81,20 +100,6 @@ export default function PatientSignupForm({
           </p>
         </div>
 
-        {/* Partner indicator */}
-        {partnerSlug && (
-          <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-sm">
-            <div className="flex items-center justify-center space-x-2">
-              <Shield className="w-5 h-5 text-blue-600" />
-              <p className="text-sm text-blue-800">
-                <span className="font-semibold">Partner Registration:</span> You
-                are signing up through{" "}
-                <strong className="text-blue-900">{partnerSlug}</strong>
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Main Form */}
         <form
           onSubmit={handleSubmit}
@@ -107,7 +112,7 @@ export default function PatientSignupForm({
             </h2>
           </div>
 
-          <div className="space-y-8 p-4 md:p-8">
+          <div className="space-y-6 p-4 md:p-8">
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -122,7 +127,7 @@ export default function PatientSignupForm({
                   value={formData.firstName || ""}
                   onChange={handleChange}
                   placeholder="Enter your first name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                  className={fieldBoxClass}
                 />
               </div>
 
@@ -138,7 +143,7 @@ export default function PatientSignupForm({
                   value={formData.lastName || ""}
                   onChange={handleChange}
                   placeholder="Enter your last name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                  className={fieldBoxClass}
                 />
               </div>
             </div>
@@ -157,7 +162,7 @@ export default function PatientSignupForm({
                   placeholder="your.email@example.com"
                   value={formData.emailAddress || ""}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                  className={fieldBoxClass}
                 />
               </div>
 
@@ -166,73 +171,63 @@ export default function PatientSignupForm({
                   <Phone className="w-4 h-4 text-violet-600" />
                   <span>Mobile Number</span>
                 </label>
-                <div className="relative">
-                  <input
-                    required
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber || ""}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="+234 xxx xxx xxxx"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                  />
-                </div>
+                <input
+                  required
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber || ""}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  placeholder="+234 xxx xxx xxxx"
+                  className={fieldBoxClass}
+                />
               </div>
             </div>
 
             {/* Gender and Referral Code */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700" htmlFor="gender">
                   Gender
                 </label>
-                <div className="flex space-x-6">
-                  <label className="flex items-center space-x-2 cursor-pointer group">
-                    <input
-                      required
-                      type="radio"
-                      name="gender"
-                      value="Male"
-                      checked={formData.gender === "Male"}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-violet-600  border-gray-300 focus:ring-violet-500 cursor-pointer"
-                    />
-                    <span className="text-gray-700 group-hover:text-violet-600 transition-colors">
-                      Male
-                    </span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer group">
-                    <input
-                      required
-                      type="radio"
-                      name="gender"
-                      value="Female"
-                      checked={formData.gender === "Female"}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-violet-600 border-gray-300 focus:ring-violet-500 cursor-pointer"
-                    />
-                    <span className="text-gray-700 group-hover:text-violet-600 transition-colors">
-                      Female
-                    </span>
-                  </label>
-                </div>
+                <select
+                  id="gender"
+                  name="gender"
+                  required
+                  value={formData.gender || ""}
+                  onChange={handleChange}
+                  className={fieldBoxClass}
+                >
+                  <option value="" disabled>
+                    Select gender
+                  </option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">
+                <label className="text-sm font-semibold text-gray-700" htmlFor="referralCode">
                   Referral Code{" "}
                   <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <input
+                  id="referralCode"
                   type="text"
                   name="referralCode"
                   value={formData.referralCode || ""}
                   onChange={handleChange}
-                  placeholder="Enter referral code if you have one"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                  placeholder="Referral code"
+                  className={fieldBoxClass}
                 />
               </div>
             </div>
+
+            <PartnerOrganizationSelect
+              value={formData.partnerSlug || ""}
+              onChange={handlePartnerChange}
+              lockedSlug={partnerSlugFromUrl}
+              fieldClass={fieldBoxClass}
+            />
 
             {/* Password Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -251,12 +246,12 @@ export default function PatientSignupForm({
                     value={formData.password || ""}
                     onChange={handleChange}
                     placeholder="Minimum 8 characters"
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                    className={`${fieldBoxClass} pr-12`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-violet-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-violet-600"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -284,12 +279,12 @@ export default function PatientSignupForm({
                     value={formData.confirmedPassword || ""}
                     onChange={handleChange}
                     placeholder="Confirm your password"
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                    className={`${fieldBoxClass} pr-12`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-violet-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-violet-600"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="w-5 h-5" />

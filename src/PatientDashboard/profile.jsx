@@ -576,7 +576,7 @@ export default function Profile() {
                             <input
                               type="text"
                               readOnly
-                              value={fullName || "—"}
+                              value={fullName || "Not set"}
                               className={`${profileInputClass} cursor-not-allowed opacity-70`}
                             />
                           </div>
@@ -585,7 +585,7 @@ export default function Profile() {
                             <input
                               type="text"
                               readOnly
-                              value={displayEmail || "—"}
+                              value={displayEmail || "Not set"}
                               className={`${profileInputClass} cursor-not-allowed opacity-70`}
                             />
                           </div>
@@ -1164,7 +1164,7 @@ export default function Profile() {
                             title="Your documents"
                             description={`${profileData.documents.length} file${
                               profileData.documents.length !== 1 ? "s" : ""
-                            } on record — tap to view`}
+                            } on record. Tap to view`}
                           >
                             <div className="mb-4 flex items-center justify-end text-sm text-gray-500">
                                 <svg

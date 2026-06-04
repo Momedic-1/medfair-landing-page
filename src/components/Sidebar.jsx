@@ -1,36 +1,30 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import MagnifyingGlass from "../assets/MagnifyingGlass.jsx";
-import NotificationBell from "../assets/NotificationBell.jsx";
-import CalendarIcon from "../assets/Calendar.jsx";
-import MessagesIcon from "../assets/MessageIcon.jsx";
 import DashboardIcon from "../assets/DashboardIcon.jsx";
-import AudioCallIcon from "../assets/AudioCallIcon.jsx";
-import VideoCallIcon from "../assets/VideoCallIcon.jsx";
 import DocumentsIcon from "../assets/DocumentIcon.jsx";
 import FinanceIcon from "../assets/FinanceIcon.jsx";
-import SettingsIcon from "../assets/SettingsIcon.jsx";
-import { FaUser } from "react-icons/fa";
-import HelpIcon from "../assets/HelpIcon.jsx";
+import { FaUser, FaUserEdit } from "react-icons/fa";
 import CloseIcon from "../assets/CloseIcon.jsx";
 import Logout from "../Logout.jsx";
 import { capitalizeFirstLetter } from "../utils";
 import DarkModeToggle from "./common/DarkModeToggle.jsx";
 import { useDashboardTheme } from "../hooks/useDashboardTheme";
 
+const linkClass = ({ isActive }) =>
+  `flex items-center gap-x-3.5 rounded-lg py-2.5 px-2.5 text-sm font-medium transition-colors ${
+    isActive
+      ? "bg-white text-[#020e7c]"
+      : "text-gray-100 hover:bg-white/15 hover:text-white"
+  }`;
+
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
-  const userData = JSON.parse(localStorage.getItem("userData"));
+  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const { isDarkMode, toggleDarkMode } = useDashboardTheme();
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const closeSidebar = () => {
-    setIsSidebarOpen(false);
-  };
+  const closeSidebar = () => setIsSidebarOpen(false);
+  const toggleSidebar = () => setIsSidebarOpen((open) => !open);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -38,224 +32,127 @@ const Sidebar = () => {
         closeSidebar();
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const displayName = userData?.firstName
+    ? `${capitalizeFirstLetter(userData.firstName)} ${capitalizeFirstLetter(userData.lastName || "")}`.trim()
+    : "Doctor";
+
   return (
     <>
-      <header className="sticky top-0 inset-x-0 px-2 h-12 flex flex-wrap md:justify-start md:flex-nowrap z-[48] w-full bg-white border-b text-sm py-2.5 lg:ps-[260px] overflow-x-hidden md:h-16">
-        <nav className="px-4 sm:px-6 flex basis-full items-center w-full mx-auto flex-col">
-          <div className="flex items-center px-4 justify-between w-full md:hidden">
-            <button
-              onClick={toggleSidebar}
-              className="text-2xl mr-4  mb-20 text-blue-800 focus:outline-none"
-            >
-              {isSidebarOpen ? "✕" : "☰"}
-            </button>
-            <div className="relative flex-grow w-[10rem] mr-2">
-              {/* <div className='absolute inset-y-0 left-0 flex items-center pointer-events-none ps-3.5'>
-          <MagnifyingGlass/>
-        </div> */}
-              {/* <input
-          type='text'
-          className='py-4 pl-10 pr-8 w-[9rem] bg-white border border-gray-500 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
-          placeholder='Search anything'
-        /> */}
-            </div>
-            {/* <button className='bg-blue-800 text-white py-2 w-[8rem] px-4 rounded-lg font-bold sm:px-4 sm:py-3 sm:text-sm'>
-        Create appointment
-      </button> */}
-          </div>
-          <div className="hidden md:flex md:flex-row items-center justify-between gap-1 md:gap-x-3 w-full">
-            {/* <div className='relative w-[40rem]'>
-        <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none z-20 ps-3.5'>
-          <MagnifyingGlass/>
-        </div>
-        <input
-          type='text'
-          className='py-4 ps-10 pe-16 block w-[34rem] bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none'
-          placeholder='Search anything'
-        />
-      </div> */}
-
-            <span className="font-bold text-[#020E7C]">
-              {userData
-                ? capitalizeFirstLetter(userData.firstName) +
-                  " " +
-                  capitalizeFirstLetter(userData.lastName)
-                : null}
-            </span>
-            <DarkModeToggle isDarkMode={isDarkMode} onToggle={toggleDarkMode} />
-            {/* <button
-        type='button'
-        className='relative inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none'
-      >
-        <NotificationBell/>
-        <span className='sr-only'>Notifications</span>
-      </button>
-      <button className='bg-blue-800 text-white py-4 w-[240px] flex justify-center items-center h-10 pe-16 font-bold sm:px-4 sm:py-4 rounded-2xl sm:text-sm px-2'>
-        Create appointment
-      </button> */}
-          </div>
+      <header className="sticky top-0 z-[48] flex h-12 w-full border-b bg-white py-2.5 text-sm md:h-16 lg:ps-[260px]">
+        <nav className="flex w-full items-center justify-between px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="text-2xl text-[#020e7c] focus:outline-none lg:hidden"
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+          <span className="hidden font-bold text-[#020E7C] md:inline">{displayName}</span>
+          <DarkModeToggle isDarkMode={isDarkMode} onToggle={toggleDarkMode} />
         </nav>
       </header>
 
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-gray-900 bg-opacity-50 z-[59] lg:hidden"
+          className="fixed inset-0 z-[59] bg-gray-900/50 lg:hidden"
           onClick={closeSidebar}
-        >
-          {" "}
-        </div>
+          aria-hidden
+        />
       )}
+
       <div
         ref={sidebarRef}
-        id="hs-application-sidebar"
-        className={`hs-overlay ${
+        className={`fixed inset-y-0 start-0 z-[60] w-[260px] border-e border-[#020e7c]/80 bg-[#020e7c] transition-transform duration-300 lg:translate-x-0 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-all duration-300 transform fixed inset-y-0 start-0 z-[60] w-[260px] bg-[#020e7c] border-e border-gray-200 lg:block lg:translate-x-0 lg:end-auto lg:bottom-0`}
-        role="dialog"
-        tabIndex="-1"
-        aria-label="Sidebar"
+        }`}
       >
-        <div className="relative flex flex-col h-full max-h-full">
-          <div className="flex justify-end px-6 pt-4 lg:hidden">
-            <DarkModeToggle
-              isDarkMode={isDarkMode}
-              onToggle={toggleDarkMode}
-              className="mr-3 border-white/30 bg-white/10 text-white hover:bg-white/20"
-            />
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between px-4 pt-4 lg:hidden">
+            <p className="text-sm font-semibold text-white">{displayName}</p>
             <button
               type="button"
-              onClick={toggleSidebar}
-              className="text-2xl text-white focus:outline-none"
+              onClick={closeSidebar}
+              className="text-white focus:outline-none"
               aria-label="Close menu"
             >
               <CloseIcon />
             </button>
           </div>
 
-          <div className="h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300">
-            <nav
-              className="hs-accordion-group p-3 w-full flex flex-col flex-wrap"
-              data-hs-accordion-always-open
-            >
-              <ul className="flex flex-col space-y-1 mt-6">
-                <li className="mb-2">
-                  <NavLink
-                    to="/doctor-dashboard"
-                    className={({ isActive }) =>
-                      `flex items-center p-2 rounded-lg ${
-                        isActive
-                          ? "bg-blue-100 text-blue-800"
-                          : "text-gray-100 hover:bg-gray-100"
-                      }`
-                    }
-                  >
-                    <DashboardIcon />
-                    Dashboard
-                  </NavLink>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <CalendarIcon />
-                    {/* View Profile */}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <MessagesIcon />
-                    Messages
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <AudioCallIcon />
-                    Audio calls
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <VideoCallIcon />
-                    Video calls
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <DocumentsIcon />
-                    Documents
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <FinanceIcon />
-                    Finances
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <SettingsIcon />
-                    Settings
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="w-full flex items-center gap-x-3.5 py-2 px-2.5 text-sm text-gray-100 rounded-lg hover:bg-gray-100 hover:text-blue-600"
-                    href="#"
-                  >
-                    <HelpIcon />
-                    Help
-                  </a>
-                </li>
-                <li>
-                  <NavLink
-                    to="notes"
-                    className={({ isActive }) =>
-                      `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
-                        isActive
-                          ? "bg-blue-100 text-blue-800"
-                          : "text-gray-100 hover:bg-gray-100"
-                      }`
-                    }
-                  >
-                    <FaUser />
-                    Medications
-                  </NavLink>
-                </li>
-
-                <li>
-                  <Logout />
-                </li>
-              </ul>
-            </nav>
-          </div>
+          <nav className="flex-1 overflow-y-auto p-3 pt-6">
+            <ul className="flex flex-col gap-1">
+              <li>
+                <NavLink to="/doctor-dashboard" end className={linkClass} onClick={closeSidebar}>
+                  <DashboardIcon />
+                  Dashboard
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/doctor-dashboard/view-profile"
+                  className={linkClass}
+                  onClick={closeSidebar}
+                >
+                  <FaUser className="h-5 w-5 shrink-0" />
+                  View profile
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/doctor-dashboard/edit-profile"
+                  className={linkClass}
+                  onClick={closeSidebar}
+                >
+                  <FaUserEdit className="h-5 w-5 shrink-0" />
+                  Edit profile
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/doctor-dashboard/finances"
+                  className={linkClass}
+                  onClick={closeSidebar}
+                >
+                  <FinanceIcon />
+                  Finances
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/doctor-dashboard/notes" className={linkClass} onClick={closeSidebar}>
+                  <DocumentsIcon />
+                  Notes
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/doctor-dashboard/contact-us"
+                  className={linkClass}
+                  onClick={closeSidebar}
+                >
+                  <span className="text-lg leading-none">✉</span>
+                  Contact us
+                </NavLink>
+              </li>
+              <li className="mt-4 border-t border-white/20 pt-4">
+                <NavLink to="/incoming-call" className={linkClass} onClick={closeSidebar}>
+                  <span className="text-lg leading-none">📞</span>
+                  Incoming calls
+                </NavLink>
+              </li>
+              <li>
+                <Logout />
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </>
   );
 };
+
 export default Sidebar;

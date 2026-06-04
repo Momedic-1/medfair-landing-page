@@ -77,16 +77,19 @@ export const formatNumber = (number) => {
   return new Intl.NumberFormat('en-US').format(number);
 };
 
-export const getToken = ()=> {
+export const getToken = () => {
   try {
-    const raw = localStorage.getItem('authToken');
+    const raw = localStorage.getItem("authToken");
     if (!raw) return null;
+    if (raw.startsWith("eyJ")) return raw;
     const parsed = JSON.parse(raw);
     return parsed?.token ?? null;
   } catch {
+    const raw = localStorage.getItem("authToken");
+    if (raw?.startsWith?.("eyJ")) return raw;
     return null;
   }
-}
+};
 
 export const getRefreshToken = () => {
   try {
@@ -184,7 +187,25 @@ export const getUserData = () => {
   } catch {
     return null;
   }
-}
+};
+
+/** Normalize role from login payload (string, enum object, or roleType fallback). */
+export const getUserRole = () => {
+  try {
+    const stored = localStorage.getItem("roleType");
+    if (stored && String(stored).trim()) {
+      return String(stored).trim().toUpperCase();
+    }
+    const user = getUserData();
+    const raw = user?.role ?? user?.userRole;
+    if (raw == null) return null;
+    if (typeof raw === "string") return raw.trim().toUpperCase();
+    if (typeof raw === "object" && raw.name) return String(raw.name).trim().toUpperCase();
+    return String(raw).trim().toUpperCase();
+  } catch {
+    return null;
+  }
+};
 
 export const getId = () =>{
   try {

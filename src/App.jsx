@@ -83,6 +83,7 @@ import DashboardLayout from "./DashboardLayout";
 import PatientSignup from "./PatientSignup";
 import LoginPage from "./Login";
 import Dashboard from "./PatientDashboard/dashboard";
+import DoctorDashboard from "./components/Dashboard";
 import Profile from "./PatientDashboard/profile";
 import PaymentPage from "./PatientDashboard/payment";
 import VerificationInput from "./DoctorSignup/VerificationInput.jsx";
@@ -112,6 +113,10 @@ import AddDependents from "./PatientDashboard/AddDependents.jsx";
 import PatientDoctorProfile from "./PatientDashboard/PatientDoctorProfile.jsx";
 import PeriodTracker from "./PatientDashboard/PeriodTracker.jsx";
 import WeightLossProgram from "./PatientDashboard/WeightLossProgram.jsx";
+import GetAppPage from "./pages/GetAppPage.jsx";
+import SignupRolePage from "./pages/SignupRolePage.jsx";
+import Search from "./pages/Search.jsx";
+import Finances from "./pages/Finances.jsx";
 import { useEffect } from "react";
 import { refreshAccessTokenIfNeeded } from "./utils";
 
@@ -131,6 +136,8 @@ const App = () => {
         <CookieBanner />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/get-app" element={<GetAppPage />} />
+          <Route path="/signup" element={<SignupRolePage />} />
           <Route path="/doctor_signup/*" element={<DoctorSignupForm />} />
           <Route path="/patient_signup/*" element={<PatientSignup />} />
           <Route path="/verify-email" element={<VerificationInput />} />
@@ -178,8 +185,19 @@ const App = () => {
             <Route path="partners/profile" element={<Profile />} />
           </Route>
 
-          <Route element={<ProtectedRoute role="DOCTOR" />}>
-            <Route path="/doctor-dashboard/*" element={<DashboardLayout />} />
+          <Route
+            path="/doctor-dashboard/*"
+            element={<ProtectedRoute role="DOCTOR" />}
+          >
+            <Route element={<DashboardLayout />}>
+              <Route index element={<DoctorDashboard />} />
+              <Route path="view-profile" element={<DoctorProfile />} />
+              <Route path="edit-profile" element={<ViewProfile />} />
+              <Route path="notes" element={<Search />} />
+              <Route path="contact-us" element={<ContactUs />} />
+              <Route path="finances" element={<Finances />} />
+              <Route path="doctor-profile" element={<DoctorProfile />} />
+            </Route>
           </Route>
         </Routes>
       </Router>

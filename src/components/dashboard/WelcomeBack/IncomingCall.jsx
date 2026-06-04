@@ -100,7 +100,7 @@ const IncomingCall = () => {
   const joinCall = async (call) => {
     const callId = call?.callId;
     if (!callId || !userData?.id) {
-      toast.error("Unable to join — please sign in again.");
+      toast.error("Unable to join. Please sign in again.");
       return;
     }
     setJoiningCallId(callId);
@@ -115,7 +115,7 @@ const IncomingCall = () => {
       toast.success(
         result.usedSameTab
           ? "Call opened in this tab."
-          : "Call opened in a new tab — use Rejoin if you get disconnected.",
+          : "Call opened in a new tab. Use Rejoin if you get disconnected.",
       );
     } catch (error) {
       toast.error(formatGpJoinError(error));
@@ -161,7 +161,7 @@ const IncomingCall = () => {
               <span className="font-semibold">Active consultation</span>
               <span className="opacity-90">
                 {" "}
-                — {rejoinData.call?.patientFirstName}{" "}
+                · {rejoinData.call?.patientFirstName}{" "}
                 {rejoinData.call?.patientLastName}
                 {" · "}
                 {remainingRejoinMinutes(rejoinData.expiresAt)} min left to rejoin

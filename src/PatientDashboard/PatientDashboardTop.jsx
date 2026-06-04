@@ -93,7 +93,7 @@ export function PatientDashboardTop({
             }
             message={
               nextActive
-                ? `Dr. ${highlight?.name || "your doctor"} — rejoin your video call in a new tab.`
+                ? `Dr. ${highlight?.name || "your doctor"}: rejoin your video call in a new tab.`
                 : "Continue your GP consultation in a new browser tab."
             }
             primaryAction={
@@ -132,7 +132,7 @@ export function PatientDashboardTop({
             title={nextActive ? "Appointment happening now" : "Next appointment"}
             message={
               nextActive
-                ? `Dr. ${highlight.name} — join your consultation.`
+                ? `Dr. ${highlight.name}: join your consultation.`
                 : `Dr. ${highlight.name} on ${highlight.date} at ${formatTime?.(highlight.time)}`
             }
             primaryAction={
@@ -173,7 +173,7 @@ export function PatientDashboardTop({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ActionCard
           title="Call a General Practitioner"
-          description="Speak with a GP now — usually under a few minutes wait."
+          description="Speak with a GP now. Usually under a few minutes wait."
           image={call}
           accent="blue"
           disabled={!!activeMeeting?.roomUrl || isLoading}

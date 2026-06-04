@@ -3,9 +3,11 @@ import Footer from "../reuseable/Footer";
 import Works from "../works/Works";
 import ContactUs from "../Contact/ContactUs";
 import FAQs from "../FAQs/FAQs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import InstallGuideModal from "../../install/InstallGuideModal";
+import { isIOSDevice, isStandalonePwa } from "../../../utils/installApp";
 
 const specialties = [
   {
@@ -61,14 +63,13 @@ const conditionCards = [
 ];
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true;
-    setIsStandalone(standalone);
+    setIsStandalone(isStandalonePwa());
 
     const onBeforeInstallPrompt = (event) => {
       event.preventDefault();
@@ -82,10 +83,12 @@ const HomePage = () => {
   }, []);
 
   const handleInstallApp = async () => {
+    if (isIOSDevice()) {
+      navigate("/get-app");
+      return;
+    }
     if (!installPromptEvent) {
-      window.alert(
-        "To install Medfair App now, open your browser menu and tap 'Install app' or 'Add to Home screen'."
-      );
+      setShowInstallGuide(true);
       return;
     }
     installPromptEvent.prompt();
@@ -109,16 +112,23 @@ const HomePage = () => {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            {!isStandalone && (
-              <button
-                type="button"
-                onClick={handleInstallApp}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Link
+                to="/get-app"
                 className="inline-flex w-full animate-pulse items-center justify-center gap-3 rounded-2xl border-2 border-[#020e7c] bg-yellow-300 px-5 py-3 text-sm font-extrabold uppercase tracking-wide text-[#020e7c] shadow-lg ring-4 ring-yellow-200/80 transition hover:scale-[1.01] hover:bg-yellow-200 sm:w-auto"
               >
                 <img src="/logo.png" alt="" className="h-8 w-auto" aria-hidden />
                 Download MedFair App
-              </button>
-            )}
+              </Link>
+              {isStandalone && (
+                <Link
+                  to="/get-app"
+                  className="inline-flex w-full items-center justify-center rounded-2xl border-2 border-[#020e7c] bg-white px-5 py-3 text-sm font-bold text-[#020e7c] sm:w-auto"
+                >
+                  Share install link with friends
+                </Link>
+              )}
+            </div>
             <h1 className="text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
               Smarter telemedicine, built for real patient care.
             </h1>
@@ -128,7 +138,7 @@ const HomePage = () => {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/patient_signup"
+                to="/signup"
                 className="rounded-xl bg-[#020e7c] px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-800"
               >
                 Get started as patient
@@ -145,7 +155,7 @@ const HomePage = () => {
                   onClick={handleInstallApp}
                   className="animate-pulse rounded-xl border-2 border-[#020e7c] bg-[#020e7c] px-5 py-3 text-sm font-extrabold text-white shadow-md transition hover:bg-blue-800"
                 >
-                  Install MedFair App
+                  {isIOSDevice() ? "How to install on iPhone" : "Install MedFair App"}
                 </button>
               )}
             </div>
@@ -364,6 +374,7 @@ const HomePage = () => {
       </section>
 
       <Footer />
+      <InstallGuideModal open={showInstallGuide} onClose={() => setShowInstallGuide(false)} />
     </div>
   );
 };

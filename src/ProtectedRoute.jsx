@@ -1,62 +1,146 @@
-import React, { useEffect, useState } from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
-import PatientLayout from './PatientDashboard/PatientLayout';
-import {jwtDecode} from "jwt-decode"
+import React, { useEffect, useState } from "react";
+
+import { Outlet, Navigate } from "react-router-dom";
+
+import PatientLayout from "./PatientDashboard/PatientLayout";
+
+import {
+
+  getToken,
+
+  getRefreshToken,
+
+  refreshAccessTokenIfNeeded,
+
+  getTokenExpiryMs,
+
+  getUserRole,
+
+} from "./utils";
+
+
 
 const ProtectedRoute = ({ role }) => {
+
+  const [checking, setChecking] = useState(true);
+
   const [isTokenValid, setIsTokenValid] = useState(true);
-  const userData = localStorage.getItem('userData');
-  const authToken = localStorage.getItem('authToken');
+
+
 
   useEffect(() => {
-    
-    if (authToken) {
-      const isExpired = checkTokenExpiration(authToken);
-      if (isExpired) {
-        setIsTokenValid(false);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData'); 
+
+    const validate = async () => {
+
+      let token = getToken();
+
+      const refresh = getRefreshToken();
+
+
+
+      if (!token && refresh) {
+
+        token = await refreshAccessTokenIfNeeded({ force: true });
+
+      } else if (token) {
+
+        const exp = getTokenExpiryMs(token);
+
+        if (exp && exp <= Date.now() + 60_000) {
+
+          token = await refreshAccessTokenIfNeeded({ force: true });
+
+        }
+
       }
-    } else {
-      setIsTokenValid(false); 
-    }
-  }, [authToken]);
 
-  
-  const checkTokenExpiration = (token) => {
-    try {
-      const decodedToken = jwtDecode(token);
-      const currentTime = Date.now() / 1000; 
-      return decodedToken.exp < currentTime; 
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return true; 
-    }
-  };
 
-  
+
+      setIsTokenValid(Boolean(token));
+
+      setChecking(false);
+
+    };
+
+
+
+    validate();
+
+  }, []);
+
+
+
+  if (checking) {
+
+    return (
+
+      <div className="flex min-h-screen items-center justify-center text-[#020e7c]">
+
+        Loading…
+
+      </div>
+
+    );
+
+  }
+
+
+
   if (!isTokenValid) {
+
     return <Navigate to="/login" replace />;
+
   }
 
-  
-  if (!userData) {
+
+
+  const userRole = getUserRole();
+
+  if (!userRole) {
+
     return <Navigate to="/login" replace />;
+
   }
 
-  const parsedUserData = JSON.parse(userData);
-  const userRole = parsedUserData.role;
 
-  
-  if (userRole !== role) {
-    return <Navigate to={`/${userRole.toLowerCase()}-dashboard`} replace />;
+
+  const expectedRole = String(role).toUpperCase();
+
+
+
+  if (userRole !== expectedRole) {
+
+    const redirect =
+
+      userRole === "DOCTOR" ? "/doctor-dashboard" : "/patient-dashboard";
+
+    return <Navigate to={redirect} replace />;
+
   }
 
-  return (
-    <PatientLayout>
-      <Outlet />
-    </PatientLayout>
-  );
+
+
+  if (expectedRole === "PATIENT") {
+
+    return (
+
+      <PatientLayout>
+
+        <Outlet />
+
+      </PatientLayout>
+
+    );
+
+  }
+
+
+
+  return <Outlet />;
+
 };
 
+
+
 export default ProtectedRoute;
+

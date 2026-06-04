@@ -146,7 +146,7 @@ function LeftPanel({ status, setStatus }) {
           <DashboardAlert
             variant="info"
             title="Ongoing consultation"
-            message={`Rejoin your call with ${callAlerts.rejoinData.call?.patientFirstName || "patient"} ${callAlerts.rejoinData.call?.patientLastName || ""} — ${remainingMinutes(callAlerts.rejoinData.expiresAt)} min left.`}
+            message={`Rejoin your call with ${callAlerts.rejoinData.call?.patientFirstName || "patient"} ${callAlerts.rejoinData.call?.patientLastName || ""}. ${remainingMinutes(callAlerts.rejoinData.expiresAt)} min left.`}
             primaryAction={
               <button
                 type="button"
@@ -248,12 +248,15 @@ function LeftPanel({ status, setStatus }) {
         <div className="order-1 lg:col-span-2">
           <DashboardSection
             title="Appointment requests"
-            subtitle="Join opens 5 minutes before start · stays open 45 minutes after"
+            subtitle="Join opens 5 minutes before start. Stays open 45 minutes after."
             className="h-full"
             noPadding
           >
-            <div className="max-h-[min(520px,60vh)] overflow-y-auto p-3 sm:p-4">
-              <AppointmentRequests appointments={appointments} />
+            <div className="min-h-[200px] max-h-[min(520px,60vh)] overflow-x-hidden overflow-y-auto p-3 sm:p-4">
+              <AppointmentRequests
+                appointments={appointments}
+                onRefresh={getDoctorsAppointmentRequest}
+              />
             </div>
           </DashboardSection>
         </div>

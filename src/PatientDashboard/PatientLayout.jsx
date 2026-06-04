@@ -434,42 +434,48 @@ export default function PatientLayout() {
   return (
     <PartnerLocationsProvider>
       <div
-        className={`w-full h-screen flex flex-col lg:flex-row ${isDarkMode ? "dashboard-theme-dark" : "dashboard-theme-light"}`}
+        className={`min-h-screen ${isDarkMode ? "dashboard-theme-dark bg-[#0b1220]" : "dashboard-theme-light bg-gradient-to-b from-slate-100 via-gray-50 to-slate-100"}`}
       >
-        <ToastContainer />
+        <ToastContainer position="top-right" autoClose={4000} />
 
-        {/* Sidebar */}
-        <div className="lg:w-[20%] flex-shrink-0 bg-white">
-          <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        </div>
+        <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-        {/* Main Content */}
-        <div className="lg:w-[80%] flex flex-col bg-gradient-to-b from-slate-100 via-gray-50 to-slate-100">
-          {/* Header */}
-          <header className="w-full flex h-16 shrink-0 items-center justify-between border-b border-gray-200/80 bg-white/90 px-4 py-4 shadow-sm backdrop-blur-sm">
+        <div className="flex min-h-screen flex-col lg:pl-[260px]">
+          <header
+            className={`sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b px-4 shadow-sm backdrop-blur-sm ${
+              isDarkMode
+                ? "border-gray-700 bg-gray-900/95"
+                : "border-gray-200/80 bg-white/90"
+            }`}
+          >
             <button
-              className="lg:hidden text-2xl p-2 focus:outline-none"
+              type="button"
+              className="text-2xl p-2 focus:outline-none lg:hidden"
               onClick={toggleSidebar}
+              aria-label="Open menu"
             >
               ☰
             </button>
-            <div className="flex justify-between w-full items-center gap-4">
+            <div className="flex w-full items-center justify-between gap-4">
               <FirstCareHospitalLogo />
-              <span className="font-bold text-[#020E7C] hidden lg:block">
+              <span
+                className={`truncate font-bold ${isDarkMode ? "text-white" : "text-[#020E7C]"} max-lg:text-sm lg:text-base`}
+              >
                 Welcome, {userName}
               </span>
               <DarkModeToggle
                 isDarkMode={isDarkMode}
                 onToggle={toggleDarkMode}
-                className="ml-auto"
+                className="ml-auto shrink-0"
               />
             </div>
           </header>
 
-          {/* Scrollable Outlet */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <Outlet />
-          </div>
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="mx-auto w-full max-w-7xl">
+              <Outlet />
+            </div>
+          </main>
         </div>
       </div>
     </PartnerLocationsProvider>

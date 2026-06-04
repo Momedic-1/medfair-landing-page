@@ -707,7 +707,7 @@ const Investigations = () => {
                     send to lab
                     {isFirstCareHospitalPartner
                       ? " (no upfront payment required)"
-                      : " — paid order(s)"}
+                      : " paid order(s)"}
                   </p>
                 </div>
               </div>
@@ -975,7 +975,7 @@ const Investigations = () => {
                     !order.sentToLab &&
                     !isOrderSentToLab && (
                       <p className="text-xs text-teal-700 mt-2">
-                        ✓ No upfront payment — select a lab partner and send
+                        ✓ No upfront payment. Select a lab partner and send
                         this order when you are ready.
                       </p>
                     )}

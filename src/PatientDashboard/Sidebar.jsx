@@ -298,9 +298,9 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed lg:static top-0 left-0 h-full w-3/4 sm:w-1/2 lg:w-full bg-[#020E7C] text-white flex flex-col z-20 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 start-0 z-[60] flex h-full w-[min(280px,85vw)] flex-col border-e border-[#020e7c]/80 bg-[#020E7C] text-white transition-transform duration-300 ease-in-out sm:w-[280px] lg:w-[260px] lg:translate-x-0 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
+        }`}
       >
         {role === "PATIENT" ? (
           <div className="w-full h-full flex flex-col">

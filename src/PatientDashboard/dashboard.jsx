@@ -10,7 +10,8 @@ import CallDoctorModal from "./components/CallDoctorModal";
 import { confirmModalSx } from "./components/bookingModalStyles";
 import { baseUrl } from "../env";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import PeriodTrackerFloatingPromo from "../components/patient/PeriodTrackerFloatingPromo";
 import { ColorRing } from "react-loader-spinner";
 import { formatTime, getId, getToken, transformName } from "../utils";
 import {
@@ -43,6 +44,11 @@ import {
 import { notifyAppointmentReminders } from "../utils/appointmentReminderNotifications";
 import UpcomingAppointmentsList from "../components/appointments/UpcomingAppointmentsList";
 import UpcomingAppointmentJoinModal from "../components/appointments/UpcomingAppointmentJoinModal";
+import CancelAppointmentModal from "../components/appointments/CancelAppointmentModal";
+import {
+  cancelAppointment,
+  parseCancelError,
+} from "../utils/cancelAppointment";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -111,9 +117,15 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const userId = userData.id;
+  const getCurrentUserId = () => {
+    const fresh = JSON.parse(localStorage.getItem("userData") || "{}");
+    return Number(fresh?.id ?? sessionStorage.getItem("id") ?? userId);
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [joiningSlotId, setJoiningSlotId] = useState(null);
+  const [cancellingSlotId, setCancellingSlotId] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const [specialistsLoading, setSpecialistsLoading] = useState(false);
   const [specialistCategories, setSpecialistCategories] =
     useState(specialistCategory);
@@ -424,7 +436,7 @@ const Dashboard = () => {
           "Allow pop-ups for this site, then click Join again. Your dashboard will stay here."
         );
       } else if (opened) {
-        toast.success("Video call opened in a new tab — you can stay on this page.");
+        toast.success("Video call opened in a new tab. You can stay on this page.");
       }
     } catch (error) {
       console.error("Join call error:", error);
@@ -454,6 +466,29 @@ const Dashboard = () => {
     if (!currentUpcomingAppointment) return;
     await handleJoinCall(currentUpcomingAppointment);
     handleCloseUpcomingModal();
+  };
+
+  const handleCancelConfirm = async (reason) => {
+    const apt = cancelTarget;
+    const currentUserId = Number(patientId || getCurrentUserId());
+    if (!apt?.slotId || !currentUserId || !token) return;
+
+    setCancellingSlotId(apt.slotId);
+    try {
+      await cancelAppointment({
+        slotId: apt.slotId,
+        userId: currentUserId,
+        reason,
+        token,
+      });
+      toast.success("Appointment cancelled. Your doctor will see the reason you provided.");
+      setCancelTarget(null);
+      await getUpcomingAppointments();
+    } catch (error) {
+      toast.error(parseCancelError(error));
+    } finally {
+      setCancellingSlotId(null);
+    }
   };
 
   const handleCardClick = (title) => {
@@ -526,11 +561,7 @@ const Dashboard = () => {
 
       await getUpcomingAppointments();
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to book appointment";
-      toast.error(errorMessage);
+      toast.error(parseApiError(error, "Could not book this appointment. The slot may already be taken."));
 
       setBookedSlots((prev) => {
         const newSet = new Set(prev);
@@ -640,7 +671,7 @@ const Dashboard = () => {
       const statusCode = error?.response?.status;
       const onPatientDashboard = window.location.pathname.startsWith("/patient-dashboard");
       if (onPatientDashboard && statusCode !== 401 && statusCode !== 403) {
-        toast.error("Could not load your appointments.");
+        toast.error(parseApiError(error, "Could not load your appointments. Pull to refresh or try again."));
       }
     } finally {
       setAppointmentsLoading(false);
@@ -838,11 +869,7 @@ const Dashboard = () => {
       toast.success("Call cancelled successfully");
     } catch (error) {
       console.error("Error cancelling call:", error);
-      const errorMessage =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        "Failed to cancel call";
-      toast.error(errorMessage);
+      toast.error(parseApiError(error, "Could not cancel the call. Please try again."));
 
       // Still clean up local state even if API call fails
       if (pollingInterval) {
@@ -987,9 +1014,13 @@ const Dashboard = () => {
   const isSlotExpired = (slot) =>
     isSlotDateTimeExpired(slot, nowInBookingZone());
 
+  const location = useLocation();
+  const isPartnersDashboard = location.pathname.includes("/partners");
+
   return (
     <div className="w-full">
       <ToastContainer />
+      {!isPartnersDashboard && <PeriodTrackerFloatingPromo />}
 
       {/* Custom Calendar Styles */}
       <style jsx>{`
@@ -1170,7 +1201,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[32%]">
+          <div className="flex w-full flex-col overflow-x-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[32%]">
             <div className="border-b border-gray-100 px-4 py-4">
               <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
                 Your appointments
@@ -1188,6 +1219,8 @@ const Dashboard = () => {
                 emptyHint="Schedule a specialist visit to see it here."
                 onJoin={handleJoinCall}
                 isJoiningId={joiningSlotId}
+                onCancel={(apt) => setCancelTarget(apt)}
+                isCancellingId={cancellingSlotId}
               />
             </div>
           </div>
@@ -1297,6 +1330,15 @@ const Dashboard = () => {
             ? "active"
             : "reminder"
         }
+      />
+
+      <CancelAppointmentModal
+        open={!!cancelTarget}
+        appointment={cancelTarget}
+        audience="patient"
+        onClose={() => !cancellingSlotId && setCancelTarget(null)}
+        onConfirm={handleCancelConfirm}
+        isSubmitting={!!cancellingSlotId}
       />
     </div>
   );

@@ -35,7 +35,7 @@ const HowItWorks = () => {
   ];
 
   const handleCreateAccount = () => {
-    navigate("/patient_signup");
+    navigate("/signup");
   };
 
   return (

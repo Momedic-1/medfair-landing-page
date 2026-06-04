@@ -149,7 +149,7 @@ const DesktopNavbar = () => {
                         description: "Join our medical team",
                       },
                       {
-                        to: "/patient_signup",
+                        to: "/signup",
                         label: "As a Patient",
                         icon: "👤",
                         description: "Get healthcare services",
