@@ -29,7 +29,7 @@ const ContactUs = () => {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                to="/patient_signup"
+                to="/signup"
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#020e7c] transition hover:bg-blue-50"
               >
                 Book as patient

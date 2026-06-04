@@ -262,7 +262,7 @@ const MobileNavbar = () => {
                 </a>
 
                 <a
-                  href="/patient_signup"
+                  href="/signup"
                   className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group"
                   onClick={closeMobileMenu}
                 >

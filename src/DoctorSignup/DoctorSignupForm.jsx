@@ -10,6 +10,7 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { ColorRing } from "react-loader-spinner";
 import { Eye, EyeOff } from "lucide-react";
+import SignupRoleSelect from "../components/signup/SignupRoleSelect";
 
 const specialization = [
   "Select specialization",
@@ -139,6 +140,13 @@ export default function DoctorSignupForm() {
             Complete your account details to continue to verification.
           </p>
         </div>
+
+        <SignupRoleSelect
+          value="DOCTOR"
+          fieldClass="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium text-[#020E7C] focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
+          className="mb-6 max-w-md"
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
           <div className="mt-4">
             <h1 className="text-gray-600 font-medium text-sm">First Name</h1>

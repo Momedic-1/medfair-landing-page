@@ -196,7 +196,7 @@ function SpecialistCard({
       {totalSlots === 0 && (
       <div className="border-t border-gray-50 px-4 pb-4 sm:px-5 sm:pb-5">
         <p className="text-center text-sm text-gray-500">
-          No open slots —{" "}
+          No open slots.{" "}
           <button
             type="button"
             onClick={viewProfile}

@@ -26,7 +26,7 @@ const Benefit = () => {
         </div>
       </div>
       <div className="mt-16 -ml-6 md:px-20 ">
-        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] md:w-[430px] md:h-[200px]  w-[305px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] cursor-pointer"   onClick={() => navigate("/patient_signup")}>
+        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] md:w-[430px] md:h-[200px]  w-[305px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] cursor-pointer"   onClick={() => navigate("/signup")}>
           <h1 className="font-bold text-[20px] leading-9">Patients</h1>
           <p className="sm:w-[552px] h-[98px] w-[286px] md:max-w-96 font-normal text-[12px] sm:w[700px] sm:h-[61px]">
            At Medfair, we are committed to enhancing healthcare 
@@ -43,7 +43,7 @@ const Benefit = () => {
             </span>
           </h2>
         </div>
-        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] w-[305px] md:w-[430px] md:h-[200px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/patient_signup")}>
+        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] w-[305px] md:w-[430px] md:h-[200px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/signup")}>
           <h1 className="font-bold text-[20px] leading-9">Doctors</h1>
           <p className="sm:w-[552px] h-[98px] w-[286px] md:max-w-96  font-normal text-[12px] sm:w[700px] sm:h-[61px]">
            
@@ -62,7 +62,7 @@ const Benefit = () => {
             </span>
           </h2>
         </div>
-        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] w-[305px] md:w-[430px] md:h-[200px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/patient_signup")}>
+        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] w-[305px] md:w-[430px] md:h-[200px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/signup")}>
           <h1 className="font-bold text-[20px] leading-9">Partners</h1>
           <p className="sm:w-[552px] h-[98px] w-[286px] md:max-w-96  font-normal text-[12px] sm:w[700px] sm:h-[61px]">
             We collaborate with diverse stakeholders who share 
@@ -78,7 +78,7 @@ const Benefit = () => {
             </span>
           </h2>
         </div>
-        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] md:w-[430px] md:h-[200px]  w-[305px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/patient_signup")}>
+        <div className=" sm:w-[636px] sm:h-[168px] lg:w-[540px] lg:h-[180px] md:w-[430px] md:h-[200px]  w-[305px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/signup")}>
           <h1 className="font-bold text-[20px] leading-9">
             Corporate Organization
           </h1>
@@ -94,7 +94,7 @@ const Benefit = () => {
             </span>
           </h2>
         </div>
-        <div className=" sm:w-[636px] sm:h-[168px] md:w-[430px] md:h-[200px] lg:w-[540px] lg:h-[180px] w-[305px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/patient_signup")}>
+        <div className=" sm:w-[636px] sm:h-[168px] md:w-[430px] md:h-[200px] lg:w-[540px] lg:h-[180px] w-[305px] h-[200px] border border-[#A3ADFF] rounded-xl p-4 text-[#020E7C] mt-4 cursor-pointer" onClick={() => navigate("/signup")}>
           <h1 className="font-bold text-[20px] leading-9">Volunteer</h1>
           <p className="sm:w-[552px] h-[98px] md:max-w-96  w-[286px] font-normal text-[12px] sm:w[700px] sm:h-[61px]">
             At Medfair, we carter to a diverse range of stakeholders each

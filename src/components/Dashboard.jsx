@@ -1,21 +1,13 @@
 import { useEffect, useState } from "react";
 import LeftPanel from "./dashboard/LeftPanel.jsx";
-import { useNavigate } from "react-router-dom";
 import { useDashboardTheme } from "../hooks/useDashboardTheme";
 
-const Dashboard = () => {
-  const navigate = useNavigate();
+const DoctorDashboard = () => {
   const onlineStatus = "onlineStatus";
   const online = localStorage.getItem(onlineStatus);
-  const value = online ? online : "Online";
-
+  const value = online || "Online";
   const [status, setStatus] = useState(value);
-  const token = JSON.parse(localStorage.getItem("authToken"))?.token;
   const { isDarkMode } = useDashboardTheme();
-
-  if (!token) {
-    navigate("/login");
-  }
 
   useEffect(() => {
     if (status !== value) {
@@ -25,11 +17,15 @@ const Dashboard = () => {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-b from-slate-100 via-gray-50 to-slate-100 ${isDarkMode ? "dashboard-theme-dark" : "dashboard-theme-light"}`}
+      className={`min-h-full w-full ${
+        isDarkMode
+          ? "bg-[#0b1220] dashboard-theme-dark"
+          : "bg-gradient-to-b from-slate-100 via-gray-50 to-slate-100 dashboard-theme-light"
+      }`}
     >
       <LeftPanel status={status} setStatus={setStatus} />
     </div>
   );
 };
 
-export default Dashboard;
+export default DoctorDashboard;

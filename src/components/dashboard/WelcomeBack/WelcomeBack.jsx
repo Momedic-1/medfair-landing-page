@@ -18,13 +18,14 @@ import {
   ensureDoctorPushSubscription,
   showIncomingCallNotification,
 } from "../../../utils/doctorPushNotifications";
+import { getToken } from "../../../utils";
 
 function WelcomeBack({ status, onAlertsChange }) {
   const [pickedCalls, setPickedCalls] = useState(new Set());
   const [callTimer, setCallTimer] = useState(null);
   const [rejoinData, setRejoinData] = useState(null);
   const [answeringCallId, setAnsweringCallId] = useState(null);
-  const token = JSON.parse(localStorage.getItem("authToken"))?.token;
+  const token = getToken();
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const online = "Online";
   const navigate = useNavigate();

@@ -3,7 +3,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { baseUrl } from '../env';
-import { setPatientPartnerSlug, PATIENT_PARTNER_SLUG_STORAGE_KEY } from '../utils';
+import { setPatientPartnerSlug, PATIENT_PARTNER_SLUG_STORAGE_KEY, getUserRole } from '../utils';
+import { formatAuthError } from '../utils/parseApiError';
 
 export const login = createAsyncThunk(
   'auth/login',
@@ -21,7 +22,9 @@ export const login = createAsyncThunk(
       );
       return payload?.user;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(
+        error?.response?.data ?? { message: formatAuthError(null) },
+      );
     }
   }
 );
@@ -71,9 +74,21 @@ const authSlice = createSlice({
         state.token = action.payload?.message;
         state.userData = action.payload;
         sessionStorage.setItem('id', action.payload.id);
-        // localStorage.setItem('authToken', state?.token);
         localStorage.setItem('userData', JSON.stringify(state.userData));
-        localStorage.setItem('roleType', state.userData.role);
+        const rawRole = action.payload?.role;
+        const role =
+          typeof rawRole === "string"
+            ? rawRole.toUpperCase()
+            : rawRole?.name
+              ? String(rawRole.name).toUpperCase()
+              : getUserRole();
+        if (role) {
+          localStorage.setItem("roleType", role);
+          if (state.userData && typeof state.userData === "object") {
+            state.userData.role = role;
+            localStorage.setItem("userData", JSON.stringify(state.userData));
+          }
+        }
         if (state.userData?.partnerSlug != null && String(state.userData.partnerSlug).trim() !== '') {
           setPatientPartnerSlug(state.userData.partnerSlug);
         } else if (state.userData?.partner_slug != null && String(state.userData.partner_slug).trim() !== '') {
@@ -82,8 +97,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload
-        
+        state.error = formatAuthError(action.payload);
       });
   },
 });

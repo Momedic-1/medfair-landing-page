@@ -35,7 +35,7 @@ const DesignedSideBar = ({ className = "" }) => {
 
   return (
     <div
-      className={`${className} w-full lg:w-1/3 bg-gradient-to-br from-[#020E7C] via-blue-700 to-indigo-800 relative overflow-hidden`}
+      className={`${className} relative w-full shrink-0 overflow-hidden bg-gradient-to-br from-[#020E7C] via-blue-700 to-indigo-800`}
     >
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full transform translate-x-16 -translate-y-16"></div>
@@ -52,7 +52,7 @@ const DesignedSideBar = ({ className = "" }) => {
           </div>
 
           <button
-            className="flex flex-col items-center space-y-2 hover:transform hover:scale-105 transition-all duration-300 group"
+            className="group flex flex-col items-center space-y-2"
             onClick={toHomePage}
           >
             <div className="w-12 h-12 md:w-20 md:h-20 drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-300">
@@ -80,7 +80,7 @@ const DesignedSideBar = ({ className = "" }) => {
 
           <div className="space-y-6">
             <button
-              className="flex flex-col items-center justify-center space-y-4 hover:transform hover:scale-105 transition-all duration-300 group"
+              className="group flex flex-col items-center justify-center space-y-4"
               onClick={toHomePage}
             >
               <div className="w-20 h-20 drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-300">

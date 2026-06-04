@@ -216,7 +216,7 @@ export default function PatientDoctorProfile() {
               </h2>
             </div>
             <p className="mb-4 text-sm text-gray-500">
-              Times are shown in Nigeria (WAT). Each day is one row — pick a time
+              Times are shown in Nigeria (WAT). Each day is one row. Pick a time
               to book.
             </p>
 

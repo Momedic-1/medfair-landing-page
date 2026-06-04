@@ -176,20 +176,25 @@
 //   );
 // }
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, Fingerprint } from "lucide-react";
 import { login, setError } from "./features/authSlice";
-import ErrorModal from "./components/ErrorModal";
+import {
+  enableBiometricLogin,
+  hasBiometricLoginSetup,
+  isBiometricAvailable,
+  loginWithBiometric,
+} from "./utils/biometricLogin";
+import { getRefreshToken, getToken, getUserRole } from "./utils";
+import { baseUrl } from "./env";
 import DesignedSideBar from "./components/reuseables/DesignedSideBar";
 import eye from "./assets/ph_eye.png";
 import close from "./assets/eye-close-svgrepo-com.svg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { baseUrl } from "./env";
-import { getToken } from "../src/utils";
 
 export default function LoginPage({ isPartnerLogin = false }) {
   const [formData, setFormData] = useState({
@@ -197,11 +202,15 @@ export default function LoginPage({ isPartnerLogin = false }) {
     password: "",
   });
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [enableBiometricAfterLogin, setEnableBiometricAfterLogin] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricSetup, setBiometricSetup] = useState(false);
+  const loginHandledRef = useRef(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { error, isLoading, userData } = useSelector((state) => state.auth);
-  const token = getToken();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -220,20 +229,22 @@ export default function LoginPage({ isPartnerLogin = false }) {
     dispatch(login(formData));
   };
 
-  const handleCloseModal = () => {
-    dispatch(setError(""));
-  };
-
   const fetchDoctorProfile = async () => {
-    const response = await axios.get(
-      `${baseUrl}/api/v1/doctor-profile/profile-info`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    localStorage.setItem("doctorProfile", JSON.stringify(response.data));
+    const accessToken = getToken();
+    if (!accessToken) return;
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/v1/doctor-profile/profile-info`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      localStorage.setItem("doctorProfile", JSON.stringify(response.data));
+    } catch (err) {
+      console.warn("[doctor-dashboard] profile prefetch failed:", err?.message || err);
+    }
   };
 
   // const goToLogin = ()=> {
@@ -256,23 +267,69 @@ export default function LoginPage({ isPartnerLogin = false }) {
   // }, [userData, navigate]);
 
   useEffect(() => {
-    if (userData) {
-      const role = userData.role;
+    isBiometricAvailable().then(setBiometricAvailable);
+    setBiometricSetup(hasBiometricLoginSetup());
+  }, []);
 
-      if (role === "DOCTOR") {
-        fetchDoctorProfile();
-        navigate("/doctor-dashboard");
-      } else if (role === "PATIENT") {
-        if (isPartnerLogin) {
-          navigate("/patient-dashboard/partners");
-        } else {
-          navigate("/patient-dashboard");
-        }
-      } else {
-        dispatch(setError("Invalid user role"));
-      }
+  const navigateAfterLogin = (role) => {
+    const normalized = (role && String(role).toUpperCase()) || getUserRole();
+    if (normalized === "DOCTOR") {
+      fetchDoctorProfile();
+      navigate("/doctor-dashboard", { replace: true });
+    } else if (normalized === "PATIENT") {
+      navigate(isPartnerLogin ? "/patient-dashboard/partners" : "/patient-dashboard", {
+        replace: true,
+      });
+    } else {
+      dispatch(setError("Invalid user role"));
     }
-  }, [userData, navigate, isPartnerLogin]);
+  };
+
+  useEffect(() => {
+    if (!userData) {
+      loginHandledRef.current = false;
+      return;
+    }
+    if (loginHandledRef.current) return;
+    loginHandledRef.current = true;
+
+    const finishLogin = async () => {
+      if (
+        enableBiometricAfterLogin &&
+        (await isBiometricAvailable()) &&
+        !hasBiometricLoginSetup() &&
+        getRefreshToken()
+      ) {
+        try {
+          await enableBiometricLogin({
+            email: userData?.emailAddress || formData.emailOrPhone,
+            refreshToken: getRefreshToken(),
+            userData,
+          });
+          setBiometricSetup(true);
+          toast.success("Fingerprint login enabled on this device");
+        } catch (e) {
+          toast.error(e?.message || "Could not enable fingerprint login");
+        }
+      }
+      navigateAfterLogin(getUserRole() || userData.role);
+    };
+
+    finishLogin();
+  }, [userData, navigate, isPartnerLogin, enableBiometricAfterLogin]);
+
+  const handleBiometricLogin = async () => {
+    setBiometricLoading(true);
+    try {
+      const { userData: u } = await loginWithBiometric();
+      if (u?.role) navigateAfterLogin(u.role);
+      else navigate("/patient-dashboard");
+    } catch (e) {
+      toast.error(e?.message || "Biometric sign-in failed");
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Clear form data and show success message if coming from password reset
@@ -291,10 +348,10 @@ export default function LoginPage({ isPartnerLogin = false }) {
     "block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5";
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <DesignedSideBar className="hidden lg:block" />
-      <div className="flex w-full flex-1 flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/40 px-4 py-8 sm:px-6 sm:py-10 lg:w-2/3">
-        <div className="w-full max-w-md">
+    <div className="min-h-screen lg:grid lg:grid-cols-[380px_1fr]">
+      <DesignedSideBar className="hidden lg:flex lg:min-h-screen" />
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/40 px-4 py-8 sm:px-6 lg:py-10">
+        <div className="w-full max-w-md lg:mx-auto">
           <div className="mb-6 rounded-2xl border border-blue-100 bg-white/80 p-4 text-center shadow-sm backdrop-blur lg:hidden">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#020e7c]/70">
               Medfair
@@ -322,11 +379,26 @@ export default function LoginPage({ isPartnerLogin = false }) {
             onSubmit={handleSubmit}
             className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg sm:p-8"
           >
-            {error && (
-              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error ? (
+              <p
+                className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                aria-live="polite"
+              >
                 {error}
               </p>
-            )}
+            ) : null}
+
+            {biometricAvailable && biometricSetup ? (
+              <button
+                type="button"
+                disabled={biometricLoading}
+                onClick={handleBiometricLogin}
+                className="mb-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#020e7c] bg-[#020e7c]/5 text-sm font-semibold text-[#020e7c]"
+              >
+                <Fingerprint className="h-5 w-5" />
+                {biometricLoading ? "Verifying…" : "Sign in with fingerprint"}
+              </button>
+            ) : null}
 
             <div className="mb-5">
               <label className={labelClass} htmlFor="emailOrPhone">
@@ -385,6 +457,27 @@ export default function LoginPage({ isPartnerLogin = false }) {
               </Link>
             </div>
 
+            {biometricAvailable && !biometricSetup ? (
+              <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[#020e7c]/15 bg-[#020e7c]/5 p-3.5">
+                <input
+                  type="checkbox"
+                  checked={enableBiometricAfterLogin}
+                  onChange={(e) => setEnableBiometricAfterLogin(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#020e7c] focus:ring-[#020e7c]"
+                />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-[#020e7c]">
+                    <Fingerprint className="h-4 w-4 shrink-0" />
+                    Use fingerprint next time
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-gray-600">
+                    After you sign in with your password once, unlock faster with fingerprint or
+                    Face ID on this device.
+                  </span>
+                </span>
+              </label>
+            ) : null}
+
             <button
               type="submit"
               disabled={isLoading}
@@ -399,23 +492,19 @@ export default function LoginPage({ isPartnerLogin = false }) {
                 "Sign in"
               )}
             </button>
+
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Need an account?{" "}
-            <Link to="/patient_signup" className="font-medium text-[#020e7c] hover:underline">
-              Patient signup
-            </Link>
-            {" · "}
-            <Link to="/doctor_signup" className="font-medium text-[#020e7c] hover:underline">
-              Doctor signup
+            <Link to="/signup" className="font-medium text-[#020e7c] hover:underline">
+              Create account
             </Link>
           </p>
         </div>
       </div>
 
-      <ErrorModal message={error} onClose={handleCloseModal} />
-      <ToastContainer position="top-center" autoClose={3000} />
+      <ToastContainer position="top-center" autoClose={4000} />
     </div>
   );
 }

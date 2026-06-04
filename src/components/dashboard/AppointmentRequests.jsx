@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { getToken } from "../../utils";
+import { getId, getToken } from "../../utils";
 import { useDispatch } from "react-redux";
 import { setCall, setRoomUrl } from "../../features/authSlice";
 import {
@@ -13,11 +13,20 @@ import {
 } from "../../utils/appointmentStatus";
 import UpcomingAppointmentsList from "../appointments/UpcomingAppointmentsList";
 import UpcomingAppointmentJoinModal from "../appointments/UpcomingAppointmentJoinModal";
+import CancelAppointmentModal from "../appointments/CancelAppointmentModal";
+import {
+  cancelAppointment,
+  parseCancelError,
+} from "../../utils/cancelAppointment";
 
-function AppointmentRequests({ appointments }) {
+function AppointmentRequests({ appointments, onRefresh }) {
   const userData = JSON.parse(localStorage.getItem("userData") || "{}");
   const userId = userData.id;
   const dispatch = useDispatch();
+  const getCurrentUserId = () => {
+    const fresh = JSON.parse(localStorage.getItem("userData") || "{}");
+    return Number(fresh?.id ?? sessionStorage.getItem("id") ?? userId);
+  };
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [reminderShown, setReminderShown] = useState(new Set());
@@ -25,6 +34,8 @@ function AppointmentRequests({ appointments }) {
   const [currentUpcomingAppointment, setCurrentUpcomingAppointment] =
     useState(null);
   const [joiningSlotId, setJoiningSlotId] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancellingSlotId, setCancellingSlotId] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 30000);
@@ -102,6 +113,30 @@ function AppointmentRequests({ appointments }) {
     handleCloseUpcomingModal();
   };
 
+  const handleCancelConfirm = async (reason) => {
+    const apt = cancelTarget;
+    const token = getToken();
+    const currentUserId = Number(getId() || getCurrentUserId());
+    if (!apt?.slotId || !currentUserId || !token) return;
+
+    setCancellingSlotId(apt.slotId);
+    try {
+      await cancelAppointment({
+        slotId: apt.slotId,
+        userId: currentUserId,
+        reason,
+        token,
+      });
+      toast.success("Appointment cancelled. The patient will see your reason.");
+      setCancelTarget(null);
+      onRefresh?.();
+    } catch (error) {
+      toast.error(parseCancelError(error));
+    } finally {
+      setCancellingSlotId(null);
+    }
+  };
+
   return (
     <>
       <UpcomingAppointmentsList
@@ -112,6 +147,17 @@ function AppointmentRequests({ appointments }) {
         emptyHint="Open slots on your calendar for patients to book."
         onJoin={handleJoinCall}
         isJoiningId={joiningSlotId}
+        onCancel={(apt) => setCancelTarget(apt)}
+        isCancellingId={cancellingSlotId}
+      />
+
+      <CancelAppointmentModal
+        open={!!cancelTarget}
+        appointment={cancelTarget}
+        audience="doctor"
+        onClose={() => !cancellingSlotId && setCancelTarget(null)}
+        onConfirm={handleCancelConfirm}
+        isSubmitting={!!cancellingSlotId}
       />
 
       <UpcomingAppointmentJoinModal
