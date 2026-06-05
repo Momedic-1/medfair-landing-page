@@ -10,10 +10,8 @@ const Logout = () => {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
-    sessionStorage.clear();
-    localStorage.clear()
+    // Clear session only — keep biometric vault so fingerprint login works after logout.
     dispatch(logout());
-
     navigate('/login', { replace: true });
   };
 
