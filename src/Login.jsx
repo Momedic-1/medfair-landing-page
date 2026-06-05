@@ -187,6 +187,7 @@ import {
   isBiometricAvailable,
   loginWithBiometric,
 } from "./utils/biometricLogin";
+import { isStandalonePwa } from "./utils/installApp";
 import { getRefreshToken, getToken, getUserRole } from "./utils";
 import { baseUrl } from "./env";
 import DesignedSideBar from "./components/reuseables/DesignedSideBar";
@@ -267,6 +268,11 @@ export default function LoginPage({ isPartnerLogin = false }) {
   // }, [userData, navigate]);
 
   useEffect(() => {
+    if (!isStandalonePwa()) {
+      setBiometricAvailable(false);
+      setBiometricSetup(false);
+      return;
+    }
     isBiometricAvailable().then(setBiometricAvailable);
     setBiometricSetup(hasBiometricLoginSetup());
   }, []);
@@ -295,6 +301,7 @@ export default function LoginPage({ isPartnerLogin = false }) {
 
     const finishLogin = async () => {
       if (
+        isStandalonePwa() &&
         enableBiometricAfterLogin &&
         (await isBiometricAvailable()) &&
         !hasBiometricLoginSetup() &&

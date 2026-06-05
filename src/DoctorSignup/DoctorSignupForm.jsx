@@ -205,29 +205,47 @@ export default function DoctorSignupForm() {
           </div>
         </div>
 
-        <h1 className="mt-2 text-gray-600 font-medium text-sm ml-2">Gender</h1>
-        <div className="flex flex-col md:flex-row items-center justify-between w-full mb-4">
-          <div className="flex items-center w-full md:w-1/2 px-2 mb-4 md:mb-0">
-            <p className="mr-2">Male</p>
-            <input
-              type="radio"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
+          <div className="mt-4">
+            <label className="text-gray-600 font-medium text-sm" htmlFor="gender">
+              Gender
+            </label>
+            <select
+              id="gender"
               name="gender"
-              value="MALE"
-              checked={formData.gender === "MALE"}
+              value={formData.gender}
               onChange={handleChange}
               required
-            />
+              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
+            >
+              <option value="" disabled>
+                Select gender
+              </option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
           </div>
-          <div className="flex items-center w-full md:w-1/2 px-10 mr-16 lg:mr-0">
-            <p className="mr-2">Female</p>
-            <input
-              type="radio"
-              name="gender"
-              value="FEMALE"
-              checked={formData.gender === "FEMALE"}
+          <div className="mt-4">
+            <label
+              className="text-gray-600 font-medium text-sm"
+              htmlFor="howDidYouHearAboutUs"
+            >
+              How did you hear about us?
+            </label>
+            <select
+              id="howDidYouHearAboutUs"
+              name="howDidYouHearAboutUs"
+              value={formData.howDidYouHearAboutUs}
               onChange={handleChange}
-              required
-            />
+              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
+            >
+              <option value="INSTAGRAM">Instagram</option>
+              <option value="FACEBOOK">Facebook</option>
+              <option value="X">X</option>
+              <option value="NEWSPAPER">Newspaper</option>
+              <option value="LINKEDIN">LinkedIn</option>
+              <option value="OTHERS">Others</option>
+            </select>
           </div>
         </div>
 
@@ -344,24 +362,6 @@ export default function DoctorSignupForm() {
           </div>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            How did you hear about us?
-          </label>
-          <select
-            name="howDidYouHearAboutUs"
-            value={formData.howDidYouHearAboutUs}
-            onChange={handleChange}
-            className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-          >
-            <option value="INSTAGRAM">Instagram</option>
-            <option value="FACEBOOK">Facebook</option>
-            <option value="X">X</option>
-            <option value="NEWSPAPER">Newspaper</option>
-            <option value="LINKEDIN">LinkedIn</option>
-            <option value="OTHERS">Others</option>
-          </select>
-        </div>
         <div className="flex space-x-10 flex-col md:flex-row mt-4">
           {/* <Modal /> */}
           <a onClick={() => navigate("/login")} className="text-sm font-medium">

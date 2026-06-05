@@ -1,8 +1,8 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export const SIGNUP_ROLE_OPTIONS = [
-  { value: "PATIENT", label: "Patient — book doctors and get care" },
-  { value: "DOCTOR", label: "Doctor — join as a healthcare provider" },
+  { value: "PATIENT", label: "Patient" },
+  { value: "DOCTOR", label: "Doctor" },
 ];
 
 export function signupPathForRole(role, searchParams) {
