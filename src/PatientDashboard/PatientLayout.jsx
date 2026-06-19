@@ -305,11 +305,13 @@ import {
   PartnerLocationsProvider,
   usePartnerLocations,
 } from "../context/PartnerLocationsContext";
-import { getPatientPartnerSlug } from "../utils";
+import { getPatientPartnerSlug, getUserData } from "../utils";
 import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
 import { parseApiError } from "../utils/parseApiError";
 import { useDashboardTheme } from "../hooks/useDashboardTheme";
 import DarkModeToggle from "../components/common/DarkModeToggle";
+import PatientWellnessPopups from "../components/patient/PatientWellnessPopups";
+import RouteErrorBoundary from "../components/common/RouteErrorBoundary";
 
 const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
 const LOGO_SRC = "/logo.jpeg";
@@ -350,7 +352,7 @@ export default function PatientLayout() {
   const swiperRef = useRef(null);
 
   const token = localStorage.getItem("authToken");
-  const userData = JSON.parse(localStorage.getItem("userData"));
+  const userData = getUserData();
   const { isDarkMode, toggleDarkMode } = useDashboardTheme();
 
   if (!token || !userData) {
@@ -427,9 +429,15 @@ export default function PatientLayout() {
     }
   };
 
-  const userName =
-    userData?.firstName.charAt(0).toUpperCase() +
-    userData?.firstName.slice(1).toLowerCase();
+  const userName = (() => {
+    const first = userData?.firstName;
+    if (first) {
+      return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    }
+    const full = [userData?.firstName, userData?.lastName].filter(Boolean).join(" ");
+    if (full) return full;
+    return userData?.emailAddress?.split("@")[0] || "there";
+  })();
 
   return (
     <PartnerLocationsProvider>
@@ -437,6 +445,7 @@ export default function PatientLayout() {
         className={`min-h-screen ${isDarkMode ? "dashboard-theme-dark bg-[#0b1220]" : "dashboard-theme-light bg-gradient-to-b from-slate-100 via-gray-50 to-slate-100"}`}
       >
         <ToastContainer position="top-right" autoClose={4000} />
+        <PatientWellnessPopups />
 
         <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
@@ -473,7 +482,9 @@ export default function PatientLayout() {
 
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
             <div className="mx-auto w-full max-w-7xl">
-              <Outlet />
+              <RouteErrorBoundary>
+                <Outlet />
+              </RouteErrorBoundary>
             </div>
           </main>
         </div>

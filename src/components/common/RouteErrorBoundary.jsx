@@ -16,6 +16,9 @@ export default class RouteErrorBoundary extends Component {
 
   render() {
     if (this.state.error) {
+      const home = window.location.pathname.includes("doctor")
+        ? "/doctor-dashboard"
+        : "/patient-dashboard";
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 p-6 text-center">
           <h1 className="text-lg font-bold text-[#020e7c]">Something went wrong</h1>
@@ -24,7 +27,7 @@ export default class RouteErrorBoundary extends Component {
           </p>
           <button
             type="button"
-            onClick={() => window.location.assign("/doctor-dashboard")}
+            onClick={() => window.location.assign(home)}
             className="rounded-xl bg-[#020e7c] px-5 py-2.5 text-sm font-semibold text-white"
           >
             Reload dashboard
