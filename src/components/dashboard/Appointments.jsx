@@ -41,7 +41,7 @@ const  CalendarPage = () => {
   const profileComplete = isDoctorProfileComplete(profilePayload);
   const missingFields = getMissingProfileFields(profilePayload);
 
-  const date = new Date();
+  const [calendarValue, setCalendarValue] = useState(new Date());
 
   const fetchDoctorProfile = useCallback(async () => {
     if (!doctorsId || !token) {
@@ -113,11 +113,15 @@ const  CalendarPage = () => {
   }, [fetchDoctorProfile]);
 
   const handleDateChange = (date) => {
-    if (profileLoading) return;
+    if (profileLoading) {
+      toast.info('Loading your profile — please try again in a moment.');
+      return;
+    }
     if (!profileComplete) {
       promptCompleteProfile();
       return;
     }
+    setCalendarValue(date);
     setSelectedDate(date);
     handleOpen();
   };
@@ -216,8 +220,7 @@ const  CalendarPage = () => {
     }
   };
 
-  const calendarDisabled = ({ date: tileDate }) =>
-    isDateInPast(tileDate) || !profileComplete || profileLoading;
+  const calendarDisabled = ({ date: tileDate }) => isDateInPast(tileDate);
 
   return (
     <>
@@ -232,12 +235,35 @@ const  CalendarPage = () => {
           </p>
         </div>
         <div className="p-3 sm:p-5">
-          <div
-            className={`flex justify-center ${!profileComplete && !profileLoading ? "pointer-events-none opacity-50" : ""}`}
-          >
+          {!profileComplete && !profileLoading && (
+            <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Complete your profile to create appointment slots.
+              {missingFields.length > 0 && (
+                <span className="block mt-1 text-xs text-amber-800">
+                  Missing: {missingFields.join(', ')}
+                </span>
+              )}
+            </p>
+          )}
+          <div className="relative flex justify-center">
+            {profileLoading && (
+              <div
+                className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/70"
+                aria-busy="true"
+                aria-label="Loading profile"
+              >
+                <ColorRing
+                  visible
+                  height="48"
+                  width="48"
+                  ariaLabel="loading-profile"
+                  colors={['#020e7c', '#020e7c', '#020e7c', '#020e7c', '#020e7c']}
+                />
+              </div>
+            )}
             <Calendar
               onChange={handleDateChange}
-              value={date}
+              value={calendarValue}
               nextLabel={<FaChevronRight />}
               prevLabel={<FaChevronLeft />}
               navigationLabel={({ date }) =>

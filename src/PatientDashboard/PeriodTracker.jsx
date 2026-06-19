@@ -3,6 +3,12 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { baseUrl } from "../env";
 import { getId, getToken } from "../utils";
+import {
+  formatPeriodDate,
+  getPeriodInsights,
+  shouldShowPeriodReminder,
+} from "../utils/periodInsights";
+import PeriodReminderModal from "../components/patient/PeriodReminderModal";
 
 const defaultData = {
   lastPeriodDate: "",
@@ -14,24 +20,11 @@ const defaultData = {
 
 const symptomOptions = ["Cramps", "Headache", "Mood swings", "Bloating", "Fatigue"];
 
-const toDate = (value) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
-
-const addDays = (date, days) => {
-  const copy = new Date(date);
-  copy.setDate(copy.getDate() + days);
-  return copy;
-};
-
-const fmt = (date) =>
-  date?.toLocaleDateString("en-NG", { year: "numeric", month: "short", day: "numeric" }) || "-";
-
 export default function PeriodTracker() {
   const [form, setForm] = useState(defaultData);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showReminderPopup, setShowReminderPopup] = useState(false);
   const token = getToken();
   const patientId = getId();
 
@@ -61,14 +54,20 @@ export default function PeriodTracker() {
     loadData();
   }, [patientId, token]);
 
-  const insights = useMemo(() => {
-    const lastDate = toDate(form.lastPeriodDate);
-    if (!lastDate) return null;
-    const nextPeriod = addDays(lastDate, Number(form.cycleLength || 28));
-    const fertileStart = addDays(nextPeriod, -14);
-    const fertileEnd = addDays(fertileStart, 5);
-    return { nextPeriod, fertileStart, fertileEnd };
-  }, [form.lastPeriodDate, form.cycleLength]);
+  const insights = useMemo(
+    () =>
+      getPeriodInsights({
+        lastPeriodDate: form.lastPeriodDate,
+        cycleLength: form.cycleLength,
+      }),
+    [form.lastPeriodDate, form.cycleLength]
+  );
+
+  useEffect(() => {
+    if (insights && shouldShowPeriodReminder(insights)) {
+      setShowReminderPopup(true);
+    }
+  }, [insights]);
 
   const handleSave = async () => {
     if (!patientId || !token) {
@@ -89,6 +88,9 @@ export default function PeriodTracker() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Period tracker saved.");
+      if (insights && shouldShowPeriodReminder(insights)) {
+        setShowReminderPopup(true);
+      }
     } catch (error) {
       toast.error("Could not save period tracker.");
     }
@@ -116,6 +118,7 @@ export default function PeriodTracker() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Reminder email sent.");
+      setShowReminderPopup(true);
     } catch (error) {
       toast.error(error.message || "Could not send reminder email.");
     } finally {
@@ -125,10 +128,16 @@ export default function PeriodTracker() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <PeriodReminderModal
+        open={showReminderPopup}
+        onClose={() => setShowReminderPopup(false)}
+        insights={insights}
+      />
+
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-[#020e7c]">Period Tracker</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Track cycle dates and send reminder emails from your Medfair backend.
+          Track cycle dates, get on-screen reminders, and optional email alerts.
         </p>
       </div>
       {loading && <p className="text-sm text-gray-500">Loading period tracker...</p>}
@@ -205,21 +214,34 @@ export default function PeriodTracker() {
           {insights ? (
             <div className="mt-3 space-y-2 text-sm text-gray-700">
               <p>
-                Next expected period: <span className="font-semibold">{fmt(insights.nextPeriod)}</span>
+                Next expected period:{" "}
+                <span className="font-semibold">{formatPeriodDate(insights.nextPeriod)}</span>
               </p>
               <p>
                 Estimated fertile window:{" "}
                 <span className="font-semibold">
-                  {fmt(insights.fertileStart)} - {fmt(insights.fertileEnd)}
+                  {formatPeriodDate(insights.fertileStart)} - {formatPeriodDate(insights.fertileEnd)}
                 </span>
               </p>
+              {shouldShowPeriodReminder(insights) && (
+                <button
+                  type="button"
+                  onClick={() => setShowReminderPopup(true)}
+                  className="mt-2 text-sm font-semibold text-[#020e7c] underline"
+                >
+                  View period reminder popup
+                </button>
+              )}
             </div>
           ) : (
             <p className="mt-3 text-sm text-gray-500">Enter period details to see predictions.</p>
           )}
 
           <div className="mt-6 border-t pt-4">
-            <h3 className="text-sm font-semibold text-gray-700">Email reminder request</h3>
+            <h3 className="text-sm font-semibold text-gray-700">Email reminder</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              Email alerts are sent in addition to on-screen pop-up reminders.
+            </p>
             <input
               type="email"
               placeholder="you@example.com"
@@ -233,7 +255,7 @@ export default function PeriodTracker() {
               disabled={sending}
               className="mt-3 rounded-lg border border-[#020e7c] px-4 py-2 text-sm font-semibold text-[#020e7c] disabled:opacity-60"
             >
-              {sending ? "Sending..." : "Send reminder request"}
+              {sending ? "Sending..." : "Send reminder email"}
             </button>
           </div>
         </div>

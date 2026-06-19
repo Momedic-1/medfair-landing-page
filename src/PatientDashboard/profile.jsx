@@ -10,7 +10,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { baseUrl } from "../env";
-import { capitalizeFirstLetter, getToken } from "../utils";
+import { capitalizeFirstLetter, getId, getToken, getUserData } from "../utils";
 import { normalizeDateOfBirth } from "../utils/normalizeDateOfBirth";
 import "../styling/profile.css";
 import { Box, Modal } from "@mui/material";
@@ -99,12 +99,13 @@ export default function Profile() {
     documentCategory: "",
   });
 
-  const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+  const userData = getUserData() || {};
   const token = getToken();
-  const userId = userData.id;
+  const userId = getId();
 
   useEffect(() => {
     if (!token || !userId) {
+      setProfileLoading(false);
       return;
     }
     fetchFullProfile();
@@ -118,10 +119,11 @@ export default function Profile() {
         `${baseUrl}/api/patient-profile/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const data = response?.data;
-      if (!data) return;
+      const raw = response?.data;
+      const data = raw?.data ?? raw;
+      if (!data || typeof data !== "object") return;
 
-      const profile = data.profile || {};
+      const profile = data.profile || data.patientProfile || {};
       const address = data.address || {};
       const emergencyContact = data.emergencyContact || {};
       const medicalHistory = Array.isArray(data.medicalHistory) ? data.medicalHistory : [];
@@ -145,8 +147,8 @@ export default function Profile() {
           normalizeDateOfBirth(profile.dateOfBirth) ||
           normalizeDateOfBirth(prev.dateOfBirth) ||
           "",
-        age: profile.age ?? prev.age,
-        weight: profile.weight ?? prev.weight,
+        age: profile.age ?? prev.age ?? 0,
+        weight: profile.weight ?? prev.weight ?? "",
         bloodGroup: profile.bloodGroup ?? prev.bloodGroup,
         genotype: profile.genotype ?? prev.genotype,
         imageUrl: profile.imageUrl ?? prev.imageUrl,
@@ -530,6 +532,13 @@ export default function Profile() {
       <main className="mx-auto max-w-5xl px-3 py-5 sm:px-6 sm:py-8">
         {profileLoading ? (
           <ProfileSkeleton />
+        ) : !userId ? (
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-lg font-semibold text-[#020e7c]">Could not load profile</p>
+            <p className="mt-2 text-sm text-gray-600">
+              Your session may have expired. Please log in again.
+            </p>
+          </div>
         ) : (
           <>
             <ProfileHero
@@ -675,7 +684,7 @@ export default function Profile() {
                               type="text"
                               name="emergencyContact.relationship"
                               value={capitalizeFirstLetter(
-                                profileData.emergencyContact.relationship
+                                profileData.emergencyContact.relationship || ""
                               )}
                               onChange={handleChange}
                               className={profileInputClass}
