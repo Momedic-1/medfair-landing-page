@@ -44,17 +44,31 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
       setLoading(true);
       setError(null);
 
-      // Doctors use /api/doctor/** (role DOCTOR). Patients can still use /api/patient/documents.
-      const url = isDoctor
-        ? `${baseUrl}/api/doctor/patients/${userId}/documents`
-        : `${baseUrl}/api/patient/documents/${userId}`;
+      // Doctors prefer /api/doctor/**; fall back to permitAll patient docs path if role auth mismatches.
+      const doctorUrl = `${baseUrl}/api/doctor/patients/${userId}/documents`;
+      const patientUrl = `${baseUrl}/api/patient/documents/${userId}`;
 
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      let response;
+      try {
+        response = await axios.get(isDoctor ? doctorUrl : patientUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (firstErr) {
+        const status = firstErr.response?.status;
+        if (isDoctor && (status === 403 || status === 401 || status === 404)) {
+          response = await axios.get(patientUrl, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+        } else {
+          throw firstErr;
+        }
+      }
 
       const data = response.data;
       const list = Array.isArray(data)
@@ -134,17 +148,29 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
       return;
     }
 
-    // Open via our authenticated API (blob). Direct Cloudinary PDF URLs return
-    // HTTP 401 when "Allow delivery of PDF and ZIP files" is off (free plan).
-    const fileUrl = isDoctor
-      ? `${baseUrl}/api/doctor/patients/${userId}/documents/${doc.id}/file`
-      : `${baseUrl}/api/patient/documents/${userId}/${doc.id}/file`;
+    // Prefer doctor file proxy; fall back to patient path (permitAll) if role auth fails.
+    const doctorFileUrl = `${baseUrl}/api/doctor/patients/${userId}/documents/${doc.id}/file`;
+    const patientFileUrl = `${baseUrl}/api/patient/documents/${userId}/${doc.id}/file`;
+    const tryUrls = isDoctor ? [doctorFileUrl, patientFileUrl] : [patientFileUrl];
 
     try {
-      const response = await axios.get(fileUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
+      let response;
+      let lastErr;
+      for (const fileUrl of tryUrls) {
+        try {
+          response = await axios.get(fileUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: "blob",
+          });
+          lastErr = null;
+          break;
+        } catch (e) {
+          lastErr = e;
+          const status = e.response?.status;
+          if (status !== 401 && status !== 403 && status !== 404) throw e;
+        }
+      }
+      if (!response) throw lastErr || new Error("Could not open document");
       const contentType =
         response.headers["content-type"] ||
         doc.fileType ||

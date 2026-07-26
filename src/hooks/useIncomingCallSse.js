@@ -9,10 +9,10 @@ import {
   loadDismissedCallIds,
 } from "../utils/dismissedIncomingCalls";
 
-const DEFAULT_POLL_MS = 30000;
-const INCOMING_PAGE_POLL_MS = 10000;
-const RECONNECT_DELAY_MS = 5000;
-const FAST_RETRY_MS = 2500;
+const DEFAULT_POLL_MS = 8000;
+const INCOMING_PAGE_POLL_MS = 4000;
+const RECONNECT_DELAY_MS = 3000;
+const FAST_RETRY_MS = 1500;
 
 /**
  * Real-time incoming GP calls via SSE, with polling fallback.
