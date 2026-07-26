@@ -14,6 +14,7 @@ import {
   formatGpJoinError,
   joinGpCallAsDoctor,
 } from "../../../utils/joinGpCallAsDoctor";
+import { loadPickedCallIds } from "../../../utils/pickedCalls";
 import {
   ensureDoctorPushSubscription,
   showIncomingCallNotification,
@@ -55,9 +56,7 @@ function WelcomeBack({ status, onAlertsChange }) {
   });
 
   useEffect(() => {
-    const storedPickedCalls =
-      JSON.parse(localStorage.getItem("pickedCalls")) || [];
-    setPickedCalls(new Set(storedPickedCalls));
+    setPickedCalls(new Set(loadPickedCallIds()));
     setRejoinData(loadDoctorRejoinSession());
 
     const unlockAudio = () => {
@@ -169,11 +168,11 @@ function WelcomeBack({ status, onAlertsChange }) {
         dispatch,
       });
       setRejoinData(result.session);
-      setPickedCalls((prev) => new Set([...prev, callId]));
+      setPickedCalls(new Set(loadPickedCallIds()));
       toast.success(
         result.usedSameTab
-          ? "Call opened in this tab."
-          : "Call opened in a new tab.",
+          ? "You are in the call. The patient will join after they tap Join call."
+          : "Call opened in a new tab. The patient joins after they tap Join call. Use Rejoin if you disconnect.",
       );
     } catch (error) {
       toast.error(formatGpJoinError(error));

@@ -4,6 +4,7 @@ import { setCall, setRoomUrl } from "../features/authSlice";
 import { openVideoCallPreferNewTab } from "./videoCallNavigation";
 import { dismissIncomingCallId } from "./dismissedIncomingCalls";
 import { saveDoctorJoinedSession } from "./activeCallSession";
+import { rememberPickedCallId } from "./pickedCalls";
 
 export function formatGpJoinError(error) {
   const data = error?.response?.data;
@@ -60,11 +61,7 @@ export async function joinGpCallAsDoctor({
     localStorage.setItem("patientId", String(patientId));
   }
 
-  const picked = JSON.parse(localStorage.getItem("pickedCalls")) || [];
-  if (!picked.includes(callId)) {
-    picked.push(callId);
-    localStorage.setItem("pickedCalls", JSON.stringify(picked));
-  }
+  rememberPickedCallId(callId);
   dismissIncomingCallId(callId);
 
   const session = saveDoctorJoinedSession({

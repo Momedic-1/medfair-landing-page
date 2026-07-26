@@ -43,6 +43,27 @@ function clearCallPersistenceForRole(role) {
   }
 }
 
+function connectionLabel(connectionStatus, remoteCount) {
+  if (remoteCount > 0) return "Connected";
+  const status = String(connectionStatus || "").toLowerCase();
+  if (!status || status === "ready" || status === "connecting") {
+    return "Connecting…";
+  }
+  if (status.includes("knock") || status === "room_locked") {
+    return "Waiting to be let in…";
+  }
+  if (status.includes("disconnect") || status.includes("left")) {
+    return "Disconnected";
+  }
+  if (status.includes("error") || status.includes("fail")) {
+    return "Connection issue";
+  }
+  if (status.includes("connect") || status === "connected" || status === "joined") {
+    return "In room — waiting for the other person";
+  }
+  return "In room — waiting for the other person";
+}
+
 /** Shell: resolve room URL only — Whereby hooks run in VideoCallRoom. */
 const VideoCall = () => {
   const [userData] = useState(() => {
@@ -67,8 +88,8 @@ const VideoCall = () => {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-gray-100">
         <p className="text-center text-gray-700 px-6">
-          No meeting link found. Close this tab, return to your dashboard, and join
-          again.
+          No meeting link found. Close this tab, return to your dashboard, and
+          tap Rejoin.
         </p>
       </div>
     );
@@ -92,12 +113,15 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [showCopiedMessage, setShowCopiedMessage] = useState(false);
   const [isLocalVideoFullscreen, setIsLocalVideoFullscreen] = useState(true);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(null);
+  const [joinError, setJoinError] = useState(null);
 
   const displayInfo = useVideoCallHeader(userData, call);
+  const intentionalLeaveRef = useRef(false);
+  const joinRoomRef = useRef(null);
+  const leaveRoomRef = useRef(null);
 
   const roomConnection = useRoomConnection(roomUrl, {
     localMediaOptions: {
@@ -110,11 +134,18 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const state = roomConnection?.state;
   const localParticipant = state?.localParticipant;
   const remoteParticipants = state?.remoteParticipants ?? [];
+  const connectionStatus =
+    state?.connectionStatus ?? state?.connectionState ?? "";
   const joinRoom = actions?.joinRoom;
+  const leaveRoomAction = actions?.leaveRoom;
   const toggleCamera = actions?.toggleCamera;
   const toggleMicrophone = actions?.toggleMicrophone;
-  const canJoin = Boolean(joinRoom);
-  const hasJoinedRef = useRef(false);
+
+  joinRoomRef.current = joinRoom ?? null;
+  leaveRoomRef.current = leaveRoomAction ?? null;
+
+  const otherPartyLabel =
+    userData?.role === "DOCTOR" ? "the patient" : "the doctor";
 
   const finishLeaveAndRedirect = (redirectPath) => {
     const endedCallId =
@@ -153,18 +184,58 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     dispatch(setRoomUrl(roomUrl));
   }, [roomUrl, dispatch]);
 
+  // Join once per roomUrl. Leave only on real unmount / room change — not on
+  // transient action identity changes (which previously dropped live calls).
   useEffect(() => {
-    if (!canJoin || hasJoinedRef.current) return undefined;
-    hasJoinedRef.current = true;
-    joinRoom();
-    return () => {
-      hasJoinedRef.current = false;
-      actions?.leaveRoom?.();
+    intentionalLeaveRef.current = false;
+    setJoinError(null);
+
+    let cancelled = false;
+    let didJoin = false;
+    let attempts = 0;
+    let retryId = null;
+
+    const tryJoin = () => {
+      const join = joinRoomRef.current;
+      if (!join || cancelled || didJoin) return false;
+      didJoin = true;
+      Promise.resolve(join())
+        .then(() => {
+          if (!cancelled) setJoinError(null);
+        })
+        .catch((error) => {
+          console.error("Could not join room", error);
+          didJoin = false;
+          if (!cancelled) {
+            setJoinError(
+              "Could not connect to the video room. Use Rejoin on your dashboard.",
+            );
+          }
+        });
+      return true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomUrl, canJoin]);
+
+    if (!tryJoin()) {
+      retryId = window.setInterval(() => {
+        attempts += 1;
+        if (cancelled || tryJoin() || attempts > 20) {
+          window.clearInterval(retryId);
+        }
+      }, 250);
+    }
+
+    return () => {
+      cancelled = true;
+      if (retryId != null) window.clearInterval(retryId);
+      // Skip leave when the user already ended the call intentionally.
+      if (!intentionalLeaveRef.current) {
+        leaveRoomRef.current?.();
+      }
+    };
+  }, [roomUrl]);
 
   const leaveRoom = async () => {
+    intentionalLeaveRef.current = true;
     try {
       if (isVideoOn && toggleCamera) {
         await toggleCamera();
@@ -175,7 +246,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         setIsAudioOn(false);
       }
 
-      await actions?.leaveRoom?.();
+      await leaveRoomRef.current?.();
 
       if (localParticipant?.stream) {
         localParticipant.stream.getTracks().forEach((track) => {
@@ -212,18 +283,13 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     return remoteParticipants.find((p) => p.id === id)?.displayName || "Guest";
   };
 
-  const handleShareLink = async () => {
-    try {
-      await navigator.clipboard.writeText(roomUrl);
-      setShowCopiedMessage(true);
-      setTimeout(() => setShowCopiedMessage(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  };
-
   const feedbackCallId =
     call?.callId ?? call?.id ?? call?.meetingId ?? null;
+
+  const statusText = connectionLabel(
+    connectionStatus,
+    remoteParticipants.length,
+  );
 
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden bg-gradient-to-b from-blue-800 via-blue-950/40 to-white/50">
@@ -242,6 +308,10 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
           </span>
           {formatHeaderParticipantName(displayInfo)}
         </p>
+        <p className="text-xs sm:text-sm text-gray-300">
+          <span className="font-semibold text-white">Status: </span>
+          {statusText}
+        </p>
         {displayInfo?.showDob && (
           <p className="text-xs sm:text-sm md:text-base">
             <span className="font-bold">DOB: </span>
@@ -255,6 +325,12 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
           </p>
         )}
       </div>
+
+      {joinError && (
+        <div className="bg-amber-500 px-3 py-2 text-center text-sm font-medium text-black">
+          {joinError}
+        </div>
+      )}
 
       <div className="relative flex-1 w-full">
         <div className="absolute inset-0">
@@ -295,7 +371,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
               remoteParticipants.map((participant) => {
                 if (!participant.stream) return null;
                 return (
-                  <div key={participant.id} className="w-full h-full">
+                  <div key={participant.id} className="w-full h-full relative">
                     <VideoView
                       stream={participant.stream}
                       style={{
@@ -312,23 +388,19 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
                 );
               })
             ) : (
-              <div className="w-full h-full bg-gray-900 flex flex-col items-center justify-center p-2">
-                <p className="text-white text-xs mb-2">Share this link:</p>
-                <div className="w-[90%] bg-gray-800 rounded-lg p-2 mb-2">
-                  <p className="text-gray-300 text-xs break-all">{roomUrl}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleShareLink}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-lg transition-colors"
-                >
-                  {showCopiedMessage ? "Copied!" : "Copy"}
-                </button>
+              <div className="w-full h-full bg-gray-900/95 flex flex-col items-center justify-center gap-2 p-3 text-center">
+                <p className="text-white text-xs sm:text-sm font-semibold leading-snug">
+                  Waiting for {otherPartyLabel}…
+                </p>
+                <p className="text-gray-300 text-[10px] sm:text-xs leading-snug">
+                  They should tap Join or Rejoin on their dashboard if they are
+                  not here yet.
+                </p>
               </div>
             )
           ) : (
             localParticipant?.stream && (
-              <div className="w-full h-full">
+              <div className="w-full h-full relative">
                 <VideoView
                   muted
                   stream={localParticipant.stream}

@@ -24,7 +24,7 @@ import {
   enrichSpecialistWithSlots,
   flattenSpecialistsFromApi,
 } from "../utils/fetchDoctorForPatient";
-import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
+import { openVideoCallPreferNewTab } from "../utils/videoCallNavigation";
 import { parseApiError } from "../utils/parseApiError";
 import {
   clearPatientGpCall,
@@ -66,7 +66,8 @@ const calendarStyle = {
   overflow: "hidden",
 };
 
-const CALL_WAIT_TIMEOUT_MS = 5 * 60 * 1000;
+/** Align with backend pending-call visibility / Whereby room window (30 min). */
+const CALL_WAIT_TIMEOUT_MS = 30 * 60 * 1000;
 
 const specialistCategory = [
   {
@@ -155,6 +156,7 @@ const Dashboard = () => {
   const [callStatus, setCallStatus] = useState(null);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [currentCallId, setCurrentCallId] = useState(null);
+  const [readyDoctorName, setReadyDoctorName] = useState("");
 
   const patientId = getId();
 
@@ -327,15 +329,32 @@ const Dashboard = () => {
     const storedCall = loadPatientGpCall();
     if (!storedCall?.callId || !token) return;
 
-    if (storedCall.status !== "WAITING") return;
-
     const callId = storedCall.callId;
     setCurrentCallId(callId);
-    setCallStatus("WAITING");
     if (storedCall.roomUrl) {
       setVideoLink({ roomUrl: storedCall.roomUrl, meetingId: callId });
     }
 
+    if (storedCall.status === "DOCTOR_JOINED") {
+      setCallStatus("DOCTOR_JOINED");
+      setReadyDoctorName(storedCall.doctorName || "");
+      if (storedCall.roomUrl) {
+        saveActiveMeetingToStorage(storedCall.roomUrl, 45);
+      }
+      setIsCallADoctorModalOpen(true);
+      return undefined;
+    }
+
+    if (storedCall.status === "IN_CALL") {
+      if (storedCall.roomUrl) {
+        saveActiveMeetingToStorage(storedCall.roomUrl, 45);
+      }
+      return undefined;
+    }
+
+    if (storedCall.status !== "WAITING") return undefined;
+
+    setCallStatus("WAITING");
     if (pollingInterval) return undefined;
 
     const waitStartedAt = storedCall.startedAt || Date.now();
@@ -345,25 +364,11 @@ const Dashboard = () => {
       if (status === "DOCTOR_JOINED") {
         clearInterval(interval);
         setPollingInterval(null);
-        savePatientGpCall({
+        markDoctorReadyForPatient({
           callId,
-          roomUrl: storedCall.roomUrl,
-          status: "IN_CALL",
+          roomUrl: statusPayload?.roomUrl || storedCall.roomUrl,
+          statusPayload,
         });
-        savePatientGpVideoContext({
-          callId,
-          roomUrl: storedCall.roomUrl,
-          doctorId: statusPayload?.doctorId,
-          doctorFirstName: statusPayload?.doctorFirstName,
-          doctorLastName: statusPayload?.doctorLastName,
-        });
-        if (storedCall.roomUrl) {
-          saveActiveMeetingToStorage(storedCall.roomUrl, 45);
-          openVideoCallInNewTab(storedCall.roomUrl);
-        }
-        setIsCallADoctorModalOpen(false);
-        setCallStatus(null);
-        clearPatientGpCall();
       } else if (
         status === "ENDED" ||
         Date.now() - waitStartedAt >= CALL_WAIT_TIMEOUT_MS
@@ -372,6 +377,7 @@ const Dashboard = () => {
         setPollingInterval(null);
         setCallStatus("NO_DOCTOR");
         clearPatientGpCall();
+        setIsCallADoctorModalOpen(true);
       }
     }, 3000);
     setPollingInterval(interval);
@@ -390,6 +396,82 @@ const Dashboard = () => {
     }, 30000); // check every 30s
     return () => clearInterval(interval);
   }, [activeMeeting]);
+
+  const formatDoctorReadyName = (statusPayload) => {
+    if (statusPayload?.doctorName) return String(statusPayload.doctorName).trim();
+    const full = [statusPayload?.doctorFirstName, statusPayload?.doctorLastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    return full ? `Dr. ${full}` : "";
+  };
+
+  /** Doctor claimed the call — keep patient on an explicit Join CTA (user gesture). */
+  const markDoctorReadyForPatient = ({ callId, roomUrl, statusPayload }) => {
+    const resolvedRoomUrl = roomUrl || null;
+    const doctorName = formatDoctorReadyName(statusPayload);
+    setCallStatus("DOCTOR_JOINED");
+    setReadyDoctorName(doctorName);
+    setCurrentCallId(callId);
+    if (resolvedRoomUrl) {
+      setVideoLink({ roomUrl: resolvedRoomUrl, meetingId: callId });
+      saveActiveMeetingToStorage(resolvedRoomUrl, 45);
+    }
+    savePatientGpCall({
+      callId,
+      roomUrl: resolvedRoomUrl,
+      status: "DOCTOR_JOINED",
+      doctorName,
+    });
+    savePatientGpVideoContext({
+      callId,
+      roomUrl: resolvedRoomUrl,
+      doctorId: statusPayload?.doctorId,
+      doctorFirstName: statusPayload?.doctorFirstName,
+      doctorLastName: statusPayload?.doctorLastName,
+    });
+    setIsCallADoctorModalOpen(true);
+    toast.success(
+      doctorName
+        ? `${doctorName} is ready. Tap Join call.`
+        : "Doctor is ready. Tap Join call.",
+    );
+  };
+
+  const handleJoinReadyCall = () => {
+    const roomUrl = videoLink?.roomUrl || loadPatientGpCall()?.roomUrl;
+    if (!roomUrl) {
+      toast.error("Meeting link is missing. Please try calling again.");
+      return;
+    }
+
+    saveActiveMeetingToStorage(roomUrl, 45);
+    const { opened, blocked, usedSameTab } = openVideoCallPreferNewTab(roomUrl);
+
+    savePatientGpCall({
+      callId: currentCallId || loadPatientGpCall()?.callId,
+      roomUrl,
+      status: "IN_CALL",
+      doctorName: readyDoctorName,
+    });
+
+    if (blocked && !usedSameTab) {
+      toast.warn(
+        "Pop-up was blocked. Allow pop-ups, or the call will open in this tab on retry.",
+      );
+      return;
+    }
+
+    setIsCallADoctorModalOpen(false);
+    setCallStatus(null);
+    toast.success(
+      usedSameTab
+        ? "Opening your consultation…"
+        : opened
+          ? "Call opened. Use Rejoin on your dashboard if you get disconnected."
+          : "Opening your consultation…",
+    );
+  };
 
   const handleJoinCall = async (appointment) => {
     const slotId = appointment?.slotId ?? appointment;
@@ -498,6 +580,22 @@ const Dashboard = () => {
   };
 
   const handleCallADoctorClick = async () => {
+    const stored = loadPatientGpCall();
+    if (stored?.status === "DOCTOR_JOINED") {
+      setCurrentCallId(stored.callId);
+      setCallStatus("DOCTOR_JOINED");
+      setReadyDoctorName(stored.doctorName || "");
+      if (stored.roomUrl) {
+        setVideoLink({ roomUrl: stored.roomUrl, meetingId: stored.callId });
+        saveActiveMeetingToStorage(stored.roomUrl, 45);
+      }
+    } else if (stored?.status === "WAITING") {
+      setCurrentCallId(stored.callId);
+      setCallStatus("WAITING");
+      if (stored.roomUrl) {
+        setVideoLink({ roomUrl: stored.roomUrl, meetingId: stored.callId });
+      }
+    }
     setIsCallADoctorModalOpen(true);
   };
 
@@ -531,6 +629,7 @@ const Dashboard = () => {
     setCallStatus(null);
     setCurrentCallId(null);
     setVideoLink(null);
+    setReadyDoctorName("");
   };
 
   const handleConfirmBooking = (e, slotId) => {
@@ -741,6 +840,7 @@ const Dashboard = () => {
 
       setCurrentCallId(callId);
       setCallStatus("WAITING");
+      setReadyDoctorName("");
       savePatientGpCall({
         callId,
         roomUrl: response.data?.roomUrl,
@@ -755,35 +855,13 @@ const Dashboard = () => {
         const status = statusPayload?.status;
 
         if (status === "DOCTOR_JOINED") {
-          setCallStatus("DOCTOR_JOINED");
           clearInterval(interval);
           setPollingInterval(null);
-          savePatientGpCall({
+          markDoctorReadyForPatient({
             callId,
-            roomUrl: response.data?.roomUrl,
-            status: "IN_CALL",
+            roomUrl: statusPayload?.roomUrl || response.data?.roomUrl,
+            statusPayload,
           });
-          savePatientGpVideoContext({
-            callId,
-            roomUrl: response.data?.roomUrl,
-            doctorId: statusPayload?.doctorId,
-            doctorFirstName: statusPayload?.doctorFirstName,
-            doctorLastName: statusPayload?.doctorLastName,
-          });
-
-          if (response.data?.roomUrl) {
-            saveActiveMeetingToStorage(response.data.roomUrl, 45);
-            const { blocked } = openVideoCallInNewTab(response.data.roomUrl);
-            if (blocked) {
-              toast.warn(
-                "Allow pop-ups to open the call in a new tab. This page will stay on your dashboard."
-              );
-            }
-            toast.success("Call opened in a new tab.");
-          }
-          setIsCallADoctorModalOpen(false);
-          setCallStatus(null);
-          clearPatientGpCall();
         } else if (
           status === "ENDED" ||
           Date.now() - waitStartedAt >= CALL_WAIT_TIMEOUT_MS
@@ -862,6 +940,7 @@ const Dashboard = () => {
       setCallStatus(null);
       setCurrentCallId(null);
       setVideoLink(null);
+      setReadyDoctorName("");
       clearPatientGpCall();
       setIsCallADoctorModalOpen(false);
       setIsCancelCallConfirmOpen(false);
@@ -879,6 +958,7 @@ const Dashboard = () => {
       setCallStatus(null);
       setCurrentCallId(null);
       setVideoLink(null);
+      setReadyDoctorName("");
       clearPatientGpCall();
       setIsCallADoctorModalOpen(false);
     } finally {
@@ -1253,11 +1333,13 @@ const Dashboard = () => {
         callStatus={callStatus}
         videoLink={videoLink}
         isLoading={isLoading}
+        doctorName={readyDoctorName}
         onClose={() => setIsCallADoctorModalOpen(false)}
         onCreateMeeting={createMeeting}
         onCancelWaiting={handleCancelWaiting}
         onBookAppointment={handleOpenBookFromCall}
         onTryAgain={handleTryCallAgain}
+        onJoinCall={handleJoinReadyCall}
       />
 
       {/* Cancel Call Confirmation Modal */}

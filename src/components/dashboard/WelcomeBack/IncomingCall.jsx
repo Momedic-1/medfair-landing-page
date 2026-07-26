@@ -20,6 +20,7 @@ import {
   formatGpJoinError,
   joinGpCallAsDoctor,
 } from "../../../utils/joinGpCallAsDoctor";
+import { loadPickedCallIds } from "../../../utils/pickedCalls";
 import { Phone, RefreshCw, Video } from "lucide-react";
 
 const IncomingCall = () => {
@@ -61,8 +62,7 @@ const IncomingCall = () => {
   });
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("pickedCalls")) || [];
-    setPickedCalls(stored);
+    setPickedCalls(loadPickedCallIds());
     setRejoinData(loadDoctorRejoinSession());
   }, []);
 
@@ -112,10 +112,11 @@ const IncomingCall = () => {
         dispatch,
       });
       setRejoinData(result.session);
+      setPickedCalls(loadPickedCallIds());
       toast.success(
         result.usedSameTab
-          ? "Call opened in this tab."
-          : "Call opened in a new tab. Use Rejoin if you get disconnected.",
+          ? "You are in the call. The patient will join after they tap Join call."
+          : "Call opened in a new tab. The patient joins after they tap Join call. Use Rejoin if you disconnect.",
       );
     } catch (error) {
       toast.error(formatGpJoinError(error));

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { ColorRing } from "react-loader-spinner";
 import { formatSpecialization, getId } from "../utils";
-import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
+import { openVideoCallPreferNewTab } from "../utils/videoCallNavigation";
 import Skeleton from "react-loading-skeleton";
 import { PiStethoscope } from "react-icons/pi";
 import dayjs from "dayjs";
@@ -350,10 +350,10 @@ const AppointmentModals = ({
                 </a>
                 <button
                   type="button"
-                  onClick={() => openVideoCallInNewTab(videoLink?.roomUrl)}
+                  onClick={() => openVideoCallPreferNewTab(videoLink?.roomUrl)}
                   className="h-10 w-full rounded-full bg-blue-500 text-white hover:bg-blue-600"
                 >
-                  Join call in new tab
+                  Join call
                 </button>
               </div>
             )}
