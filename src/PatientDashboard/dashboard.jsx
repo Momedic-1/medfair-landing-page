@@ -488,7 +488,7 @@ const Dashboard = () => {
         clearActiveMeeting();
         setIsCallADoctorModalOpen(true);
       }
-    }, 3000);
+    }, 1000);
     setPollingInterval(interval);
 
     return () => clearInterval(interval);
@@ -1034,7 +1034,7 @@ const Dashboard = () => {
           clearAllGpCallPersistence();
           clearActiveMeeting();
         }
-      }, 3000);
+      }, 1000);
 
       setPollingInterval(interval);
       return response.data;
