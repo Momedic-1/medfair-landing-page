@@ -16,6 +16,10 @@ import {
 } from "../../../utils/joinGpCallAsDoctor";
 import { loadPickedCallIds } from "../../../utils/pickedCalls";
 import {
+  clearAllGpCallPersistence,
+  fetchGpCallStatus,
+} from "../../../utils/endGpConsultation";
+import {
   ensureDoctorPushSubscription,
   showIncomingCallNotification,
 } from "../../../utils/doctorPushNotifications";
@@ -82,6 +86,30 @@ function WelcomeBack({ status, onAlertsChange }) {
     };
   }, []);
 
+  // Clear doctor Rejoin banner once the consultation is formally ended.
+  useEffect(() => {
+    if (!token || !rejoinData) return undefined;
+    const callId =
+      rejoinData?.call?.callId ?? rejoinData?.call?.id ?? null;
+    if (callId == null) return undefined;
+
+    let cancelled = false;
+    const tick = async () => {
+      const statusPayload = await fetchGpCallStatus(callId, token);
+      if (cancelled || !statusPayload) return;
+      if (statusPayload.status === "ENDED") {
+        clearAllGpCallPersistence();
+        setRejoinData(null);
+      }
+    };
+    tick();
+    const interval = window.setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [token, rejoinData]);
+
   useEffect(() => {
     if (!userData?.id || !token || status !== online) return;
     ensureDoctorPushSubscription(token).catch(() => {});
@@ -124,12 +152,22 @@ function WelcomeBack({ status, onAlertsChange }) {
     }
   }, [activeCalls, status]);
 
-  const handleRejoin = () => {
+  const handleRejoin = async () => {
     const active = loadDoctorRejoinSession();
     if (!active?.joinRoomUrl || !userData?.id || !token) {
       setRejoinData(null);
       toast.error("Call session has expired.");
       return;
+    }
+    const callId = active?.call?.callId ?? active?.call?.id ?? null;
+    if (callId != null) {
+      const statusPayload = await fetchGpCallStatus(callId, token);
+      if (statusPayload?.status === "ENDED") {
+        clearAllGpCallPersistence();
+        setRejoinData(null);
+        toast.info("This consultation has already ended.");
+        return;
+      }
     }
     joinGpCallAsDoctor({
       call: active.call,

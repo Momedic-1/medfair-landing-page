@@ -15,11 +15,22 @@ import { getStoredCallContext } from "../utils/videoCallDisplayInfo";
 import { resolveVideoCallRoomUrl } from "../utils/videoCallRoomUrl";
 import { useVideoCallHeader } from "../hooks/useVideoCallHeader";
 import { dismissIncomingCallId } from "../utils/dismissedIncomingCalls";
-import { clearPatientGpCall } from "../utils/patientGpCall";
 import {
-  clearDoctorRejoinSession,
-  clearPatientGpVideoContext,
+  loadPatientGpCall,
+  savePatientGpCall,
+} from "../utils/patientGpCall";
+import {
+  loadPatientGpVideoContext,
+  savePatientGpVideoContext,
 } from "../utils/activeCallSession";
+import { getToken } from "../utils";
+import {
+  clearAllGpCallPersistence,
+  endGpConsultationByDoctor,
+  fetchGpCallStatus,
+  parseEndConsultationError,
+} from "../utils/endGpConsultation";
+import { toast } from "react-toastify";
 
 function formatHeaderParticipantName(displayInfo) {
   if (!displayInfo) return "Loading...";
@@ -29,18 +40,6 @@ function formatHeaderParticipantName(displayInfo) {
     .join(" ")
     .trim();
   return full || "Loading...";
-}
-
-function clearCallPersistence() {
-  localStorage.removeItem("activeMeeting");
-}
-
-function clearCallPersistenceForRole(role) {
-  if (role === "DOCTOR") {
-    clearDoctorRejoinSession();
-  } else {
-    clearPatientGpVideoContext();
-  }
 }
 
 function connectionLabel(connectionStatus, remoteCount) {
@@ -58,10 +57,53 @@ function connectionLabel(connectionStatus, remoteCount) {
   if (status.includes("error") || status.includes("fail")) {
     return "Connection issue";
   }
-  if (status.includes("connect") || status === "connected" || status === "joined") {
+  if (
+    status.includes("connect") ||
+    status === "connected" ||
+    status === "joined"
+  ) {
     return "In room — waiting for the other person";
   }
   return "In room — waiting for the other person";
+}
+
+function resolveCallId(call) {
+  return call?.callId ?? call?.id ?? call?.meetingId ?? null;
+}
+
+function ensurePatientRejoinPersistence(roomUrl, call) {
+  const callId = resolveCallId(call);
+  const expiresAt = Date.now() + 45 * 60 * 1000;
+  if (roomUrl) {
+    try {
+      localStorage.setItem(
+        "activeMeeting",
+        JSON.stringify({ roomUrl, expiresAt }),
+      );
+    } catch {
+      // ignore
+    }
+  }
+  if (callId != null) {
+    const existing = loadPatientGpCall();
+    savePatientGpCall({
+      callId,
+      roomUrl: roomUrl || existing?.roomUrl || null,
+      status: "IN_CALL",
+      doctorName: existing?.doctorName || null,
+      startedAt: existing?.startedAt,
+    });
+    const ctx = loadPatientGpVideoContext();
+    if (ctx || call) {
+      savePatientGpVideoContext({
+        callId,
+        roomUrl: roomUrl || null,
+        doctorId: call?.doctorId ?? ctx?.doctorId,
+        doctorFirstName: call?.doctorFirstName ?? ctx?.doctorFirstName,
+        doctorLastName: call?.doctorLastName ?? ctx?.doctorLastName,
+      });
+    }
+  }
 }
 
 /** Shell: resolve room URL only — Whereby hooks run in VideoCallRoom. */
@@ -109,6 +151,7 @@ const VideoCall = () => {
 function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const isDoctor = userData?.role === "DOCTOR";
 
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
@@ -117,6 +160,8 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(null);
   const [joinError, setJoinError] = useState(null);
+  const [isEnding, setIsEnding] = useState(false);
+  const [consultationEndedNotice, setConsultationEndedNotice] = useState(null);
 
   const displayInfo = useVideoCallHeader(userData, call);
   const intentionalLeaveRef = useRef(false);
@@ -144,27 +189,26 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   joinRoomRef.current = joinRoom ?? null;
   leaveRoomRef.current = leaveRoomAction ?? null;
 
-  const otherPartyLabel =
-    userData?.role === "DOCTOR" ? "the patient" : "the doctor";
+  const otherPartyLabel = isDoctor ? "the patient" : "the doctor";
+  const callId = resolveCallId(call);
 
-  const finishLeaveAndRedirect = (redirectPath) => {
-    const endedCallId =
-      call?.callId ?? call?.id ?? call?.meetingId ?? null;
-    if (endedCallId != null) {
-      dismissIncomingCallId(endedCallId);
+  const detachLocalMedia = async () => {
+    try {
+      if (isVideoOn && toggleCamera) {
+        await toggleCamera();
+        setIsVideoOn(false);
+      }
+      if (isAudioOn && toggleMicrophone) {
+        await toggleMicrophone();
+        setIsAudioOn(false);
+      }
+      await leaveRoomRef.current?.();
+      if (localParticipant?.stream) {
+        localParticipant.stream.getTracks().forEach((track) => track.stop());
+      }
+    } catch (error) {
+      console.error("Error detaching media:", error);
     }
-    clearCallPersistence();
-    clearCallPersistenceForRole(userData?.role);
-    clearPatientGpCall();
-    dispatch(setRoomUrl(null));
-    dispatch(setCall(null));
-
-    if (userData?.role === "PATIENT") {
-      setPendingRedirect(redirectPath);
-      setShowFeedbackModal(true);
-      return;
-    }
-    navigate(redirectPath);
   };
 
   const handleFeedbackClose = () => {
@@ -173,6 +217,82 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       navigate(pendingRedirect);
       setPendingRedirect(null);
     }
+  };
+
+  /**
+   * Patient Leave call — exit Whereby only. Keep Rejoin on dashboard.
+   * Does NOT end the consultation on the backend.
+   */
+  const handlePatientLeave = async () => {
+    intentionalLeaveRef.current = true;
+    ensurePatientRejoinPersistence(roomUrl, call);
+    await detachLocalMedia();
+    dispatch(setRoomUrl(null));
+    // Keep call context in redux lightly cleared; persistence remains for rejoin.
+    dispatch(setCall(null));
+    toast.info("You left the call. Use Rejoin on your dashboard to return.");
+    navigate("/patient-dashboard");
+  };
+
+  /**
+   * Doctor End call — formally ends consultation for both parties.
+   * GP instant calls hit the backend; scheduled appointments clear local session only.
+   */
+  const handleDoctorEndCall = async () => {
+    if (isEnding) return;
+    const confirmed = window.confirm(
+      "End this consultation? The patient will no longer be able to rejoin, and they can start a new call afterward.",
+    );
+    if (!confirmed) return;
+
+    setIsEnding(true);
+    intentionalLeaveRef.current = true;
+
+    try {
+      const token = getToken();
+      const isGpInstantCall = callId != null && !call?.slotId;
+      if (isGpInstantCall && token) {
+        await endGpConsultationByDoctor({ callId, token });
+      } else {
+        clearAllGpCallPersistence();
+      }
+      if (callId != null) {
+        dismissIncomingCallId(callId);
+      }
+      await detachLocalMedia();
+      dispatch(setRoomUrl(null));
+      dispatch(setCall(null));
+      toast.success("Consultation ended.");
+      navigate("/doctor-dashboard");
+    } catch (error) {
+      console.error("End consultation failed:", error);
+      toast.error(parseEndConsultationError(error));
+      setIsEnding(false);
+      intentionalLeaveRef.current = false;
+    }
+  };
+
+  /** Remote party ended — leave room and clear local rejoin. */
+  const handleRemoteConsultationEnded = async (message) => {
+    if (intentionalLeaveRef.current) return;
+    intentionalLeaveRef.current = true;
+    setConsultationEndedNotice(message);
+    clearAllGpCallPersistence();
+    if (callId != null) {
+      dismissIncomingCallId(callId);
+    }
+    await detachLocalMedia();
+    dispatch(setRoomUrl(null));
+    dispatch(setCall(null));
+
+    if (!isDoctor) {
+      setPendingRedirect("/patient-dashboard");
+      setShowFeedbackModal(true);
+      toast.info(message);
+      return;
+    }
+    toast.info(message);
+    navigate("/doctor-dashboard");
   };
 
   useEffect(() => {
@@ -184,8 +304,42 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     dispatch(setRoomUrl(roomUrl));
   }, [roomUrl, dispatch]);
 
-  // Join once per roomUrl. Leave only on real unmount / room change — not on
-  // transient action identity changes (which previously dropped live calls).
+  // Keep patient rejoin markers fresh while they are in the room.
+  useEffect(() => {
+    if (isDoctor || !roomUrl) return undefined;
+    ensurePatientRejoinPersistence(roomUrl, call);
+    return undefined;
+  }, [isDoctor, roomUrl, call]);
+
+  // Poll backend so patient learns when doctor ends the consultation.
+  useEffect(() => {
+    if (!callId) return undefined;
+    const token = getToken();
+    if (!token) return undefined;
+
+    let cancelled = false;
+    const tick = async () => {
+      const statusPayload = await fetchGpCallStatus(callId, token);
+      if (cancelled || !statusPayload) return;
+      if (statusPayload.status === "ENDED") {
+        await handleRemoteConsultationEnded(
+          isDoctor
+            ? "This consultation has ended."
+            : "The doctor ended the consultation.",
+        );
+      }
+    };
+
+    tick();
+    const interval = window.setInterval(tick, 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callId, isDoctor]);
+
+  // Join once per roomUrl. Leave only on real unmount / room change.
   useEffect(() => {
     intentionalLeaveRef.current = false;
     setJoinError(null);
@@ -227,47 +381,15 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     return () => {
       cancelled = true;
       if (retryId != null) window.clearInterval(retryId);
-      // Skip leave when the user already ended the call intentionally.
       if (!intentionalLeaveRef.current) {
+        // Accidental unmount / refresh: keep rejoin for both roles.
+        if (!isDoctor) {
+          ensurePatientRejoinPersistence(roomUrl, call);
+        }
         leaveRoomRef.current?.();
       }
     };
   }, [roomUrl]);
-
-  const leaveRoom = async () => {
-    intentionalLeaveRef.current = true;
-    try {
-      if (isVideoOn && toggleCamera) {
-        await toggleCamera();
-        setIsVideoOn(false);
-      }
-      if (isAudioOn && toggleMicrophone) {
-        await toggleMicrophone();
-        setIsAudioOn(false);
-      }
-
-      await leaveRoomRef.current?.();
-
-      if (localParticipant?.stream) {
-        localParticipant.stream.getTracks().forEach((track) => {
-          track.stop();
-        });
-      }
-
-      const redirectPath =
-        userData?.role === "DOCTOR"
-          ? "/doctor-dashboard"
-          : "/patient-dashboard";
-      finishLeaveAndRedirect(redirectPath);
-    } catch (error) {
-      console.error("Error leaving room:", error);
-      const redirectPath =
-        userData?.role === "DOCTOR"
-          ? "/doctor-dashboard"
-          : "/patient-dashboard";
-      finishLeaveAndRedirect(redirectPath);
-    }
-  };
 
   const handleToggleAudio = () => {
     toggleMicrophone?.();
@@ -283,9 +405,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     return remoteParticipants.find((p) => p.id === id)?.displayName || "Guest";
   };
 
-  const feedbackCallId =
-    call?.callId ?? call?.id ?? call?.meetingId ?? null;
-
+  const feedbackCallId = callId;
   const statusText = connectionLabel(
     connectionStatus,
     remoteParticipants.length,
@@ -302,15 +422,13 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       <div className="bg-black h-16 md:h-20 flex flex-col md:flex-row items-start md:items-center justify-start md:justify-between text-white px-2 py-1 md:px-5 md:py-0 space-y-1 md:space-y-0">
         <p className="text-xs sm:text-sm md:text-base">
           <span className="font-bold">
-            {displayInfo?.label ||
-              (userData?.role === "DOCTOR" ? "Patient" : "Doctor")}
-            :{" "}
+            {displayInfo?.label || (isDoctor ? "Patient" : "Doctor")}:{" "}
           </span>
           {formatHeaderParticipantName(displayInfo)}
         </p>
         <p className="text-xs sm:text-sm text-gray-300">
           <span className="font-semibold text-white">Status: </span>
-          {statusText}
+          {consultationEndedNotice || statusText}
         </p>
         {displayInfo?.showDob && (
           <p className="text-xs sm:text-sm md:text-base">
@@ -431,49 +549,69 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         )}
       </div>
 
-      <div className="absolute bottom-0 w-full py-4 flex justify-center items-center gap-4 md:gap-8 bg-black/30">
-        <button
-          type="button"
-          className={`rounded-full p-3 cursor-pointer ${
-            isAudioOn ? "bg-gray-400" : "bg-red-500"
-          } text-white`}
-          onClick={handleToggleAudio}
-        >
-          <img src={isAudioOn ? micOn : micOff} alt="mic" height={25} width={25} />
-        </button>
-
-        <button
-          type="button"
-          className={`rounded-full p-3 cursor-pointer ${
-            isVideoOn ? "bg-gray-400" : "bg-red-500"
-          } text-white`}
-          onClick={handleToggleVideo}
-        >
-          <img
-            src={isVideoOn ? videoOn : videoOff}
-            alt="video"
-            height={25}
-            width={25}
-          />
-        </button>
-
-        {userData?.role === "DOCTOR" && (
+      <div className="absolute bottom-0 w-full py-4 flex flex-col items-center gap-2 bg-black/30">
+        <div className="flex justify-center items-center gap-4 md:gap-8">
           <button
             type="button"
-            className="rounded-full p-3 bg-gray-400 cursor-pointer"
-            onClick={() => setIsNoteModalOpen(true)}
+            className={`rounded-full p-3 cursor-pointer ${
+              isAudioOn ? "bg-gray-400" : "bg-red-500"
+            } text-white`}
+            onClick={handleToggleAudio}
+            aria-label={isAudioOn ? "Mute microphone" : "Unmute microphone"}
           >
-            <img src={note} alt="note" height={25} width={25} />
+            <img
+              src={isAudioOn ? micOn : micOff}
+              alt="mic"
+              height={25}
+              width={25}
+            />
           </button>
-        )}
 
-        <button
-          type="button"
-          className="rounded-full p-3 bg-red-500 cursor-pointer"
-          onClick={leaveRoom}
-        >
-          <MdCallEnd width={25} height={25} className="text-white" />
-        </button>
+          <button
+            type="button"
+            className={`rounded-full p-3 cursor-pointer ${
+              isVideoOn ? "bg-gray-400" : "bg-red-500"
+            } text-white`}
+            onClick={handleToggleVideo}
+            aria-label={isVideoOn ? "Turn camera off" : "Turn camera on"}
+          >
+            <img
+              src={isVideoOn ? videoOn : videoOff}
+              alt="video"
+              height={25}
+              width={25}
+            />
+          </button>
+
+          {isDoctor && (
+            <button
+              type="button"
+              className="rounded-full p-3 bg-gray-400 cursor-pointer"
+              onClick={() => setIsNoteModalOpen(true)}
+              aria-label="Add clinical note"
+            >
+              <img src={note} alt="note" height={25} width={25} />
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="rounded-full p-3 bg-red-500 cursor-pointer disabled:opacity-60"
+            onClick={isDoctor ? handleDoctorEndCall : handlePatientLeave}
+            disabled={isEnding}
+            aria-label={isDoctor ? "End call" : "Leave call"}
+            title={isDoctor ? "End call" : "Leave call"}
+          >
+            <MdCallEnd width={25} height={25} className="text-white" />
+          </button>
+        </div>
+        <p className="text-xs text-white/90 font-medium">
+          {isDoctor
+            ? isEnding
+              ? "Ending consultation…"
+              : "End call"
+            : "Leave call"}
+        </p>
       </div>
 
       <AddNoteModal
@@ -483,6 +621,6 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       />
     </div>
   );
-};
+}
 
 export default VideoCall;
