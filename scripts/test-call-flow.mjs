@@ -41,4 +41,10 @@ const filtered = filterDismissedCalls([
 assert.equal(filtered.length, 1);
 assert.equal(filtered[0].callId, 99);
 
+// TTL prune: expired dismissals should not hide calls
+const expiredRaw = JSON.stringify([{ id: 7, at: Date.now() - 50 * 60 * 1000 }]);
+globalThis.localStorage.setItem("dismissedIncomingCallIds", expiredRaw);
+const afterExpire = filterDismissedCalls([{ callId: 7 }]);
+assert.equal(afterExpire.length, 1);
+
 console.log("call-flow tests passed");

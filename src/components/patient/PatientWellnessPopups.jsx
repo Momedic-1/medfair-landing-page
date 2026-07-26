@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { baseUrl } from "../../env";
-import { getTipForToday } from "../../data/dailyHealthTips";
 import { getId, getToken } from "../../utils";
 import {
   getPeriodInsights,
   shouldShowPeriodReminder,
 } from "../../utils/periodInsights";
 import { notificationsGranted } from "../../utils/notificationPermission";
-import { localTodayKey, scheduleDailyHealthTip } from "../../utils/dailyHealthTipSchedule";
-import DailyHealthTipModal from "./DailyHealthTipModal";
+import { localTodayKey } from "../../utils/dailyHealthTipSchedule";
+import { scheduleDailyHealthTipNotification } from "../../utils/dailyHealthTipNotifications";
 import PeriodReminderModal from "./PeriodReminderModal";
 import NotificationPermissionPrompt from "./NotificationPermissionPrompt";
 
-const HEALTH_TIP_KEY = "medfair_daily_health_tip_date";
 const PERIOD_REMINDER_KEY = "medfair_period_reminder_popup_date";
 const NOTIFICATION_PROMPT_SESSION = "medfair_notification_prompt_dismissed_session";
 
@@ -37,14 +35,11 @@ function markShownToday(storageKey) {
   }
 }
 
-/** Orchestrates wellness popups: notifications prompt, daily tip, period reminder. */
+/** Period in-app popups + notification permission; daily health tips use system notifications. */
 export default function PatientWellnessPopups() {
   const [periodInsights, setPeriodInsights] = useState(null);
   const [showPeriodModal, setShowPeriodModal] = useState(false);
-  const [showHealthTip, setShowHealthTip] = useState(false);
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
-
-  const dailyTip = getTipForToday();
 
   useEffect(() => {
     const patientId = getId();
@@ -87,18 +82,18 @@ export default function PatientWellnessPopups() {
   }, []);
 
   useEffect(() => {
+    if (notificationsGranted()) {
+      const cleanup = scheduleDailyHealthTipNotification();
+      return cleanup;
+    }
+    return undefined;
+  }, []);
+
+  useEffect(() => {
     if (notificationsGranted()) return;
     if (sessionStorage.getItem(NOTIFICATION_PROMPT_SESSION) === "true") return;
     const timer = setTimeout(() => setShowNotificationPrompt(true), 800);
     return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const cleanup = scheduleDailyHealthTip({
-      onShow: () => setShowHealthTip(true),
-      wasShownToday: () => wasShownToday(HEALTH_TIP_KEY),
-    });
-    return cleanup;
   }, []);
 
   const closePeriodModal = () => {
@@ -106,14 +101,14 @@ export default function PatientWellnessPopups() {
     setShowPeriodModal(false);
   };
 
-  const closeHealthTip = () => {
-    markShownToday(HEALTH_TIP_KEY);
-    setShowHealthTip(false);
-  };
-
   const closeNotificationPrompt = () => {
     sessionStorage.setItem(NOTIFICATION_PROMPT_SESSION, "true");
     setShowNotificationPrompt(false);
+  };
+
+  const onNotificationGranted = () => {
+    sessionStorage.setItem(NOTIFICATION_PROMPT_SESSION, "true");
+    scheduleDailyHealthTipNotification();
   };
 
   return (
@@ -121,9 +116,8 @@ export default function PatientWellnessPopups() {
       <NotificationPermissionPrompt
         open={showNotificationPrompt}
         onClose={closeNotificationPrompt}
-        onGranted={() => sessionStorage.setItem(NOTIFICATION_PROMPT_SESSION, "true")}
+        onGranted={onNotificationGranted}
       />
-      <DailyHealthTipModal open={showHealthTip} onClose={closeHealthTip} tip={dailyTip} />
       <PeriodReminderModal
         open={showPeriodModal}
         onClose={closePeriodModal}

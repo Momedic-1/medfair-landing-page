@@ -1,4 +1,4 @@
-/** Local hour (24h) when the daily health tip popup should appear. */
+/** Local hour (24h) when the daily health tip notification should appear. */
 export const HEALTH_TIP_HOUR = 7;
 export const HEALTH_TIP_MINUTE = 0;
 
@@ -21,27 +21,4 @@ export function msUntilHealthTipTime(date = new Date()) {
   target.setHours(HEALTH_TIP_HOUR, HEALTH_TIP_MINUTE, 0, 0);
   const diff = target.getTime() - date.getTime();
   return diff > 0 ? diff : 0;
-}
-
-/**
- * Schedule showing today's health tip popup at ~7 AM local time.
- * @returns cleanup function
- */
-export function scheduleDailyHealthTip({ onShow, wasShownToday, markShownToday }) {
-  if (wasShownToday()) return () => {};
-
-  const tryShow = () => {
-    if (wasShownToday()) return;
-    if (!isPastHealthTipTime()) return;
-    onShow();
-  };
-
-  const delay = msUntilHealthTipTime();
-  if (delay === 0) {
-    tryShow();
-    return () => {};
-  }
-
-  const timer = setTimeout(tryShow, delay);
-  return () => clearTimeout(timer);
 }

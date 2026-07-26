@@ -1,6 +1,6 @@
 import { Modal, Box } from "@mui/material";
 import { ColorRing } from "react-loader-spinner";
-import { CalendarDays, PhoneOff } from "lucide-react";
+import { CalendarDays, PhoneOff, Video } from "lucide-react";
 import { callDoctorModalSx } from "./bookingModalStyles";
 
 export default function CallDoctorModal({
@@ -8,30 +8,45 @@ export default function CallDoctorModal({
   callStatus,
   videoLink,
   isLoading,
+  doctorName,
   onClose,
   onCreateMeeting,
   onCancelWaiting,
   onBookAppointment,
   onTryAgain,
+  onJoinCall,
 }) {
   const handleBackdropClose = () => {
     if (callStatus === "WAITING") {
       onCancelWaiting?.();
-    } else {
-      onClose?.();
+      return;
     }
+    if (callStatus === "DOCTOR_JOINED") {
+      // Keep ready-to-join state; user can reopen from the dashboard banner.
+      onClose?.();
+      return;
+    }
+    onClose?.();
   };
+
+  const title =
+    callStatus === "WAITING"
+      ? "Connecting you…"
+      : callStatus === "DOCTOR_JOINED"
+        ? "Doctor is ready"
+        : callStatus === "NO_DOCTOR"
+          ? "No doctor available"
+          : "Call a doctor";
 
   return (
     <Modal open={open} onClose={handleBackdropClose} aria-labelledby="call-doctor-modal">
       <Box sx={callDoctorModalSx}>
         <div className="border-b border-gray-100 bg-gradient-to-r from-[#020e7c] to-blue-700 px-4 py-4 sm:px-5">
-          <h2 id="call-doctor-modal" className="text-lg font-semibold text-white sm:text-xl">
-            {callStatus === "WAITING"
-              ? "Connecting you…"
-              : callStatus === "NO_DOCTOR"
-                ? "No doctor available"
-                : "Call a doctor"}
+          <h2
+            id="call-doctor-modal"
+            className="text-lg font-semibold text-white sm:text-xl"
+          >
+            {title}
           </h2>
         </div>
 
@@ -49,8 +64,8 @@ export default function CallDoctorModal({
                   Please wait while we connect you with a doctor
                 </p>
                 <p className="text-sm text-gray-600">
-                  You will join automatically once a doctor is available. If no one joins,
-                  you can book a scheduled appointment instead.
+                  When a doctor accepts, you will tap Join call to enter the
+                  consultation. Keep this screen open.
                 </p>
               </div>
               <button
@@ -59,6 +74,53 @@ export default function CallDoctorModal({
                 onClick={onCancelWaiting}
               >
                 Cancel call
+              </button>
+            </>
+          )}
+
+          {callStatus === "DOCTOR_JOINED" && (
+            <>
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                  <Video className="h-7 w-7" aria-hidden />
+                </div>
+                <p className="text-base font-medium text-gray-900 sm:text-lg">
+                  {doctorName
+                    ? `${doctorName} has accepted your call`
+                    : "A doctor has accepted your call"}
+                </p>
+                <p className="text-sm leading-relaxed text-gray-600">
+                  Tap Join call to open the video consultation. If the call does
+                  not open, allow pop-ups or use the Rejoin banner on your
+                  dashboard.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-emerald-600 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-70"
+                onClick={onJoinCall}
+                disabled={isLoading || !videoLink?.roomUrl}
+              >
+                {isLoading ? (
+                  <ColorRing
+                    height="36"
+                    width="36"
+                    ariaLabel="joining-call"
+                    colors={["white", "white", "white", "white", "white"]}
+                  />
+                ) : (
+                  <>
+                    <Video className="h-5 w-5" aria-hidden />
+                    Join call
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                className="flex h-11 w-full items-center justify-center rounded-full border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                onClick={onClose}
+              >
+                Join later from dashboard
               </button>
             </>
           )}
@@ -73,8 +135,8 @@ export default function CallDoctorModal({
                   No doctor joined your call
                 </p>
                 <p className="text-sm leading-relaxed text-gray-600">
-                  All doctors may be busy right now. Book an appointment with a specialist
-                  and choose a time that works for you.
+                  All doctors may be busy right now. Book an appointment with a
+                  specialist and choose a time that works for you.
                 </p>
               </div>
               <button

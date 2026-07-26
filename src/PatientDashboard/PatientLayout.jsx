@@ -306,7 +306,7 @@ import {
   usePartnerLocations,
 } from "../context/PartnerLocationsContext";
 import { getPatientPartnerSlug, getUserData } from "../utils";
-import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
+import { openVideoCallPreferNewTab } from "../utils/videoCallNavigation";
 import { parseApiError } from "../utils/parseApiError";
 import { useDashboardTheme } from "../hooks/useDashboardTheme";
 import DarkModeToggle from "../components/common/DarkModeToggle";
@@ -401,7 +401,7 @@ export default function PatientLayout() {
 
       const roomUrl = response.data?.roomUrl;
       if (roomUrl) {
-        openVideoCallInNewTab(roomUrl);
+        openVideoCallPreferNewTab(roomUrl);
       }
     } catch (error) {
       makePaymentToast(parseApiError(error, "Failed to start call."));

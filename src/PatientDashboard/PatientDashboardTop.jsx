@@ -4,7 +4,7 @@ import DashboardAlert from "../components/dashboard/shared/DashboardAlert";
 import StatCard from "../components/dashboard/shared/StatCard";
 import call from "./assets/call (2).svg";
 import calendarIcon from "../assets/calendarIcon.jpeg";
-import { openVideoCallInNewTab } from "../utils/videoCallNavigation";
+import { openVideoCallPreferNewTab } from "../utils/videoCallNavigation";
 
 export function PatientDashboardTop({
   userData,
@@ -93,13 +93,18 @@ export function PatientDashboardTop({
             }
             message={
               nextActive
-                ? `Dr. ${highlight?.name || "your doctor"}: rejoin your video call in a new tab.`
-                : "Continue your GP consultation in a new browser tab."
+                ? `Dr. ${highlight?.name || "your doctor"}: if you cannot see each other, tap Rejoin.`
+                : "If the video tab closed or the doctor cannot see you, tap Rejoin."
             }
             primaryAction={
               <button
                 type="button"
-                onClick={() => openVideoCallInNewTab(activeMeeting.roomUrl)}
+                onClick={() => {
+                  const { usedSameTab } = openVideoCallPreferNewTab(
+                    activeMeeting.roomUrl,
+                  );
+                  if (usedSameTab) return;
+                }}
                 className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
               >
                 Rejoin video call
@@ -116,10 +121,10 @@ export function PatientDashboardTop({
             primaryAction={
               <button
                 type="button"
-                onClick={() => openVideoCallInNewTab(videoMeetingUrl)}
+                onClick={() => openVideoCallPreferNewTab(videoMeetingUrl)}
                 className="rounded-lg bg-[#020e7c] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
               >
-                Join in new tab
+                Join call
               </button>
             }
             onDismiss={onDismissMeetingChip}
