@@ -25,6 +25,8 @@ import {
   clearAllGpCallPersistence,
   fetchGpCallStatus,
 } from "../../../utils/endGpConsultation";
+import { openVideoCallPreferNewTab } from "../../../utils/videoCallNavigation";
+import { setCall, setRoomUrl } from "../../../features/authSlice";
 import { Phone, RefreshCw, Video } from "lucide-react";
 
 const IncomingCall = () => {
@@ -129,7 +131,7 @@ const IncomingCall = () => {
     }
   };
 
-  const handleRejoin = async () => {
+  const handleRejoin = () => {
     const active = loadDoctorRejoinSession();
     if (!active?.joinRoomUrl) {
       setRejoinData(null);
@@ -137,27 +139,24 @@ const IncomingCall = () => {
       return;
     }
     const callId = active?.call?.callId ?? active?.call?.id ?? null;
-    if (callId != null && token) {
-      const statusPayload = await fetchGpCallStatus(callId, token);
-      if (statusPayload?.status === "ENDED") {
-        clearAllGpCallPersistence();
-        setRejoinData(null);
-        toast.info("This consultation has already ended.");
-        return;
-      }
-    }
+
+    // The doctor already claimed this call, so reopen the stored room straight
+    // away instead of re-running join + status first — those round-trips were
+    // what made Rejoin feel slow. Staleness is verified in the background.
     setRejoinData(active);
-    joinGpCallAsDoctor({
-      call: active.call,
-      doctorId: userData?.id,
-      token,
-      dispatch,
-    })
-      .then((result) => {
-        setRejoinData(result.session);
-        toast.success("Rejoining consultation…");
-      })
-      .catch((err) => toast.error(formatGpJoinError(err)));
+    dispatch(setRoomUrl(active.joinRoomUrl));
+    dispatch(setCall(active.call));
+    openVideoCallPreferNewTab(active.joinRoomUrl, callId);
+
+    if (callId != null && token) {
+      fetchGpCallStatus(callId, token).then((statusPayload) => {
+        if (statusPayload?.status === "ENDED") {
+          clearAllGpCallPersistence();
+          setRejoinData(null);
+          toast.info("This consultation has already ended.");
+        }
+      });
+    }
   };
 
   const dismissRejoin = () => {

@@ -187,8 +187,17 @@ const VideoCall = () => {
   const queryCallId =
     parseCallIdFromSearch(location.search) || peekStashedVideoCallId();
 
-  const [roomUrl, setRoomUrlState] = useState(initialRoomUrl);
-  const [resolvingRoom, setResolvingRoom] = useState(Boolean(queryCallId));
+  // Known-good room from this device: lets Rejoin open instantly instead of
+  // waiting on the status API round-trip.
+  const knownRoomUrl =
+    normalizeWherebyRoomUrl(initialRoomUrl) ||
+    normalizeWherebyRoomUrl(loadRoomUrlForCall(queryCallId));
+
+  const [roomUrl, setRoomUrlState] = useState(knownRoomUrl);
+  const [resolvingRoom, setResolvingRoom] = useState(
+    Boolean(queryCallId) && !knownRoomUrl,
+  );
+  const [endedNotice, setEndedNotice] = useState(null);
 
   // Canonical room URL: API by callId first, then local stash, then query/storage.
   useEffect(() => {
@@ -197,20 +206,26 @@ const VideoCall = () => {
     const callId = queryCallId;
 
     const resolve = async () => {
-      let next =
-        normalizeWherebyRoomUrl(initialRoomUrl) ||
-        normalizeWherebyRoomUrl(loadRoomUrlForCall(callId));
+      let next = knownRoomUrl;
 
       if (callId && token) {
         const statusPayload = await fetchGpCallStatus(callId, token);
         if (cancelled) return;
+        if (statusPayload?.status === "ENDED") {
+          clearAllGpCallPersistence();
+          setEndedNotice(
+            "This consultation has already ended. Close this tab and return to your dashboard.",
+          );
+          setResolvingRoom(false);
+          return;
+        }
         if (statusPayload?.roomUrl) {
           next = normalizeWherebyRoomUrl(statusPayload.roomUrl);
         }
       }
 
       if (!cancelled) {
-        setRoomUrlState(next);
+        setRoomUrlState((current) => (next && next !== current ? next : current));
         setResolvingRoom(false);
       }
     };
@@ -222,10 +237,27 @@ const VideoCall = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search, queryCallId]);
 
+  if (endedNotice) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gray-100 px-6">
+        <p className="max-w-md text-center text-gray-700">{endedNotice}</p>
+      </div>
+    );
+  }
+
   if (resolvingRoom) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-gray-100">
-        <p className="text-center text-gray-700 px-6">Connecting to your consultation…</p>
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-gray-100 px-4 sm:px-6">
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+          <p className="text-base font-semibold text-gray-900 sm:text-lg">
+            Connecting you to your consultation…
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            The doctor may already be waiting in the room. Please keep this page
+            open — do not close or cancel while we connect you.
+          </p>
+        </div>
       </div>
     );
   }
@@ -663,7 +695,9 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
               </button>
             </span>
           ) : (
-            `Connecting to video room… (attempt ${Math.max(joinAttempt, 1)} of ${JOIN_MAX_ATTEMPTS})`
+          ) : (
+            `Connecting… ${otherPartyLabel === "the doctor" ? "Doctor may already be waiting" : "Patient may already be waiting"} — please keep this page open. (${Math.max(joinAttempt, 1)}/${JOIN_MAX_ATTEMPTS})`
+          )}
           )}
         </div>
       )}
@@ -741,8 +775,9 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
                       Connecting to the consultation…
                     </p>
                     <p className="text-gray-300 text-[10px] sm:text-xs leading-snug">
-                      Please wait — we automatically retry if the first attempt
-                      fails.
+                      {otherPartyLabel === "the doctor"
+                        ? "The doctor may already be in the room. Please wait — do not cancel."
+                        : "The patient may already be in the room. Please wait — do not cancel."}
                     </p>
                   </>
                 ) : (

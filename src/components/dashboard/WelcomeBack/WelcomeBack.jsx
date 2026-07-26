@@ -23,6 +23,8 @@ import {
   ensureDoctorPushSubscription,
   showIncomingCallNotification,
 } from "../../../utils/doctorPushNotifications";
+import { openVideoCallPreferNewTab } from "../../../utils/videoCallNavigation";
+import { setCall, setRoomUrl } from "../../../features/authSlice";
 import { getToken } from "../../../utils";
 
 function WelcomeBack({ status, onAlertsChange }) {
@@ -152,7 +154,7 @@ function WelcomeBack({ status, onAlertsChange }) {
     }
   }, [activeCalls, status]);
 
-  const handleRejoin = async () => {
+  const handleRejoin = () => {
     const active = loadDoctorRejoinSession();
     if (!active?.joinRoomUrl || !userData?.id || !token) {
       setRejoinData(null);
@@ -160,26 +162,24 @@ function WelcomeBack({ status, onAlertsChange }) {
       return;
     }
     const callId = active?.call?.callId ?? active?.call?.id ?? null;
+
+    // The doctor already claimed this call, so reopen the stored room straight
+    // away instead of re-running join + status first — those round-trips were
+    // what made Rejoin feel slow. Staleness is verified in the background.
+    setRejoinData(active);
+    dispatch(setRoomUrl(active.joinRoomUrl));
+    dispatch(setCall(active.call));
+    openVideoCallPreferNewTab(active.joinRoomUrl, callId);
+
     if (callId != null) {
-      const statusPayload = await fetchGpCallStatus(callId, token);
-      if (statusPayload?.status === "ENDED") {
-        clearAllGpCallPersistence();
-        setRejoinData(null);
-        toast.info("This consultation has already ended.");
-        return;
-      }
+      fetchGpCallStatus(callId, token).then((statusPayload) => {
+        if (statusPayload?.status === "ENDED") {
+          clearAllGpCallPersistence();
+          setRejoinData(null);
+          toast.info("This consultation has already ended.");
+        }
+      });
     }
-    joinGpCallAsDoctor({
-      call: active.call,
-      doctorId: userData.id,
-      token,
-      dispatch,
-    })
-      .then((result) => {
-        setRejoinData(result.session);
-        toast.success("Rejoining consultation…");
-      })
-      .catch((err) => toast.error(formatGpJoinError(err)));
   };
 
   const dismissRejoin = () => {

@@ -607,22 +607,28 @@ const Dashboard = () => {
       toast.error("No active meeting to rejoin.");
       return;
     }
-    if (callId && token) {
-      const statusPayload = await fetchGpCallStatus(callId, token);
-      if (statusPayload?.status === "ENDED") {
-        clearStalePatientRejoin(
-          "The doctor ended this consultation. You can start a new call.",
-        );
-        return;
-      }
-    } else if (!callId) {
+    if (!callId) {
       // Cannot verify — drop stale rejoin rather than open a dead room.
       clearStalePatientRejoin(
         "That consultation is no longer active. You can start a new call.",
       );
       return;
     }
+
+    // Open straight away: the video page verifies the call and shows an
+    // "already ended" notice if the doctor closed it. Waiting on the status
+    // API here made Rejoin feel slow.
     openVideoCallPreferNewTab(roomUrl, callId);
+
+    if (token) {
+      fetchGpCallStatus(callId, token).then((statusPayload) => {
+        if (statusPayload?.status === "ENDED") {
+          clearStalePatientRejoin(
+            "The doctor ended this consultation. You can start a new call.",
+          );
+        }
+      });
+    }
   };
 
   const handleJoinCall = async (appointment) => {
