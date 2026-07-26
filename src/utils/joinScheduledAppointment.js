@@ -71,9 +71,11 @@ export async function joinScheduledAppointment({
         expiresAt,
       })
     );
+    // Keep scheduled rejoin separate from GP instant-call `activeMeeting`
+    // so a GP callId is never paired with a scheduled roomUrl.
     localStorage.setItem(
-      "activeMeeting",
-      JSON.stringify({ roomUrl: meetingUrl, expiresAt })
+      "activeScheduledMeeting",
+      JSON.stringify({ roomUrl: meetingUrl, expiresAt, kind: "scheduled", slotId })
     );
   } catch {
     // ignore storage errors

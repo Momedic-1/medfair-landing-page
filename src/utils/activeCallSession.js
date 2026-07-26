@@ -1,5 +1,5 @@
 /** Active GP consultation window (Whereby room + rejoin). */
-export const ACTIVE_CALL_REJOIN_MS = 45 * 60 * 1000;
+export const ACTIVE_CALL_REJOIN_MS = 30 * 60 * 1000;
 
 export function saveDoctorJoinedSession({
   call,

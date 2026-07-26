@@ -1,6 +1,6 @@
 const STORAGE_KEY = "dismissedIncomingCallIds";
 /** Match GP call visibility / room lifetime so dismissed ids do not hide future calls forever. */
-const DISMISS_TTL_MS = 45 * 60 * 1000;
+const DISMISS_TTL_MS = 30 * 60 * 1000;
 
 function normalizeId(id) {
   if (id == null) return null;

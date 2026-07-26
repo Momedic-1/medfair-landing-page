@@ -21,6 +21,11 @@ export function clearAllGpCallPersistence() {
   } catch {
     // ignore
   }
+  try {
+    localStorage.removeItem("patientId");
+  } catch {
+    // ignore
+  }
   clearDoctorRejoinSession();
   clearPatientGpVideoContext();
   clearPatientGpCall();
@@ -50,7 +55,11 @@ export async function endGpConsultationByDoctor({ callId, token }) {
   return response.data;
 }
 
-/** Fetch GP call status; returns null on network/auth errors. */
+/**
+ * Fetch GP call status.
+ * Returns null on network/auth errors.
+ * Maps 404 / not-found to { status: "ENDED" } so stale Rejoin can clear.
+ */
 export async function fetchGpCallStatus(callId, token) {
   if (callId == null || !token) return null;
   try {
@@ -59,7 +68,21 @@ export async function fetchGpCallStatus(callId, token) {
       { headers: { Authorization: `Bearer ${token}` } },
     );
     return response.data;
-  } catch {
+  } catch (error) {
+    const status = error?.response?.status;
+    const message = String(
+      error?.response?.data?.message ||
+        error?.response?.data ||
+        error?.message ||
+        "",
+    ).toLowerCase();
+    if (
+      status === 404 ||
+      message.includes("call not found") ||
+      message.includes("not found")
+    ) {
+      return { status: "ENDED", callId, message: "Call not found" };
+    }
     return null;
   }
 }

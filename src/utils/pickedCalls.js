@@ -1,5 +1,5 @@
 const STORAGE_KEY = "pickedCalls";
-const PICKED_TTL_MS = 45 * 60 * 1000;
+const PICKED_TTL_MS = 30 * 60 * 1000;
 
 function normalizeId(id) {
   if (id == null) return null;
