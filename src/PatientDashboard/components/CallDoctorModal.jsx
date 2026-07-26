@@ -63,9 +63,10 @@ export default function CallDoctorModal({
                 <p className="text-base font-medium text-gray-900 sm:text-lg">
                   Please wait while we connect you with a doctor
                 </p>
-                <p className="text-sm text-gray-600">
-                  When a doctor accepts, you will tap Join call to enter the
-                  consultation. Keep this screen open.
+                <p className="rounded-xl bg-blue-50 px-3 py-3 text-sm leading-relaxed text-blue-900">
+                  A doctor may accept and join the room before you do. Keep this
+                  screen open — when they accept, tap Join call. Do not cancel
+                  while waiting unless you want to end the request.
                 </p>
               </div>
               <button
@@ -82,18 +83,35 @@ export default function CallDoctorModal({
             <>
               <div className="flex flex-col items-center gap-3 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                  <Video className="h-7 w-7" aria-hidden />
+                  {isLoading ? (
+                    <ColorRing
+                      height="40"
+                      width="40"
+                      ariaLabel="joining-call"
+                      colors={["#059669", "#059669", "#059669", "#059669", "#059669"]}
+                    />
+                  ) : (
+                    <Video className="h-7 w-7" aria-hidden />
+                  )}
                 </div>
                 <p className="text-base font-medium text-gray-900 sm:text-lg">
-                  {doctorName
-                    ? `${doctorName} has accepted your call`
-                    : "A doctor has accepted your call"}
+                  {isLoading
+                    ? "Connecting you to the consultation…"
+                    : doctorName
+                      ? `${doctorName} has accepted your call`
+                      : "A doctor has accepted your call"}
                 </p>
-                <p className="text-sm leading-relaxed text-gray-600">
-                  Tap Join call to open the video consultation. If the call does
-                  not open, allow pop-ups or use the Rejoin banner on your
-                  dashboard.
+                <p className="rounded-xl bg-blue-50 px-3 py-3 text-sm leading-relaxed text-blue-900">
+                  {isLoading
+                    ? "The doctor may already be waiting in the video room. Please keep this screen open — do not cancel or close while we connect you."
+                    : "The doctor may already be in the video room. Tap Join call below and keep this screen open while we connect you."}
                 </p>
+                {!isLoading && (
+                  <p className="text-sm leading-relaxed text-gray-600">
+                    If the call does not open, allow pop-ups or use the Rejoin
+                    banner on your dashboard.
+                  </p>
+                )}
               </div>
               <button
                 type="button"
@@ -102,12 +120,15 @@ export default function CallDoctorModal({
                 disabled={isLoading || !videoLink?.roomUrl}
               >
                 {isLoading ? (
-                  <ColorRing
-                    height="36"
-                    width="36"
-                    ariaLabel="joining-call"
-                    colors={["white", "white", "white", "white", "white"]}
-                  />
+                  <>
+                    <ColorRing
+                      height="36"
+                      width="36"
+                      ariaLabel="joining-call"
+                      colors={["white", "white", "white", "white", "white"]}
+                    />
+                    Connecting…
+                  </>
                 ) : (
                   <>
                     <Video className="h-5 w-5" aria-hidden />
@@ -115,13 +136,15 @@ export default function CallDoctorModal({
                   </>
                 )}
               </button>
-              <button
-                type="button"
-                className="flex h-11 w-full items-center justify-center rounded-full border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                onClick={onClose}
-              >
-                Join later from dashboard
-              </button>
+              {!isLoading && (
+                <button
+                  type="button"
+                  className="flex h-11 w-full items-center justify-center rounded-full border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  onClick={onClose}
+                >
+                  Join later from dashboard
+                </button>
+              )}
             </>
           )}
 

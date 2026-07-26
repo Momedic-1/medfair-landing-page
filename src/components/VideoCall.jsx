@@ -677,7 +677,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
 
       {(joinError || isJoiningRoom) && (
         <div
-          className={`px-3 py-2 text-center text-sm font-medium ${
+          className={`px-3 py-2.5 text-center text-sm font-medium sm:py-2 ${
             joinError
               ? "bg-amber-500 text-black"
               : "bg-blue-600 text-white"
@@ -695,8 +695,28 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
               </button>
             </span>
           ) : (
-            `Connecting… ${otherPartyLabel === "the doctor" ? "Doctor may already be waiting" : "Patient may already be waiting"} — please keep this page open. (${Math.max(joinAttempt, 1)}/${JOIN_MAX_ATTEMPTS})`
+            <span className="block leading-snug">
+              Connecting…{" "}
+              {otherPartyLabel === "the doctor"
+                ? "The doctor may already be waiting in the room."
+                : "The patient may already be waiting in the room."}{" "}
+              Please keep this page open.
+            </span>
           )}
+        </div>
+      )}
+
+      {!joinError && isJoiningRoom && !roomConnected && !isDoctor && (
+        <div className="pointer-events-none absolute inset-x-0 top-20 z-20 flex justify-center px-3 sm:top-24">
+          <div className="max-w-md rounded-2xl bg-black/75 px-4 py-3 text-center text-white shadow-lg backdrop-blur-sm">
+            <p className="text-sm font-semibold sm:text-base">
+              Connecting you to your consultation…
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-blue-100 sm:text-sm">
+              The doctor may already be on the call. Please wait — do not close
+              or cancel this page.
+            </p>
+          </div>
         </div>
       )}
 
