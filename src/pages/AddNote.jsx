@@ -28,8 +28,9 @@ import {
 } from "lucide-react";
 import ViewDocuments from "../components/ViewDocuments";
 import Lab from "../components/Lab";
+import { getStoredPatientId } from "../utils/videoCallDisplayInfo";
 
-const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
+const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp = null }) => {
   const [patientFirstName, setPatientFirstName] = useState("");
   const [patientLastName, setPatientLastName] = useState("");
   const [visitDate, setVisitDate] = useState("");
@@ -48,9 +49,28 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
   const userData = JSON.parse(localStorage.getItem("userData")) || {};
   const [expandedDates, setExpandedDates] = useState(new Set());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const patientId = localStorage.getItem("patientId");
+  const patientId =
+    patientIdProp != null && String(patientIdProp).trim() !== ""
+      ? String(patientIdProp)
+      : getStoredPatientId();
   const [activeTab, setActiveTab] = useState("SOAP");
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [documentsRefreshKey, setDocumentsRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen || patientId == null) return;
+    try {
+      localStorage.setItem("patientId", String(patientId));
+    } catch {
+      // ignore
+    }
+  }, [isOpen, patientId]);
+
+  useEffect(() => {
+    if (isOpen && activeTab === "ViewDocuments") {
+      setDocumentsRefreshKey((k) => k + 1);
+    }
+  }, [isOpen, activeTab]);
 
   const tabs = [
     { id: "SOAP", label: "SOAP", icon: FileText },
@@ -1030,7 +1050,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded }) => {
               </div>
             )}
 
-            {activeTab === "ViewDocuments" && <ViewDocuments />}
+            {activeTab === "ViewDocuments" && (
+              <ViewDocuments
+                patientId={patientId}
+                refreshKey={documentsRefreshKey}
+              />
+            )}
             {activeTab === "investigations" && <Lab doctorId={userData?.id} />}
           </>
         )}

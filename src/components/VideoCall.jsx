@@ -11,7 +11,7 @@ import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
 import { setRoomUrl, setCall } from "../features/authSlice";
 import ConsultationFeedbackModal from "./ConsultationFeedbackModal";
-import { getStoredCallContext, resolveVideoCallRole } from "../utils/videoCallDisplayInfo";
+import { getStoredCallContext, getStoredPatientId, resolveVideoCallRole } from "../utils/videoCallDisplayInfo";
 import { resolveVideoCallRoomUrl } from "../utils/videoCallRoomUrl";
 import { useVideoCallHeader } from "../hooks/useVideoCallHeader";
 import { dismissIncomingCallId } from "../utils/dismissedIncomingCalls";
@@ -89,41 +89,53 @@ function resolveCallId(call) {
   );
 }
 
+/**
+ * Reload the doctor dashboard after ending a call. A full navigation
+ * reinitializes auth/dashboard providers that can otherwise remain blank
+ * after the video tab clears its call-specific Redux state.
+ */
+function redirectToDoctorDashboard() {
+  window.location.replace(`${window.location.origin}/doctor-dashboard`);
+}
+
 /** Persist patient rejoin markers. Never clears — Leave must not remove these. */
 function ensurePatientRejoinPersistence(roomUrl, call) {
-  const callId = resolveCallId(call);
-  const expiresAt = Date.now() + 45 * 60 * 1000;
+  const callId = resolveCallId(call) ?? loadPatientGpCall()?.callId ?? null;
+  const expiresAt = Date.now() + 30 * 60 * 1000;
   const existing = loadPatientGpCall();
   const resolvedRoomUrl = roomUrl || existing?.roomUrl || null;
 
-  if (resolvedRoomUrl) {
-    try {
-      localStorage.setItem(
-        "activeMeeting",
-        JSON.stringify({ roomUrl: resolvedRoomUrl, expiresAt, callId }),
-      );
-    } catch {
-      // ignore
-    }
+  // Without a callId the dashboard cannot verify ENDED — do not write a stale banner.
+  if (callId == null || !resolvedRoomUrl) return;
+
+  try {
+    localStorage.setItem(
+      "activeMeeting",
+      JSON.stringify({
+        roomUrl: resolvedRoomUrl,
+        expiresAt,
+        callId: String(callId),
+      }),
+    );
+  } catch {
+    // ignore
   }
 
-  if (callId != null) {
-    savePatientGpCall({
-      callId,
-      roomUrl: resolvedRoomUrl,
-      status: "IN_CALL",
-      doctorName: existing?.doctorName || null,
-      startedAt: existing?.startedAt,
-    });
-    const ctx = loadPatientGpVideoContext();
-    savePatientGpVideoContext({
-      callId,
-      roomUrl: resolvedRoomUrl,
-      doctorId: call?.doctorId ?? ctx?.doctorId,
-      doctorFirstName: call?.doctorFirstName ?? ctx?.doctorFirstName,
-      doctorLastName: call?.doctorLastName ?? ctx?.doctorLastName,
-    });
-  }
+  savePatientGpCall({
+    callId,
+    roomUrl: resolvedRoomUrl,
+    status: "IN_CALL",
+    doctorName: existing?.doctorName || null,
+    startedAt: existing?.startedAt,
+  });
+  const ctx = loadPatientGpVideoContext();
+  savePatientGpVideoContext({
+    callId,
+    roomUrl: resolvedRoomUrl,
+    doctorId: call?.doctorId ?? ctx?.doctorId,
+    doctorFirstName: call?.doctorFirstName ?? ctx?.doctorFirstName,
+    doctorLastName: call?.doctorLastName ?? ctx?.doctorLastName,
+  });
 }
 
 /** Shell: resolve room URL only — Whereby hooks run in VideoCallRoom. */
@@ -185,6 +197,8 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const [consultationEndedNotice, setConsultationEndedNotice] = useState(null);
 
   const displayInfo = useVideoCallHeader(userData, call);
+  const consultationPatientId =
+    call?.patientId ?? getStoredPatientId() ?? null;
   const intentionalLeaveRef = useRef(false);
   const joinRoomRef = useRef(null);
   const leaveRoomRef = useRef(null);
@@ -278,7 +292,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         dispatch(setCall(null));
         setShowEndConfirm(false);
         toast.success("You left the appointment call.");
-        navigate("/doctor-dashboard");
+        redirectToDoctorDashboard();
         return;
       }
 
@@ -297,7 +311,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       dispatch(setCall(null));
       setShowEndConfirm(false);
       toast.success("Consultation ended.");
-      navigate("/doctor-dashboard");
+      redirectToDoctorDashboard();
     } catch (error) {
       console.error("End consultation failed:", error);
       toast.error(parseEndConsultationError(error));
@@ -328,7 +342,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       return;
     }
     toast.info(message);
-    navigate("/doctor-dashboard");
+    redirectToDoctorDashboard();
   };
 
   useEffect(() => {
@@ -690,6 +704,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         isOpen={isNoteModalOpen}
         onClose={() => setIsNoteModalOpen(false)}
         onNoteAdded={() => setIsNoteModalOpen(false)}
+        patientId={consultationPatientId}
       />
     </div>
   );

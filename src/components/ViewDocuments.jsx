@@ -1,60 +1,80 @@
-import { useEffect, useState } from "react";
-import { Download, FileText, Calendar, Tag, AlertCircle } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Download, FileText, Calendar, Tag, AlertCircle, RefreshCw } from "lucide-react";
 import axios from "axios";
 import { baseUrl } from "../env";
+import { getStoredPatientId } from "../utils/videoCallDisplayInfo";
 
-const ViewDocuments = () => {
+const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const userId = localStorage.getItem("patientId");
+  const userId =
+    patientIdProp != null && String(patientIdProp).trim() !== ""
+      ? String(patientIdProp)
+      : getStoredPatientId();
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await axios.get(
-          `${baseUrl}/api/patient/documents/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        setDocuments(response.data);
-        setLoading(false);
-      } catch (error) {
-        setError(
-          `Failed to load documents: ${
-            error.response?.data?.message || error.message
-          }`
-        );
-        setLoading(false);
-      }
-    };
-
-    if (userId && token) {
-      fetchDocuments();
-    } else {
+  const fetchDocuments = useCallback(async () => {
+    if (!userId || !token) {
       const missingItems = [];
       if (!userId) missingItems.push("patient ID");
       if (!token) missingItems.push("authentication token");
-
       setError(`Missing: ${missingItems.join(" and ")}`);
+      setDocuments([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.get(
+        `${baseUrl}/api/patient/documents/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      const data = response.data;
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.documents)
+          ? data.documents
+          : [];
+      setDocuments(list);
+    } catch (err) {
+      setError(
+        `Failed to load documents: ${
+          err.response?.data?.message || err.message
+        }`,
+      );
+      setDocuments([]);
+    } finally {
       setLoading(false);
     }
-  }, [userId, token, baseUrl]);
+  }, [userId, token]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments, refreshKey]);
+
+  // While doctor keeps Documents open during a call, pick up mid-call uploads.
+  useEffect(() => {
+    if (!userId || !token) return undefined;
+    const interval = window.setInterval(fetchDocuments, 15000);
+    return () => window.clearInterval(interval);
+  }, [userId, token, fetchDocuments]);
 
   const getCategoryColor = (category) => {
     const colors = {
       RADIOLOGY_RESULT: "bg-purple-100 text-purple-700 border-purple-200",
       LAB_RESULT: "bg-green-100 text-green-700 border-green-200",
+      PRESCRIPTION: "bg-blue-100 text-blue-700 border-blue-200",
       OTHER: "bg-gray-100 text-gray-700 border-gray-200",
     };
     return colors[category] || colors.OTHER;
@@ -64,6 +84,7 @@ const ViewDocuments = () => {
     const labels = {
       RADIOLOGY_RESULT: "Radiology",
       LAB_RESULT: "Lab Result",
+      PRESCRIPTION: "Prescription",
       OTHER: "Other",
     };
     return labels[category] || "Unknown";
@@ -82,7 +103,13 @@ const ViewDocuments = () => {
   };
 
   const handleDownload = (doc) => {
-    window.open(doc.url, "_blank", "noopener,noreferrer");
+    const rawUrl = doc?.url || doc?.fileUrl;
+    if (!rawUrl) {
+      setError("This document has no file link. Ask the patient to re-upload it.");
+      return;
+    }
+    const url = String(rawUrl).replace(/^http:\/\//i, "https://");
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   if (loading) {
@@ -110,7 +137,8 @@ const ViewDocuments = () => {
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <p className="text-red-600 mb-4">{error}</p>
             <button
-              onClick={() => window.location.reload()}
+              type="button"
+              onClick={fetchDocuments}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
             >
               Try Again
@@ -137,12 +165,23 @@ const ViewDocuments = () => {
 
   return (
     <div className="p-0 md:p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3">
         <h2 className="text-lg md:text-2xl font-bold text-gray-800">
           Submitted Documents
         </h2>
-        <div className="text-sm text-gray-500">
-          {documents.length} document{documents.length !== 1 ? "s" : ""} found
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-500">
+            {documents.length} document{documents.length !== 1 ? "s" : ""} found
+          </div>
+          <button
+            type="button"
+            onClick={fetchDocuments}
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            title="Refresh documents"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </button>
         </div>
       </div>
 
@@ -151,7 +190,8 @@ const ViewDocuments = () => {
           <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <p className="text-gray-500 text-lg">No documents found</p>
           <p className="text-gray-400 text-sm mt-2">
-            Upload documents to see them here
+            Ask the patient to upload from their Profile → Documents, then tap
+            Refresh.
           </p>
         </div>
       ) : (
@@ -161,7 +201,6 @@ const ViewDocuments = () => {
               key={doc.id}
               className="w-full bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-5 border border-gray-100 group"
             >
-              {/* Header */}
               <div className="flex items-start gap-3 mb-4">
                 <div className="bg-blue-100 text-blue-600 p-2.5 rounded-lg group-hover:bg-blue-200 transition-colors">
                   <FileText className="w-5 h-5" />
@@ -182,11 +221,10 @@ const ViewDocuments = () => {
                 </div>
               </div>
 
-              {/* Category Badge */}
               <div className="mb-4">
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getCategoryColor(
-                    doc.category
+                    doc.category,
                   )}`}
                 >
                   <Tag className="w-3 h-3" />
@@ -194,8 +232,8 @@ const ViewDocuments = () => {
                 </span>
               </div>
 
-              {/* Download Button */}
               <button
+                type="button"
                 onClick={() => handleDownload(doc)}
                 className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
               >

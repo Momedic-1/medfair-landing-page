@@ -27,7 +27,6 @@ import {
 import { openVideoCallPreferNewTab } from "../utils/videoCallNavigation";
 import { parseApiError } from "../utils/parseApiError";
 import {
-  clearPatientGpCall,
   isPatientGpCallActive,
   loadPatientGpCall,
   savePatientGpCall,
@@ -310,9 +309,15 @@ const Dashboard = () => {
     }
   };
 
-  const saveActiveMeetingToStorage = (roomUrl, durationMinutes = 40) => {
+  const saveActiveMeetingToStorage = (roomUrl, durationMinutes = 40, callId = null) => {
     const expiresAt = Date.now() + durationMinutes * 60 * 1000;
-    const payload = { roomUrl, expiresAt };
+    const resolvedCallId =
+      callId ?? loadPatientGpCall()?.callId ?? currentCallId ?? null;
+    const payload = {
+      roomUrl,
+      expiresAt,
+      ...(resolvedCallId != null ? { callId: String(resolvedCallId) } : {}),
+    };
     localStorage.setItem(ACTIVE_MEETING_KEY, JSON.stringify(payload));
     setActiveMeeting(payload);
   };
@@ -322,52 +327,103 @@ const Dashboard = () => {
     setActiveMeeting(null);
   };
 
-  // Initialize active meeting from storage on mount
-  useEffect(() => {
-    const stored = loadActiveMeetingFromStorage();
-    if (stored) {
-      setActiveMeeting(stored);
-      return;
-    }
-    // Fallback: patient left call but activeMeeting was missing — recover from GP call state.
-    const gpCall = loadPatientGpCall();
-    if (
-      gpCall?.roomUrl &&
-      (gpCall.status === "IN_CALL" || gpCall.status === "DOCTOR_JOINED")
-    ) {
-      saveActiveMeetingToStorage(gpCall.roomUrl, 45);
-    }
-  }, []);
+  const clearStalePatientRejoin = (message) => {
+    clearAllGpCallPersistence();
+    clearActiveMeeting();
+    setCallStatus(null);
+    setCurrentCallId(null);
+    setVideoLink(null);
+    setReadyDoctorName("");
+    if (message) toast.info(message);
+  };
 
-  // While a consultation is active (rejoin available), watch for doctor End call.
+  const isLiveRejoinStatus = (apiStatus) =>
+    apiStatus === "DOCTOR_JOINED" || apiStatus === "WAITING";
+
+  // Initialize active meeting from storage, then confirm it is still live on the server.
+  useEffect(() => {
+    if (!token) return undefined;
+
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      const stored = loadActiveMeetingFromStorage();
+      const gpCall = loadPatientGpCall();
+      const callId = stored?.callId || gpCall?.callId || null;
+      const roomUrl = stored?.roomUrl || gpCall?.roomUrl || null;
+
+      if (!roomUrl && !callId) return;
+
+      // Rejoin banner is only for patients who already entered (or left) the room.
+      const localAllowsRejoin =
+        gpCall?.status === "IN_CALL" ||
+        (!gpCall && Boolean(stored?.roomUrl && stored?.callId));
+
+      if (!callId || !roomUrl || !localAllowsRejoin) {
+        // WAITING / DOCTOR_JOINED without prior join must not show "You left the call".
+        if (stored?.roomUrl) clearActiveMeeting();
+        return;
+      }
+
+      const statusPayload = await fetchGpCallStatus(callId, token);
+      if (cancelled) return;
+      // Network blip: keep local marker; poll will clear when we know ENDED.
+      if (!statusPayload) return;
+      if (statusPayload.status === "ENDED" || !isLiveRejoinStatus(statusPayload.status)) {
+        clearStalePatientRejoin(
+          statusPayload.status === "ENDED"
+            ? "That consultation has ended. You can start a new call."
+            : null,
+        );
+        return;
+      }
+      if (roomUrl) {
+        saveActiveMeetingToStorage(roomUrl, 30, callId);
+      }
+    };
+
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  // While Rejoin is visible, watch for doctor End call.
   useEffect(() => {
     if (!token) return undefined;
     const storedCall = loadPatientGpCall();
+    const storedMeeting = loadActiveMeetingFromStorage();
     const callId =
+      activeMeeting?.callId ||
+      storedMeeting?.callId ||
       storedCall?.callId ||
       currentCallId ||
-      (activeMeeting?.roomUrl ? storedCall?.callId : null);
-    if (!callId) return undefined;
-    if (
-      storedCall?.status !== "IN_CALL" &&
-      storedCall?.status !== "DOCTOR_JOINED" &&
-      !activeMeeting?.roomUrl
-    ) {
-      return undefined;
-    }
+      null;
+    const hasRejoinBanner =
+      Boolean(activeMeeting?.roomUrl) || Boolean(storedMeeting?.roomUrl);
+    if (!callId || !hasRejoinBanner) return undefined;
 
     let cancelled = false;
+    let unknownStreak = 0;
     const tick = async () => {
       const statusPayload = await fetchGpCallStatus(callId, token);
-      if (cancelled || !statusPayload) return;
+      if (cancelled) return;
+      if (!statusPayload) {
+        unknownStreak += 1;
+        // After ~30s of failures, drop unverifiable banner rather than leave it forever.
+        if (unknownStreak >= 6) {
+          clearStalePatientRejoin(
+            "Could not verify your consultation. You can start a new call if needed.",
+          );
+        }
+        return;
+      }
+      unknownStreak = 0;
       if (statusPayload.status === "ENDED") {
-        clearAllGpCallPersistence();
-        clearActiveMeeting();
-        setCallStatus(null);
-        setCurrentCallId(null);
-        setVideoLink(null);
-        setReadyDoctorName("");
-        toast.info("The doctor ended the consultation. You can start a new call.");
+        clearStalePatientRejoin(
+          "The doctor ended the consultation. You can start a new call.",
+        );
       }
     };
 
@@ -377,7 +433,7 @@ const Dashboard = () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [token, activeMeeting?.roomUrl, currentCallId]);
+  }, [token, activeMeeting?.roomUrl, activeMeeting?.callId, currentCallId]);
 
   // Restore in-progress GP call (prevents duplicate "Start call")
   useEffect(() => {
@@ -393,17 +449,14 @@ const Dashboard = () => {
     if (storedCall.status === "DOCTOR_JOINED") {
       setCallStatus("DOCTOR_JOINED");
       setReadyDoctorName(storedCall.doctorName || "");
-      if (storedCall.roomUrl) {
-        saveActiveMeetingToStorage(storedCall.roomUrl, 45);
-      }
+      // Do not set Rejoin from localStorage alone — mount bootstrap verifies
+      // against the API first (avoids stale banner when ACTIVE NOW is 0).
       setIsCallADoctorModalOpen(true);
       return undefined;
     }
 
     if (storedCall.status === "IN_CALL") {
-      if (storedCall.roomUrl) {
-        saveActiveMeetingToStorage(storedCall.roomUrl, 45);
-      }
+      // Rejoin banner is restored only after bootstrap confirms call is live.
       return undefined;
     }
 
@@ -431,7 +484,8 @@ const Dashboard = () => {
         clearInterval(interval);
         setPollingInterval(null);
         setCallStatus("NO_DOCTOR");
-        clearPatientGpCall();
+        clearAllGpCallPersistence();
+        clearActiveMeeting();
         setIsCallADoctorModalOpen(true);
       }
     }, 3000);
@@ -470,8 +524,8 @@ const Dashboard = () => {
     setCurrentCallId(callId);
     if (resolvedRoomUrl) {
       setVideoLink({ roomUrl: resolvedRoomUrl, meetingId: callId });
-      saveActiveMeetingToStorage(resolvedRoomUrl, 45);
     }
+    // Do not set activeMeeting yet — Rejoin is only after the patient joins/leaves.
     savePatientGpCall({
       callId,
       roomUrl: resolvedRoomUrl,
@@ -495,13 +549,17 @@ const Dashboard = () => {
 
   const handleJoinReadyCall = () => {
     const roomUrl = videoLink?.roomUrl || loadPatientGpCall()?.roomUrl;
+    const joinCallId = currentCallId || loadPatientGpCall()?.callId;
     if (!roomUrl) {
       toast.error("Meeting link is missing. Please try calling again.");
       return;
     }
+    if (!joinCallId) {
+      toast.error("Call id is missing. Please try calling again.");
+      return;
+    }
 
-    saveActiveMeetingToStorage(roomUrl, 45);
-    const joinCallId = currentCallId || loadPatientGpCall()?.callId;
+    saveActiveMeetingToStorage(roomUrl, 30, joinCallId);
     const { opened, blocked, usedSameTab } = openVideoCallPreferNewTab(
       roomUrl,
       joinCallId,
@@ -534,9 +592,17 @@ const Dashboard = () => {
 
   const handlePatientRejoin = async () => {
     const storedCall = loadPatientGpCall();
+    const storedMeeting = loadActiveMeetingFromStorage();
     const roomUrl =
-      activeMeeting?.roomUrl || storedCall?.roomUrl || videoLink?.roomUrl;
-    const callId = storedCall?.callId || currentCallId;
+      activeMeeting?.roomUrl ||
+      storedMeeting?.roomUrl ||
+      storedCall?.roomUrl ||
+      videoLink?.roomUrl;
+    const callId =
+      storedCall?.callId ||
+      activeMeeting?.callId ||
+      storedMeeting?.callId ||
+      currentCallId;
     if (!roomUrl) {
       toast.error("No active meeting to rejoin.");
       return;
@@ -544,16 +610,17 @@ const Dashboard = () => {
     if (callId && token) {
       const statusPayload = await fetchGpCallStatus(callId, token);
       if (statusPayload?.status === "ENDED") {
-        clearAllGpCallPersistence();
-        clearActiveMeeting();
-        setCallStatus(null);
-        setCurrentCallId(null);
-        setVideoLink(null);
-        toast.info(
+        clearStalePatientRejoin(
           "The doctor ended this consultation. You can start a new call.",
         );
         return;
       }
+    } else if (!callId) {
+      // Cannot verify — drop stale rejoin rather than open a dead room.
+      clearStalePatientRejoin(
+        "That consultation is no longer active. You can start a new call.",
+      );
+      return;
     }
     openVideoCallPreferNewTab(roomUrl, callId);
   };
@@ -595,8 +662,7 @@ const Dashboard = () => {
       } catch {
         // ignore
       }
-      const stored = loadActiveMeetingFromStorage();
-      if (stored) setActiveMeeting(stored);
+      // Scheduled joins use `activeScheduledMeeting` — do not hydrate GP Rejoin banner.
 
       if (blocked) {
         toast.warn(
@@ -666,6 +732,16 @@ const Dashboard = () => {
 
   const handleCallADoctorClick = async () => {
     const stored = loadPatientGpCall();
+    if (stored?.callId && token) {
+      const statusPayload = await fetchGpCallStatus(stored.callId, token);
+      if (statusPayload?.status === "ENDED") {
+        clearStalePatientRejoin(
+          "That consultation has ended. You can start a new call.",
+        );
+        setIsCallADoctorModalOpen(true);
+        return;
+      }
+    }
     if (stored?.status === "IN_CALL") {
       toast.info(
         "You already have an active consultation. Use Rejoin video call on your dashboard.",
@@ -678,7 +754,6 @@ const Dashboard = () => {
       setReadyDoctorName(stored.doctorName || "");
       if (stored.roomUrl) {
         setVideoLink({ roomUrl: stored.roomUrl, meetingId: stored.callId });
-        saveActiveMeetingToStorage(stored.roomUrl, 45);
       }
     } else if (stored?.status === "WAITING") {
       setCurrentCallId(stored.callId);
@@ -716,11 +791,7 @@ const Dashboard = () => {
 
   const handleTryCallAgain = () => {
     clearCallPolling();
-    clearPatientGpCall();
-    setCallStatus(null);
-    setCurrentCallId(null);
-    setVideoLink(null);
-    setReadyDoctorName("");
+    clearStalePatientRejoin(null);
   };
 
   const handleConfirmBooking = (e, slotId) => {
@@ -960,7 +1031,8 @@ const Dashboard = () => {
           clearInterval(interval);
           setPollingInterval(null);
           setCallStatus("NO_DOCTOR");
-          clearPatientGpCall();
+          clearAllGpCallPersistence();
+          clearActiveMeeting();
         }
       }, 3000);
 
@@ -972,7 +1044,8 @@ const Dashboard = () => {
         parseApiError(err, "Failed to create meeting. Please try again in a moment."),
       );
       setCallStatus(null);
-      clearPatientGpCall();
+      clearAllGpCallPersistence();
+      clearActiveMeeting();
     } finally {
       setIsLoading(false);
     }
@@ -1028,11 +1101,7 @@ const Dashboard = () => {
       }
 
       // Reset call-related state
-      setCallStatus(null);
-      setCurrentCallId(null);
-      setVideoLink(null);
-      setReadyDoctorName("");
-      clearPatientGpCall();
+      clearStalePatientRejoin(null);
       setIsCallADoctorModalOpen(false);
       setIsCancelCallConfirmOpen(false);
 
@@ -1046,11 +1115,7 @@ const Dashboard = () => {
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
-      setCallStatus(null);
-      setCurrentCallId(null);
-      setVideoLink(null);
-      setReadyDoctorName("");
-      clearPatientGpCall();
+      clearStalePatientRejoin(null);
       setIsCallADoctorModalOpen(false);
     } finally {
       setIsLoading(false);
