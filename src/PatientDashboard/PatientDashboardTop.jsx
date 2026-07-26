@@ -119,7 +119,7 @@ export function PatientDashboardTop({
           <DashboardAlert
             variant="info"
             title="Your doctor is ready"
-            message="Join your video consultation now."
+            message="The doctor may already be waiting in the video room. Tap Join now and keep the page open while we connect you."
             primaryAction={
               <button
                 type="button"
