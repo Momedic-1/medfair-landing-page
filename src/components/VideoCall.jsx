@@ -39,8 +39,27 @@ import {
   fetchGpCallStatus,
   parseEndConsultationError,
 } from "../utils/endGpConsultation";
-import { peekStashedVideoCallId } from "../utils/videoCallNavigation";
+import {
+  loadRoomUrlForCall,
+  peekStashedVideoCallId,
+} from "../utils/videoCallNavigation";
 import { toast } from "react-toastify";
+
+const JOIN_MAX_ATTEMPTS = 8;
+const JOIN_RETRY_MS = 1200;
+
+function isRoomConnected(connectionStatus) {
+  const status = String(connectionStatus || "").toLowerCase();
+  return (
+    status.includes("connected") ||
+    status === "joined" ||
+    status === "connect"
+  );
+}
+
+function delay(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
 function formatHeaderParticipantName(displayInfo) {
   if (!displayInfo) return "Loading...";
@@ -171,14 +190,16 @@ const VideoCall = () => {
   const [roomUrl, setRoomUrlState] = useState(initialRoomUrl);
   const [resolvingRoom, setResolvingRoom] = useState(Boolean(queryCallId));
 
-  // Canonical room URL from backend when we have a callId (immune to query-string bugs).
+  // Canonical room URL: API by callId first, then local stash, then query/storage.
   useEffect(() => {
     let cancelled = false;
     const token = getToken();
     const callId = queryCallId;
 
     const resolve = async () => {
-      let next = normalizeWherebyRoomUrl(initialRoomUrl);
+      let next =
+        normalizeWherebyRoomUrl(initialRoomUrl) ||
+        normalizeWherebyRoomUrl(loadRoomUrlForCall(callId));
 
       if (callId && token) {
         const statusPayload = await fetchGpCallStatus(callId, token);
@@ -244,6 +265,8 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(null);
   const [joinError, setJoinError] = useState(null);
+  const [isJoiningRoom, setIsJoiningRoom] = useState(true);
+  const [joinAttempt, setJoinAttempt] = useState(0);
   const [isEnding, setIsEnding] = useState(false);
   const [consultationEndedNotice, setConsultationEndedNotice] = useState(null);
 
@@ -253,6 +276,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const intentionalLeaveRef = useRef(false);
   const joinRoomRef = useRef(null);
   const leaveRoomRef = useRef(null);
+  const joinGenerationRef = useRef(0);
 
   const roomConnection = useRoomConnection(roomUrl, {
     localMediaOptions: {
@@ -440,50 +464,74 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callId, isDoctor]);
 
-  // Join once per roomUrl. Leave only on real unmount / room change.
+  // Join with automatic retries. First attempt often fails before Whereby is ready;
+  // Rejoin worked because it remounted — we now retry in-place instead.
   useEffect(() => {
     intentionalLeaveRef.current = false;
     setJoinError(null);
+    setIsJoiningRoom(true);
+    setJoinAttempt(0);
 
+    const generation = ++joinGenerationRef.current;
     let cancelled = false;
-    let didJoin = false;
-    let attempts = 0;
-    let retryId = null;
 
-    const tryJoin = () => {
-      const join = joinRoomRef.current;
-      if (!join || cancelled || didJoin) return false;
-      didJoin = true;
-      Promise.resolve(join())
-        .then(() => {
-          if (!cancelled) setJoinError(null);
-        })
-        .catch((error) => {
-          console.error("Could not join room", error);
-          didJoin = false;
-          if (!cancelled) {
-            setJoinError(
-              "Could not connect to the video room. Use Rejoin on your dashboard.",
-            );
-          }
-        });
-      return true;
+    const waitForJoinFn = async () => {
+      for (let i = 0; i < 40; i += 1) {
+        if (cancelled || generation !== joinGenerationRef.current) return null;
+        const join = joinRoomRef.current;
+        if (typeof join === "function") return join;
+        await delay(250);
+      }
+      return null;
     };
 
-    if (!tryJoin()) {
-      retryId = window.setInterval(() => {
-        attempts += 1;
-        if (cancelled || tryJoin() || attempts > 20) {
-          window.clearInterval(retryId);
+    const run = async () => {
+      const join = await waitForJoinFn();
+      if (!join || cancelled || generation !== joinGenerationRef.current) {
+        if (!cancelled && generation === joinGenerationRef.current) {
+          setIsJoiningRoom(false);
+          setJoinError(
+            "Could not start the video room. Tap Retry connection.",
+          );
         }
-      }, 250);
-    }
+        return;
+      }
+
+      for (let attempt = 1; attempt <= JOIN_MAX_ATTEMPTS; attempt += 1) {
+        if (cancelled || generation !== joinGenerationRef.current) return;
+        setJoinAttempt(attempt);
+        setIsJoiningRoom(true);
+        setJoinError(null);
+
+        try {
+          await Promise.resolve(joinRoomRef.current?.());
+          if (cancelled || generation !== joinGenerationRef.current) return;
+          // Give Whereby a moment to flip connection status after join().
+          await delay(800);
+          if (cancelled || generation !== joinGenerationRef.current) return;
+          setIsJoiningRoom(false);
+          setJoinError(null);
+          return;
+        } catch (error) {
+          console.error(`Whereby join attempt ${attempt} failed`, error);
+          if (cancelled || generation !== joinGenerationRef.current) return;
+          if (attempt < JOIN_MAX_ATTEMPTS) {
+            await delay(JOIN_RETRY_MS);
+            continue;
+          }
+          setIsJoiningRoom(false);
+          setJoinError(
+            "Could not connect to the video room. Tap Retry connection, or Rejoin from your dashboard.",
+          );
+        }
+      }
+    };
+
+    run();
 
     return () => {
       cancelled = true;
-      if (retryId != null) window.clearInterval(retryId);
       if (!intentionalLeaveRef.current) {
-        // Accidental unmount / refresh: keep rejoin for both roles.
         if (!isDoctor) {
           ensurePatientRejoinPersistence(roomUrl, call);
         }
@@ -491,6 +539,53 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       }
     };
   }, [roomUrl]);
+
+  // If join() resolved but SDK later reports connected, clear transient errors.
+  useEffect(() => {
+    if (isRoomConnected(connectionStatus) || remoteParticipants.length > 0) {
+      setIsJoiningRoom(false);
+      setJoinError(null);
+    }
+  }, [connectionStatus, remoteParticipants.length]);
+
+  const handleRetryJoin = () => {
+    setJoinError(null);
+    setIsJoiningRoom(true);
+    // Remount join cycle by nudging roomUrl dependency via generation bump + re-run.
+    joinGenerationRef.current += 1;
+    const join = joinRoomRef.current;
+    if (typeof join !== "function") {
+      setJoinError("Video room is not ready yet. Wait a moment and try again.");
+      setIsJoiningRoom(false);
+      return;
+    }
+    (async () => {
+      const generation = joinGenerationRef.current;
+      for (let attempt = 1; attempt <= JOIN_MAX_ATTEMPTS; attempt += 1) {
+        if (generation !== joinGenerationRef.current) return;
+        setJoinAttempt(attempt);
+        setIsJoiningRoom(true);
+        try {
+          await Promise.resolve(joinRoomRef.current?.());
+          await delay(800);
+          if (generation !== joinGenerationRef.current) return;
+          setIsJoiningRoom(false);
+          setJoinError(null);
+          return;
+        } catch (error) {
+          console.error(`Whereby retry attempt ${attempt} failed`, error);
+          if (attempt < JOIN_MAX_ATTEMPTS) {
+            await delay(JOIN_RETRY_MS);
+            continue;
+          }
+          setIsJoiningRoom(false);
+          setJoinError(
+            "Could not connect to the video room. Tap Retry connection again, or Rejoin from your dashboard.",
+          );
+        }
+      }
+    })();
+  };
 
   const handleToggleAudio = () => {
     toggleMicrophone?.();
@@ -507,10 +602,13 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   };
 
   const feedbackCallId = callId;
-  const statusText = connectionLabel(
-    connectionStatus,
-    remoteParticipants.length,
-  );
+  const roomConnected =
+    isRoomConnected(connectionStatus) || remoteParticipants.length > 0;
+  const statusText = joinError
+    ? "Connection issue"
+    : isJoiningRoom && !roomConnected
+      ? "Connecting…"
+      : connectionLabel(connectionStatus, remoteParticipants.length);
 
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden bg-gradient-to-b from-blue-800 via-blue-950/40 to-white/50">
@@ -545,9 +643,28 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         )}
       </div>
 
-      {joinError && (
-        <div className="bg-amber-500 px-3 py-2 text-center text-sm font-medium text-black">
-          {joinError}
+      {(joinError || isJoiningRoom) && (
+        <div
+          className={`px-3 py-2 text-center text-sm font-medium ${
+            joinError
+              ? "bg-amber-500 text-black"
+              : "bg-blue-600 text-white"
+          }`}
+        >
+          {joinError ? (
+            <span className="inline-flex flex-wrap items-center justify-center gap-2">
+              <span>{joinError}</span>
+              <button
+                type="button"
+                onClick={handleRetryJoin}
+                className="rounded-md bg-black/80 px-3 py-1 text-xs font-semibold text-white hover:bg-black"
+              >
+                Retry connection
+              </button>
+            </span>
+          ) : (
+            `Connecting to video room… (attempt ${Math.max(joinAttempt, 1)} of ${JOIN_MAX_ATTEMPTS})`
+          )}
         </div>
       )}
 
@@ -614,8 +731,18 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
                       You are not in the video room yet
                     </p>
                     <p className="text-gray-300 text-[10px] sm:text-xs leading-snug">
-                      Close this tab and tap Rejoin on your dashboard to enter
-                      the same consultation room.
+                      Tap Retry connection above. Rejoin from your dashboard if
+                      it still fails.
+                    </p>
+                  </>
+                ) : isJoiningRoom || !isRoomConnected(connectionStatus) ? (
+                  <>
+                    <p className="text-white text-xs sm:text-sm font-semibold leading-snug">
+                      Connecting to the consultation…
+                    </p>
+                    <p className="text-gray-300 text-[10px] sm:text-xs leading-snug">
+                      Please wait — we automatically retry if the first attempt
+                      fails.
                     </p>
                   </>
                 ) : (

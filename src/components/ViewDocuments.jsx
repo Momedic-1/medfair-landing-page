@@ -3,17 +3,31 @@ import { Download, FileText, Calendar, Tag, AlertCircle, RefreshCw } from "lucid
 import axios from "axios";
 import { baseUrl } from "../env";
 import { getStoredPatientId } from "../utils/videoCallDisplayInfo";
+import { toViewableDocumentUrl } from "../utils/documentUrl";
+
+function resolveViewerRole() {
+  try {
+    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+    const role = userData?.role || localStorage.getItem("roleType") || "";
+    return String(role).trim().toUpperCase();
+  } catch {
+    return "";
+  }
+}
 
 const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openError, setOpenError] = useState(null);
 
   const userId =
     patientIdProp != null && String(patientIdProp).trim() !== ""
       ? String(patientIdProp)
       : getStoredPatientId();
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
+  const role = resolveViewerRole();
+  const isDoctor = role === "DOCTOR";
 
   const fetchDocuments = useCallback(async () => {
     if (!userId || !token) {
@@ -30,15 +44,17 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.get(
-        `${baseUrl}/api/patient/documents/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+      // Doctors use /api/doctor/** (role DOCTOR). Patients can still use /api/patient/documents.
+      const url = isDoctor
+        ? `${baseUrl}/api/doctor/patients/${userId}/documents`
+        : `${baseUrl}/api/patient/documents/${userId}`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      );
+      });
 
       const data = response.data;
       const list = Array.isArray(data)
@@ -48,22 +64,27 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
           : [];
       setDocuments(list);
     } catch (err) {
+      const status = err.response?.status;
+      const apiMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        (typeof err.response?.data === "string" ? err.response.data : null) ||
+        err.message;
       setError(
-        `Failed to load documents: ${
-          err.response?.data?.message || err.message
-        }`,
+        status
+          ? `Failed to load documents (${status}): ${apiMessage}`
+          : `Failed to load documents: ${apiMessage}`,
       );
       setDocuments([]);
     } finally {
       setLoading(false);
     }
-  }, [userId, token]);
+  }, [userId, token, isDoctor]);
 
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments, refreshKey]);
 
-  // While doctor keeps Documents open during a call, pick up mid-call uploads.
   useEffect(() => {
     if (!userId || !token) return undefined;
     const interval = window.setInterval(fetchDocuments, 15000);
@@ -103,13 +124,24 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
   };
 
   const handleDownload = (doc) => {
-    const rawUrl = doc?.url || doc?.fileUrl;
-    if (!rawUrl) {
-      setError("This document has no file link. Ask the patient to re-upload it.");
+    setOpenError(null);
+    const url = toViewableDocumentUrl(doc);
+    if (!url) {
+      setOpenError(
+        "This document has no file link. Ask the patient to re-upload it.",
+      );
       return;
     }
-    const url = String(rawUrl).replace(/^http:\/\//i, "https://");
-    window.open(url, "_blank", "noopener,noreferrer");
+
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      // Popup blocked — fall back to same-tab navigation via anchor.
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.click();
+    }
   };
 
   if (loading) {
@@ -185,13 +217,17 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
         </div>
       </div>
 
+      {openError && (
+        <p className="mb-4 text-sm text-red-600">{openError}</p>
+      )}
+
       {documents.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <p className="text-gray-500 text-lg">No documents found</p>
           <p className="text-gray-400 text-sm mt-2">
-            Ask the patient to upload from their Profile → Documents, then tap
-            Refresh.
+            This shows all uploads for this patient (old and new). Ask them to
+            upload from Profile → Documents, then tap Refresh.
           </p>
         </div>
       ) : (
