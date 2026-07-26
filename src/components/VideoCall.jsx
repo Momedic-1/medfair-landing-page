@@ -89,6 +89,15 @@ function resolveCallId(call) {
   );
 }
 
+/**
+ * Reload the doctor dashboard after ending a call. A full navigation
+ * reinitializes auth/dashboard providers that can otherwise remain blank
+ * after the video tab clears its call-specific Redux state.
+ */
+function redirectToDoctorDashboard() {
+  window.location.replace(`${window.location.origin}/doctor-dashboard`);
+}
+
 /** Persist patient rejoin markers. Never clears — Leave must not remove these. */
 function ensurePatientRejoinPersistence(roomUrl, call) {
   const callId = resolveCallId(call);
@@ -278,7 +287,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         dispatch(setCall(null));
         setShowEndConfirm(false);
         toast.success("You left the appointment call.");
-        navigate("/doctor-dashboard");
+        redirectToDoctorDashboard();
         return;
       }
 
@@ -297,7 +306,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       dispatch(setCall(null));
       setShowEndConfirm(false);
       toast.success("Consultation ended.");
-      navigate("/doctor-dashboard");
+      redirectToDoctorDashboard();
     } catch (error) {
       console.error("End consultation failed:", error);
       toast.error(parseEndConsultationError(error));
@@ -328,7 +337,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       return;
     }
     toast.info(message);
-    navigate("/doctor-dashboard");
+    redirectToDoctorDashboard();
   };
 
   useEffect(() => {
