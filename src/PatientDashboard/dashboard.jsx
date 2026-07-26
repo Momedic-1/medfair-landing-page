@@ -501,10 +501,14 @@ const Dashboard = () => {
     }
 
     saveActiveMeetingToStorage(roomUrl, 45);
-    const { opened, blocked, usedSameTab } = openVideoCallPreferNewTab(roomUrl);
+    const joinCallId = currentCallId || loadPatientGpCall()?.callId;
+    const { opened, blocked, usedSameTab } = openVideoCallPreferNewTab(
+      roomUrl,
+      joinCallId,
+    );
 
     savePatientGpCall({
-      callId: currentCallId || loadPatientGpCall()?.callId,
+      callId: joinCallId,
       roomUrl,
       status: "IN_CALL",
       doctorName: readyDoctorName,
@@ -551,7 +555,7 @@ const Dashboard = () => {
         return;
       }
     }
-    openVideoCallPreferNewTab(roomUrl);
+    openVideoCallPreferNewTab(roomUrl, callId);
   };
 
   const handleJoinCall = async (appointment) => {

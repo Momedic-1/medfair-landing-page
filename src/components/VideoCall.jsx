@@ -31,6 +31,7 @@ import {
   fetchGpCallStatus,
   parseEndConsultationError,
 } from "../utils/endGpConsultation";
+import { peekStashedVideoCallId } from "../utils/videoCallNavigation";
 import { toast } from "react-toastify";
 
 function formatHeaderParticipantName(displayInfo) {
@@ -69,10 +70,18 @@ function connectionLabel(connectionStatus, remoteCount) {
 }
 
 function resolveCallId(call) {
+  try {
+    const fromQuery = new URLSearchParams(window.location.search).get("callId");
+    if (fromQuery) return fromQuery;
+  } catch {
+    // ignore
+  }
+
   return (
     call?.callId ??
     call?.id ??
     call?.meetingId ??
+    peekStashedVideoCallId() ??
     loadPatientGpCall()?.callId ??
     loadPatientGpVideoContext()?.callId ??
     loadDoctorRejoinSession()?.call?.callId ??
@@ -251,31 +260,51 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
 
   const confirmDoctorEndCall = async () => {
     if (isEnding) return;
-    setShowEndConfirm(false);
     setIsEnding(true);
     intentionalLeaveRef.current = true;
 
     try {
       const token = getToken();
-      const isGpInstantCall = callId != null && !call?.slotId;
-      if (isGpInstantCall && token) {
-        await endGpConsultationByDoctor({ callId, token });
-      } else {
+      if (!token) {
+        throw new Error("Please sign in again before ending the consultation.");
+      }
+
+      // Scheduled appointments: local leave only (no GP video_calls row).
+      if (call?.slotId) {
         clearAllGpCallPersistence();
+        if (callId != null) dismissIncomingCallId(callId);
+        await detachLocalMedia();
+        dispatch(setRoomUrl(null));
+        dispatch(setCall(null));
+        setShowEndConfirm(false);
+        toast.success("You left the appointment call.");
+        navigate("/doctor-dashboard");
+        return;
       }
-      if (callId != null) {
-        dismissIncomingCallId(callId);
+
+      const resolvedCallId = resolveCallId(call);
+      if (resolvedCallId == null) {
+        throw new Error(
+          "Missing call id — cannot end this consultation. Rejoin from your dashboard and try End call again.",
+        );
       }
+
+      // Must succeed against the backend before clearing doctor rejoin state.
+      await endGpConsultationByDoctor({ callId: resolvedCallId, token });
+      dismissIncomingCallId(resolvedCallId);
       await detachLocalMedia();
       dispatch(setRoomUrl(null));
       dispatch(setCall(null));
+      setShowEndConfirm(false);
       toast.success("Consultation ended.");
       navigate("/doctor-dashboard");
     } catch (error) {
       console.error("End consultation failed:", error);
       toast.error(parseEndConsultationError(error));
+      // Keep doctor on the call page with rejoin session intact.
       setIsEnding(false);
       intentionalLeaveRef.current = false;
+      setShowEndConfirm(true);
     }
   };
 
