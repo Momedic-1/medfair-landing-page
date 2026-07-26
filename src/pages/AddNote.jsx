@@ -49,6 +49,10 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
   const userData = JSON.parse(localStorage.getItem("userData")) || {};
   const [expandedDates, setExpandedDates] = useState(new Set());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // Held until the doctor acknowledges the confirmation: notifying the parent
+  // immediately unmounts this modal, so the confirmation was never seen.
+  const [savedNote, setSavedNote] = useState(null);
+  const [savedCount, setSavedCount] = useState(0);
   const patientId =
     patientIdProp != null && String(patientIdProp).trim() !== ""
       ? String(patientIdProp)
@@ -265,7 +269,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
           }
         );
 
-        // Only show success modal if the API call succeeds
         const prescriptionCount = validPrescriptions.length;
         toast.success(
           prescriptionCount === 1
@@ -273,10 +276,9 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
             : `${prescriptionCount} prescriptions created successfully!`
         );
 
-        setShowSuccessModal(true); // ✅ Only show success modal on successful API response
-
-        onNoteAdded(response.data);
-        resetForm();
+        setSavedCount(prescriptionCount);
+        setSavedNote(response.data);
+        setShowSuccessModal(true);
         setLoading(false);
         setIsPrescriptionModalOpen(false);
       }
@@ -285,6 +287,16 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
       toast.error("Failed to add note, please try again.");
       // Don't show success modal on error
     }
+  };
+
+  const closeSuccessModal = () => {
+    const payload = savedNote;
+    setShowSuccessModal(false);
+    setSavedNote(null);
+    setSavedCount(0);
+    resetForm();
+    setIsPrescriptionModalOpen(false);
+    if (payload) onNoteAdded?.(payload);
   };
 
   const resetForm = () => {
@@ -512,6 +524,60 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
     }
   };
 
+  const soapInputClass =
+    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
+  const soapFields = [
+    {
+      id: "subjective",
+      label: "Subjective",
+      placeholder: "What the patient reports",
+      value: subjective,
+      onChange: setSubjective,
+      multiline: true,
+    },
+    {
+      id: "objective",
+      label: "Objective",
+      placeholder: "Examination findings and vitals",
+      value: objective,
+      onChange: setObjective,
+      multiline: true,
+    },
+    {
+      id: "assessment",
+      label: "Assessment",
+      placeholder: "Clinical impression",
+      value: assessment,
+      onChange: setAssessment,
+      multiline: true,
+    },
+    {
+      id: "plan",
+      label: "Plan",
+      placeholder: "Treatment plan and follow-up",
+      value: plan,
+      onChange: setPlan,
+      multiline: true,
+    },
+    {
+      id: "finalDiagnosis",
+      label: "Final diagnosis",
+      placeholder: "Enter final diagnosis",
+      value: finalDiagnosis,
+      onChange: setFinalDiagnosis,
+      multiline: false,
+    },
+    {
+      id: "soapComment",
+      label: "Additional comment",
+      placeholder: "Anything else worth recording",
+      value: soapComment,
+      onChange: setSoapComment,
+      multiline: true,
+    },
+  ];
+
   const toggleDateExpansion = (date) => {
     const newExpanded = new Set(expandedDates);
     if (newExpanded.has(date)) {
@@ -524,35 +590,59 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/50 sm:items-center sm:p-3"
       onClick={handleOverlayClick}
     >
       <div
-        className="bg-white w-[90%] max-w-lg rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-scroll"
+        className="flex h-[100dvh] w-full max-w-3xl flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[92vh] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-blue-600">Add Notes</h2>
-          <button
-            onClick={handleViewNotes}
-            className="bg-blue-500 text-white w-[160px] h-10 px-6 py-2 rounded-md flex items-center justify-center"
-          >
-            {isViewNotesOpen ? (
-              "Hide Notes"
-            ) : loading ? (
-              <ColorRing
-                visible={true}
-                height="40"
-                width="40"
-                ariaLabel="loading"
-                wrapperClass="color-ring-wrapper"
-                colors={["white", "white", "white", "white", "white"]}
-              />
-            ) : (
-              "View Notes"
-            )}
-          </button>
+        <div className="shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#020E7C] to-blue-700 px-3 py-3 text-white sm:px-5 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold sm:text-xl">
+                Consultation notes
+              </h2>
+              <p className="truncate text-xs text-blue-100">
+                {`${capitalizeFirstLetter(
+                  patientFirstName
+                )} ${capitalizeFirstLetter(patientLastName)}`.trim() ||
+                  "Patient record"}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <button
+                onClick={handleViewNotes}
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-white/15 px-2.5 text-xs font-medium text-white hover:bg-white/25 sm:px-4 sm:text-sm"
+              >
+                {isViewNotesOpen ? (
+                  "Hide notes"
+                ) : loading ? (
+                  <ColorRing
+                    visible={true}
+                    height="24"
+                    width="24"
+                    ariaLabel="loading"
+                    wrapperClass="color-ring-wrapper"
+                    colors={["white", "white", "white", "white", "white"]}
+                  />
+                ) : (
+                  "Past notes"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full p-1.5 text-2xl leading-none text-blue-100 hover:bg-white/15 hover:text-white"
+                aria-label="Close notes"
+              >
+                ×
+              </button>
+            </div>
+          </div>
         </div>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:px-5 sm:py-4">
 
         {/* <div className="flex border-b mb-4">
           <button
@@ -596,23 +686,23 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
             Investigations
           </button>
         </div> */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-lg transition-colors ${
+              className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-3 transition-all ${
                 activeTab === tab.id
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-blue-200 hover:bg-blue-50"
               }`}
               onClick={() => setActiveTab(tab.id)}
             >
               {React.createElement(tab.icon, {
                 className: `h-5 w-5 ${
-                  activeTab === tab.id ? "text-white" : "text-gray-500"
+                  activeTab === tab.id ? "text-white" : "text-gray-400"
                 }`,
               })}
-              <span className="text-xs font-medium">{tab.label}</span>
+              <span className="text-xs font-semibold">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -709,143 +799,67 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
             {activeTab === "SOAP" && (
               <>
                 <form className="space-y-4">
-                  <div className="border rounded p-4">
-                    <p className="font-bold text-[#020E7C] text-xl text-left">
-                      Patient Name
-                    </p>
-                    <hr className="mt-1" />
-                    <p className="font-bold text-gray-900/50 mt-2 text-xl text-left">
-                      {`${capitalizeFirstLetter(
-                        patientFirstName
-                      )} ${capitalizeFirstLetter(patientLastName)}`}
-                    </p>
-                  </div>
-
-                  <div className="border rounded p-4">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
                     <label
                       htmlFor="visitDate"
-                      className="block font-medium mb-1 text-[#020E7C]"
+                      className="mb-1.5 block text-sm font-semibold text-[#020E7C]"
                     >
-                      Visit Date:
+                      Visit date
                     </label>
                     <input
                       type="date"
                       id="visitDate"
-                      className="border p-2 w-full outline-none"
+                      className={soapInputClass}
                       value={visitDate}
                       onChange={(e) => setVisitDate(e.target.value)}
                       required
                     />
                   </div>
 
-                  <div className="border rounded p-4">
-                    <label
-                      htmlFor="subjective"
-                      className="block text-sm font-medium mb-1 text-[#020E7C]"
+                  {soapFields.map((field) => (
+                    <div
+                      key={field.id}
+                      className="rounded-xl border border-gray-200 bg-white p-4"
                     >
-                      Subjective
-                    </label>
-                    <textarea
-                      id="subjective"
-                      value={subjective}
-                      onChange={(e) => setSubjective(e.target.value)}
-                      placeholder="Enter subjective information"
-                      className="border rounded p-2 w-full outline-none text-gray-900/60"
-                    />
-                  </div>
-
-                  <div className="border rounded p-4">
-                    <label
-                      htmlFor="objective"
-                      className="block mb-1 text-[#020E7C] text-sm font-medium"
-                    >
-                      Objective
-                    </label>
-                    <textarea
-                      id="objective"
-                      value={objective}
-                      onChange={(e) => setObjective(e.target.value)}
-                      placeholder="Enter objective information"
-                      className="border rounded p-2 w-full outline-none text-gray-900/60"
-                    />
-                  </div>
-
-                  <div className="border rounded p-4">
-                    <label
-                      htmlFor="assessment"
-                      className="block mb-1 text-[#020E7C] text-sm font-medium"
-                    >
-                      Assessment
-                    </label>
-                    <textarea
-                      id="assessment"
-                      value={assessment}
-                      onChange={(e) => setAssessment(e.target.value)}
-                      placeholder="Enter assessment information"
-                      className="border rounded p-2 w-full outline-none text-gray-900/60"
-                    />
-                  </div>
-
-                  <div className="border rounded p-4">
-                    <label
-                      htmlFor="plan"
-                      className="block mb-1 text-[#020E7C] text-sm font-medium"
-                    >
-                      Plan
-                    </label>
-                    <textarea
-                      id="plan"
-                      value={plan}
-                      onChange={(e) => setPlan(e.target.value)}
-                      placeholder="Enter plan information"
-                      className="border rounded p-2 w-full outline-none text-gray-900/60"
-                    />
-                  </div>
-
-                  <div className="border rounded p-4">
-                    <label
-                      htmlFor="finalDiagnosis"
-                      className="block mb-1 text-[#020E7C] text-sm font-medium"
-                    >
-                      Final Diagnosis
-                    </label>
-                    <input
-                      id="finalDiagnosis"
-                      type="text"
-                      value={finalDiagnosis}
-                      onChange={(e) => setFinalDiagnosis(e.target.value)}
-                      placeholder="Enter final diagnosis"
-                      className="border rounded p-2 w-full outline-none text-gray-900/60"
-                    />
-                  </div>
-
-                  <div className="border rounded p-4">
-                    <label
-                      htmlFor="soapComment"
-                      className="block mb-1 text-[#020E7C] text-sm font-medium"
-                    >
-                      SOAP Comment
-                    </label>
-                    <textarea
-                      id="soapComment"
-                      value={soapComment}
-                      onChange={(e) => setSoapComment(e.target.value)}
-                      placeholder="Enter SOAP comment"
-                      className="border rounded p-2 w-full outline-none text-gray-900/60"
-                    />
-                  </div>
+                      <label
+                        htmlFor={field.id}
+                        className="mb-1.5 block text-sm font-semibold text-[#020E7C]"
+                      >
+                        {field.label}
+                      </label>
+                      {field.multiline ? (
+                        <textarea
+                          id={field.id}
+                          rows={3}
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          placeholder={field.placeholder}
+                          className={soapInputClass}
+                        />
+                      ) : (
+                        <input
+                          id={field.id}
+                          type="text"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          placeholder={field.placeholder}
+                          className={soapInputClass}
+                        />
+                      )}
+                    </div>
+                  ))}
                 </form>
-                <div className="flex justify-between mt-6">
+                <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="bg-white text-blue-600 px-4 py-2 rounded-md"
+                    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white px-6 py-2 rounded-md w-[160px] h-10 flex justify-center items-center"
+                    className="flex h-10 w-full items-center justify-center rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700 sm:w-[160px]"
                     onClick={moveToMedication}
                   >
                     Next
@@ -856,15 +870,21 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
 
             {activeTab === "Medication" && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    Current Medication
-                  </h3>
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Current medication
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      A single prescription can carry several drugs.
+                    </p>
+                  </div>
                   <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 sm:w-auto"
                     onClick={handleNewPrescription}
                   >
-                    <span>+ New Prescription</span>
+                    <Plus className="h-4 w-4" />
+                    New prescription
                   </button>
                 </div>
 
@@ -1018,18 +1038,18 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                   </div>
                 )}
 
-                <div className="flex justify-between mt-6">
+                <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
                   <button
                     type="button"
                     onClick={() => setActiveTab("SOAP")}
-                    className="bg-white text-blue-600 px-4 py-2 rounded-md flex items-center gap-2"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
                     <IoMdArrowBack />
                     Back
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white px-6 py-2 rounded-md w-[160px] h-10 flex justify-center items-center"
+                    className="flex h-10 w-full items-center justify-center rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 sm:w-[160px]"
                     onClick={handleAddNote}
                     disabled={loading}
                   >
@@ -1059,46 +1079,66 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
             {activeTab === "investigations" && <Lab doctorId={userData?.id} />}
           </>
         )}
+        </div>
 
         {isPrescriptionModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white w-[90%] max-w-2xl rounded-lg shadow-lg p-6 max-h-[80vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {isEditMode ? "Edit Prescription" : "New Prescription"}
-                </h3>
+          <div className="fixed inset-0 z-[60] flex items-stretch justify-center bg-black/60 sm:items-center sm:p-3">
+            <div className="flex h-[100dvh] w-full max-w-2xl flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl">
+              <div className="flex items-start justify-between gap-2 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-3 text-white sm:gap-3 sm:px-5 sm:py-4">
+                <div className="min-w-0">
+                  <h3 className="text-base font-semibold sm:text-lg">
+                    {isEditMode ? "Edit Prescription" : "New Prescription"}
+                  </h3>
+                  {!isEditMode && (
+                    <p className="mt-0.5 text-xs leading-snug text-blue-100">
+                      One prescription can hold several drugs — use “Add another
+                      drug” below instead of starting a new prescription.
+                    </p>
+                  )}
+                </div>
                 <button
                   onClick={() => {
                     setIsPrescriptionModalOpen(false);
                     resetPrescriptionForm();
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="shrink-0 rounded-full p-1 text-2xl leading-none text-blue-100 hover:bg-white/15 hover:text-white"
+                  aria-label="Close"
                 >
                   ×
                 </button>
               </div>
 
+              <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-5 sm:py-5">
               {prescriptionError && (
                 <Alert severity="error" className="mb-4">
                   {prescriptionError}
                 </Alert>
               )}
 
-              <form onSubmit={handleAddNote} className="space-y-4">
+              <form id="prescription-form" onSubmit={handleAddNote} className="space-y-4">
                 {prescriptionForms.map((form, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-4">
-                    {prescriptionForms.length > 1 && (
+                  <div
+                    key={index}
+                    className="space-y-4 rounded-xl border border-gray-200 bg-gray-50/60 p-4"
+                  >
+                    {!isEditMode && (
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">
-                          Prescription {index + 1}
+                        <h4 className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                            {index + 1}
+                          </span>
+                          Drug {index + 1} of {prescriptionForms.length}
                         </h4>
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePrescription(index)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {prescriptionForms.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePrescription(index)}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Remove
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -1276,30 +1316,43 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                   <button
                     type="button"
                     onClick={handleAddMorePrescription}
-                    className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-300 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-blue-500 bg-blue-50 px-3 py-3 text-sm font-semibold leading-snug text-blue-700 shadow-sm transition-colors hover:bg-blue-100"
                   >
-                    <Plus className="h-4 w-4" />
-                    Add Another Prescription
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                      <Plus className="h-4 w-4" />
+                    </span>
+                    <span className="text-left">
+                      Add another drug to this prescription
+                    </span>
                   </button>
                 )}
+              </form>
+              </div>
 
-                <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex flex-col gap-3 border-t border-gray-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+                <span className="text-xs text-gray-500">
+                  {isEditMode
+                    ? "Editing existing prescription"
+                    : `${prescriptionForms.length} drug${prescriptionForms.length !== 1 ? "s" : ""} on this prescription`}
+                </span>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
                   <button
                     type="button"
                     onClick={() => {
                       setIsPrescriptionModalOpen(false);
                       resetPrescriptionForm();
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={prescriptionLoading}
-                    className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+                    form="prescription-form"
+                    disabled={loading || prescriptionLoading}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 sm:px-6"
                   >
-                    {prescriptionLoading ? (
+                    {loading || prescriptionLoading ? (
                       <ColorRing
                         visible={true}
                         height="16"
@@ -1312,28 +1365,24 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                     {isEditMode ? "Update" : "Save"} Prescription
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
         {showSuccessModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white w-[60%] max-w-2xl rounded-lg shadow-lg p-6 max-h-[40vh] overflow-y-auto relative">
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+            <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
               <button
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  resetForm();
-                  setIsPrescriptionModalOpen(false);
-                }}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                onClick={closeSuccessModal}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-700"
                 aria-label="Close"
               >
                 &times;
               </button>
               <div className="text-center">
-                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
                   <svg
-                    className="h-6 w-6 text-green-600"
+                    className="h-7 w-7 text-green-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1346,21 +1395,21 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Prescription Saved
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  {savedCount > 1
+                    ? `${savedCount} drugs saved`
+                    : "Prescription saved"}
                 </h3>
-                <p className="text-sm text-gray-500">
-                  Your prescription has been saved successfully.
+                <p className="text-sm text-gray-600">
+                  The note{savedCount > 0 ? " and prescription" : ""} for this
+                  patient {savedCount > 1 ? "have" : "has"} been saved
+                  successfully.
                 </p>
                 <button
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    resetForm();
-                    setIsPrescriptionModalOpen(false);
-                  }}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  onClick={closeSuccessModal}
+                  className="mt-5 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
                 >
-                  Close
+                  Done
                 </button>
               </div>
             </div>

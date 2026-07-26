@@ -1,9 +1,29 @@
-import { useCallback, useEffect, useState } from "react";
-import { Download, FileText, Calendar, Tag, AlertCircle, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Download,
+  FileText,
+  Calendar,
+  Tag,
+  AlertCircle,
+  RefreshCw,
+  Eye,
+  X,
+  ExternalLink,
+} from "lucide-react";
 import axios from "axios";
 import { baseUrl } from "../env";
 import { getStoredPatientId } from "../utils/videoCallDisplayInfo";
 import { toViewableDocumentUrl } from "../utils/documentUrl";
+
+function isImageType(contentType, fileName) {
+  if (String(contentType || "").toLowerCase().startsWith("image/")) return true;
+  return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(fileName || ""));
+}
+
+function isPdfType(contentType, fileName) {
+  if (String(contentType || "").toLowerCase().includes("pdf")) return true;
+  return /\.pdf$/i.test(String(fileName || ""));
+}
 
 function resolveViewerRole() {
   try {
@@ -20,6 +40,9 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openError, setOpenError] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState(null);
+  const previewUrlRef = useRef(null);
 
   const userId =
     patientIdProp != null && String(patientIdProp).trim() !== ""
@@ -137,7 +160,27 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
     }
   };
 
-  const handleDownload = async (doc) => {
+  const closePreview = useCallback(() => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setPreview(null);
+  }, []);
+
+  useEffect(() => () => closePreview(), [closePreview]);
+
+  useEffect(() => {
+    if (!preview) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") closePreview();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [preview, closePreview]);
+
+  /** Streams the file through the authenticated API so nothing hits the disk. */
+  const handleView = async (doc) => {
     setOpenError(null);
     if (!doc?.id) {
       setOpenError("This document has no id. Ask the patient to re-upload it.");
@@ -153,6 +196,7 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
     const patientFileUrl = `${baseUrl}/api/patient/documents/${userId}/${doc.id}/file`;
     const tryUrls = isDoctor ? [doctorFileUrl, patientFileUrl] : [patientFileUrl];
 
+    setPreviewLoadingId(doc.id);
     try {
       let response;
       let lastErr;
@@ -176,24 +220,35 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
         doc.fileType ||
         "application/octet-stream";
       const blob = new Blob([response.data], { type: contentType });
+
+      closePreview();
       const objectUrl = URL.createObjectURL(blob);
-      const opened = window.open(objectUrl, "_blank", "noopener,noreferrer");
-      if (!opened) {
-        const a = document.createElement("a");
-        a.href = objectUrl;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.download = doc.fileName || "document";
-        a.click();
-      }
-      // Keep blob alive long enough for the tab to load; then revoke.
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      previewUrlRef.current = objectUrl;
+      setPreview({
+        doc,
+        objectUrl,
+        contentType,
+        kind: isImageType(contentType, doc.fileName)
+          ? "image"
+          : isPdfType(contentType, doc.fileName)
+            ? "pdf"
+            : "other",
+      });
     } catch (err) {
       const status = err.response?.status;
       // Fallback: try direct Cloudinary URL (images often work; PDFs may still 401).
       const direct = toViewableDocumentUrl(doc);
       if (direct && status !== 401 && status !== 403) {
-        window.open(direct, "_blank", "noopener,noreferrer");
+        setPreview({
+          doc,
+          objectUrl: direct,
+          contentType: doc.fileType || "",
+          kind: isImageType(doc.fileType, doc.fileName)
+            ? "image"
+            : isPdfType(doc.fileType, doc.fileName)
+              ? "pdf"
+              : "other",
+        });
         return;
       }
       setOpenError(
@@ -201,7 +256,17 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
           ? `Could not open document (${status}). If this is a PDF, enable Cloudinary → Settings → Security → Allow delivery of PDF and ZIP files, or ask the patient to re-upload.`
           : `Could not open document: ${err.message}`,
       );
+    } finally {
+      setPreviewLoadingId(null);
     }
+  };
+
+  const handleDownload = (item) => {
+    if (!item?.objectUrl) return;
+    const anchor = document.createElement("a");
+    anchor.href = item.objectUrl;
+    anchor.download = item.doc?.fileName || "document";
+    anchor.click();
   };
 
   if (loading) {
@@ -330,14 +395,107 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
 
               <button
                 type="button"
-                onClick={() => handleDownload(doc)}
-                className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                onClick={() => handleView(doc)}
+                disabled={previewLoadingId === doc.id}
+                className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-60"
               >
-                <Download className="w-4 h-4 mr-2" />
-                View Document
+                {previewLoadingId === doc.id ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    Opening…
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Document
+                  </>
+                )}
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {preview && (
+        <div className="fixed inset-0 z-[60] flex items-stretch justify-center bg-black/70 sm:items-center sm:p-4">
+          <div className="flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:h-[90dvh] sm:rounded-xl">
+            <div className="flex items-center justify-between gap-2 border-b border-gray-200 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+              <div className="min-w-0">
+                <p
+                  className="truncate text-sm font-semibold text-gray-900"
+                  title={preview.doc?.fileName}
+                >
+                  {preview.doc?.fileName || "Document"}
+                </p>
+                <p className="truncate text-xs text-gray-500">
+                  {getCategoryLabel(preview.doc?.category)} ·{" "}
+                  {formatDate(preview.doc?.uploadedDate)}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.open(preview.objectUrl, "_blank")}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 p-2 text-xs font-medium text-gray-600 hover:bg-gray-50 sm:px-2.5 sm:py-1.5"
+                  title="Open in a new tab"
+                  aria-label="Open in a new tab"
+                >
+                  <ExternalLink className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  <span className="hidden sm:inline">New tab</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDownload(preview)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 p-2 text-xs font-medium text-gray-600 hover:bg-gray-50 sm:px-2.5 sm:py-1.5"
+                  title="Download a copy"
+                  aria-label="Download a copy"
+                >
+                  <Download className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={closePreview}
+                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                  aria-label="Close preview"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-auto bg-gray-100">
+              {preview.kind === "image" ? (
+                <div className="flex h-full items-center justify-center p-3 sm:p-4">
+                  <img
+                    src={preview.objectUrl}
+                    alt={preview.doc?.fileName || "Document"}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+              ) : preview.kind === "pdf" ? (
+                <iframe
+                  src={preview.objectUrl}
+                  title={preview.doc?.fileName || "Document"}
+                  className="h-full min-h-[70dvh] w-full border-0 sm:min-h-0"
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+                  <FileText className="h-10 w-10 text-gray-400" />
+                  <p className="text-sm text-gray-600">
+                    This file type cannot be previewed here.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(preview)}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    Download to open
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
