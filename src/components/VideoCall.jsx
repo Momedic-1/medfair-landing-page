@@ -11,7 +11,7 @@ import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
 import { setRoomUrl, setCall } from "../features/authSlice";
 import ConsultationFeedbackModal from "./ConsultationFeedbackModal";
-import { getStoredCallContext } from "../utils/videoCallDisplayInfo";
+import { getStoredCallContext, resolveVideoCallRole } from "../utils/videoCallDisplayInfo";
 import { resolveVideoCallRoomUrl } from "../utils/videoCallRoomUrl";
 import { useVideoCallHeader } from "../hooks/useVideoCallHeader";
 import { dismissIncomingCallId } from "../utils/dismissedIncomingCalls";
@@ -20,6 +20,7 @@ import {
   savePatientGpCall,
 } from "../utils/patientGpCall";
 import {
+  loadDoctorRejoinSession,
   loadPatientGpVideoContext,
   savePatientGpVideoContext,
 } from "../utils/activeCallSession";
@@ -68,41 +69,51 @@ function connectionLabel(connectionStatus, remoteCount) {
 }
 
 function resolveCallId(call) {
-  return call?.callId ?? call?.id ?? call?.meetingId ?? null;
+  return (
+    call?.callId ??
+    call?.id ??
+    call?.meetingId ??
+    loadPatientGpCall()?.callId ??
+    loadPatientGpVideoContext()?.callId ??
+    loadDoctorRejoinSession()?.call?.callId ??
+    null
+  );
 }
 
+/** Persist patient rejoin markers. Never clears — Leave must not remove these. */
 function ensurePatientRejoinPersistence(roomUrl, call) {
   const callId = resolveCallId(call);
   const expiresAt = Date.now() + 45 * 60 * 1000;
-  if (roomUrl) {
+  const existing = loadPatientGpCall();
+  const resolvedRoomUrl = roomUrl || existing?.roomUrl || null;
+
+  if (resolvedRoomUrl) {
     try {
       localStorage.setItem(
         "activeMeeting",
-        JSON.stringify({ roomUrl, expiresAt }),
+        JSON.stringify({ roomUrl: resolvedRoomUrl, expiresAt, callId }),
       );
     } catch {
       // ignore
     }
   }
+
   if (callId != null) {
-    const existing = loadPatientGpCall();
     savePatientGpCall({
       callId,
-      roomUrl: roomUrl || existing?.roomUrl || null,
+      roomUrl: resolvedRoomUrl,
       status: "IN_CALL",
       doctorName: existing?.doctorName || null,
       startedAt: existing?.startedAt,
     });
     const ctx = loadPatientGpVideoContext();
-    if (ctx || call) {
-      savePatientGpVideoContext({
-        callId,
-        roomUrl: roomUrl || null,
-        doctorId: call?.doctorId ?? ctx?.doctorId,
-        doctorFirstName: call?.doctorFirstName ?? ctx?.doctorFirstName,
-        doctorLastName: call?.doctorLastName ?? ctx?.doctorLastName,
-      });
-    }
+    savePatientGpVideoContext({
+      callId,
+      roomUrl: resolvedRoomUrl,
+      doctorId: call?.doctorId ?? ctx?.doctorId,
+      doctorFirstName: call?.doctorFirstName ?? ctx?.doctorFirstName,
+      doctorLastName: call?.doctorLastName ?? ctx?.doctorLastName,
+    });
   }
 }
 
@@ -151,13 +162,14 @@ const VideoCall = () => {
 function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const isDoctor = userData?.role === "DOCTOR";
+  const isDoctor = resolveVideoCallRole(userData) === "DOCTOR";
 
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isLocalVideoFullscreen, setIsLocalVideoFullscreen] = useState(true);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(null);
   const [joinError, setJoinError] = useState(null);
   const [isEnding, setIsEnding] = useState(false);
@@ -212,39 +224,34 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   };
 
   const handleFeedbackClose = () => {
+    // Rating closed — rejoin markers must still be present.
+    ensurePatientRejoinPersistence(roomUrl, call);
     setShowFeedbackModal(false);
-    if (pendingRedirect) {
-      navigate(pendingRedirect);
-      setPendingRedirect(null);
-    }
+    const target = pendingRedirect || "/patient-dashboard";
+    setPendingRedirect(null);
+    navigate(target);
   };
 
   /**
-   * Patient Leave call — exit Whereby only. Keep Rejoin on dashboard.
-   * Does NOT end the consultation on the backend.
+   * Patient Leave call — exit Whereby only. Keep Rejoin until doctor ends.
+   * Rating is optional; it must not clear the active consultation.
    */
   const handlePatientLeave = async () => {
     intentionalLeaveRef.current = true;
     ensurePatientRejoinPersistence(roomUrl, call);
     await detachLocalMedia();
     dispatch(setRoomUrl(null));
-    // Keep call context in redux lightly cleared; persistence remains for rejoin.
     dispatch(setCall(null));
+    // Persist again after media teardown in case anything raced.
+    ensurePatientRejoinPersistence(roomUrl, call);
     toast.info("You left the call. Use Rejoin on your dashboard to return.");
-    navigate("/patient-dashboard");
+    setPendingRedirect("/patient-dashboard");
+    setShowFeedbackModal(true);
   };
 
-  /**
-   * Doctor End call — formally ends consultation for both parties.
-   * GP instant calls hit the backend; scheduled appointments clear local session only.
-   */
-  const handleDoctorEndCall = async () => {
+  const confirmDoctorEndCall = async () => {
     if (isEnding) return;
-    const confirmed = window.confirm(
-      "End this consultation? The patient will no longer be able to rejoin, and they can start a new call afterward.",
-    );
-    if (!confirmed) return;
-
+    setShowEndConfirm(false);
     setIsEnding(true);
     intentionalLeaveRef.current = true;
 
@@ -597,7 +604,9 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
           <button
             type="button"
             className="rounded-full p-3 bg-red-500 cursor-pointer disabled:opacity-60"
-            onClick={isDoctor ? handleDoctorEndCall : handlePatientLeave}
+            onClick={
+              isDoctor ? () => setShowEndConfirm(true) : handlePatientLeave
+            }
             disabled={isEnding}
             aria-label={isDoctor ? "End call" : "Leave call"}
             title={isDoctor ? "End call" : "Leave call"}
@@ -613,6 +622,40 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
             : "Leave call"}
         </p>
       </div>
+
+      {showEndConfirm && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-[#020e7c]">End consultation?</h2>
+            <p className="mt-3 text-sm leading-relaxed text-gray-700">
+              This will permanently end the call for you and the patient. The
+              patient will not be able to rejoin, and they will be able to start
+              a new call afterward.
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Finish any clinical notes before ending if you still need them.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                onClick={() => setShowEndConfirm(false)}
+                disabled={isEnding}
+              >
+                Cancel — stay on call
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                onClick={confirmDoctorEndCall}
+                disabled={isEnding}
+              >
+                {isEnding ? "Ending…" : "Yes, end consultation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AddNoteModal
         isOpen={isNoteModalOpen}

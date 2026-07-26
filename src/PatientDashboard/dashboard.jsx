@@ -325,7 +325,18 @@ const Dashboard = () => {
   // Initialize active meeting from storage on mount
   useEffect(() => {
     const stored = loadActiveMeetingFromStorage();
-    if (stored) setActiveMeeting(stored);
+    if (stored) {
+      setActiveMeeting(stored);
+      return;
+    }
+    // Fallback: patient left call but activeMeeting was missing — recover from GP call state.
+    const gpCall = loadPatientGpCall();
+    if (
+      gpCall?.roomUrl &&
+      (gpCall.status === "IN_CALL" || gpCall.status === "DOCTOR_JOINED")
+    ) {
+      saveActiveMeetingToStorage(gpCall.roomUrl, 45);
+    }
   }, []);
 
   // While a consultation is active (rejoin available), watch for doctor End call.
