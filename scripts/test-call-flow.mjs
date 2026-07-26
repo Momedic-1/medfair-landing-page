@@ -25,6 +25,20 @@ list = applyIncomingCallEvent(
 );
 assert.deepEqual(list.map((c) => c.callId), [11]);
 
+// Empty REFRESH must not wipe a brand-new SSE call (race before DB commit/poll).
+list = applyIncomingCallEvent(
+  [],
+  { type: "NEW_CALL", call: { callId: 55, patientFirstName: "Pat" } },
+);
+assert.equal(list.length, 1);
+list = applyIncomingCallEvent(list, { type: "REFRESH", calls: [] });
+assert.equal(list.length, 1);
+assert.equal(list[0].callId, 55);
+
+// CALL_ENDED must clear even when id types differ (string vs number).
+list = applyIncomingCallEvent(list, { type: "CALL_ENDED", callId: "55" });
+assert.equal(list.length, 0);
+
 // dismissedIncomingCalls (in-memory shim for localStorage)
 const mem = new Map();
 globalThis.localStorage = {

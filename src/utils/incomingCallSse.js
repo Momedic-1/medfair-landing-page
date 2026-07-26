@@ -111,24 +111,44 @@ export function applyIncomingCallEvent(
   const list = Array.isArray(calls) ? [...calls] : [];
   const hiddenIds = [...pickedCallIds, ...dismissedCallIds];
   const isHidden = (id) => isHiddenCallId(id, hiddenIds);
+  const GRACE_MS = 20000;
 
   if (!event?.type) return list.filter((c) => !isHidden(c.callId));
 
   switch (event.type) {
     case "CONNECTED":
-    case "REFRESH":
-      return (event.calls || []).filter((c) => !isHidden(c.callId));
+    case "REFRESH": {
+      const fromServer = (event.calls || []).filter((c) => !isHidden(c.callId));
+      const serverIds = new Set(
+        fromServer.map((c) => normalizeCallId(c.callId)),
+      );
+      const now = Date.now();
+      // Keep very recent SSE-only calls so an empty/racy poll cannot flash-remove them.
+      const pendingLocal = list.filter((c) => {
+        const id = normalizeCallId(c.callId);
+        if (id == null || serverIds.has(id) || isHidden(id)) return false;
+        const at = typeof c._sseAt === "number" ? c._sseAt : 0;
+        return at > 0 && now - at < GRACE_MS;
+      });
+      return [...fromServer, ...pendingLocal];
+    }
     case "NEW_CALL":
       if (event.call && !isHidden(event.call.callId)) {
         const exists = list.some(
-          (c) => normalizeCallId(c.callId) === normalizeCallId(event.call.callId),
+          (c) =>
+            normalizeCallId(c.callId) === normalizeCallId(event.call.callId),
         );
-        if (!exists) list.unshift(event.call);
+        if (!exists) {
+          list.unshift({ ...event.call, _sseAt: Date.now() });
+        }
       }
       return list.filter((c) => !isHidden(c.callId));
     case "CALL_CLAIMED":
     case "CALL_ENDED":
-      return list.filter((c) => c.callId !== event.callId);
+      return list.filter(
+        (c) =>
+          normalizeCallId(c.callId) !== normalizeCallId(event.callId),
+      );
     case "HEARTBEAT":
     default:
       return list;
