@@ -21,6 +21,10 @@ import {
   joinGpCallAsDoctor,
 } from "../../../utils/joinGpCallAsDoctor";
 import { loadPickedCallIds } from "../../../utils/pickedCalls";
+import {
+  clearAllGpCallPersistence,
+  fetchGpCallStatus,
+} from "../../../utils/endGpConsultation";
 import { Phone, RefreshCw, Video } from "lucide-react";
 
 const IncomingCall = () => {
@@ -125,12 +129,22 @@ const IncomingCall = () => {
     }
   };
 
-  const handleRejoin = () => {
+  const handleRejoin = async () => {
     const active = loadDoctorRejoinSession();
     if (!active?.joinRoomUrl) {
       setRejoinData(null);
       toast.error("Call session has expired.");
       return;
+    }
+    const callId = active?.call?.callId ?? active?.call?.id ?? null;
+    if (callId != null && token) {
+      const statusPayload = await fetchGpCallStatus(callId, token);
+      if (statusPayload?.status === "ENDED") {
+        clearAllGpCallPersistence();
+        setRejoinData(null);
+        toast.info("This consultation has already ended.");
+        return;
+      }
     }
     setRejoinData(active);
     joinGpCallAsDoctor({

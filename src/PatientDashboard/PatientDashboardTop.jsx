@@ -22,6 +22,7 @@ export function PatientDashboardTop({
   getAppointmentStatus,
   formatTime,
   onJoinAppointment,
+  onRejoinCall,
 }) {
   const firstName = userData?.firstName
     ? userData.firstName.charAt(0).toUpperCase() +
@@ -94,16 +95,17 @@ export function PatientDashboardTop({
             message={
               nextActive
                 ? `Dr. ${highlight?.name || "your doctor"}: if you cannot see each other, tap Rejoin.`
-                : "If the video tab closed or the doctor cannot see you, tap Rejoin."
+                : "You left the call. Tap Rejoin to return. The doctor ends the consultation when finished."
             }
             primaryAction={
               <button
                 type="button"
                 onClick={() => {
-                  const { usedSameTab } = openVideoCallPreferNewTab(
-                    activeMeeting.roomUrl,
-                  );
-                  if (usedSameTab) return;
+                  if (onRejoinCall) {
+                    onRejoinCall();
+                    return;
+                  }
+                  openVideoCallPreferNewTab(activeMeeting.roomUrl);
                 }}
                 className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
               >

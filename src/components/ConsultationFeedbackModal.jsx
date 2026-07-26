@@ -49,6 +49,12 @@ const ConsultationFeedbackModal = ({
         </h2>
         <p className="text-sm text-gray-600 mb-4">
           Your feedback helps us improve care. You can skip if you prefer.
+          {userData?.role !== "DOCTOR" ? (
+            <span className="mt-1 block text-emerald-700">
+              After this, use Rejoin on your dashboard if the doctor has not
+              ended the consultation yet.
+            </span>
+          ) : null}
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

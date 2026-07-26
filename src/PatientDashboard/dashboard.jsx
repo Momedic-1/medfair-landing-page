@@ -34,6 +34,10 @@ import {
 } from "../utils/patientGpCall";
 import { savePatientGpVideoContext } from "../utils/activeCallSession";
 import {
+  clearAllGpCallPersistence,
+  fetchGpCallStatus,
+} from "../utils/endGpConsultation";
+import {
   joinScheduledAppointment,
   parseJoinError,
 } from "../utils/joinScheduledAppointment";
@@ -321,8 +325,59 @@ const Dashboard = () => {
   // Initialize active meeting from storage on mount
   useEffect(() => {
     const stored = loadActiveMeetingFromStorage();
-    if (stored) setActiveMeeting(stored);
+    if (stored) {
+      setActiveMeeting(stored);
+      return;
+    }
+    // Fallback: patient left call but activeMeeting was missing — recover from GP call state.
+    const gpCall = loadPatientGpCall();
+    if (
+      gpCall?.roomUrl &&
+      (gpCall.status === "IN_CALL" || gpCall.status === "DOCTOR_JOINED")
+    ) {
+      saveActiveMeetingToStorage(gpCall.roomUrl, 45);
+    }
   }, []);
+
+  // While a consultation is active (rejoin available), watch for doctor End call.
+  useEffect(() => {
+    if (!token) return undefined;
+    const storedCall = loadPatientGpCall();
+    const callId =
+      storedCall?.callId ||
+      currentCallId ||
+      (activeMeeting?.roomUrl ? storedCall?.callId : null);
+    if (!callId) return undefined;
+    if (
+      storedCall?.status !== "IN_CALL" &&
+      storedCall?.status !== "DOCTOR_JOINED" &&
+      !activeMeeting?.roomUrl
+    ) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const tick = async () => {
+      const statusPayload = await fetchGpCallStatus(callId, token);
+      if (cancelled || !statusPayload) return;
+      if (statusPayload.status === "ENDED") {
+        clearAllGpCallPersistence();
+        clearActiveMeeting();
+        setCallStatus(null);
+        setCurrentCallId(null);
+        setVideoLink(null);
+        setReadyDoctorName("");
+        toast.info("The doctor ended the consultation. You can start a new call.");
+      }
+    };
+
+    tick();
+    const interval = window.setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [token, activeMeeting?.roomUrl, currentCallId]);
 
   // Restore in-progress GP call (prevents duplicate "Start call")
   useEffect(() => {
@@ -473,6 +528,32 @@ const Dashboard = () => {
     );
   };
 
+  const handlePatientRejoin = async () => {
+    const storedCall = loadPatientGpCall();
+    const roomUrl =
+      activeMeeting?.roomUrl || storedCall?.roomUrl || videoLink?.roomUrl;
+    const callId = storedCall?.callId || currentCallId;
+    if (!roomUrl) {
+      toast.error("No active meeting to rejoin.");
+      return;
+    }
+    if (callId && token) {
+      const statusPayload = await fetchGpCallStatus(callId, token);
+      if (statusPayload?.status === "ENDED") {
+        clearAllGpCallPersistence();
+        clearActiveMeeting();
+        setCallStatus(null);
+        setCurrentCallId(null);
+        setVideoLink(null);
+        toast.info(
+          "The doctor ended this consultation. You can start a new call.",
+        );
+        return;
+      }
+    }
+    openVideoCallPreferNewTab(roomUrl);
+  };
+
   const handleJoinCall = async (appointment) => {
     const slotId = appointment?.slotId ?? appointment;
     const token = getToken();
@@ -581,6 +662,12 @@ const Dashboard = () => {
 
   const handleCallADoctorClick = async () => {
     const stored = loadPatientGpCall();
+    if (stored?.status === "IN_CALL") {
+      toast.info(
+        "You already have an active consultation. Use Rejoin video call on your dashboard.",
+      );
+      return;
+    }
     if (stored?.status === "DOCTOR_JOINED") {
       setCurrentCallId(stored.callId);
       setCallStatus("DOCTOR_JOINED");
@@ -805,7 +892,7 @@ const Dashboard = () => {
   const createMeeting = async () => {
     if (callStatus === "WAITING" || isPatientGpCallActive()) {
       toast.info(
-        "You already have an active call. Cancel it or wait for a doctor before starting another.",
+        "You already have an active consultation. Use Rejoin if you left the call, or wait for the doctor to end it before starting another.",
       );
       setIsCallADoctorModalOpen(true);
       return;
@@ -1231,6 +1318,7 @@ const Dashboard = () => {
           getAppointmentStatus={getAppointmentStatus}
           formatTime={formatTime}
           onJoinAppointment={handleJoinCall}
+          onRejoinCall={handlePatientRejoin}
         />
 
         <div className="mt-6 flex flex-col gap-6 xl:flex-row">
