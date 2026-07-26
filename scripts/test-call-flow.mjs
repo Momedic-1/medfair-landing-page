@@ -39,6 +39,37 @@ assert.equal(list[0].callId, 55);
 list = applyIncomingCallEvent(list, { type: "CALL_ENDED", callId: "55" });
 assert.equal(list.length, 0);
 
+// roomUrl parser must not append &callId onto Whereby URLs
+import {
+  parseRoomUrlFromSearch,
+  normalizeWherebyRoomUrl,
+} from "../src/utils/videoCallRoomUrl.js";
+
+const encoded =
+  "?roomUrl=" +
+  encodeURIComponent("https://medfair.whereby.com/consult-abc") +
+  "&callId=42";
+assert.equal(
+  parseRoomUrlFromSearch(encoded),
+  "https://medfair.whereby.com/consult-abc",
+);
+
+const withRoomKey =
+  "?roomUrl=" +
+  encodeURIComponent("https://medfair.whereby.com/r?roomKey=xyz") +
+  "&callId=99";
+assert.equal(
+  parseRoomUrlFromSearch(withRoomKey),
+  "https://medfair.whereby.com/r?roomKey=xyz",
+);
+
+assert.equal(
+  normalizeWherebyRoomUrl(
+    "https://medfair.whereby.com/consult-abc&callId=42",
+  ),
+  "https://medfair.whereby.com/consult-abc",
+);
+
 // dismissedIncomingCalls (in-memory shim for localStorage)
 const mem = new Map();
 globalThis.localStorage = {
