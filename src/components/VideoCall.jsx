@@ -695,9 +695,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
               </button>
             </span>
           ) : (
-          ) : (
             `Connecting… ${otherPartyLabel === "the doctor" ? "Doctor may already be waiting" : "Patient may already be waiting"} — please keep this page open. (${Math.max(joinAttempt, 1)}/${JOIN_MAX_ATTEMPTS})`
-          )}
           )}
         </div>
       )}
