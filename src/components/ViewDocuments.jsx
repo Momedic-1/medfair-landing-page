@@ -123,24 +123,58 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
     }
   };
 
-  const handleDownload = (doc) => {
+  const handleDownload = async (doc) => {
     setOpenError(null);
-    const url = toViewableDocumentUrl(doc);
-    if (!url) {
-      setOpenError(
-        "This document has no file link. Ask the patient to re-upload it.",
-      );
+    if (!doc?.id) {
+      setOpenError("This document has no id. Ask the patient to re-upload it.");
+      return;
+    }
+    if (!userId || !token) {
+      setOpenError("Missing patient ID or login token.");
       return;
     }
 
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
-    if (!opened) {
-      // Popup blocked — fall back to same-tab navigation via anchor.
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.click();
+    // Open via our authenticated API (blob). Direct Cloudinary PDF URLs return
+    // HTTP 401 when "Allow delivery of PDF and ZIP files" is off (free plan).
+    const fileUrl = isDoctor
+      ? `${baseUrl}/api/doctor/patients/${userId}/documents/${doc.id}/file`
+      : `${baseUrl}/api/patient/documents/${userId}/${doc.id}/file`;
+
+    try {
+      const response = await axios.get(fileUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const contentType =
+        response.headers["content-type"] ||
+        doc.fileType ||
+        "application/octet-stream";
+      const blob = new Blob([response.data], { type: contentType });
+      const objectUrl = URL.createObjectURL(blob);
+      const opened = window.open(objectUrl, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.download = doc.fileName || "document";
+        a.click();
+      }
+      // Keep blob alive long enough for the tab to load; then revoke.
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (err) {
+      const status = err.response?.status;
+      // Fallback: try direct Cloudinary URL (images often work; PDFs may still 401).
+      const direct = toViewableDocumentUrl(doc);
+      if (direct && status !== 401 && status !== 403) {
+        window.open(direct, "_blank", "noopener,noreferrer");
+        return;
+      }
+      setOpenError(
+        status
+          ? `Could not open document (${status}). If this is a PDF, enable Cloudinary → Settings → Security → Allow delivery of PDF and ZIP files, or ask the patient to re-upload.`
+          : `Could not open document: ${err.message}`,
+      );
     }
   };
 
