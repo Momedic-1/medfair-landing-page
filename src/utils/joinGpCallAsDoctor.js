@@ -72,7 +72,7 @@ export async function joinGpCallAsDoctor({
     patientLastName: enrichedCall.patientLastName,
   });
 
-  const { usedSameTab } = openVideoCallPreferNewTab(joinRoomUrl);
+  const { usedSameTab } = openVideoCallPreferNewTab(joinRoomUrl, callId);
 
   return { enrichedCall, session, usedSameTab, joinRoomUrl };
 }
