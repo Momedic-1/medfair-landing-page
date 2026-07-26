@@ -11,8 +11,16 @@ import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
 import { setRoomUrl, setCall } from "../features/authSlice";
 import ConsultationFeedbackModal from "./ConsultationFeedbackModal";
-import { getStoredCallContext, getStoredPatientId, resolveVideoCallRole } from "../utils/videoCallDisplayInfo";
-import { resolveVideoCallRoomUrl } from "../utils/videoCallRoomUrl";
+import {
+  getStoredCallContext,
+  getStoredPatientId,
+  resolveVideoCallRole,
+} from "../utils/videoCallDisplayInfo";
+import {
+  parseCallIdFromSearch,
+  resolveVideoCallRoomUrl,
+  normalizeWherebyRoomUrl,
+} from "../utils/videoCallRoomUrl";
 import { useVideoCallHeader } from "../hooks/useVideoCallHeader";
 import { dismissIncomingCallId } from "../utils/dismissedIncomingCalls";
 import {
@@ -150,13 +158,56 @@ const VideoCall = () => {
 
   const location = useLocation();
   const roomUrlFromRedux = useSelector((state) => state.auth.roomUrl);
-  const roomUrl = resolveVideoCallRoomUrl({
+  const callFromRedux = useSelector((state) => state.auth.call);
+  const call = callFromRedux || getStoredCallContext();
+
+  const initialRoomUrl = resolveVideoCallRoomUrl({
     search: location.search,
     reduxRoomUrl: roomUrlFromRedux,
   });
+  const queryCallId =
+    parseCallIdFromSearch(location.search) || peekStashedVideoCallId();
 
-  const callFromRedux = useSelector((state) => state.auth.call);
-  const call = callFromRedux || getStoredCallContext();
+  const [roomUrl, setRoomUrlState] = useState(initialRoomUrl);
+  const [resolvingRoom, setResolvingRoom] = useState(Boolean(queryCallId));
+
+  // Canonical room URL from backend when we have a callId (immune to query-string bugs).
+  useEffect(() => {
+    let cancelled = false;
+    const token = getToken();
+    const callId = queryCallId;
+
+    const resolve = async () => {
+      let next = normalizeWherebyRoomUrl(initialRoomUrl);
+
+      if (callId && token) {
+        const statusPayload = await fetchGpCallStatus(callId, token);
+        if (cancelled) return;
+        if (statusPayload?.roomUrl) {
+          next = normalizeWherebyRoomUrl(statusPayload.roomUrl);
+        }
+      }
+
+      if (!cancelled) {
+        setRoomUrlState(next);
+        setResolvingRoom(false);
+      }
+    };
+
+    resolve();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, queryCallId]);
+
+  if (resolvingRoom) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gray-100">
+        <p className="text-center text-gray-700 px-6">Connecting to your consultation…</p>
+      </div>
+    );
+  }
 
   if (!roomUrl) {
     return (
@@ -557,13 +608,27 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
               })
             ) : (
               <div className="w-full h-full bg-gray-900/95 flex flex-col items-center justify-center gap-2 p-3 text-center">
-                <p className="text-white text-xs sm:text-sm font-semibold leading-snug">
-                  Waiting for {otherPartyLabel}…
-                </p>
-                <p className="text-gray-300 text-[10px] sm:text-xs leading-snug">
-                  They should tap Join or Rejoin on their dashboard if they are
-                  not here yet.
-                </p>
+                {joinError ? (
+                  <>
+                    <p className="text-amber-200 text-xs sm:text-sm font-semibold leading-snug">
+                      You are not in the video room yet
+                    </p>
+                    <p className="text-gray-300 text-[10px] sm:text-xs leading-snug">
+                      Close this tab and tap Rejoin on your dashboard to enter
+                      the same consultation room.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white text-xs sm:text-sm font-semibold leading-snug">
+                      Waiting for {otherPartyLabel}…
+                    </p>
+                    <p className="text-gray-300 text-[10px] sm:text-xs leading-snug">
+                      They should tap Join or Rejoin on their dashboard if they
+                      are not here yet.
+                    </p>
+                  </>
+                )}
               </div>
             )
           ) : (
