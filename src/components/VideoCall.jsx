@@ -132,7 +132,6 @@ function ensurePatientRejoinPersistence(roomUrl, call) {
   const existing = loadPatientGpCall();
   const resolvedRoomUrl = roomUrl || existing?.roomUrl || null;
 
-  // Without a callId the dashboard cannot verify ENDED — do not write a stale banner.
   if (callId == null || !resolvedRoomUrl) return;
 
   try {
@@ -187,8 +186,6 @@ const VideoCall = () => {
   const queryCallId =
     parseCallIdFromSearch(location.search) || peekStashedVideoCallId();
 
-  // Known-good room from this device: lets Rejoin open instantly instead of
-  // waiting on the status API round-trip.
   const knownRoomUrl =
     normalizeWherebyRoomUrl(initialRoomUrl) ||
     normalizeWherebyRoomUrl(loadRoomUrlForCall(queryCallId));
@@ -199,7 +196,6 @@ const VideoCall = () => {
   );
   const [endedNotice, setEndedNotice] = useState(null);
 
-  // Canonical room URL: API by callId first, then local stash, then query/storage.
   useEffect(() => {
     let cancelled = false;
     const token = getToken();
@@ -496,8 +492,6 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callId, isDoctor]);
 
-  // Join with automatic retries. First attempt often fails before Whereby is ready;
-  // Rejoin worked because it remounted — we now retry in-place instead.
   useEffect(() => {
     intentionalLeaveRef.current = false;
     setJoinError(null);
@@ -538,7 +532,6 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         try {
           await Promise.resolve(joinRoomRef.current?.());
           if (cancelled || generation !== joinGenerationRef.current) return;
-          // Give Whereby a moment to flip connection status after join().
           await delay(800);
           if (cancelled || generation !== joinGenerationRef.current) return;
           setIsJoiningRoom(false);
@@ -572,7 +565,6 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     };
   }, [roomUrl]);
 
-  // If join() resolved but SDK later reports connected, clear transient errors.
   useEffect(() => {
     if (isRoomConnected(connectionStatus) || remoteParticipants.length > 0) {
       setIsJoiningRoom(false);
@@ -583,7 +575,6 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const handleRetryJoin = () => {
     setJoinError(null);
     setIsJoiningRoom(true);
-    // Remount join cycle by nudging roomUrl dependency via generation bump + re-run.
     joinGenerationRef.current += 1;
     const join = joinRoomRef.current;
     if (typeof join !== "function") {
