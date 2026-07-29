@@ -64,9 +64,8 @@ export default function CallDoctorModal({
                   Please wait while we connect you with a doctor
                 </p>
                 <p className="rounded-xl bg-blue-50 px-3 py-3 text-sm leading-relaxed text-blue-900">
-                  A doctor may accept and join the room before you do. Keep this
-                  screen open — when they accept, tap Join call. Do not cancel
-                  while waiting unless you want to end the request.
+                  Please wait at least 5 minutes. A doctor may already be on the
+                  call or have already accepted.
                 </p>
               </div>
               <button
