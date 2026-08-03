@@ -49,8 +49,6 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
   const userData = JSON.parse(localStorage.getItem("userData")) || {};
   const [expandedDates, setExpandedDates] = useState(new Set());
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  // Held until the doctor acknowledges the confirmation: notifying the parent
-  // immediately unmounts this modal, so the confirmation was never seen.
   const [savedNote, setSavedNote] = useState(null);
   const [savedCount, setSavedCount] = useState(0);
   const patientId =

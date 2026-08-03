@@ -608,16 +608,12 @@ const Dashboard = () => {
       return;
     }
     if (!callId) {
-      // Cannot verify — drop stale rejoin rather than open a dead room.
       clearStalePatientRejoin(
         "That consultation is no longer active. You can start a new call.",
       );
       return;
     }
 
-    // Open straight away: the video page verifies the call and shows an
-    // "already ended" notice if the doctor closed it. Waiting on the status
-    // API here made Rejoin feel slow.
     openVideoCallPreferNewTab(roomUrl, callId);
 
     if (token) {
@@ -1067,12 +1063,30 @@ const Dashboard = () => {
   }, [pollingInterval]);
 
   // Handle cancel waiting - shows confirmation modal
-  const handleCancelWaiting = () => {
+  const handleCancelWaiting = async () => {
     if (!currentCallId) {
       toast.info("No active call to cancel");
       setIsCallADoctorModalOpen(false);
       return;
     }
+
+    // Doctor may have joined while the patient still sees "waiting".
+    if (token) {
+      const statusPayload = await fetchGpCallStatus(currentCallId, token);
+      if (statusPayload?.status === "DOCTOR_JOINED") {
+        markDoctorReadyForPatient({
+          callId: currentCallId,
+          roomUrl: statusPayload?.roomUrl || videoLink?.roomUrl,
+          statusPayload,
+        });
+        setIsCancelCallConfirmOpen(false);
+        toast.info(
+          "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+        );
+        return;
+      }
+    }
+
     setIsCancelCallConfirmOpen(true);
   };
 
@@ -1088,7 +1102,23 @@ const Dashboard = () => {
     try {
       setIsLoading(true);
 
-      // Call the API to end the call
+      // Re-check: refuse cancel once a doctor has claimed the call.
+      if (token) {
+        const statusPayload = await fetchGpCallStatus(currentCallId, token);
+        if (statusPayload?.status === "DOCTOR_JOINED") {
+          markDoctorReadyForPatient({
+            callId: currentCallId,
+            roomUrl: statusPayload?.roomUrl || videoLink?.roomUrl,
+            statusPayload,
+          });
+          setIsCancelCallConfirmOpen(false);
+          toast.info(
+            "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+          );
+          return;
+        }
+      }
+
       await axios.post(
         `${baseUrl}/api/v1/video/end-call-by-patient/${currentCallId}`,
         {},
@@ -1100,13 +1130,11 @@ const Dashboard = () => {
         }
       );
 
-      // Clean up polling interval
       if (pollingInterval) {
         clearInterval(pollingInterval);
         setPollingInterval(null);
       }
 
-      // Reset call-related state
       clearStalePatientRejoin(null);
       setIsCallADoctorModalOpen(false);
       setIsCancelCallConfirmOpen(false);
@@ -1114,15 +1142,32 @@ const Dashboard = () => {
       toast.success("Call cancelled successfully");
     } catch (error) {
       console.error("Error cancelling call:", error);
-      toast.error(parseApiError(error, "Could not cancel the call. Please try again."));
+      const message = parseApiError(
+        error,
+        "Could not cancel the call. Please try again.",
+      );
+      const doctorAlreadyJoined =
+        /doctor has joined|cannot end the call after the doctor/i.test(
+          String(message),
+        );
 
-      // Still clean up local state even if API call fails
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
+      if (doctorAlreadyJoined) {
+        const statusPayload = token
+          ? await fetchGpCallStatus(currentCallId, token)
+          : null;
+        markDoctorReadyForPatient({
+          callId: currentCallId,
+          roomUrl: statusPayload?.roomUrl || videoLink?.roomUrl,
+          statusPayload,
+        });
+        setIsCancelCallConfirmOpen(false);
+        toast.info(
+          "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+        );
+        return;
       }
-      clearStalePatientRejoin(null);
-      setIsCallADoctorModalOpen(false);
+
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

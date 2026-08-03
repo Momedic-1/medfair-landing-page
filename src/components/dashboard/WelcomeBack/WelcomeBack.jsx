@@ -163,9 +163,6 @@ function WelcomeBack({ status, onAlertsChange }) {
     }
     const callId = active?.call?.callId ?? active?.call?.id ?? null;
 
-    // The doctor already claimed this call, so reopen the stored room straight
-    // away instead of re-running join + status first — those round-trips were
-    // what made Rejoin feel slow. Staleness is verified in the background.
     setRejoinData(active);
     dispatch(setRoomUrl(active.joinRoomUrl));
     dispatch(setCall(active.call));

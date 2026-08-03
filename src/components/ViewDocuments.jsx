@@ -67,7 +67,6 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
       setLoading(true);
       setError(null);
 
-      // Doctors prefer /api/doctor/**; fall back to permitAll patient docs path if role auth mismatches.
       const doctorUrl = `${baseUrl}/api/doctor/patients/${userId}/documents`;
       const patientUrl = `${baseUrl}/api/patient/documents/${userId}`;
 
@@ -179,7 +178,6 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [preview, closePreview]);
 
-  /** Streams the file through the authenticated API so nothing hits the disk. */
   const handleView = async (doc) => {
     setOpenError(null);
     if (!doc?.id) {
@@ -191,7 +189,6 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
       return;
     }
 
-    // Prefer doctor file proxy; fall back to patient path (permitAll) if role auth fails.
     const doctorFileUrl = `${baseUrl}/api/doctor/patients/${userId}/documents/${doc.id}/file`;
     const patientFileUrl = `${baseUrl}/api/patient/documents/${userId}/${doc.id}/file`;
     const tryUrls = isDoctor ? [doctorFileUrl, patientFileUrl] : [patientFileUrl];
@@ -236,7 +233,6 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
       });
     } catch (err) {
       const status = err.response?.status;
-      // Fallback: try direct Cloudinary URL (images often work; PDFs may still 401).
       const direct = toViewableDocumentUrl(doc);
       if (direct && status !== 401 && status !== 403) {
         setPreview({
