@@ -9,7 +9,8 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test:call-flow": "node scripts/test-call-flow.mjs",
-    "test:signup-partner": "node scripts/test-signup-partner-e2e.mjs"
+    "test:signup-partner": "node scripts/test-signup-partner-e2e.mjs",
+    "test:gp-wait-cancel-earn": "node scripts/test-gp-wait-cancel-earn-fixes.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
