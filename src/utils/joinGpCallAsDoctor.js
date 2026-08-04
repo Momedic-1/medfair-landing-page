@@ -28,6 +28,10 @@ export async function joinGpCallAsDoctor({
     throw new Error("Missing call or sign-in details.");
   }
 
+  // #region agent log
+  const __joinStartedAt = Date.now();
+  fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'E',location:'joinGpCallAsDoctor.js:beforeJoinApi',message:'Doctor join API starting',data:{callId,doctorId},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   const response = await axios.post(
     `${baseUrl}/api/v1/video/join?callId=${callId}&doctorId=${doctorId}`,
     {},
@@ -38,6 +42,9 @@ export async function joinGpCallAsDoctor({
       },
     },
   );
+  // #region agent log
+  fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'E',location:'joinGpCallAsDoctor.js:afterJoinApi',message:'Doctor join API finished',data:{callId,doctorId,apiMs:Date.now()-__joinStartedAt,hasUrl:Boolean(response?.data?.joinRoomUrl)},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 
   const { patientId, joinRoomUrl, patientFirstName, patientLastName } =
     response.data || {};
