@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PatientDashboardTop from "./PatientDashboardTop";
 // import testTube from "../assets/test.jpeg"
 import { Calendar, dayjsLocalizer } from "react-big-calendar";
@@ -160,6 +160,10 @@ const Dashboard = () => {
   const [pollingInterval, setPollingInterval] = useState(null);
   const [currentCallId, setCurrentCallId] = useState(null);
   const [readyDoctorName, setReadyDoctorName] = useState("");
+  const waitingPollIntervalRef = useRef(null);
+  const statusPollInFlightRef = useRef(false);
+  const waitingPollStoppedRef = useRef(false);
+  const doctorReadyNotifiedCallIdRef = useRef(null);
 
   const patientId = getId();
 
@@ -447,6 +451,7 @@ const Dashboard = () => {
     }
 
     if (storedCall.status === "DOCTOR_JOINED") {
+      doctorReadyNotifiedCallIdRef.current = String(callId);
       setCallStatus("DOCTOR_JOINED");
       setReadyDoctorName(storedCall.doctorName || "");
       // Do not set Rejoin from localStorage alone — mount bootstrap verifies
@@ -463,35 +468,13 @@ const Dashboard = () => {
     if (storedCall.status !== "WAITING") return undefined;
 
     setCallStatus("WAITING");
-    if (pollingInterval) return undefined;
+    startWaitingPoll({
+      callId,
+      roomUrlFallback: storedCall.roomUrl,
+      waitStartedAt: storedCall.startedAt || Date.now(),
+    });
 
-    const waitStartedAt = storedCall.startedAt || Date.now();
-    const interval = setInterval(async () => {
-      const statusPayload = await pollCallStatus(callId);
-      const status = statusPayload?.status;
-      if (status === "DOCTOR_JOINED") {
-        clearInterval(interval);
-        setPollingInterval(null);
-        markDoctorReadyForPatient({
-          callId,
-          roomUrl: statusPayload?.roomUrl || storedCall.roomUrl,
-          statusPayload,
-        });
-      } else if (
-        status === "ENDED" ||
-        Date.now() - waitStartedAt >= CALL_WAIT_TIMEOUT_MS
-      ) {
-        clearInterval(interval);
-        setPollingInterval(null);
-        setCallStatus("NO_DOCTOR");
-        clearAllGpCallPersistence();
-        clearActiveMeeting();
-        setIsCallADoctorModalOpen(true);
-      }
-    }, 1000);
-    setPollingInterval(interval);
-
-    return () => clearInterval(interval);
+    return () => clearWaitingPoll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
@@ -515,10 +498,83 @@ const Dashboard = () => {
     return full ? `Dr. ${full}` : "";
   };
 
+  const clearWaitingPoll = () => {
+    if (waitingPollIntervalRef.current) {
+      clearInterval(waitingPollIntervalRef.current);
+      waitingPollIntervalRef.current = null;
+    }
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    statusPollInFlightRef.current = false;
+  };
+
+  /**
+   * Single WAITING poller — never overlaps async ticks, never double-fires ready toast.
+   */
+  const startWaitingPoll = ({ callId, roomUrlFallback, waitStartedAt }) => {
+    clearWaitingPoll();
+    waitingPollStoppedRef.current = false;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'B',location:'dashboard.jsx:startWaitingPoll',message:'Starting single WAITING poller',data:{callId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+
+    const interval = setInterval(async () => {
+      if (waitingPollStoppedRef.current || statusPollInFlightRef.current) return;
+      statusPollInFlightRef.current = true;
+      const pollTickAt = Date.now();
+      try {
+        const statusPayload = await pollCallStatus(callId);
+        if (waitingPollStoppedRef.current) return;
+        const status = statusPayload?.status;
+
+        if (status === "DOCTOR_JOINED") {
+          waitingPollStoppedRef.current = true;
+          clearWaitingPoll();
+          // #region agent log
+          fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'A',location:'dashboard.jsx:startWaitingPoll:DOCTOR_JOINED',message:'Poller saw DOCTOR_JOINED once',data:{callId,awaitMs:Date.now()-pollTickAt,elapsedSinceWaitMs:Date.now()-(waitStartedAt||pollTickAt)},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          markDoctorReadyForPatient({
+            callId,
+            roomUrl: statusPayload?.roomUrl || roomUrlFallback,
+            statusPayload,
+          });
+        } else if (
+          status === "ENDED" ||
+          Date.now() - (waitStartedAt || Date.now()) >= CALL_WAIT_TIMEOUT_MS
+        ) {
+          waitingPollStoppedRef.current = true;
+          clearWaitingPoll();
+          setCallStatus("NO_DOCTOR");
+          clearAllGpCallPersistence();
+          clearActiveMeeting();
+          setIsCallADoctorModalOpen(true);
+        }
+      } finally {
+        statusPollInFlightRef.current = false;
+      }
+    }, 1000);
+
+    waitingPollIntervalRef.current = interval;
+    setPollingInterval(interval);
+  };
+
   /** Doctor claimed the call — keep patient on an explicit Join CTA (user gesture). */
   const markDoctorReadyForPatient = ({ callId, roomUrl, statusPayload }) => {
     const resolvedRoomUrl = roomUrl || null;
     const doctorName = formatDoctorReadyName(statusPayload);
+    const callKey = callId != null ? String(callId) : "";
+    const alreadyNotified = doctorReadyNotifiedCallIdRef.current === callKey;
+    // #region agent log
+    fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'A',location:'dashboard.jsx:markDoctorReadyForPatient',message:'markDoctorReady invoked',data:{callId,doctorName,alreadyNotified,willToast:!alreadyNotified,prevCallStatus:callStatus},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    if (callKey) doctorReadyNotifiedCallIdRef.current = callKey;
+
+    waitingPollStoppedRef.current = true;
+    clearWaitingPoll();
+
     setCallStatus("DOCTOR_JOINED");
     setReadyDoctorName(doctorName);
     setCurrentCallId(callId);
@@ -540,11 +596,14 @@ const Dashboard = () => {
       doctorLastName: statusPayload?.doctorLastName,
     });
     setIsCallADoctorModalOpen(true);
-    toast.success(
-      doctorName
-        ? `${doctorName} is ready. Tap Join call.`
-        : "Doctor is ready. Tap Join call.",
-    );
+    if (!alreadyNotified) {
+      toast.success(
+        doctorName
+          ? `${doctorName} is ready. Tap Join call.`
+          : "Doctor is ready. Tap Join call.",
+        { toastId: `gp-doctor-ready-${callKey || "unknown"}` },
+      );
+    }
   };
 
   const handleJoinReadyCall = () => {
@@ -1005,40 +1064,18 @@ const Dashboard = () => {
       setCurrentCallId(callId);
       setCallStatus("WAITING");
       setReadyDoctorName("");
+      doctorReadyNotifiedCallIdRef.current = null;
       savePatientGpCall({
         callId,
         roomUrl: response.data?.roomUrl,
         status: "WAITING",
       });
 
-      const waitStartedAt = Date.now();
-
-      // Start polling for doctor join
-      const interval = setInterval(async () => {
-        const statusPayload = await pollCallStatus(callId);
-        const status = statusPayload?.status;
-
-        if (status === "DOCTOR_JOINED") {
-          clearInterval(interval);
-          setPollingInterval(null);
-          markDoctorReadyForPatient({
-            callId,
-            roomUrl: statusPayload?.roomUrl || response.data?.roomUrl,
-            statusPayload,
-          });
-        } else if (
-          status === "ENDED" ||
-          Date.now() - waitStartedAt >= CALL_WAIT_TIMEOUT_MS
-        ) {
-          clearInterval(interval);
-          setPollingInterval(null);
-          setCallStatus("NO_DOCTOR");
-          clearAllGpCallPersistence();
-          clearActiveMeeting();
-        }
-      }, 1000);
-
-      setPollingInterval(interval);
+      startWaitingPoll({
+        callId,
+        roomUrlFallback: response.data?.roomUrl,
+        waitStartedAt: Date.now(),
+      });
       return response.data;
     } catch (err) {
       console.error("Create meeting error:", err);
@@ -1056,14 +1093,16 @@ const Dashboard = () => {
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
+      clearWaitingPoll();
     };
-  }, [pollingInterval]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle cancel waiting - shows confirmation modal
   const handleCancelWaiting = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'pre-fix',hypothesisId:'C',location:'dashboard.jsx:handleCancelWaiting',message:'Cancel tapped while modal visible',data:{currentCallId,callStatus,modalOpen:isCallADoctorModalOpen},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!currentCallId) {
       toast.info("No active call to cancel");
       setIsCallADoctorModalOpen(false);
@@ -1073,6 +1112,9 @@ const Dashboard = () => {
     // Doctor may have joined while the patient still sees "waiting".
     if (token) {
       const statusPayload = await fetchGpCallStatus(currentCallId, token);
+      // #region agent log
+      fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'pre-fix',hypothesisId:'C',location:'dashboard.jsx:handleCancelWaiting:status',message:'Cancel re-check API status',data:{currentCallId,uiCallStatus:callStatus,apiStatus:statusPayload?.status},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       if (statusPayload?.status === "DOCTOR_JOINED") {
         markDoctorReadyForPatient({
           callId: currentCallId,
@@ -1082,6 +1124,7 @@ const Dashboard = () => {
         setIsCancelCallConfirmOpen(false);
         toast.info(
           "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+          { toastId: `gp-no-cancel-${currentCallId}` },
         );
         return;
       }
@@ -1163,6 +1206,7 @@ const Dashboard = () => {
         setIsCancelCallConfirmOpen(false);
         toast.info(
           "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+          { toastId: `gp-no-cancel-${currentCallId}` },
         );
         return;
       }
@@ -1423,6 +1467,15 @@ const Dashboard = () => {
           hasSubscription={hasSubscription}
           subscriptionMessage={subscriptionMessage}
           activeMeeting={activeMeeting}
+          doctorReadyCall={
+            callStatus === "DOCTOR_JOINED" && videoLink?.roomUrl
+              ? {
+                  roomUrl: videoLink.roomUrl,
+                  doctorName: readyDoctorName,
+                  callId: currentCallId,
+                }
+              : null
+          }
           videoMeetingUrl={videoMeetingUrl}
           showMeetingModal={showModal}
           upcomingAppointments={upcomingAppointments}
@@ -1439,6 +1492,7 @@ const Dashboard = () => {
           formatTime={formatTime}
           onJoinAppointment={handleJoinCall}
           onRejoinCall={handlePatientRejoin}
+          onJoinDoctorReadyCall={handleJoinReadyCall}
         />
 
         <div className="mt-6 flex flex-col gap-6 xl:flex-row">
@@ -1542,7 +1596,12 @@ const Dashboard = () => {
         videoLink={videoLink}
         isLoading={isLoading}
         doctorName={readyDoctorName}
-        onClose={() => setIsCallADoctorModalOpen(false)}
+        onClose={() => {
+          // #region agent log
+          fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'pre-fix',hypothesisId:'D',location:'dashboard.jsx:CallDoctorModal:onClose',message:'Patient closed Join modal / Join later',data:{callStatus,hasActiveMeeting:Boolean(activeMeeting?.roomUrl),gpStatus:loadPatientGpCall()?.status||null,currentCallId},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+          setIsCallADoctorModalOpen(false);
+        }}
         onCreateMeeting={createMeeting}
         onCancelWaiting={handleCancelWaiting}
         onBookAppointment={handleOpenBookFromCall}

@@ -11,6 +11,7 @@ export function PatientDashboardTop({
   hasSubscription,
   subscriptionMessage,
   activeMeeting,
+  doctorReadyCall,
   videoMeetingUrl,
   showMeetingModal,
   upcomingAppointments,
@@ -23,6 +24,7 @@ export function PatientDashboardTop({
   formatTime,
   onJoinAppointment,
   onRejoinCall,
+  onJoinDoctorReadyCall,
 }) {
   const firstName = userData?.firstName
     ? userData.firstName.charAt(0).toUpperCase() +
@@ -84,6 +86,27 @@ export function PatientDashboardTop({
           </div>
         )}
 
+        {doctorReadyCall?.roomUrl && !activeMeeting?.roomUrl && (
+          <DashboardAlert
+            variant="success"
+            title="Doctor is ready"
+            message={
+              doctorReadyCall.doctorName
+                ? `${doctorReadyCall.doctorName} has accepted your call. Tap Join call.`
+                : "A doctor has accepted your call. Tap Join call."
+            }
+            primaryAction={
+              <button
+                type="button"
+                onClick={() => onJoinDoctorReadyCall?.()}
+                className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+              >
+                Join call
+              </button>
+            }
+          />
+        )}
+
         {activeMeeting?.roomUrl && (
           <DashboardAlert
             variant="success"
@@ -115,7 +138,7 @@ export function PatientDashboardTop({
           />
         )}
 
-        {showMeetingModal && videoMeetingUrl && !activeMeeting?.roomUrl && (
+        {showMeetingModal && videoMeetingUrl && !activeMeeting?.roomUrl && !doctorReadyCall?.roomUrl && (
           <DashboardAlert
             variant="info"
             title="Your doctor is ready"
@@ -183,7 +206,7 @@ export function PatientDashboardTop({
           description="Speak with a GP now. Usually under a few minutes wait."
           image={call}
           accent="blue"
-          disabled={!!activeMeeting?.roomUrl || isLoading}
+          disabled={!!activeMeeting?.roomUrl || !!doctorReadyCall?.roomUrl || isLoading}
           onClick={onCallDoctor}
           icon={<Phone className="h-7 w-7" />}
         />
