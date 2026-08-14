@@ -371,10 +371,14 @@ export default function Profile() {
     } catch (error) {
       // More detailed error handling
       let errorMessage = "Failed to upload document";
-      if (error.response?.data?.message) {
-        errorMessage += `: ${error.response.data.message}`;
-      } else if (error.response?.data?.exceptionMessage) {
-        errorMessage += `: ${error.response.data.exceptionMessage}`;
+      const apiMessage = error.response?.data?.message;
+      const apiDetail = error.response?.data?.exceptionMessage;
+      if (apiMessage && apiMessage !== "An error occurred") {
+        errorMessage += `: ${apiMessage}`;
+      } else if (apiDetail) {
+        errorMessage += `: ${apiDetail}`;
+      } else if (apiMessage) {
+        errorMessage += `: ${apiMessage}`;
       } else if (error.message) {
         errorMessage += `: ${error.message}`;
       }
