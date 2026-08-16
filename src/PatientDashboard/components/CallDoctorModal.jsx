@@ -1,6 +1,6 @@
 import { Modal, Box } from "@mui/material";
 import { ColorRing } from "react-loader-spinner";
-import { CalendarDays, PhoneOff, Video } from "lucide-react";
+import { CalendarDays, PhoneOff, Video, CreditCard } from "lucide-react";
 import { callDoctorModalSx } from "./bookingModalStyles";
 
 export default function CallDoctorModal({
@@ -15,6 +15,8 @@ export default function CallDoctorModal({
   onBookAppointment,
   onTryAgain,
   onJoinCall,
+  onBuySubscription,
+  onRefreshWaitingStatus,
 }) {
   const handleBackdropClose = () => {
     if (callStatus === "WAITING") {
@@ -36,7 +38,9 @@ export default function CallDoctorModal({
         ? "Doctor is ready"
         : callStatus === "NO_DOCTOR"
           ? "No doctor available"
-          : "Call a doctor";
+          : callStatus === "NEEDS_SUBSCRIPTION"
+            ? "Instant plan required"
+            : "Call a doctor";
 
   return (
     <Modal open={open} onClose={handleBackdropClose} aria-labelledby="call-doctor-modal">
@@ -61,13 +65,32 @@ export default function CallDoctorModal({
                   colors={["#3b82f6", "#3b82f6", "#3b82f6", "#3b82f6", "#3b82f6"]}
                 />
                 <p className="text-base font-medium text-gray-900 sm:text-lg">
-                  Please wait while we connect you with a doctor
+                  Looking for a doctor…
                 </p>
                 <p className="rounded-xl bg-blue-50 px-3 py-3 text-sm leading-relaxed text-blue-900">
-                  Please wait at least 5 minutes. A doctor may already be on the
-                  call or have already accepted.
+                  Keep this screen open. As soon as a doctor accepts, you will
+                  see <span className="font-semibold">Join call</span> — they
+                  may already be waiting in the video room. You can cancel only
+                  while no doctor has joined yet.
                 </p>
               </div>
+              <button
+                type="button"
+                className="flex h-12 w-full items-center justify-center rounded-full bg-[#020e7c] font-semibold text-white transition hover:bg-blue-800 disabled:opacity-70"
+                onClick={onRefreshWaitingStatus}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ColorRing
+                    height="36"
+                    width="36"
+                    ariaLabel="checking-status"
+                    colors={["white", "white", "white", "white", "white"]}
+                  />
+                ) : (
+                  "Check if doctor joined"
+                )}
+              </button>
               <button
                 type="button"
                 className="flex h-12 w-full items-center justify-center rounded-full bg-red-500 font-medium text-white transition hover:bg-red-600"
@@ -175,6 +198,38 @@ export default function CallDoctorModal({
                 onClick={onTryAgain}
               >
                 Try calling again
+              </button>
+            </>
+          )}
+
+          {callStatus === "NEEDS_SUBSCRIPTION" && (
+            <>
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#020e7c]/10 text-[#020e7c]">
+                  <CreditCard className="h-7 w-7" aria-hidden />
+                </div>
+                <p className="text-base font-medium text-gray-900 sm:text-lg">
+                  You need Instant or a subscription
+                </p>
+                <p className="text-sm leading-relaxed text-gray-600">
+                  Buy Instant or subscribe to start a GP video call. Once your
+                  plan is active, come back here and tap Start call.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#020e7c] font-semibold text-white transition hover:bg-blue-800"
+                onClick={onBuySubscription}
+              >
+                <CreditCard className="h-5 w-5" aria-hidden />
+                Buy Instant / subscribe
+              </button>
+              <button
+                type="button"
+                className="flex h-11 w-full items-center justify-center rounded-full border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                onClick={onClose}
+              >
+                Close
               </button>
             </>
           )}

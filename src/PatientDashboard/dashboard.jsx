@@ -512,6 +512,7 @@ const Dashboard = () => {
 
   /**
    * Single WAITING poller — never overlaps async ticks, never double-fires ready toast.
+   * Runs an immediate first check so patients flip to Join as soon as the doctor claims.
    */
   const startWaitingPoll = ({ callId, roomUrlFallback, waitStartedAt }) => {
     clearWaitingPoll();
@@ -521,7 +522,7 @@ const Dashboard = () => {
     fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'B',location:'dashboard.jsx:startWaitingPoll',message:'Starting single WAITING poller',data:{callId},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
 
-    const interval = setInterval(async () => {
+    const tick = async () => {
       if (waitingPollStoppedRef.current || statusPollInFlightRef.current) return;
       statusPollInFlightRef.current = true;
       const pollTickAt = Date.now();
@@ -555,7 +556,11 @@ const Dashboard = () => {
       } finally {
         statusPollInFlightRef.current = false;
       }
-    }, 1000);
+    };
+
+    // Immediate first poll — do not wait a full interval while a doctor may already be joining.
+    tick();
+    const interval = setInterval(tick, 500);
 
     waitingPollIntervalRef.current = interval;
     setPollingInterval(interval);
@@ -603,6 +608,59 @@ const Dashboard = () => {
           : "Doctor is ready. Tap Join call.",
         { toastId: `gp-doctor-ready-${callKey || "unknown"}` },
       );
+    }
+  };
+
+  // If the patient returns to this tab while still WAITING, re-check immediately
+  // (doctor may already be in the room).
+  useEffect(() => {
+    if (callStatus !== "WAITING" || !currentCallId || !token) return undefined;
+
+    const recheck = async () => {
+      if (document.visibilityState === "hidden") return;
+      const statusPayload = await pollCallStatus(currentCallId);
+      if (statusPayload?.status === "DOCTOR_JOINED") {
+        markDoctorReadyForPatient({
+          callId: currentCallId,
+          roomUrl: statusPayload?.roomUrl || videoLink?.roomUrl,
+          statusPayload,
+        });
+      }
+    };
+
+    const onVisible = () => {
+      recheck();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callStatus, currentCallId, token]);
+
+  const handleRefreshWaitingStatus = async () => {
+    if (!currentCallId) return;
+    setIsLoading(true);
+    try {
+      const statusPayload = await pollCallStatus(currentCallId);
+      if (statusPayload?.status === "DOCTOR_JOINED") {
+        markDoctorReadyForPatient({
+          callId: currentCallId,
+          roomUrl: statusPayload?.roomUrl || videoLink?.roomUrl,
+          statusPayload,
+        });
+      } else if (statusPayload?.status === "ENDED") {
+        setCallStatus("NO_DOCTOR");
+        clearAllGpCallPersistence();
+        clearActiveMeeting();
+        toast.info("This call has ended. You can start a new one.");
+      } else {
+        toast.info("Still waiting — a doctor has not joined yet.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1079,12 +1137,30 @@ const Dashboard = () => {
       return response.data;
     } catch (err) {
       console.error("Create meeting error:", err);
-      toast.error(
-        parseApiError(err, "Failed to create meeting. Please try again in a moment."),
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      const msg = parseApiError(
+        err,
+        "Failed to create meeting. Please try again in a moment.",
       );
-      setCallStatus(null);
+      const needsSubscription =
+        status === 402 ||
+        data?.code === "NEEDS_SUBSCRIPTION" ||
+        /subscription|instant|consultations remaining|buy instant/i.test(
+          String(msg || ""),
+        );
+
       clearAllGpCallPersistence();
       clearActiveMeeting();
+
+      if (needsSubscription) {
+        setCallStatus("NEEDS_SUBSCRIPTION");
+        setIsCallADoctorModalOpen(true);
+        toast.info("Buy Instant or subscribe to start a GP call.");
+      } else {
+        setCallStatus(null);
+        toast.error(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -1607,6 +1683,12 @@ const Dashboard = () => {
         onBookAppointment={handleOpenBookFromCall}
         onTryAgain={handleTryCallAgain}
         onJoinCall={handleJoinReadyCall}
+        onBuySubscription={() => {
+          setIsCallADoctorModalOpen(false);
+          setCallStatus(null);
+          navigate("/patient-dashboard/subscription");
+        }}
+        onRefreshWaitingStatus={handleRefreshWaitingStatus}
       />
 
       {/* Cancel Call Confirmation Modal */}

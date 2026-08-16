@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import ErrorModal from "./components/ErrorModal";
-import SpinnerImg from "./PatientDashboard/assets/SpinnerSVG.svg";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import DesignedSideBar from "./components/reuseables/DesignedSideBar";
 import { baseUrl } from "./env";
 
@@ -11,167 +10,170 @@ export default function OTPVerification() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const inputRefs = useRef([]);
+  const submittingRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // Get email from location state
     if (location.state?.email) {
       setEmail(location.state.email);
     } else {
-      // If no email in state, redirect back to forgot password
       navigate("/forgot-password");
     }
   }, [location, navigate]);
 
-  const handleChange = (index, value) => {
-    // Only allow numbers
-    if (!/^\d*$/.test(value)) return;
+  const handleSubmit = async (codeDigits = otp) => {
+    if (submittingRef.current) return;
+    const token = codeDigits.join("");
+    if (token.length !== 5) return;
 
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Move to next input if current input is filled
-    if (value && index < 4) {
-      inputRefs.current[index + 1].focus();
-    }
-
-    // If all inputs are filled, submit automatically
-    if (newOtp.every((digit) => digit == 4)) {
-      handleSubmit();
-    }
-  };
-
-  const handleKeyDown = (e, index) => {
-    // Handle backspace
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1].focus();
-    }
-  };
-
-  const handleSubmit = async () => {
+    submittingRef.current = true;
     setIsLoading(true);
     setError("");
 
     try {
-      const token = otp.join("");
-      const response = await fetch(
-        `${baseUrl}/api/v1/registration/verify-email`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token,
-            email,
-          }),
-        }
-      );
+      const response = await fetch(`${baseUrl}/api/v1/registration/verify-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, email }),
+      });
 
       const responseText = await response.text();
 
       if (responseText.includes("Email verification successful")) {
-        // After successful verification, make the password reset request
-        const resetResponse = await fetch(
-          `${baseUrl}/api/v1/registration/password/reset`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email,
-              newPassword: location.state.newPassword,
-            }),
-          }
-        );
+        const resetResponse = await fetch(`${baseUrl}/api/v1/registration/password/reset`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            newPassword: location.state?.newPassword,
+          }),
+        });
 
         if (resetResponse.ok) {
           navigate("/login", {
-            state: { successMessage: "Password Reset Successful" },
+            state: { successMessage: "Password reset successful. You can sign in now." },
           });
         } else {
-          const resetData = await resetResponse.json();
-          setError(resetData.message || "Failed to reset password");
+          const resetData = await resetResponse.json().catch(() => ({}));
+          setError(resetData.exceptionMessage || resetData.message || "Failed to reset password");
         }
       } else {
-        setError("Invalid OTP. Please try again.");
+        setError("Invalid code. Please try again.");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      setError("An error occurred while verifying OTP");
+    } catch {
+      setError("Something went wrong while verifying the code.");
     } finally {
       setIsLoading(false);
+      submittingRef.current = false;
     }
   };
 
-  const handleCloseModal = () => {
-    setError("");
+  const handleChange = (index, value) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    const newOtp = [...otp];
+    newOtp[index] = digit;
+    setOtp(newOtp);
+
+    if (digit && index < 4) {
+      inputRefs.current[index + 1]?.focus();
+    }
+
+    if (newOtp.every((d) => d !== "") && newOtp.join("").length === 5) {
+      handleSubmit(newOtp);
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 5);
+    if (!pasted) return;
+    const next = ["", "", "", "", ""];
+    for (let i = 0; i < pasted.length; i += 1) next[i] = pasted[i];
+    setOtp(next);
+    inputRefs.current[Math.min(pasted.length, 4)]?.focus();
+    if (pasted.length === 5) handleSubmit(next);
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen">
-      <DesignedSideBar />
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center">
-        <h1 className="text-2xl mb-3 text-blue-500 mt-5 lg:mt-0">
-          Enter Verification Code
-        </h1>
-        <div className="p-0 md:p-8 w-3/4 max-w-md">
-          {error && <p className="text-red-600 mb-4">{error}</p>}
-          <p className="text-gray-600 mb-6 text-center">
-            A verification code has been sent to{" "}
-            <span className="font-medium">{email}</span>. If you do not receive
-            it, please check your spam or junk folder.
-          </p>
-
-          <div className="flex justify-center space-x-2 mb-8">
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
-                type="text"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                className="w-12 h-12 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            ))}
+    <div className="min-h-screen lg:grid lg:grid-cols-[380px_1fr]">
+      <DesignedSideBar className="hidden lg:flex lg:min-h-screen" />
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/40 px-4 py-8 sm:px-6">
+        <div className="w-full max-w-md">
+          <div className="mb-8 text-center lg:text-left">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#020e7c]/70">
+              Verification
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-[#020e7c] sm:text-3xl">
+              Enter your code
+            </h1>
+            <p className="mt-2 text-sm text-gray-600">
+              We sent a 5-digit code to{" "}
+              <span className="font-semibold text-gray-900">{email || "your email"}</span>.
+            </p>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading || otp.some((digit) => digit === "")}
-            className={`bg-gradient-to-r from-blue-400 to-purple-600 text-white p-5 w-full h-12 rounded-md flex items-center justify-center ${
-              isLoading || otp.some((digit) => digit === "")
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-            }`}
-          >
-            {isLoading ? (
-              <img src={SpinnerImg} className="w-7" alt="Loading" />
-            ) : (
-              "Verify"
-            )}
-          </button>
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg sm:p-8">
+            {error ? (
+              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </p>
+            ) : null}
 
-          <p className="text-center mt-4 text-sm text-gray-600">
-            Didn't receive the code?{" "}
+            <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
+                  disabled={isLoading}
+                  className="h-12 w-11 rounded-xl border border-gray-200 bg-gray-50/80 text-center text-lg font-semibold text-gray-900 focus:border-[#020e7c] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020e7c]/15 sm:h-14 sm:w-12"
+                />
+              ))}
+            </div>
+
             <button
-              className="text-blue-600 hover:underline"
-              onClick={() => {
-                // TODO: Implement resend OTP functionality
-              }}
+              type="button"
+              onClick={() => handleSubmit()}
+              disabled={isLoading || otp.some((d) => d === "")}
+              className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#020e7c] text-sm font-semibold text-white hover:bg-[#010a5c] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Resend
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying…
+                </>
+              ) : (
+                "Verify and reset"
+              )}
             </button>
-          </p>
+
+            <p className="mt-6 text-center text-sm text-gray-500">
+              <Link to="/forgot-password" className="font-semibold text-[#020e7c] hover:underline">
+                Back
+              </Link>
+              {" · "}
+              <Link to="/login" className="font-semibold text-[#020e7c] hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-
-      {error && <ErrorModal message={error} onClose={handleCloseModal} />}
     </div>
   );
 }

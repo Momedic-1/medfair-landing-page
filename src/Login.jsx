@@ -196,6 +196,7 @@ import close from "./assets/eye-close-svgrepo-com.svg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
+import { normalizeLoginIdentifier } from "./utils/phoneE164";
 
 export default function LoginPage({ isPartnerLogin = false }) {
   const [formData, setFormData] = useState({
@@ -207,6 +208,8 @@ export default function LoginPage({ isPartnerLogin = false }) {
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricSetup, setBiometricSetup] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const loginHandledRef = useRef(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -227,7 +230,54 @@ export default function LoginPage({ isPartnerLogin = false }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(login(formData));
+    dispatch(
+      login({
+        ...formData,
+        emailOrPhone: normalizeLoginIdentifier(formData.emailOrPhone),
+      }),
+    );
+  };
+
+  const looksUnverified =
+    typeof error === "string" &&
+    /verif/i.test(error) &&
+    /email|account/i.test(error);
+
+  const handleResendVerification = async () => {
+    const email = String(formData.emailOrPhone || "").trim();
+    if (!email.includes("@")) {
+      toast.error("Enter the email you used to sign up, then tap Resend.");
+      return;
+    }
+    if (resendLoading || resendCooldown > 0) return;
+    setResendLoading(true);
+    try {
+      const response = await axios.post(`${baseUrl}/api/v1/registration/resend`, {
+        email,
+      });
+      if (response.status >= 200 && response.status < 300) {
+        toast.success("Verification code sent. Check your email (and spam folder).");
+        localStorage.setItem("email", JSON.stringify(email));
+        setResendCooldown(60);
+        const timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.exceptionMessage ||
+          err?.response?.data?.message ||
+          "Could not resend verification code.",
+      );
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   const fetchDoctorProfile = async () => {
@@ -387,12 +437,41 @@ export default function LoginPage({ isPartnerLogin = false }) {
             className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg sm:p-8"
           >
             {error ? (
-              <p
+              <div
                 className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
                 aria-live="polite"
               >
-                {error}
-              </p>
+                <p>{error}</p>
+                {looksUnverified ? (
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={resendLoading || resendCooldown > 0}
+                      className="text-left text-sm font-semibold text-[#020e7c] underline disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {resendLoading
+                        ? "Sending…"
+                        : resendCooldown > 0
+                          ? `Resend available in ${resendCooldown}s`
+                          : "Resend verification code"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const email = String(formData.emailOrPhone || "").trim();
+                        if (email.includes("@")) {
+                          localStorage.setItem("email", JSON.stringify(email));
+                        }
+                        navigate("/verify-email");
+                      }}
+                      className="text-left text-sm font-semibold text-[#020e7c] underline"
+                    >
+                      Enter verification code
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             ) : null}
 
             {biometricAvailable && biometricSetup ? (

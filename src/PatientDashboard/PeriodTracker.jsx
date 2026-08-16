@@ -38,12 +38,19 @@ export default function PeriodTracker() {
         });
         const data = response?.data || {};
         if (!data.lastPeriodDate) return;
+        let accountEmail = "";
+        try {
+          const userData = JSON.parse(localStorage.getItem("userData") || "null");
+          accountEmail = userData?.emailAddress || userData?.email || "";
+        } catch {
+          /* ignore */
+        }
         setForm({
           lastPeriodDate: data.lastPeriodDate || "",
           cycleLength: data.cycleLength || 28,
           periodLength: data.periodLength || 5,
           symptoms: data.symptoms || [],
-          reminderEmail: data.reminderEmail || "",
+          reminderEmail: data.reminderEmail || accountEmail || "",
         });
       } catch (error) {
         toast.error("Could not load period tracker.");
@@ -240,7 +247,8 @@ export default function PeriodTracker() {
           <div className="mt-6 border-t pt-4">
             <h3 className="text-sm font-semibold text-gray-700">Email reminder</h3>
             <p className="mt-1 text-xs text-gray-500">
-              Email alerts are sent in addition to on-screen pop-up reminders.
+              Defaults to your account email. You also get an on-screen popup on the dashboard
+              when your period is within 3 days (same style as daily health tips).
             </p>
             <input
               type="email"

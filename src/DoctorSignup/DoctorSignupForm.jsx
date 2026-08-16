@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SignUpTop from "./SignUpTop.jsx";
 import Steps from "../Steps.jsx";
 import PhoneInput from "react-phone-input-2";
-import Modal from "./Modal";
 import "react-phone-input-2/lib/style.css";
 import { baseUrl } from "../env.jsx";
 import axios from "axios";
@@ -11,6 +10,8 @@ import { toast, ToastContainer } from "react-toastify";
 import { ColorRing } from "react-loader-spinner";
 import { Eye, EyeOff } from "lucide-react";
 import SignupRoleSelect from "../components/signup/SignupRoleSelect";
+import DesignedSideBar from "../components/reuseables/DesignedSideBar";
+import { toE164, isValidPhoneE164, phoneValidationMessage } from "../utils/phoneE164";
 
 const specialization = [
   "Select specialization",
@@ -71,10 +72,11 @@ export default function DoctorSignupForm() {
     }
   };
 
-  const handlePhoneChange = (phone) => {
+  const handlePhoneChange = (phone, country) => {
     setFormData({
       ...formData,
-      phoneNumber: phone,
+      phoneNumber: toE164(phone),
+      _phoneCountry: country || formData._phoneCountry,
     });
   };
 
@@ -90,6 +92,12 @@ export default function DoctorSignupForm() {
       toast.error("Passwords do not match");
       return;
     }
+    if (!isValidPhoneE164(formData.phoneNumber, formData._phoneCountry)) {
+      const msg = phoneValidationMessage(formData._phoneCountry);
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
 
     setLoading(true);
 
@@ -99,25 +107,44 @@ export default function DoctorSignupForm() {
     // }
 
     try {
+      const { _phoneCountry, ...registrationPayload } = formData;
       const response = await axios.post(
         `${baseUrl}/api/v1/registration/doctors-registration`,
-        formData,
+        {
+          ...registrationPayload,
+          phoneNumber: toE164(formData.phoneNumber),
+        },
         {
           headers: {
             "Content-Type": "application/json",
           },
         },
       );
-      toast.success(response.data.message);
+      const payload = response.data || {};
+      const continueVerification =
+        payload.message === "CONTINUE_VERIFICATION" ||
+        payload.data?.continueVerification === true;
 
       localStorage.setItem("email", JSON.stringify(formData.emailAddress));
       setLoading(false);
-      navigate("/check-email");
+
+      if (continueVerification) {
+        toast.info(
+          payload.exceptionMessage ||
+            "You already started signup. Enter the verification code we emailed you.",
+        );
+      } else {
+        toast.success(payload.message || "Registration was successful");
+      }
+      navigate("/verify-email");
     } catch (error) {
       setLoading(false);
       let exceptionMessage = "";
       if (error.response) {
-        exceptionMessage = error.response.data.exceptionMessage;
+        exceptionMessage =
+          error.response.data?.exceptionMessage ||
+          error.response.data?.message ||
+          "Registration failed";
         toast.error(exceptionMessage);
       }
 
@@ -125,284 +152,260 @@ export default function DoctorSignupForm() {
     }
   };
   const stepLabels = ["Account", "Verification", "Login"];
+  const fieldClass =
+    "w-full h-11 rounded-xl border border-gray-200 bg-gray-50/80 px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#020e7c] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020e7c]/15";
+  const labelClass =
+    "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 pb-10">
-      <ToastContainer />
-      <SignUpTop />
-      <Steps stepLabels={stepLabels} currentStep={1} />
-      <form
-        onSubmit={handleSubmit}
-        className="mx-auto mt-4 w-[95%] max-w-4xl rounded-2xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6 md:w-5/6 lg:w-3/5 lg:p-8"
-      >
-        <div className="mb-5 border-b border-slate-100 pb-4">
-          <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">Doctor Registration</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Complete your account details to continue to verification.
-          </p>
-        </div>
-
-        <SignupRoleSelect
-          value="DOCTOR"
-          fieldClass="h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium text-[#020E7C] focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-          className="mb-6 max-w-md"
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
-          <div className="mt-4">
-            <h1 className="text-gray-600 font-medium text-sm">First Name</h1>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              placeholder="Enter First Name"
-              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-              required
-            />
-          </div>
-          <div className="mt-4">
-            <h1 className="text-gray-600 font-medium text-sm">Last Name</h1>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              placeholder="Enter Last Name"
-              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
-          <div className="mt-4">
-            <h1 className="text-gray-600 font-medium text-sm">Email</h1>
-            <input
-              type="email"
-              name="emailAddress"
-              value={formData.emailAddress}
-              onChange={handleChange}
-              placeholder="Enter Email"
-              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-              required
-            />
-          </div>
-          <div className="mt-4">
-            <h1 className="text-gray-600 font-medium text-sm">Mobile Number</h1>
-            <PhoneInput
-              country={"ng"}
-              value={formData.phoneNumber}
-              onChange={handlePhoneChange}
-              inputStyle={{
-                width: "100%",
-                height: "52px",
-                borderRadius: "12px",
-                borderColor: "#cbd5e1",
-                background: "#f8fafc",
-              }}
-              containerStyle={{ width: "100%" }}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
-          <div className="mt-4">
-            <label className="text-gray-600 font-medium text-sm" htmlFor="gender">
-              Gender
-            </label>
-            <select
-              id="gender"
-              name="gender"
-              value={formData.gender}
-              onChange={handleChange}
-              required
-              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-            >
-              <option value="" disabled>
-                Select gender
-              </option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-            </select>
-          </div>
-          <div className="mt-4">
-            <label
-              className="text-gray-600 font-medium text-sm"
-              htmlFor="howDidYouHearAboutUs"
-            >
-              How did you hear about us?
-            </label>
-            <select
-              id="howDidYouHearAboutUs"
-              name="howDidYouHearAboutUs"
-              value={formData.howDidYouHearAboutUs}
-              onChange={handleChange}
-              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-            >
-              <option value="INSTAGRAM">Instagram</option>
-              <option value="FACEBOOK">Facebook</option>
-              <option value="X">X</option>
-              <option value="NEWSPAPER">Newspaper</option>
-              <option value="LINKEDIN">LinkedIn</option>
-              <option value="OTHERS">Others</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Medical specialization
-            </label>
-            <select
-              type="text"
-              name="medicalSpecialization"
-              value={formData.medicalSpecialization}
-              onChange={handleChange}
-              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-              placeholder="Enter here"
-            >
-              {specialization.map((specialization, index) => (
-                <option
-                  key={index}
-                  value={specialization}
-                  className="w-full border-none outline-none cursor-pointer"
-                >
-                  {formatSpecialization(specialization)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name of Hospital
-            </label>
-            <input
-              type="text"
-              name="hospital"
-              value={formData.hospital}
-              onChange={handleChange}
-              className="w-full mt-2 rounded-xl border border-slate-300 bg-slate-50 p-3.5 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-              placeholder="Enter here"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-20">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div className="relative mt-2">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                minLength={8}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3.5 pr-12 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-                placeholder="Password"
-                required
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#020E7C] p-1"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Minimum 8 characters required
+    <div className="min-h-screen lg:grid lg:grid-cols-[380px_1fr]">
+      <DesignedSideBar className="hidden lg:flex lg:min-h-screen" />
+      <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-slate-50 to-blue-50/40 px-4 py-6 sm:px-6 sm:py-10">
+        <ToastContainer />
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-white/80 p-4 text-center shadow-sm backdrop-blur lg:hidden">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#020e7c]/70">
+              Medfair
             </p>
-            {error && error.includes("8 characters") && (
-              <p className="text-red-500 text-sm mt-1">{error}</p>
-            )}
+            <p className="mt-1 text-sm text-gray-600">Doctor signup</p>
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
-            </label>
-            <div className="relative mt-2">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                name="confirmedPassword"
-                value={formData.confirmedPassword}
-                onChange={handleChange}
-                minLength={8}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3.5 pr-12 text-sm focus:border-[#020E7C] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#020E7C]/15"
-                placeholder="Confirm your password"
-                required
-              />
+
+          <SignUpTop />
+
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-2xl border border-gray-100 bg-white p-4 shadow-lg sm:p-6 md:p-8"
+          >
+            <Steps stepLabels={stepLabels} currentStep={1} />
+
+            <SignupRoleSelect
+              value="DOCTOR"
+              fieldClass={fieldClass}
+              className="mb-6 max-w-md"
+            />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>First name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="First name"
+                  className={fieldClass}
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Last name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Last name"
+                  className={fieldClass}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Email</label>
+                <input
+                  type="email"
+                  name="emailAddress"
+                  value={formData.emailAddress}
+                  onChange={handleChange}
+                  placeholder="you@email.com"
+                  className={fieldClass}
+                  required
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Mobile number</label>
+                <PhoneInput
+                  country={"ng"}
+                  enableSearch
+                  preferredCountries={["ng", "gh", "ke", "za", "gb", "us", "ca"]}
+                  value={(formData.phoneNumber || "").replace(/^\+/, "")}
+                  onChange={handlePhoneChange}
+                  inputStyle={{
+                    width: "100%",
+                    height: "44px",
+                    borderRadius: "12px",
+                    borderColor: "#e5e7eb",
+                    background: "rgba(249,250,251,0.8)",
+                    fontSize: "14px",
+                  }}
+                  containerStyle={{ width: "100%" }}
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass} htmlFor="gender">
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  required
+                  className={fieldClass}
+                >
+                  <option value="" disabled>
+                    Select gender
+                  </option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="howDidYouHearAboutUs">
+                  How did you hear about us?
+                </label>
+                <select
+                  id="howDidYouHearAboutUs"
+                  name="howDidYouHearAboutUs"
+                  value={formData.howDidYouHearAboutUs}
+                  onChange={handleChange}
+                  className={fieldClass}
+                >
+                  <option value="INSTAGRAM">Instagram</option>
+                  <option value="FACEBOOK">Facebook</option>
+                  <option value="X">X</option>
+                  <option value="NEWSPAPER">Newspaper</option>
+                  <option value="LINKEDIN">LinkedIn</option>
+                  <option value="OTHERS">Others</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Medical specialization</label>
+                <select
+                  name="medicalSpecialization"
+                  value={formData.medicalSpecialization}
+                  onChange={handleChange}
+                  className={fieldClass}
+                >
+                  {specialization.map((item, index) => (
+                    <option key={index} value={item}>
+                      {formatSpecialization(item)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Hospital name</label>
+                <input
+                  type="text"
+                  name="hospital"
+                  value={formData.hospital}
+                  onChange={handleChange}
+                  className={fieldClass}
+                  placeholder="Hospital"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    minLength={8}
+                    className={`${fieldClass} pr-11`}
+                    placeholder="Min. 8 characters"
+                    required
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#020e7c]"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {error && error.includes("8 characters") ? (
+                  <p className="mt-1 text-sm text-red-600">{error}</p>
+                ) : null}
+              </div>
+              <div>
+                <label className={labelClass}>Confirm password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmedPassword"
+                    value={formData.confirmedPassword}
+                    onChange={handleChange}
+                    minLength={8}
+                    className={`${fieldClass} pr-11`}
+                    placeholder="Confirm password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#020e7c]"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {error && error.includes("match") ? (
+                  <p className="mt-1 text-sm text-red-600">{error}</p>
+                ) : null}
+              </div>
+            </div>
+
+            <p className="mt-5 text-sm text-gray-600">
+              Already have an account?{" "}
               <button
                 type="button"
-                tabIndex={-1}
-                onClick={() => setShowConfirmPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#020E7C] p-1"
-                aria-label={
-                  showConfirmPassword ? "Hide password" : "Show password"
-                }
+                onClick={() => navigate("/login")}
+                className="font-semibold text-[#020e7c] hover:underline"
               >
-                {showConfirmPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+                Sign in
               </button>
-            </div>
-            {error && error.includes("match") && (
-              <p className="text-red-500 text-sm mt-1">{error}</p>
-            )}
-          </div>
-        </div>
+            </p>
 
-        <div className="flex space-x-10 flex-col md:flex-row mt-4">
-          {/* <Modal /> */}
-          <a onClick={() => navigate("/login")} className="text-sm font-medium">
-            Already have an account?{" "}
-            <span className="text-[#020E7C] cursor-pointer">Login here</span>
-          </a>
-        </div>
-        {/* <div className='mt-4 flex items-center font-bold'>
-        <input
-          type='checkbox'
-          name='acceptTerms'
-          checked={formData.acceptTerms}
-          onChange={(e) => setFormData({ ...formData, acceptTerms: e.target.checked })}
-          className='form-checkbox'
-        />
-        <span className='text-sm ml-2'>
-          Accept the{' '}
-          <a href='#' className='text-[#020E7C]'>
-            Terms and Conditions of Medfair{' '}
-          </a>
-        </span>
-        {error && !formData.acceptTerms && <p className='text-red-500 text-sm'>{error}</p>}
-      </div> */}
+            <button
+              type="submit"
+              disabled={
+                loading ||
+                !formData.password ||
+                formData.password.length < 8 ||
+                formData.password !== formData.confirmedPassword
+              }
+              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#020e7c] text-sm font-semibold text-white hover:bg-[#010a5c] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? <ColorRing color="#fff" height={20} width={20} /> : "Continue"}
+            </button>
 
-        <button
-          type="submit"
-          disabled={
-            loading ||
-            !formData.password ||
-            formData.password.length < 8 ||
-            formData.password !== formData.confirmedPassword
-          }
-          className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-xl border border-transparent bg-[#020E7C] px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:pointer-events-none disabled:opacity-50"
-        >
-          {loading ? <ColorRing color="#fff" height={20} width={20} /> : "Next"}
-        </button>
-      </form>
-      <div className="text-center mt-4 mb-12">
-        <a href="/patient_signup" target="" className="text-blue-500">
-          <p>Signup as Patient</p>
-        </a>
+            <p className="mt-4 text-center text-sm text-gray-500">
+              Signing up as a patient?{" "}
+              <Link to="/patient_signup" className="font-semibold text-[#020e7c] hover:underline">
+                Patient signup
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

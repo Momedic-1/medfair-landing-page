@@ -25,23 +25,43 @@ export function formatPeriodDate(date) {
   );
 }
 
-export function getPeriodInsights({ lastPeriodDate, cycleLength = 28 }) {
+/**
+ * Roll last period forward by cycle length until the next expected date is today or later
+ * (matches backend PeriodTrackerService.computeNextExpectedPeriod).
+ */
+export function computeNextExpectedPeriod(lastPeriodDate, cycleLength = 28) {
   const lastDate = toDate(lastPeriodDate);
   if (!lastDate) return null;
+  const cycle = Number(cycleLength) >= 20 && Number(cycleLength) <= 40 ? Number(cycleLength) : 28;
+  let candidate = addDays(lastDate, cycle);
+  const today = startOfDay(new Date());
+  while (startOfDay(candidate).getTime() < today.getTime()) {
+    candidate = addDays(candidate, cycle);
+  }
+  return candidate;
+}
 
-  const nextPeriod = addDays(lastDate, Number(cycleLength || 28));
+export function getPeriodInsights({ lastPeriodDate, cycleLength = 28, nextExpectedPeriod }) {
+  const nextPeriod =
+    toDate(nextExpectedPeriod) || computeNextExpectedPeriod(lastPeriodDate, cycleLength);
+  if (!nextPeriod) return null;
+
   const fertileStart = addDays(nextPeriod, -14);
   const fertileEnd = addDays(fertileStart, 5);
   const daysUntilNext = Math.ceil(
-    (startOfDay(nextPeriod).getTime() - startOfDay(new Date()).getTime()) /
-      86_400_000
+    (startOfDay(nextPeriod).getTime() - startOfDay(new Date()).getTime()) / 86_400_000
   );
 
   return { nextPeriod, fertileStart, fertileEnd, daysUntilNext };
 }
 
-/** Show popup when period is within this many days (including today). */
-export function shouldShowPeriodReminder(insights, withinDays = 3) {
+/** Show popup when period is within this many days (including today). Matches backend REMINDER_LEAD_DAYS. */
+export const PERIOD_REMINDER_LEAD_DAYS = 3;
+
+export function shouldShowPeriodReminder(
+  insights,
+  withinDays = PERIOD_REMINDER_LEAD_DAYS,
+) {
   if (!insights) return false;
   return insights.daysUntilNext >= 0 && insights.daysUntilNext <= withinDays;
 }
