@@ -1,38 +1,42 @@
 import React from "react";
 
-
-const Stepper = ({stepLabels, currentStep})=>{
-    return <>
-        <div data-hs-stepper>
-            <ul className='relative flex justify-center mr items-center mb-4 ml-4 lg:ml-[18rem] mr-4 lg:mr-[19rem] rounded-md bg-slate-100 p-6'>
-                {stepLabels.map((label, index) => (
-                    <li
-                        key={index}
-                        className='flex items-center gap-x-2 shrink basis-0 flex-1 group'
-                        data-hs-stepper-nav-item={`{"index": ${index + 1}}`}
-                    >
-                  <span className='min-w-7 min-h-7 group inline-flex items-center text-xs align-middle'>
-                    <span
-                        className={`size-7 flex justify-center items-center flex-shrink-0 ${
-                            currentStep >= index + 1
-                                ? 'bg-[#020E7C] text-white'
-                                : 'bg-gray-100 text-gray-800'
-                        } font-medium rounded-full`}
-                    >
-                      {index + 1}
-                    </span>
-                    <span className='ms-2 text-sm font-medium text-gray-800'>
-                      {label}
-                    </span>
-                  </span>
-                        {index < 2 && (
-                            <div className='w-full h-px flex-1 bg-gray-200 group-last:hidden'></div>
-                        )}
-                    </li>
-                ))}
-            </ul>
+const Steps = ({ stepLabels, currentStep }) => {
+  return (
+    <ol className="mb-6 flex w-full items-center justify-center gap-1 sm:gap-2">
+      {stepLabels.map((label, index) => {
+        const active = currentStep >= index + 1;
+        return (
+          <li key={label} className="flex min-w-0 flex-1 items-center last:flex-none">
+            <div className="flex min-w-0 flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                  active
+                    ? "bg-[#020e7c] text-white"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {index + 1}
+              </span>
+              <span
+                className={`max-w-[4.5rem] truncate text-center text-[11px] font-medium sm:max-w-none sm:text-left sm:text-sm ${
+                  active ? "text-[#020e7c]" : "text-gray-500"
+                }`}
+              >
+                {label}
+              </span>
             </div>
-        </>
-        }
+            {index < stepLabels.length - 1 ? (
+              <span
+                className={`mx-1 hidden h-px flex-1 sm:block ${
+                  currentStep > index + 1 ? "bg-[#020e7c]/40" : "bg-gray-200"
+                }`}
+              />
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
+};
 
-        export default Stepper;
+export default Steps;

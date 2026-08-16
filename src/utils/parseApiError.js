@@ -30,11 +30,11 @@ export function formatAuthError(payload, fallback = "Sign-in failed. Check your 
     if (lower.includes("bad credentials") || lower.includes("invalid credentials")) {
       return "Incorrect email/phone or password. Please try again.";
     }
+    if (lower.includes("verify") && (lower.includes("email") || lower.includes("account"))) {
+      return "Please verify your email before signing in.";
+    }
     if (lower.includes("disabled") || lower.includes("locked")) {
       return "This account is disabled. Contact support for help.";
-    }
-    if (lower.includes("verify") && lower.includes("email")) {
-      return "Please verify your email before signing in.";
     }
     if (lower === "an error occurred" && payload?.exceptionMessage) {
       return payload.exceptionMessage;

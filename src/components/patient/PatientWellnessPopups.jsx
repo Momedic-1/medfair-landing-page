@@ -60,6 +60,7 @@ export default function PatientWellnessPopups() {
         const insights = getPeriodInsights({
           lastPeriodDate: data.lastPeriodDate,
           cycleLength: data.cycleLength,
+          nextExpectedPeriod: data.nextExpectedPeriod,
         });
         setPeriodInsights(insights);
 
