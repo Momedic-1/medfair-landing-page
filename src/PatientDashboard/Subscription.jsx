@@ -89,7 +89,7 @@ const Subscription = () => {
     if (normalized.includes("ent") || normalized.includes("ear nose throat")) {
       return 30000;
     }
-    if (normalized.includes("specialist")) return 5000;
+    if (normalized.includes("specialist")) return 30000;
     if (
       normalized.includes("gp") ||
       normalized.includes("general practitioner") ||

@@ -248,7 +248,7 @@ export default function PeriodTracker() {
             <h3 className="text-sm font-semibold text-gray-700">Email reminder</h3>
             <p className="mt-1 text-xs text-gray-500">
               Defaults to your account email. You also get an on-screen popup on the dashboard
-              when your period is within 3 days (same style as daily health tips).
+              when your period is within 3 days.
             </p>
             <input
               type="email"
