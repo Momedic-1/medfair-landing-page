@@ -23,7 +23,7 @@ export const ActiveSlide = [
   },
   {
     title: "Specialist Plan",
-    subTitle: 5000,
+    subTitle: 30000,
     content: [
       "Video call with a licensed professional",
       "One-time consultation",

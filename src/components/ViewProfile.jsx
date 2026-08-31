@@ -312,7 +312,11 @@ const ViewProfile = () => {
       navigate("/doctor-dashboard", { state: { profileUpdated: true } });
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.response?.data?.exceptionMessage;
+      toast.error(msg || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -516,10 +520,14 @@ const ViewProfile = () => {
             name="about"
             value={profileData.about}
             onChange={handleChange}
-            rows={4}
+            rows={6}
+            maxLength={2000}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border"
             required
           />
+          <p className="mt-1 text-xs text-gray-500">
+            {(profileData.about || "").length}/2000 characters
+          </p>
         </div>
         <div className="flex justify-between mt-6">
           <button
