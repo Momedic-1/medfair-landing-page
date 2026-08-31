@@ -1,17 +1,19 @@
 export const ActiveSlide = [
   {
-    title: "Instant",
-    subTitle: 1500,
+    title: "Yearly",
+    category: "GP",
+    subTitle: 45000,
     content: [
-      "One-time consultation for immediate advice",
-      "Access to certified doctors",
-      "Available 24/7",
+      "Up to 40 consultations per year",
+      "Expert care anytime",
+      "Priority support",
     ],
     buttonText: "Subscribe",
     buttonLink: "/payment",
   },
   {
     title: "Monthly",
+    category: "GP",
     subTitle: 4500,
     content: [
       "Up to 3 consultations per month",
@@ -22,7 +24,20 @@ export const ActiveSlide = [
     buttonLink: "/payment",
   },
   {
-    title: "Specialist Plan",
+    title: "Instant",
+    category: "GP",
+    subTitle: 1500,
+    content: [
+      "One-time consultation for immediate advice",
+      "Access to certified doctors",
+      "Available 24/7",
+    ],
+    buttonText: "Subscribe",
+    buttonLink: "/payment",
+  },
+  {
+    title: "Specialist Single Session",
+    category: "Specialist",
     subTitle: 30000,
     content: [
       "Video call with a licensed professional",
@@ -34,18 +49,8 @@ export const ActiveSlide = [
     buttonLink: "/payment",
   },
   {
-    title: "Yearly",
-    subTitle: 45000,
-    content: [
-      "Up to 40 consultations per year",
-      "Expert care anytime",
-      "Priority support",
-    ],
-    buttonText: "Subscribe",
-    buttonLink: "/payment",
-  },
-  {
-    title: "EAR NOSE THROAT SPECIALIST",
+    title: "ENT Single Session",
+    category: "Specialist",
     subTitle: 30000,
     content: [
       "One-off consultation with an ENT doctor.",

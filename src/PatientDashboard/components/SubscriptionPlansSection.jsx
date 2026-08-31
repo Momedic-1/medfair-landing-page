@@ -27,9 +27,7 @@ const SubscriptionPlansSection = ({
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
       {plans.map((plan, index) => {
-        const isPopular =
-          plan.title.toLowerCase().includes("monthly") ||
-          plan.title.toLowerCase().includes("yearly");
+        const isPopular = plan.title.toLowerCase().includes("monthly");
 
         return (
           <article
@@ -47,7 +45,20 @@ const SubscriptionPlansSection = ({
             )}
 
             <div className="flex flex-1 flex-col p-6 sm:p-7">
-              <h3 className="text-xl font-bold text-gray-900">{plan.title}</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-xl font-bold text-gray-900">{plan.title}</h3>
+                {plan.category && (
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      plan.category === "GP"
+                        ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                        : "bg-violet-50 text-violet-800 ring-1 ring-violet-200"
+                    }`}
+                  >
+                    {plan.category}
+                  </span>
+                )}
+              </div>
               <div className="mt-3 flex items-baseline gap-1">
                 <span className="text-3xl font-extrabold tabular-nums text-[#020e7c] sm:text-4xl">
                   ₦{formatPriceWithCommas(plan.subTitle)}

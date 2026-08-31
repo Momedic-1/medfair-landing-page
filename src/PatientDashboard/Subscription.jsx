@@ -11,6 +11,30 @@ import PaymentGatewayDialog from "./components/PaymentGatewayDialog";
 
 const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
 
+const getPlanCategory = (planName) => {
+  const name = String(planName || "").toLowerCase();
+  if (
+    name.includes("specialist") ||
+    name.includes("ent") ||
+    name.includes("ear nose throat")
+  ) {
+    return "Specialist";
+  }
+  return "GP";
+};
+
+/** Display order: Yearly first, then other GP plans, then specialist plans. */
+const getPlanSortOrder = (planName) => {
+  const name = String(planName || "").toLowerCase();
+  if (name.includes("yearly")) return 1;
+  if (name.includes("monthly")) return 2;
+  if (name.includes("instant - org") || name.includes("instant-org")) return 4;
+  if (name.includes("instant")) return 3;
+  if (name.includes("specialist") && name.includes("single")) return 5;
+  if (name.includes("ent") || name.includes("ear nose throat")) return 6;
+  return 99;
+};
+
 const Subscription = () => {
   const [paymentLink, setPaymentLink] = React.useState(null);
   const [open, setOpen] = React.useState(false);
@@ -116,6 +140,7 @@ const Subscription = () => {
         const mappedPlans = response.data.map((plan) => ({
           id: plan.id,
           title: plan.name,
+          category: getPlanCategory(plan.name),
           subTitle: getPartnerAdjustedPrice(plan.name, plan.price),
           content: getPlanContent(plan.name, plan.consultationCount),
           buttonText: "Subscribe",
@@ -124,7 +149,7 @@ const Subscription = () => {
         }));
         setPlans(
           [...mappedPlans].sort(
-            (a, b) => Number(a.subTitle || 0) - Number(b.subTitle || 0)
+            (a, b) => getPlanSortOrder(a.title) - getPlanSortOrder(b.title)
           )
         );
       } else {
