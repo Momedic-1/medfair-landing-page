@@ -133,15 +133,22 @@ function ConsultationChat({ threadKey, open, closesAt, onClose }) {
   );
 }
 
+const PAGE_SIZE = 5;
+
 export default function ConsultationHistory() {
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [chatTarget, setChatTarget] = useState(null);
   const token = getToken();
   const userId = getId();
 
-  const load = async () => {
+  const load = async (pageNum = page) => {
     if (!token || !userId) {
       setError("Please sign in again.");
       setLoading(false);
@@ -152,9 +159,18 @@ export default function ConsultationHistory() {
     try {
       const res = await axios.get(
         `${baseUrl}/api/consultations/history/${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { page: pageNum, size: PAGE_SIZE },
+        }
       );
-      setItems(Array.isArray(res.data) ? res.data : []);
+      const data = res.data || {};
+      setItems(Array.isArray(data.content) ? data.content : []);
+      setPage(typeof data.page === "number" ? data.page : pageNum);
+      setTotalPages(data.totalPages || 0);
+      setTotalElements(data.totalElements || 0);
+      setHasNext(Boolean(data.hasNext));
+      setHasPrevious(Boolean(data.hasPrevious));
     } catch (e) {
       setError(e?.response?.data?.message || "Could not load consultation history");
     } finally {
@@ -163,7 +179,7 @@ export default function ConsultationHistory() {
   };
 
   useEffect(() => {
-    load();
+    load(0);
   }, []);
 
   return (
@@ -178,7 +194,7 @@ export default function ConsultationHistory() {
         </div>
         <button
           type="button"
-          onClick={load}
+          onClick={() => load(page)}
           className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm"
         >
           <RefreshCw className="h-4 w-4" />
@@ -199,49 +215,75 @@ export default function ConsultationHistory() {
           No consultations yet.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-slate-900">{item.doctorName}</p>
-                  <p className="text-sm text-slate-600">
-                    {item.category} · {item.specializationLabel || item.channel} ·{" "}
-                    {item.status}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">{formatWhen(item.dateTime)}</p>
-                  {item.organizationName && (
-                    <p className="mt-1 text-xs text-emerald-700">
-                      Paid by {item.organizationName} (organization)
+        <>
+          <ul className="space-y-3">
+            {items.map((item) => (
+              <li
+                key={item.id}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-900">{item.doctorName}</p>
+                    <p className="text-sm text-slate-600">
+                      {item.category} · {item.specializationLabel || item.channel} ·{" "}
+                      {item.status}
                     </p>
-                  )}
-                  {!item.organizationName && item.paidBy === "PERSONAL_PLAN" && (
-                    <p className="mt-1 text-xs text-slate-500">Paid with personal plan</p>
+                    <p className="mt-1 text-xs text-slate-500">{formatWhen(item.dateTime)}</p>
+                    {item.organizationName && (
+                      <p className="mt-1 text-xs text-emerald-700">
+                        Paid by {item.organizationName} (organization)
+                      </p>
+                    )}
+                    {!item.organizationName && item.paidBy === "PERSONAL_PLAN" && (
+                      <p className="mt-1 text-xs text-slate-500">Paid with personal plan</p>
+                    )}
+                  </div>
+                  {(item.chatOpen || item.status === "completed") && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setChatTarget({
+                          threadKey: item.id,
+                          open: item.chatOpen,
+                          closesAt: item.chatClosesAt,
+                        })
+                      }
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#020e7c] px-3 py-2 text-sm font-semibold text-white"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {item.chatOpen ? "Open chat" : "View chat"}
+                    </button>
                   )}
                 </div>
-                {(item.chatOpen || item.status === "completed") && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setChatTarget({
-                        threadKey: item.id,
-                        open: item.chatOpen,
-                        closesAt: item.chatClosesAt,
-                      })
-                    }
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#020e7c] px-3 py-2 text-sm font-semibold text-white"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    {item.chatOpen ? "Open chat" : "View chat"}
-                  </button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-slate-500">
+              Showing {items.length} of {totalElements}
+              {totalPages > 0 ? ` · Page ${page + 1} of ${totalPages}` : ""}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={!hasPrevious || loading}
+                onClick={() => load(page - 1)}
+                className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                disabled={!hasNext || loading}
+                onClick={() => load(page + 1)}
+                className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {chatTarget && (
