@@ -4,7 +4,6 @@ import DashboardIcon from "../assets/DashboardIcon.jsx";
 import DocumentsIcon from "../assets/DocumentIcon.jsx";
 import FinanceIcon from "../assets/FinanceIcon.jsx";
 import { FaUser, FaUserEdit } from "react-icons/fa";
-import CloseIcon from "../assets/CloseIcon.jsx";
 import Logout from "../Logout.jsx";
 import { capitalizeFirstLetter } from "../utils";
 import DarkModeToggle from "./common/DarkModeToggle.jsx";
@@ -72,19 +71,11 @@ const Sidebar = () => {
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between px-4 pt-4 lg:hidden">
+          <div className="px-4 pt-4 pb-1 lg:hidden">
             <p className="text-sm font-semibold text-white">{displayName}</p>
-            <button
-              type="button"
-              onClick={closeSidebar}
-              className="text-white focus:outline-none"
-              aria-label="Close menu"
-            >
-              <CloseIcon />
-            </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-3 pt-6">
+          <nav className="flex-1 overflow-y-auto p-3 pt-3">
             <ul className="flex flex-col gap-1">
               <li>
                 <NavLink to="/doctor-dashboard" end className={linkClass} onClick={closeSidebar}>
@@ -126,6 +117,12 @@ const Sidebar = () => {
                 <NavLink to="/doctor-dashboard/notes" className={linkClass} onClick={closeSidebar}>
                   <DocumentsIcon />
                   Notes
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/doctor-dashboard/chat" className={linkClass} onClick={closeSidebar}>
+                  <span className="text-lg leading-none">💬</span>
+                  Chat
                 </NavLink>
               </li>
               <li>

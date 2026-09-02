@@ -98,6 +98,8 @@ import VerifyPayment from "./VerifyPayment.jsx";
 import VideoCall from "./components/VideoCall.jsx";
 import Subscription from "./PatientDashboard/Subscription.jsx";
 import SubscriptionPreview from "./PatientDashboard/SubscriptionPreview.jsx";
+import ConsultationHistory from "./PatientDashboard/ConsultationHistory.jsx";
+import DoctorConsultationChat from "./pages/DoctorConsultationChat.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
 import OTPVerification from "./OTPVerification.jsx";
 import ViewProfile from "./components/ViewProfile.jsx";
@@ -182,6 +184,7 @@ const App = () => {
             <Route path="period-tracker" element={<PeriodTracker />} />
             <Route path="weight-loss" element={<WeightLossProgram />} />
             <Route path="subscription" element={<Subscription />} />
+            <Route path="consultation-history" element={<ConsultationHistory />} />
             <Route path="subscription-success" element={<SubscriptionSuccessful />} />
             <Route path="subscription-unsuccessful" element={<SubscriptionNotSuccessful />} />
             <Route path="payment" element={<PaymentPage />} />
@@ -201,6 +204,7 @@ const App = () => {
               <Route path="view-profile" element={<DoctorProfile />} />
               <Route path="edit-profile" element={<ViewProfile />} />
               <Route path="notes" element={<Search />} />
+              <Route path="chat" element={<DoctorConsultationChat />} />
               <Route path="contact-us" element={<ContactUs />} />
               <Route path="finances" element={<Finances />} />
               <Route path="doctor-profile" element={<DoctorProfile />} />

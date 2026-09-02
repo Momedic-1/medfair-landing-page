@@ -11,6 +11,7 @@ import AddNoteModal from "../pages/AddNote";
 import { useSelector, useDispatch } from "react-redux";
 import { setRoomUrl, setCall } from "../features/authSlice";
 import ConsultationFeedbackModal from "./ConsultationFeedbackModal";
+import PostConsultChatNoticeModal from "./PostConsultChatNoticeModal";
 import {
   getStoredCallContext,
   getStoredPatientId,
@@ -290,6 +291,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isLocalVideoFullscreen, setIsLocalVideoFullscreen] = useState(true);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showChatNotice, setShowChatNotice] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(null);
   const [joinError, setJoinError] = useState(null);
@@ -349,10 +351,22 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     }
   };
 
+  const finishPatientPostConsultFlow = () => {
+    ensurePatientRejoinPersistence(roomUrl, call);
+    setShowChatNotice(false);
+    const target = pendingRedirect || "/patient-dashboard";
+    setPendingRedirect(null);
+    navigate(target);
+  };
+
   const handleFeedbackClose = () => {
     // Rating closed — rejoin markers must still be present.
     ensurePatientRejoinPersistence(roomUrl, call);
     setShowFeedbackModal(false);
+    if (!isDoctor) {
+      setShowChatNotice(true);
+      return;
+    }
     const target = pendingRedirect || "/patient-dashboard";
     setPendingRedirect(null);
     navigate(target);
@@ -640,6 +654,11 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         onClose={handleFeedbackClose}
         userData={userData}
         callId={feedbackCallId}
+      />
+      <PostConsultChatNoticeModal
+        isOpen={showChatNotice}
+        onClose={finishPatientPostConsultFlow}
+        doctorName={formatHeaderParticipantName(displayInfo)}
       />
       <div className="bg-black h-16 md:h-20 flex flex-col md:flex-row items-start md:items-center justify-start md:justify-between text-white px-2 py-1 md:px-5 md:py-0 space-y-1 md:space-y-0">
         <p className="text-xs sm:text-sm md:text-base">

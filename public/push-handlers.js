@@ -78,19 +78,29 @@ self.addEventListener("push", (event) => {
 
   const title = payload.title || "MedFair";
   const isHealthTip = payload.type === "DAILY_HEALTH_TIP";
+  const isChat = payload.type === "CONSULTATION_CHAT";
   const options = {
     body: payload.body || "You have a new update.",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     data: {
-      url: payload.url || (isHealthTip ? "/patient-dashboard" : "/doctor-dashboard"),
+      url:
+        payload.url ||
+        (isHealthTip
+          ? "/patient-dashboard"
+          : isChat
+            ? "/doctor-dashboard/chat"
+            : "/doctor-dashboard"),
       callId: payload.callId || null,
+      threadKey: payload.threadKey || null,
       type: payload.type || null,
     },
     tag: payload.tag || undefined,
   };
 
-  if (!isHealthTip) {
+  if (isChat) {
+    options.actions = [{ action: "open-chat", title: "Open chat" }];
+  } else if (!isHealthTip) {
     options.actions = [
       { action: "answer", title: "Answer" },
       { action: "view", title: "View queue" },
@@ -104,7 +114,11 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const type = event.notification?.data?.type;
   const defaultUrl =
-    type === "DAILY_HEALTH_TIP" ? "/patient-dashboard" : "/doctor-dashboard";
+    type === "DAILY_HEALTH_TIP"
+      ? "/patient-dashboard"
+      : type === "CONSULTATION_CHAT"
+        ? "/doctor-dashboard/chat"
+        : "/doctor-dashboard";
   const url = event.notification?.data?.url || defaultUrl;
 
   event.waitUntil(
