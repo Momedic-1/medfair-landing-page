@@ -142,6 +142,20 @@ function DoctorChatModal({ threadKey, open, closesAt, patientName, onClose }) {
  */
 const PAGE_SIZE = 5;
 
+function pickConsultationRows(payload) {
+  if (payload == null) return [];
+  if (Array.isArray(payload)) return payload;
+  const raw = payload.items ?? payload.content ?? payload.records;
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object" && (raw.id || raw.patientName || raw.channel)) {
+    return [raw];
+  }
+  if (payload.id && (payload.channel || payload.patientName || payload.doctorName)) {
+    return [payload];
+  }
+  return [];
+}
+
 export default function DoctorConsultationChat() {
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(0);
@@ -171,15 +185,25 @@ export default function DoctorConsultationChat() {
           params: { page: pageNum, size: PAGE_SIZE },
         }
       );
-      const data = res.data || {};
-      setItems(Array.isArray(data.content) ? data.content : []);
-      setPage(typeof data.page === "number" ? data.page : pageNum);
-      setTotalPages(data.totalPages || 0);
-      setTotalElements(data.totalElements || 0);
-      setHasNext(Boolean(data.hasNext));
-      setHasPrevious(Boolean(data.hasPrevious));
+      const data = res?.data;
+      const rows = pickConsultationRows(data);
+      setItems(rows);
+      setPage(typeof data?.page === "number" ? data.page : pageNum);
+      setTotalPages(
+        typeof data?.totalPages === "number"
+          ? data.totalPages
+          : rows.length > 0
+            ? 1
+            : 0
+      );
+      setTotalElements(
+        typeof data?.totalElements === "number" ? data.totalElements : rows.length
+      );
+      setHasNext(Boolean(data?.hasNext));
+      setHasPrevious(Boolean(data?.hasPrevious));
     } catch (e) {
       setError(e?.response?.data?.message || "Could not load open chats");
+      setItems([]);
     } finally {
       setLoading(false);
     }
