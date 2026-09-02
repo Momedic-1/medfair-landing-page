@@ -265,7 +265,6 @@ import {
   FaUser,
 } from "react-icons/fa";
 import Logout from "../Logout";
-import CloseIcon from "../assets/CloseIcon";
 import DashboardIcon from "../assets/DashboardIcon";
 import { CalendarHeart, Dumbbell, Pencil, UserCircle, Users } from "lucide-react";
 import DocumentsIcon from "../assets/DocumentIcon";
@@ -304,25 +303,15 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
       >
         {role === "PATIENT" ? (
           <div className="w-full h-full flex flex-col">
-            <div className="px-4 pt-4">
+            <div className="px-4 pt-4 pb-2">
               <DarkModeToggle
                 isDarkMode={isDarkMode}
                 onToggle={toggleDarkMode}
                 className="w-full justify-center border-white/30 bg-white/10 text-white hover:bg-white/20"
               />
             </div>
-            <div className="flex w-full justify-end p-4 lg:hidden">
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="text-2xl text-white focus:outline-none"
-                aria-label="Close menu"
-              >
-                ✕
-              </button>
-            </div>
 
-            <nav className="flex flex-1 flex-col overflow-y-auto p-4">
+            <nav className="flex flex-1 flex-col overflow-y-auto px-4 pb-4 pt-1">
               {/* Always show dashboard + profile */}
               <NavLink
                 to={
@@ -378,6 +367,21 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                   >
                     <FaMoneyBill />
                     <span className="ml-3">Subscriptions</span>
+                  </NavLink>
+
+                  <NavLink
+                    to="/patient-dashboard/consultation-history"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
+                    onClick={toggleSidebar}
+                  >
+                    <FaHandHoldingMedical />
+                    <span className="ml-3">Consultations</span>
                   </NavLink>
 
                   <NavLink
@@ -485,22 +489,12 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
         ) : (
           // Doctor Sidebar
           <div className="relative flex flex-col h-full max-h-full">
-            <div className="px-4 pt-4">
+            <div className="px-4 pt-4 pb-2">
               <DarkModeToggle
                 isDarkMode={isDarkMode}
                 onToggle={toggleDarkMode}
                 className="w-full justify-center border-white/30 bg-white/10 text-white hover:bg-white/20"
               />
-            </div>
-            <div className="flex justify-end px-6 pt-4 lg:hidden">
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="text-2xl text-white focus:outline-none"
-                aria-label="Close menu"
-              >
-                <CloseIcon />
-              </button>
             </div>
 
             <div className="h-full overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-thumb]:bg-gray-300">
@@ -508,7 +502,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 className="hs-accordion-group p-3 w-full flex flex-col flex-wrap"
                 data-hs-accordion-always-open
               >
-                <ul className="flex flex-col space-y-6 mt-6">
+                <ul className="flex flex-col space-y-6 mt-2">
                   <li>
                     <NavLink
                       to="/doctor-dashboard"

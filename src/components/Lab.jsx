@@ -16,6 +16,8 @@ const Lab = ({ doctorId }) => {
   const dropdownRef = useRef(null);
   const debounceTimeout = useRef(null);
 
+  const [customName, setCustomName] = useState("");
+
   const token = JSON.parse(localStorage.getItem("authToken"))?.token;
   const patientId = localStorage.getItem("patientId");
 
@@ -130,6 +132,34 @@ const Lab = ({ doctorId }) => {
     );
   };
 
+  const handleAddCustomInvestigation = () => {
+    const name = customName.trim();
+    if (!name) {
+      setError("Enter a custom investigation name");
+      return;
+    }
+    const already = selectedInvestigations.some(
+      (item) =>
+        String(item.name).toLowerCase() === name.toLowerCase() ||
+        (item.custom && String(item.customName).toLowerCase() === name.toLowerCase())
+    );
+    if (already) {
+      setError("That investigation is already selected");
+      return;
+    }
+    setSelectedInvestigations((prev) => [
+      ...prev,
+      {
+        id: `custom-${Date.now()}`,
+        name,
+        custom: true,
+        customName: name,
+      },
+    ]);
+    setCustomName("");
+    setError(null);
+  };
+
   // Handle order submission
   const handleSubmitOrder = async () => {
     // Validate inputs
@@ -154,16 +184,17 @@ const Lab = ({ doctorId }) => {
     setError(null);
     setSubmitSuccess(null);
 
-    // Log request data for debugging
-    const requestBody = selectedInvestigations.map((item) => ({
-      investigationId: item.id,
-      instruction: "Perform as per protocol",
-    }));
-    // console.log("Submit Order Request:", {
-    //   doctorId,
-    //   patientId,
-    //   requestBody,
-    // });
+    const requestBody = selectedInvestigations.map((item) =>
+      item.custom
+        ? {
+            customName: item.customName || item.name,
+            instruction: "Perform as per protocol",
+          }
+        : {
+            investigationId: item.id,
+            instruction: "Perform as per protocol",
+          }
+    );
 
     try {
       const response = await axios.post(
@@ -175,17 +206,16 @@ const Lab = ({ doctorId }) => {
             "Content-Type": "application/json",
           },
           params: {
-            doctorId: Number(doctorId), // Ensure numeric ID
-            patientId: Number(patientId), // Ensure numeric ID
+            doctorId: Number(doctorId),
+            patientId: Number(patientId),
           },
         }
       );
 
-      // console.log("Submit Order Response:", response.data);
       setSubmitSuccess(
         `Order created successfully! Order ID: ${response.data.orderId}`
       );
-      setSelectedInvestigations([]); // Clear selections
+      setSelectedInvestigations([]);
       setTimeout(() => setSubmitSuccess(null), 3000);
     } catch (error) {
       setError(
@@ -193,14 +223,13 @@ const Lab = ({ doctorId }) => {
           error.response?.data?.message || error.message
         }`
       );
-      // console.error("Submit Order Error:", error.response?.data || error);
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  // Error state
-  if (error && !submitSuccess) {
+  // Error state (fatal load errors only)
+  if (error && !submitSuccess && investigations.length === 0 && !debouncedSearch && !customName && selectedInvestigations.length === 0) {
     return (
       <div className="p-0 md:p-6 max-w-6xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
@@ -228,6 +257,12 @@ const Lab = ({ doctorId }) => {
         Select Investigations
       </h2>
 
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Search Dropdown */}
       <div className="mb-6 relative" ref={dropdownRef}>
         <div className="relative">
@@ -254,6 +289,9 @@ const Lab = ({ doctorId }) => {
               <div className="p-4 text-center">
                 <AlertCircle className="mx-auto h-8 w-8 text-gray-400 mb-2" />
                 <p className="text-gray-500 text-sm">No investigations found</p>
+                <p className="mt-1 text-xs text-gray-400">
+                  Use “Add custom investigation” below if the test is not listed.
+                </p>
               </div>
             ) : (
               investigations.map((investigation, index) => (
@@ -280,6 +318,29 @@ const Lab = ({ doctorId }) => {
         )}
       </div>
 
+      <div className="mb-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4">
+        <p className="mb-2 text-sm font-medium text-slate-800">
+          Test not in the list? Add a custom investigation
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            type="text"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+            placeholder="e.g. Serum Zinc, Custom panel…"
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            maxLength={255}
+          />
+          <button
+            type="button"
+            onClick={handleAddCustomInvestigation}
+            className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900"
+          >
+            Add custom
+          </button>
+        </div>
+      </div>
+
       {/* Selected Investigations */}
       {selectedInvestigations.length > 0 && (
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
@@ -292,7 +353,12 @@ const Lab = ({ doctorId }) => {
                 key={index}
                 className="flex items-center bg-white rounded-full px-3 py-1 text-sm text-gray-800 border border-gray-200"
               >
-                <span>{investigation.name || "Unnamed Investigation"}</span>
+                <span>
+                  {investigation.name || "Unnamed Investigation"}
+                  {investigation.custom ? (
+                    <span className="ml-1 text-xs text-slate-500">(custom)</span>
+                  ) : null}
+                </span>
                 <X
                   className="ml-2 h-4 w-4 text-gray-500 cursor-pointer hover:text-red-500"
                   onClick={(e) => {
