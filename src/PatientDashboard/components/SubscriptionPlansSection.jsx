@@ -64,7 +64,7 @@ const SubscriptionPlansSection = ({
                   ₦{formatPriceWithCommas(plan.subTitle)}
                 </span>
               </div>
-              {plan.consultationCount != null && (
+              {plan.showIncludedLine !== false && plan.consultationCount != null && (
                 <p className="mt-1 text-sm text-gray-500">
                   {plan.consultationCount} consultation
                   {plan.consultationCount > 1 ? "s" : ""} included

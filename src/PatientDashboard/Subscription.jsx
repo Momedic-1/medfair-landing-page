@@ -8,32 +8,13 @@ import ActiveSubscriptionsSection from "./components/ActiveSubscriptionsSection"
 import PlansSectionHeader from "./components/PlansSectionHeader";
 import SubscriptionPlansSection from "./components/SubscriptionPlansSection";
 import PaymentGatewayDialog from "./components/PaymentGatewayDialog";
+import {
+  formatSubscriptionPrice,
+  mapPlanForDisplay,
+  sortPlansForDisplay,
+} from "./utils/subscriptionPlanDisplay";
 
 const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
-
-const getPlanCategory = (planName) => {
-  const name = String(planName || "").toLowerCase();
-  if (
-    name.includes("specialist") ||
-    name.includes("ent") ||
-    name.includes("ear nose throat")
-  ) {
-    return "Specialist";
-  }
-  return "GP";
-};
-
-/** Display order: Yearly first, then other GP plans, then specialist plans. */
-const getPlanSortOrder = (planName) => {
-  const name = String(planName || "").toLowerCase();
-  if (name.includes("yearly")) return 1;
-  if (name.includes("monthly")) return 2;
-  if (name.includes("instant - org") || name.includes("instant-org")) return 4;
-  if (name.includes("instant")) return 3;
-  if (name.includes("specialist") && name.includes("single")) return 5;
-  if (name.includes("ent") || name.includes("ear nose throat")) return 6;
-  return 99;
-};
 
 const Subscription = () => {
   const [paymentLink, setPaymentLink] = React.useState(null);
@@ -60,54 +41,7 @@ const Subscription = () => {
     });
   };
 
-  const getPlanContent = (planName, consultationCount) => {
-    const name = planName.toLowerCase();
-    if (name.includes("instant")) {
-      return [
-        "One-time consultation for immediate advice",
-        "Access to certified doctors",
-        "Available 24/7",
-      ];
-    }
-    if (name.includes("monthly")) {
-      return [
-        `Up to ${consultationCount} consultations per month`,
-        "Ongoing health support",
-        "Available 24/7",
-      ];
-    }
-    if (name.includes("yearly")) {
-      return [
-        `Up to ${consultationCount} consultations per year`,
-        "Expert care anytime",
-        "Priority support",
-      ];
-    }
-    if (name.includes("specialist") && name.includes("single")) {
-      return [
-        "Video call with a licensed professional",
-        "One-time consultation",
-        "Fast and easy booking",
-        "Confidential and secure sessions",
-      ];
-    }
-    if (name.includes("ent") || name.includes("ear nose throat")) {
-      return [
-        "One-off consultation with an ENT doctor",
-        "Video consultation with experienced specialists",
-        "Diagnosis and management of ENT conditions",
-        "Personalized treatment plans",
-        "Follow-up reviews when needed",
-      ];
-    }
-    return [
-      `${consultationCount} consultation${consultationCount > 1 ? "s" : ""} included`,
-      "Access to certified doctors",
-      "Available 24/7",
-    ];
-  };
-
-  const getPartnerAdjustedPrice = (planName, originalPrice) => {
+  const adjustPartnerPrice = (planName, originalPrice) => {
     if (!isFirstCareHospitalPartner) return originalPrice;
     const normalized = String(planName || "").toLowerCase();
     if (normalized.includes("ent") || normalized.includes("ear nose throat")) {
@@ -137,19 +71,17 @@ const Subscription = () => {
         { headers: { Authorization: `Bearer ${currentToken}` } }
       );
       if (response.data && Array.isArray(response.data)) {
-        const mappedPlans = response.data.map((plan) => ({
-          id: plan.id,
-          title: plan.name,
-          category: getPlanCategory(plan.name),
-          subTitle: getPartnerAdjustedPrice(plan.name, plan.price),
-          content: getPlanContent(plan.name, plan.consultationCount),
-          buttonText: "Subscribe",
-          buttonLink: "/payment",
-          consultationCount: plan.consultationCount,
-        }));
         setPlans(
-          [...mappedPlans].sort(
-            (a, b) => getPlanSortOrder(a.title) - getPlanSortOrder(b.title)
+          sortPlansForDisplay(
+            response.data.map((plan) =>
+              mapPlanForDisplay({
+                id: plan.id,
+                name: plan.name,
+                price: plan.price,
+                consultationCount: plan.consultationCount,
+                adjustPrice: adjustPartnerPrice,
+              })
+            )
           )
         );
       } else {
@@ -216,12 +148,6 @@ const Subscription = () => {
     }
   };
 
-  const formatPriceWithCommas = (price) =>
-    new Intl.NumberFormat("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
-
   return (
     <div className="min-h-full bg-gradient-to-b from-slate-50 via-blue-50/30 to-gray-50">
       <SubscriptionLoadingOverlay isLoading={isLoading} />
@@ -257,7 +183,7 @@ const Subscription = () => {
         <SubscriptionPlansSection
           plansLoading={plansLoading}
           plans={plans}
-          formatPriceWithCommas={formatPriceWithCommas}
+          formatPriceWithCommas={formatSubscriptionPrice}
           handleSubscription={handleSubscription}
         />
       </div>
