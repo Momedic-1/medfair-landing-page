@@ -97,6 +97,7 @@ import PatientNotes from "./PatientDashboard/patientNotes.jsx";
 import VerifyPayment from "./VerifyPayment.jsx";
 import VideoCall from "./components/VideoCall.jsx";
 import Subscription from "./PatientDashboard/Subscription.jsx";
+import SubscriptionPreview from "./PatientDashboard/SubscriptionPreview.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
 import OTPVerification from "./OTPVerification.jsx";
 import ViewProfile from "./components/ViewProfile.jsx";
@@ -147,6 +148,12 @@ const App = () => {
             element={<VerificationSuccessful />}
           />
           <Route path="/login" element={<LoginPage />} />
+          {import.meta.env.DEV && (
+            <Route
+              path="/preview/subscriptions"
+              element={<SubscriptionPreview />}
+            />
+          )}
           {/*  Patient login (partners) */}
           <Route
             path="/patient-dashboard/partners/login"
