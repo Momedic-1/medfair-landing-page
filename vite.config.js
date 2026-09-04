@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.jpeg', 'logo.png', 'icons/icon-192.png', 'icons/icon-512.png'],
+      includeAssets: ['medfair.svg', 'logo.jpeg', 'logo.png', 'icons/icon-192.png', 'icons/icon-512.png'],
       workbox: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         importScripts: ['/push-handlers.js']
@@ -24,6 +24,12 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
+            src: '/medfair.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
+          },
+          {
             src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
@@ -36,9 +42,9 @@ export default defineConfig({
             purpose: 'any'
           },
           {
-            src: '/logo.png',
-            sizes: '512x512',
-            type: 'image/png',
+            src: '/medfair.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
             purpose: 'maskable'
           }
         ]

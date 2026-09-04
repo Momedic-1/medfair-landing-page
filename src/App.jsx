@@ -78,7 +78,7 @@
 
 // export default App;
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "./DashboardLayout";
 import PatientSignup from "./PatientSignup";
 import LoginPage from "./Login";
@@ -150,6 +150,14 @@ const App = () => {
             element={<VerificationSuccessful />}
           />
           <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/search"
+            element={<Navigate to="/doctor-dashboard/notes" replace />}
+          />
+          <Route
+            path="/patient-dashboard/patient-medication"
+            element={<Navigate to="/patient-dashboard/patient-notes" replace />}
+          />
           {import.meta.env.DEV && (
             <Route
               path="/preview/subscriptions"

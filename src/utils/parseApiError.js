@@ -73,6 +73,28 @@ export function parseApiError(error, fallback = "Something went wrong. Please tr
   }
 
   if (status === 409) {
+    if (msg) {
+      const lower = msg.toLowerCase();
+      if (
+        lower.includes("already have a call waiting") ||
+        lower.includes("cancel that call")
+      ) {
+        return "You already have a call waiting for a doctor. Cancel that one before starting a new call.";
+      }
+      if (
+        lower.includes("already have an active call") ||
+        lower.includes("end your current call")
+      ) {
+        return "You already have an active call. End or rejoin that one before starting a new call.";
+      }
+      if (lower.includes("no doctor has joined")) {
+        return "No doctor has joined yet. Cancel the waiting call instead of ending the consultation.";
+      }
+      if (lower.includes("already assigned") || lower.includes("another doctor")) {
+        return "Another doctor has already joined this call.";
+      }
+      return msg;
+    }
     return "This action is no longer allowed. Refresh the page and try again.";
   }
 

@@ -11,6 +11,8 @@ import {
 
 const DEFAULT_POLL_MS = 8000;
 const INCOMING_PAGE_POLL_MS = 4000;
+/** When SSE is healthy, poll only as a slow backup to cut DB load. */
+const SSE_BACKUP_POLL_MS = 60000;
 const RECONNECT_DELAY_MS = 3000;
 const FAST_RETRY_MS = 1500;
 
@@ -108,6 +110,7 @@ export function useIncomingCallSse({
   useEffect(() => {
     if (!enabled) {
       disconnectRef.current?.();
+      clearInterval(pollRef.current);
       setSseConnected(false);
       setInitialLoading(false);
       return undefined;
@@ -122,8 +125,6 @@ export function useIncomingCallSse({
       fastRetryTimer = setTimeout(loadCalls, FAST_RETRY_MS);
     }
 
-    pollRef.current = setInterval(loadCalls, pollMs);
-
     return () => {
       disconnectRef.current?.();
       clearInterval(pollRef.current);
@@ -131,7 +132,16 @@ export function useIncomingCallSse({
       if (fastRetryTimer) clearTimeout(fastRetryTimer);
       setSseConnected(false);
     };
-  }, [enabled, connect, loadCalls, pollMs, fastRetry]);
+  }, [enabled, connect, loadCalls, fastRetry]);
+
+  // Aggressive poll only when SSE is down; slow backup when connected.
+  useEffect(() => {
+    if (!enabled) return undefined;
+    clearInterval(pollRef.current);
+    const intervalMs = sseConnected ? Math.max(pollMs, SSE_BACKUP_POLL_MS) : pollMs;
+    pollRef.current = setInterval(loadCalls, intervalMs);
+    return () => clearInterval(pollRef.current);
+  }, [enabled, sseConnected, loadCalls, pollMs]);
 
   useEffect(() => {
     dismissedRef.current = loadDismissedCallIds();
