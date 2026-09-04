@@ -25,8 +25,8 @@ function ConsultationChat({ threadKey, open, closesAt, onClose }) {
   const token = getToken();
   const myId = Number(getId());
 
-  const load = async () => {
-    setLoading(true);
+  const load = async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     setError("");
     try {
       const res = await axios.get(
@@ -37,13 +37,14 @@ function ConsultationChat({ threadKey, open, closesAt, onClose }) {
     } catch (e) {
       setError(e?.response?.data?.message || "Could not load chat");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 15000);
+    // Silent poll so new messages appear without wiping the thread with a spinner.
+    const t = setInterval(() => load({ silent: true }), 15000);
     return () => clearInterval(t);
   }, [threadKey]);
 
@@ -58,7 +59,7 @@ function ConsultationChat({ threadKey, open, closesAt, onClose }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBody("");
-      await load();
+      await load({ silent: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Could not send message");
     } finally {

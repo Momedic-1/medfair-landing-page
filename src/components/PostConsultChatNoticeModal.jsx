@@ -24,8 +24,7 @@ export default function PostConsultChatNoticeModal({ isOpen, onClose, doctorName
         <h2 className="text-xl font-bold text-[#020e7c]">You can chat with {who}</h2>
         <p className="mt-2 text-sm text-gray-600">
           Free follow-up chat is open for <strong>24 hours</strong> after this consultation.
-          Open <strong>Consultations</strong>, then tap <strong>Open chat</strong> to message
-          your doctor — they will get an email and a push notification when you send a message.
+          Open <strong>Consultations</strong>, then tap <strong>Open chat</strong> to message your doctor.
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
