@@ -98,6 +98,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
   const [fetchingPrescriptions, setFetchingPrescriptions] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState(null);
+  const [editingNoteId, setEditingNoteId] = useState(null);
 
   const [drugSearchResults, setDrugSearchResults] = useState([]);
   const [drugSearchLoading, setDrugSearchLoading] = useState(false);
@@ -113,10 +114,14 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
   }, [isOpen, visitDate]);
 
   useEffect(() => {
-    if (patientId && isOpen && !existingNotes.length) {
+    if (patientId && isOpen) {
       fetchPatientNotes();
     }
-  }, [isOpen]);
+    if (!isOpen) {
+      setEditingNoteId(null);
+      setExistingNotes([]);
+    }
+  }, [isOpen, patientId]);
 
   useEffect(() => {
     if (activeTab === "Medication" && patientId) {
@@ -170,11 +175,27 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
           },
         }
       );
-      const notesData = response.data;
+      const notesData = Array.isArray(response.data) ? response.data : [];
       if (notesData.length > 0) {
         const firstNote = notesData[0];
-        setPatientFirstName(firstNote.patientFirstName);
-        setPatientLastName(firstNote.patientLastName);
+        setPatientFirstName(firstNote.patientFirstName || "");
+        setPatientLastName(firstNote.patientLastName || "");
+        setEditingNoteId(firstNote.id || null);
+        setSubjective(firstNote.subjective || "");
+        setObjective(firstNote.objective || "");
+        setAssessment(firstNote.assessment || "");
+        setPlan(firstNote.plan || "");
+        setFinalDiagnosis(firstNote.finalDiagnosis || "");
+        setSoapComment(firstNote.soapComment || "");
+        if (firstNote.visitDate) {
+          try {
+            setVisitDate(new Date(firstNote.visitDate).toISOString().split("T")[0]);
+          } catch {
+            /* keep default */
+          }
+        }
+      } else {
+        setEditingNoteId(null);
       }
       setExistingNotes(notesData);
       setLoading(false);
@@ -221,6 +242,56 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
   const moveToMedication = () => {
     setActiveTab("Medication");
     setIsViewNotesOpen(false);
+  };
+
+  const saveSoapNote = async () => {
+    if (!patientId) {
+      toast.error("Patient is missing for this visit.");
+      return;
+    }
+    setLoading(true);
+    try {
+      if (editingNoteId) {
+        await axios.put(
+          `${baseUrl}/api/notes/${editingNoteId}/update`,
+          {
+            subjective,
+            objective,
+            assessment,
+            plan,
+            finalDiagnosis,
+            soapComment,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Note updated");
+      } else {
+        const response = await axios.post(
+          `${baseUrl}/api/notes/create`,
+          {
+            doctorId: userData?.id,
+            patientId: Number(patientId),
+            visitDate,
+            subjective,
+            objective,
+            assessment,
+            plan,
+            finalDiagnosis,
+            soapComment,
+            prescriptions: [],
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setEditingNoteId(response.data?.id || null);
+        toast.success("Note created — you can add medications and lab tests next");
+        onNoteAdded?.(response.data);
+      }
+      await fetchPatientNotes();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Could not save note");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddNote = async (e) => {
@@ -855,13 +926,23 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="flex h-10 w-full items-center justify-center rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700 sm:w-[160px]"
-                    onClick={moveToMedication}
-                  >
-                    Next
-                  </button>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={saveSoapNote}
+                      className="rounded-lg border border-[#020e7c] px-4 py-2.5 text-sm font-semibold text-[#020e7c] hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {editingNoteId ? "Save note" : "Create note"}
+                    </button>
+                    <button
+                      type="button"
+                      className="flex h-10 w-full items-center justify-center rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700 sm:w-[160px]"
+                      onClick={moveToMedication}
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               </>
             )}

@@ -161,201 +161,128 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-x-auto">
-      <div className="min-w-full bg-white h-screen shadow-md rounded-lg overflow-auto">
-        <table className="min-w-full leading-normal text-center">
-          <thead className="bg-gray-50 sticky top-0 z-10 py-4">
-            <tr>
-              {[
-                "Doctor's Full Name",
-                "Visit Date",
-                // "Subjective",
-                // "Objective",
-                // "Assessment",
-                // "Plan",
-                "Final diagnosis",
-                // "SOAP comment",
-                "View Medication",
-                "Get Prescription",
-                // "Actions",
-              ].map((header, idx) => (
-                <th
-                  key={idx}
-                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody className="text-center">
-            {isLoading ? (
-              <tr>
-                <td colSpan="10">
-                  <div className="w-full h-[400px] flex items-center justify-center">
-                    <Hourglass
-                      visible={true}
-                      height="40"
-                      width="40"
-                      ariaLabel="hourglass-loading"
-                      colors={["#306cce", "#72a1ed"]}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ) : currentData.length === 0 ? (
-              <tr>
-                <td colSpan="10" className="text-center py-4">
-                  {emptyMessage || "No data available"}
-                </td>
-              </tr>
-            ) : (
-              currentData.map((patient, index) => (
-                <tr key={index} className="border-b border-gray-200">
-                  <td className="px-2 py-2 text-sm text-gray-700">{`${patient?.doctorLastName}, ${patient?.doctorFirstName}`}</td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
-                    {formatDate(patient?.visitDate)}
-                  </td>
-                  {/* <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient?.subjective}
-                  </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient?.objective}
-                  </td>
-                  <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient?.assessment}
-                  </td> */}
-                  {/* <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient?.plan}
-                  </td> */}
-                  <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient?.finalDiagnosis}
-                  </td>
-                  {/* <td className="px-2 py-2 text-sm text-gray-700">
-                    {patient?.soapComment}
-                  </td> */}
-
-                  {/* View Medications */}
-                  <td className="p-4 text-sm">
+    <div className="relative w-full max-w-4xl mx-auto px-3 py-4 sm:px-0">
+      {isLoading ? (
+        <div className="w-full h-[280px] flex items-center justify-center">
+          <Hourglass
+            visible={true}
+            height="40"
+            width="40"
+            ariaLabel="hourglass-loading"
+            colors={["#306cce", "#72a1ed"]}
+          />
+        </div>
+      ) : currentData.length === 0 ? (
+        <p className="rounded-xl border border-dashed px-4 py-12 text-center text-slate-500">
+          {emptyMessage || "No data available"}
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {currentData.map((patient, index) => (
+            <li
+              key={patient?.id ?? index}
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    {`${patient?.doctorLastName || ""}, ${patient?.doctorFirstName || ""}`.replace(/^,\s*|,\s*$/g, "") || "Doctor"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Visit {formatDate(patient?.visitDate)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {(patient?.prescriptions?.length || 0) > 0
+                      ? `${patient.prescriptions.length} medication(s)`
+                      : "No medications on this visit"}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 sm:items-end">
+                  <button
+                    type="button"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50 sm:w-auto"
+                    onClick={() => viewMedications(patient?.prescriptions)}
+                    disabled={!patient?.prescriptions?.length}
+                  >
+                    View Medications
+                  </button>
+                  <div className="relative w-full sm:w-auto" ref={dropdownRef}>
                     <button
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 rounded-lg border border-blue-200 transition-all"
-                      onClick={() => viewMedications(patient?.prescriptions)}
-                      disabled={!patient?.prescriptions?.length}
+                      type="button"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:from-orange-600 hover:to-red-600 sm:w-auto"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowPharmacyDropdown(
+                          showPharmacyDropdown === index ? null : index
+                        );
+                      }}
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
-                      View Medications
+                      Get Prescription
                     </button>
-                  </td>
-
-                  {/* Get Prescription — pharmacies from GET /api/partners/pharmacies */}
-                  <td className="px-3 py-3 text-sm relative">
-                    <div className="relative" ref={dropdownRef}>
-                      <button
-                        className="group relative inline-flex items-center gap-3 px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:via-orange-700 hover:to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowPharmacyDropdown(
-                            showPharmacyDropdown === index ? null : index
-                          );
-                        }}
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        Get Prescription
-                      </button>
-
-                      {showPharmacyDropdown === index && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                          <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white rounded-t-2xl">
-                            Available Pharmacies
-                          </div>
-                          {locationsLoading ? (
-                            <div className="px-4 py-6 text-sm text-gray-600 text-center">
-                              Loading pharmacies…
-                            </div>
-                          ) : partnerPharmacies.length === 0 ? (
-                            <div className="px-4 py-4 text-sm text-red-600">
-                              {pharmaciesError ||
-                                "No pharmacies available for your account."}
-                            </div>
-                          ) : (
-                            <ul className="divide-y divide-gray-100">
-                              {partnerPharmacies.map((pharmacy) => (
-                                <li
-                                  key={pharmacy.id}
-                                  className="px-4 py-2 hover:bg-orange-100 cursor-pointer text-sm text-gray-700 transition-colors"
-                                  onClick={() =>
-                                    handlePharmacySelect(pharmacy, patient)
-                                  }
-                                  onMouseDown={(e) => e.stopPropagation()}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <svg
-                                      className="w-4 h-4 text-orange-500"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                      />
-                                    </svg>
-                                    {pharmacy.name}
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          {networkError && !locationsLoading && (
-                            <p className="px-4 pb-3 text-xs text-amber-700">
-                              Partner list could not be refreshed; showing
-                              default options.
-                            </p>
-                          )}
+                    {showPharmacyDropdown === index && (
+                      <div className="absolute left-0 right-0 z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg sm:left-auto sm:right-0 sm:w-56">
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 px-4 py-3 text-sm font-semibold text-white">
+                          Available Pharmacies
                         </div>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                        {locationsLoading ? (
+                          <div className="px-4 py-6 text-center text-sm text-gray-600">
+                            Loading pharmacies…
+                          </div>
+                        ) : partnerPharmacies.length === 0 ? (
+                          <div className="px-4 py-4 text-sm text-red-600">
+                            {pharmaciesError ||
+                              "No pharmacies available for your account."}
+                          </div>
+                        ) : (
+                          <ul className="divide-y divide-gray-100">
+                            {partnerPharmacies.map((pharmacy) => (
+                              <li
+                                key={pharmacy.id}
+                                className="cursor-pointer px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-orange-50"
+                                onClick={() =>
+                                  handlePharmacySelect(pharmacy, patient)
+                                }
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                {pharmacy.name}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={goToPrevPage}
+            disabled={currentPage <= 1}
+            className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <p className="text-xs text-slate-500">
+            Page {currentPage} of {totalPages}
+          </p>
+          <button
+            type="button"
+            onClick={goToNextPage}
+            disabled={currentPage >= totalPages}
+            className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* View Medications Modal */}
       <Modal
@@ -365,43 +292,36 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
         aria-describedby="medications-modal-description"
       >
         <Box sx={modalStyle}>
-          <h2 id="medications-modal-title" className="text-lg font-bold mb-4">
+          <h2 id="medications-modal-title" className="mb-4 text-lg font-bold text-slate-900">
             Prescribed Medications
           </h2>
           {medications.length > 0 ? (
-            <table className="min-w-full border">
-              <thead>
-                <tr>
-                  <th className="border px-4 py-2">Drug Name</th>
-                  <th className="border px-4 py-2">Dosage</th>
-                  <th className="border px-4 py-2">Frequency</th>
-                  <th className="border px-4 py-2">Duration</th>
-                  <th className="border px-4 py-2">Instructions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {medications.map((medication) => (
-                  <tr key={medication?.id}>
-                    <td className="border px-4 py-2">{medication?.drugName}</td>
-                    <td className="border px-4 py-2">{medication?.dosage}</td>
-                    <td className="border px-4 py-2">
-                      {medication?.frequency}
-                    </td>
-                    <td className="border px-4 py-2">{medication?.duration}</td>
-                    <td className="border px-4 py-2">
-                      {medication?.instructions}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ul className="space-y-3">
+              {medications.map((medication) => (
+                <li
+                  key={medication?.id}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                >
+                  <p className="font-semibold text-slate-900">{medication?.drugName}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {medication?.dosage}
+                    {medication?.frequency ? ` · ${medication.frequency}` : ""}
+                    {medication?.duration ? ` · ${medication.duration}` : ""}
+                  </p>
+                  {medication?.instructions ? (
+                    <p className="mt-1 text-xs text-slate-500">{medication.instructions}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           ) : (
             <p id="medications-modal-description" className="text-gray-600">
               No medications available.
             </p>
           )}
           <button
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+            type="button"
+            className="mt-4 rounded-xl bg-[#020e7c] px-4 py-2 text-sm font-semibold text-white"
             onClick={() => setModalIsOpen(false)}
           >
             Close
@@ -663,30 +583,6 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
           </div>
         </Box>
       </Modal>
-
-      {data.length > 0 && (
-        <div className="flex justify-between items-center my-6 md:my-10">
-          <button
-            onClick={goToPrevPage}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-
-          <span className="text-sm text-gray-700">
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <button
-            onClick={goToNextPage}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
     </div>
   );
 };
