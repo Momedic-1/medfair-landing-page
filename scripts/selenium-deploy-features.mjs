@@ -397,7 +397,7 @@ async function main() {
       }
     }
     if (!navigated) {
-      await driver.get(`${FE}/search`);
+      await driver.get(`${FE}/doctor-dashboard/notes`);
     }
     await pause(HOLD);
     await shot(driver, "f5-visits");

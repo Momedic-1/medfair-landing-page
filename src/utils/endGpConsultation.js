@@ -6,12 +6,36 @@ import {
   clearPatientGpVideoContext,
 } from "./activeCallSession";
 
-export function parseEndConsultationError(error) {
+function pickErrorText(error) {
   const data = error?.response?.data;
   if (typeof data === "string" && data.trim()) return data.trim();
-  if (data?.message) return data.message;
-  if (data?.error) return data.error;
-  return "Could not end the consultation. Please try again.";
+  if (data?.message) return String(data.message);
+  if (data?.error) return String(data.error);
+  if (error?.message) return String(error.message);
+  return "";
+}
+
+export function parseEndConsultationError(error) {
+  const status = error?.response?.status;
+  const raw = pickErrorText(error);
+  const lower = raw.toLowerCase();
+
+  if (
+    status === 409 ||
+    lower.includes("no doctor has joined") ||
+    lower.includes("patient can cancel")
+  ) {
+    return (
+      raw ||
+      "No doctor has joined yet. If you are the patient, cancel the call instead of ending the consultation."
+    );
+  }
+
+  if (lower.includes("cannot end") && lower.includes("doctor has joined")) {
+    return "You cannot end the call after the doctor has joined. Wait for the doctor to end the consultation.";
+  }
+
+  return raw || "Could not end the consultation. Please try again.";
 }
 
 /** Clear all GP rejoin / active-meeting persistence (both roles). */

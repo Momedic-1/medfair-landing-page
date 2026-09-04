@@ -6,12 +6,52 @@ import { dismissIncomingCallId } from "./dismissedIncomingCalls";
 import { saveDoctorJoinedSession } from "./activeCallSession";
 import { rememberPickedCallId } from "./pickedCalls";
 
-export function formatGpJoinError(error) {
+function pickErrorText(error) {
   const data = error?.response?.data;
   if (typeof data === "string" && data.trim()) return data.trim();
-  if (data?.message) return data.message;
-  if (data?.error) return data.error;
-  return "Failed to join call. Please try again.";
+  if (data?.message) return String(data.message);
+  if (data?.error) return String(data.error);
+  if (error?.message) return String(error.message);
+  return "";
+}
+
+export function formatGpJoinError(error) {
+  const status = error?.response?.status;
+  const raw = pickErrorText(error);
+  const lower = raw.toLowerCase();
+
+  if (
+    status === 409 ||
+    lower.includes("already assigned") ||
+    lower.includes("another doctor") ||
+    lower.includes("already joined")
+  ) {
+    if (lower.includes("inactive")) {
+      return "This call is no longer active.";
+    }
+    return (
+      raw ||
+      "Another doctor has already joined this call. Refresh the incoming list and pick a different one."
+    );
+  }
+
+  if (lower.includes("inactive")) {
+    return "This call is no longer active.";
+  }
+
+  if (
+    status === 503 ||
+    status === 504 ||
+    /connection is not available|hikari|timed? ?out|could not get a resource/i.test(lower)
+  ) {
+    return "Could not join right now — the server is busy. Wait a few seconds and try again.";
+  }
+
+  if (status >= 500) {
+    return raw || "Could not join the call. Please try again in a moment.";
+  }
+
+  return raw || "Failed to join call. Please try again.";
 }
 
 /**
@@ -28,10 +68,6 @@ export async function joinGpCallAsDoctor({
     throw new Error("Missing call or sign-in details.");
   }
 
-  // #region agent log
-  const __joinStartedAt = Date.now();
-  fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'E',location:'joinGpCallAsDoctor.js:beforeJoinApi',message:'Doctor join API starting',data:{callId,doctorId},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   const response = await axios.post(
     `${baseUrl}/api/v1/video/join?callId=${callId}&doctorId=${doctorId}`,
     {},
@@ -42,9 +78,6 @@ export async function joinGpCallAsDoctor({
       },
     },
   );
-  // #region agent log
-  fetch('http://127.0.0.1:7473/ingest/d91cda34-e11e-485c-99d5-4c98ac7ea275',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'be24c6'},body:JSON.stringify({sessionId:'be24c6',runId:'post-fix',hypothesisId:'E',location:'joinGpCallAsDoctor.js:afterJoinApi',message:'Doctor join API finished',data:{callId,doctorId,apiMs:Date.now()-__joinStartedAt,hasUrl:Boolean(response?.data?.joinRoomUrl)},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
 
   const { patientId, joinRoomUrl, patientFirstName, patientLastName } =
     response.data || {};
