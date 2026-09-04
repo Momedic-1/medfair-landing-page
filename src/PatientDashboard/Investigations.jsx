@@ -194,8 +194,7 @@ export default function Investigations() {
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
               Review tests your doctor ordered, download a copy, then choose
-              which partner lab should receive the order. No payment on this
-              page.
+              which partner lab should receive the order.
             </p>
           </div>
           <button
@@ -269,7 +268,7 @@ export default function Investigations() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-lg font-semibold text-slate-900">
-                          Order #{order.orderId}
+                          Lab order · {formatDate(order.createdDate)}
                         </h2>
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -282,8 +281,7 @@ export default function Investigations() {
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-slate-500">
-                        Ordered by Dr {order.doctorName} ·{" "}
-                        {formatDate(order.createdDate)}
+                        Ordered by Dr {order.doctorName}
                       </p>
                       {sent && order.labPartner && (
                         <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
@@ -292,12 +290,12 @@ export default function Investigations() {
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                       <button
                         type="button"
                         onClick={() => downloadPdf(order.orderId)}
                         disabled={downloading === order.orderId}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 sm:w-auto"
                       >
                         {downloading === order.orderId ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -310,7 +308,7 @@ export default function Investigations() {
                         <button
                           type="button"
                           onClick={() => openSendModal(order.orderId)}
-                          className="inline-flex items-center gap-2 rounded-full bg-[#020e7c] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#03129a]"
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#020e7c] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#03129a] sm:w-auto"
                         >
                           <Send className="h-4 w-4" />
                           Choose lab &amp; send
@@ -354,7 +352,6 @@ export default function Investigations() {
                   Choose a partner lab
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Order #{activeOrder.orderId} ·{" "}
                   {(activeOrder.items || []).length} test
                   {(activeOrder.items || []).length === 1 ? "" : "s"}. Pick the
                   lab that should process this order.

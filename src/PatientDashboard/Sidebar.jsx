@@ -258,6 +258,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import dashboard from "./assets/dashboard.svg";
 import profile from "./assets/profile (2).svg";
 import {
+  FaCommentMedical,
   FaHandHoldingMedical,
   FaHospital,
   FaMoneyBill,
@@ -380,7 +381,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     }
                     onClick={toggleSidebar}
                   >
-                    <FaHandHoldingMedical />
+                    <FaCommentMedical />
                     <span className="ml-3">Consultations</span>
                   </NavLink>
 
