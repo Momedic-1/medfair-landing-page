@@ -204,12 +204,22 @@ async function main() {
       if (hit) {
         ok("Note persisted in API", `id=${hit.id || hit.noteId} subjective has marker`);
       } else {
-        // Also try get-all-patient-note
-        const alt = await fetch(`${API}/api/notes/get-all-patient-note/${patientId}`, {
-          headers: { Authorization: `Bearer ${doctor.token}` },
-        });
-        const altNotes = alt.ok ? await alt.json() : [];
-        const hit2 = (Array.isArray(altNotes) ? altNotes : []).find((n) =>
+        // Also try get-all-patient-note (paginated)
+        const alt = await fetch(
+          `${API}/api/notes/get-all-patient-note/${patientId}?page=0&size=5`,
+          {
+            headers: { Authorization: `Bearer ${doctor.token}` },
+          },
+        );
+        const altPayload = alt.ok ? await alt.json() : [];
+        const altNotes = Array.isArray(altPayload)
+          ? altPayload
+          : Array.isArray(altPayload?.items)
+            ? altPayload.items
+            : Array.isArray(altPayload?.content)
+              ? altPayload.content
+              : [];
+        const hit2 = altNotes.find((n) =>
           String(n.subjective || "").includes(marker),
         );
         if (hit2) ok("Note persisted (get-all)", `id=${hit2.id}`);

@@ -42,6 +42,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
   const [soapComment, setSoapComment] = useState("");
   const [drugs, setDrugs] = useState([{ name: "", dosage: "" }]);
   const [existingNotes, setExistingNotes] = useState([]);
+  const [notesPage, setNotesPage] = useState(0);
+  const [notesTotalPages, setNotesTotalPages] = useState(0);
+  const [notesTotalElements, setNotesTotalElements] = useState(0);
+  const [notesHasNext, setNotesHasNext] = useState(false);
+  const [notesHasPrevious, setNotesHasPrevious] = useState(false);
   const [isViewNotesOpen, setIsViewNotesOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -120,11 +125,16 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
 
   useEffect(() => {
     if (patientId && isOpen) {
-      fetchPatientNotes();
+      fetchPatientNotes(0, { seedForm: true });
     }
     if (!isOpen) {
       setEditingNoteId(null);
       setExistingNotes([]);
+      setNotesPage(0);
+      setNotesTotalPages(0);
+      setNotesTotalElements(0);
+      setNotesHasNext(false);
+      setNotesHasPrevious(false);
     }
   }, [isOpen, patientId]);
 
@@ -134,6 +144,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
     }
   }, [activeTab, patientId]);
 
+  const NOTES_PAGE_SIZE = 5;
   const RX_PAGE_SIZE = 5;
 
   const pickPrescriptionRows = (payload) => {
@@ -239,7 +250,14 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
     setActiveDrugSearchIndex(null);
   };
 
-  const fetchPatientNotes = async () => {
+  const pickNotesRows = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.items)) return payload.items;
+    if (Array.isArray(payload?.content)) return payload.content;
+    return [];
+  };
+
+  const fetchPatientNotes = async (pageNum = notesPage, { seedForm = false } = {}) => {
     setLoading(true);
     try {
       const response = await axios.get(
@@ -249,10 +267,12 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+          params: { page: pageNum, size: NOTES_PAGE_SIZE },
         }
       );
-      const notesData = Array.isArray(response.data) ? response.data : [];
-      if (notesData.length > 0) {
+      const data = response.data || {};
+      const notesData = pickNotesRows(data);
+      if (seedForm && notesData.length > 0) {
         const firstNote = notesData[0];
         setPatientFirstName(firstNote.patientFirstName || "");
         setPatientLastName(firstNote.patientLastName || "");
@@ -270,13 +290,29 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
             /* keep default */
           }
         }
-      } else {
+      } else if (seedForm) {
         setEditingNoteId(null);
+      } else if (notesData.length > 0) {
+        const firstNote = notesData[0];
+        if (!patientFirstName && firstNote.patientFirstName) {
+          setPatientFirstName(firstNote.patientFirstName || "");
+          setPatientLastName(firstNote.patientLastName || "");
+        }
       }
       setExistingNotes(notesData);
+      setNotesPage(typeof data.page === "number" ? data.page : pageNum);
+      setNotesTotalPages(data.totalPages || 0);
+      setNotesTotalElements(
+        typeof data.totalElements === "number"
+          ? data.totalElements
+          : notesData.length
+      );
+      setNotesHasNext(Boolean(data.hasNext));
+      setNotesHasPrevious(Boolean(data.hasPrevious));
       setLoading(false);
     } catch (err) {
       console.error("Error fetching patient notes:", err);
+      setExistingNotes([]);
       setLoading(false);
     }
   };
@@ -319,7 +355,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
 
   const handleViewNotes = async () => {
     if (!isViewNotesOpen) {
-      await fetchPatientNotes();
+      await fetchPatientNotes(0, { seedForm: false });
     }
     setIsViewNotesOpen((prev) => !prev);
   };
@@ -371,7 +407,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
         toast.success("Note created — you can add medications and lab tests next");
         onNoteAdded?.(response.data);
       }
-      await fetchPatientNotes();
+      await fetchPatientNotes(0, { seedForm: true });
     } catch (err) {
       toast.error(err?.response?.data?.message || "Could not save note");
     } finally {
@@ -846,7 +882,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
               <>
                 {existingNotes.length > 0 ? (
                   existingNotes.map((note, index) => (
-                    <div key={index} className="border-b mb-2">
+                    <div key={note.id ?? index} className="border-b mb-2">
                       <Accordion>
                         <AccordionSummary
                           expandIcon={<ExpandMoreIcon />}
@@ -919,6 +955,38 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                   ))
                 ) : (
                   <p>No notes found.</p>
+                )}
+                {notesTotalElements > 0 && (
+                  <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-gray-500">
+                      Showing {existingNotes.length} of {notesTotalElements}
+                      {notesTotalPages > 0
+                        ? ` · Page ${notesPage + 1} of ${notesTotalPages}`
+                        : ""}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={!notesHasPrevious || loading}
+                        onClick={() =>
+                          fetchPatientNotes(notesPage - 1, { seedForm: false })
+                        }
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!notesHasNext || loading}
+                        onClick={() =>
+                          fetchPatientNotes(notesPage + 1, { seedForm: false })
+                        }
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
                 )}
               </>
             )}
