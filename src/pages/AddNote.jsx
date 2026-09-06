@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import debounce from "lodash/debounce";
 import axios from "axios";
 import { baseUrl } from "../env";
@@ -129,39 +129,68 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
     }
   }, [activeTab, patientId]);
 
-  const searchDrugs = debounce(async (searchTerm, index) => {
-    if (!searchTerm || searchTerm.length < 2) {
-      setDrugSearchResults([]);
-      setShowDrugDropdown(false);
-      return;
-    }
+  const searchDrugs = useMemo(
+    () =>
+      debounce(async (searchTerm, index) => {
+        if (!searchTerm || searchTerm.trim().length < 2) {
+          setDrugSearchResults([]);
+          setShowDrugDropdown(false);
+          return;
+        }
 
-    setDrugSearchLoading(true);
-    setActiveDrugSearchIndex(index);
+        setDrugSearchLoading(true);
+        setActiveDrugSearchIndex(index);
 
-    try {
-      const response = await axios.get(`${baseUrl}/api/drugs/search`, {
-        params: {
-          keyword: searchTerm,
-          page: 0,
-          size: 10,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+        try {
+          const response = await axios.get(`${baseUrl}/api/drugs/search`, {
+            params: {
+              keyword: searchTerm.trim(),
+              page: 0,
+              size: 25,
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-      setDrugSearchResults(response.data.content || []);
-      setShowDrugDropdown(true);
-    } catch (error) {
-      console.error("Error searching drugs:", error);
-      setDrugSearchResults([]);
-      setShowDrugDropdown(false);
-    } finally {
-      setDrugSearchLoading(false);
-    }
-  }, 300);
+          setDrugSearchResults(response.data.content || []);
+          setShowDrugDropdown(true);
+        } catch (error) {
+          console.error("Error searching drugs:", error);
+          setDrugSearchResults([]);
+          setShowDrugDropdown(false);
+        } finally {
+          setDrugSearchLoading(false);
+        }
+      }, 250),
+    [token],
+  );
+
+  useEffect(() => () => searchDrugs.cancel(), [searchDrugs]);
+
+  const drugDisplayName = useCallback((drug) => {
+    if (!drug) return "";
+    return (
+      drug.item?.trim() ||
+      drug.genericName?.trim() ||
+      drug.dosageForm?.trim() ||
+      drug.name?.trim() ||
+      ""
+    );
+  }, []);
+
+  const handleDrugSelect = (drug, index) => {
+    const updatedForms = [...prescriptionForms];
+    updatedForms[index] = {
+      ...updatedForms[index],
+      drugName: drugDisplayName(drug),
+    };
+    setPrescriptionForms(updatedForms);
+    setShowDrugDropdown(false);
+    setDrugSearchResults([]);
+    setActiveDrugSearchIndex(null);
+  };
 
   const fetchPatientNotes = async () => {
     setLoading(true);
@@ -496,30 +525,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
     }
   };
 
-  // 4. Add this function to handle drug selection
-  // const handleDrugSelect = (drug, index) => {
-  //   const updatedForms = [...prescriptionForms];
-  //   updatedForms[index] = {
-  //     ...updatedForms[index],
-  //     drugName: drug.dosageForm, // Use dosageForm as it contains the actual drug name
-  //   };
-  //   setPrescriptionForms(updatedForms);
-  //   setShowDrugDropdown(false);
-  //   setDrugSearchResults([]);
-  //   setActiveDrugSearchIndex(null);
-  // };
-
-  const handleDrugSelect = (drug, index) => {
-    const updatedForms = [...prescriptionForms];
-    updatedForms[index] = {
-      ...updatedForms[index],
-      drugName: drug.dosageForm || drug.name || drug.genericName || "", // Fallback to other possible fields
-    };
-    setPrescriptionForms(updatedForms);
-    setShowDrugDropdown(false);
-    setDrugSearchResults([]);
-    setActiveDrugSearchIndex(null);
-  };
+  // Drug select handled above (search + fill product name).
 
   const handleAddMorePrescription = () => {
     setPrescriptionForms([
@@ -1258,14 +1264,16 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                             }
                           }}
                           onBlur={() => {
+                            // Keep dropdown briefly so mouse/touch selection can complete.
                             setTimeout(() => {
                               setShowDrugDropdown(false);
                               setActiveDrugSearchIndex(null);
-                            }, 200);
+                            }, 250);
                           }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Start typing to search drugs..."
                           required
+                          autoComplete="off"
                         />
 
                         {/* Drug Search Dropdown */}
@@ -1297,17 +1305,20 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                               ) : drugSearchResults.length > 0 ? (
                                 drugSearchResults.map((drug, drugIndex) => (
                                   <div
-                                    key={drugIndex}
+                                    key={`${drug.item || drug.genericName || "drug"}-${drugIndex}`}
                                     className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                    onClick={() =>
-                                      handleDrugSelect(drug, index)
-                                    }
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      handleDrugSelect(drug, index);
+                                    }}
                                   >
                                     <div className="font-medium text-gray-900">
-                                      {drug.dosageForm}
+                                      {drugDisplayName(drug)}
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      Form: {drug.genericName}
+                                      {[drug.genericName, drug.dosageForm]
+                                        .filter(Boolean)
+                                        .join(" · ")}
                                     </div>
                                   </div>
                                 ))
