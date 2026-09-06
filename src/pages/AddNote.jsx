@@ -96,6 +96,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
   const [prescriptionLoading, setPrescriptionLoading] = useState(false);
   const [prescriptions, setPrescriptions] = useState([]);
   const [fetchingPrescriptions, setFetchingPrescriptions] = useState(false);
+  const [rxPage, setRxPage] = useState(0);
+  const [rxTotalPages, setRxTotalPages] = useState(0);
+  const [rxTotalElements, setRxTotalElements] = useState(0);
+  const [rxHasNext, setRxHasNext] = useState(false);
+  const [rxHasPrevious, setRxHasPrevious] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPrescriptionId, setCurrentPrescriptionId] = useState(null);
   const [editingNoteId, setEditingNoteId] = useState(null);
@@ -125,9 +130,18 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
 
   useEffect(() => {
     if (activeTab === "Medication" && patientId) {
-      fetchPatientPrescriptions();
+      fetchPatientPrescriptions(0);
     }
   }, [activeTab, patientId]);
+
+  const RX_PAGE_SIZE = 5;
+
+  const pickPrescriptionRows = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.items)) return payload.items;
+    if (Array.isArray(payload?.content)) return payload.content;
+    return [];
+  };
 
   const searchDrugs = useMemo(
     () =>
@@ -169,22 +183,55 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
 
   useEffect(() => () => searchDrugs.cancel(), [searchDrugs]);
 
+  const isLikelyCategory = (value) => {
+    const t = String(value || "").trim();
+    if (t.length < 6) return false;
+    // Catalog groups often arrive as ALL CAPS categories, e.g. MULTIVITAMINS & MINERALS
+    return t === t.toUpperCase() && /[A-Z]/.test(t);
+  };
+
+  const isLikelyFormOnly = (value) => {
+    const t = String(value || "").trim().toLowerCase();
+    if (!t) return false;
+    return /^(tablet|capsule|syrup|injection|cream|ointment|suspension|drops|solution|powder|gel|lotion|oral)\b/.test(
+      t,
+    );
+  };
+
+  /** Prefer the specific product/brand the doctor will prescribe, not the category. */
   const drugDisplayName = useCallback((drug) => {
     if (!drug) return "";
-    return (
-      drug.item?.trim() ||
-      drug.genericName?.trim() ||
-      drug.dosageForm?.trim() ||
-      drug.name?.trim() ||
-      ""
-    );
+    const candidates = [drug.dosageForm, drug.item, drug.genericName, drug.name]
+      .map((v) => String(v || "").trim())
+      .filter(Boolean);
+
+    const product = candidates.find((c) => !isLikelyCategory(c) && !isLikelyFormOnly(c));
+    if (product) return product;
+
+    const nonCategory = candidates.find((c) => !isLikelyCategory(c));
+    return nonCategory || candidates[0] || "";
   }, []);
+
+  const drugSecondaryLabel = useCallback(
+    (drug) => {
+      if (!drug) return "";
+      const primary = drugDisplayName(drug);
+      // Show form only — never the category group name.
+      const formCandidates = [drug.genericName, drug.dosageForm]
+        .map((v) => String(v || "").trim())
+        .filter((v) => v && v !== primary && (isLikelyFormOnly(v) || /oral|coated|gelatin|mg|ml/i.test(v)));
+      return formCandidates[0] || "";
+    },
+    [drugDisplayName],
+  );
 
   const handleDrugSelect = (drug, index) => {
     const updatedForms = [...prescriptionForms];
+    const name = drugDisplayName(drug);
     updatedForms[index] = {
       ...updatedForms[index],
-      drugName: drugDisplayName(drug),
+      drugName: name,
+      // If dosage is empty and the catalog form looks useful, leave dosage for the doctor to set.
     };
     setPrescriptionForms(updatedForms);
     setShowDrugDropdown(false);
@@ -234,7 +281,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
     }
   };
 
-  const fetchPatientPrescriptions = async () => {
+  const fetchPatientPrescriptions = async (pageNum = rxPage) => {
     setFetchingPrescriptions(true);
     try {
       const response = await axios.get(
@@ -244,14 +291,23 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+          params: { page: pageNum, size: RX_PAGE_SIZE },
+        },
       );
-      const sortedPrescriptions = response.data.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      const data = response.data || {};
+      const rows = pickPrescriptionRows(data);
+      const sorted = [...rows].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
       );
-      setPrescriptions(sortedPrescriptions);
+      setPrescriptions(sorted);
+      setRxPage(typeof data.page === "number" ? data.page : pageNum);
+      setRxTotalPages(data.totalPages || 0);
+      setRxTotalElements(data.totalElements || sorted.length);
+      setRxHasNext(Boolean(data.hasNext));
+      setRxHasPrevious(Boolean(data.hasPrevious));
     } catch (err) {
       console.error("Failed to fetch prescriptions:", err);
+      setPrescriptions([]);
     } finally {
       setFetchingPrescriptions(false);
     }
@@ -479,7 +535,7 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
       );
       setIsPrescriptionModalOpen(false);
       resetPrescriptionForm();
-      fetchPatientPrescriptions();
+      fetchPatientPrescriptions(rxPage);
       toast.success("Prescription updated successfully!");
       setShowSuccessModal(true); // ✅ Only show success modal on successful update
     } catch (err) {
@@ -1120,6 +1176,35 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                         <p>No prescriptions found for this patient.</p>
                       </div>
                     )}
+
+                    {rxTotalElements > 0 && (
+                      <div className="flex flex-col gap-2 border-t border-gray-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-gray-500">
+                          Showing {prescriptions.length} of {rxTotalElements}
+                          {rxTotalPages > 0
+                            ? ` · Page ${rxPage + 1} of ${rxTotalPages}`
+                            : ""}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={!rxHasPrevious || fetchingPrescriptions}
+                            onClick={() => fetchPatientPrescriptions(rxPage - 1)}
+                            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                          >
+                            Previous
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!rxHasNext || fetchingPrescriptions}
+                            onClick={() => fetchPatientPrescriptions(rxPage + 1)}
+                            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1315,11 +1400,11 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
                                     <div className="font-medium text-gray-900">
                                       {drugDisplayName(drug)}
                                     </div>
-                                    <div className="text-sm text-gray-500">
-                                      {[drug.genericName, drug.dosageForm]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                    </div>
+                                    {drugSecondaryLabel(drug) ? (
+                                      <div className="text-sm text-gray-500">
+                                        {drugSecondaryLabel(drug)}
+                                      </div>
+                                    ) : null}
                                   </div>
                                 ))
                               ) : (
