@@ -90,7 +90,7 @@ const Sidebar = () => {
                   onClick={closeSidebar}
                 >
                   <FaUser className="h-5 w-5 shrink-0" />
-                  View profile
+                  Profile
                 </NavLink>
               </li>
               <li>

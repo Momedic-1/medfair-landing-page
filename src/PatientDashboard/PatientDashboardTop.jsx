@@ -1,4 +1,4 @@
-import { Phone, CalendarDays, Stethoscope, FlaskConical, Users, FileText } from "lucide-react";
+import { Phone, CalendarDays, Stethoscope, FlaskConical, Users, FileUp } from "lucide-react";
 import ActionCard from "../components/reuseables/ActionCard";
 import DashboardAlert from "../components/dashboard/shared/DashboardAlert";
 import StatCard from "../components/dashboard/shared/StatCard";
@@ -222,7 +222,11 @@ export function PatientDashboardTop({
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Notes", icon: <FileText size={18} />, path: "patient-notes" },
+          {
+            label: "Documents",
+            icon: <FileUp size={18} />,
+            path: "profile?section=documents",
+          },
           {
             label: "Labs",
             icon: <FlaskConical size={18} />,
@@ -232,7 +236,7 @@ export function PatientDashboardTop({
           { label: "Profile", icon: <Stethoscope size={18} />, path: "profile" },
         ].map((item) => (
           <a
-            key={item.path}
+            key={item.label}
             href={`/patient-dashboard/${item.path}`}
             className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-[#020e7c] shadow-sm transition hover:border-blue-200 hover:bg-blue-50/50"
           >
