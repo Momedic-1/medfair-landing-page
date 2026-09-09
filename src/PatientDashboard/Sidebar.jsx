@@ -58,7 +58,7 @@
 //                 onClick={toggleSidebar}
 //               >
 //                 <img src={profile} />
-//                 <span className="ml-3">View Profile</span>
+//                 <span className="ml-3">Profile</span>
 //               </NavLink>
 //               <NavLink
 //                 to="/patient-dashboard/contact-us"
@@ -349,7 +349,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                 onClick={toggleSidebar}
               >
                 <img src={profile} alt="Profile" />
-                <span className="ml-3">View Profile</span>
+                <span className="ml-3">Profile</span>
               </NavLink>
 
               {/* Extra links only if not in /partners */}
@@ -612,7 +612,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       }
                     >
                       <UserCircle className="w-5 h-5" />
-                      View Profile
+                      Profile
                     </NavLink>
                   </li>
                   <li>

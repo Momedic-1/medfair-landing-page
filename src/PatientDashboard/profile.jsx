@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Tab, Transition, Dialog } from "@headlessui/react";
+import { useSearchParams } from "react-router-dom";
+import { Tab, Transition, Dialog, Listbox, ListboxButton, ListboxOption, ListboxOptions, ListboxLabel } from "@headlessui/react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import {
@@ -8,6 +9,8 @@ import {
   HeartPulse,
   FileUp,
   MapPin,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { baseUrl } from "../env";
 import { capitalizeFirstLetter, getId, getToken, getUserData } from "../utils";
@@ -29,8 +32,18 @@ function classNames(...classes) {
 }
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState(0);
+  const [searchParams] = useSearchParams();
+  const initialSection = searchParams.get("section");
+  const [activeTab, setActiveTab] = useState(
+    initialSection === "documents" ? 1 : 0
+  );
   const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    if (searchParams.get("section") === "documents") {
+      setActiveTab(1);
+    }
+  }, [searchParams]);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -409,15 +422,20 @@ export default function Profile() {
     try {
       let response;
       switch (activeTab) {
-        case 0: // Profile
+        case 0: // Profile — API expects nested { profile: { ... } }
           response = await axios.put(
             `${baseUrl}/api/patient-profile/update/${userId}`,
             {
-              weight: profileData.weight,
-              bloodGroup: profileData.bloodGroup,
-              genotype: profileData.genotype,
-              dateOfBirth: profileData.dateOfBirth,
-              imageUrl: profileData.imageUrl,
+              profile: {
+                weight:
+                  profileData.weight === "" || profileData.weight == null
+                    ? null
+                    : Number(profileData.weight),
+                bloodGroup: profileData.bloodGroup || null,
+                genotype: profileData.genotype || null,
+                dateOfBirth: profileData.dateOfBirth || null,
+                imageUrl: profileData.imageUrl || null,
+              },
             },
             {
               headers: {
@@ -426,7 +444,30 @@ export default function Profile() {
             }
           );
           break;
-        case 1: // Emergency Contact
+        case 1: // Documents — uploaded immediately via handleDocumentUpload
+          toast.info("Documents are uploaded immediately when selected");
+          break;
+        case 2: // Medical History (add new entry)
+          response = await axios.post(
+            `${baseUrl}/api/patient/medical-history/${userId}`,
+            {
+              condition: newMedicalEntry.condition,
+              allergy: newMedicalEntry.allergy,
+              description: newMedicalEntry.description,
+              diagnosedDate: newMedicalEntry.diagnosedDate || null,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (response) {
+            setNewMedicalEntry({ condition: "", allergy: "", description: "", diagnosedDate: "" });
+            fetchFullProfile();
+          }
+          break;
+        case 3: // Emergency Contact
           response = await axios.put(
             `${baseUrl}/api/patient/emergency-contact/${userId}`,
             {
@@ -441,10 +482,6 @@ export default function Profile() {
               },
             }
           );
-          break;
-        case 3: // File Upload - Remove this case since documents are now uploaded immediately
-          // Documents are now handled by handleDocumentUpload function
-          toast.info("Documents are uploaded immediately when selected");
           break;
         case 4: // Address
           try {
@@ -475,31 +512,11 @@ export default function Profile() {
             } else throw e;
           }
           break;
-        case 2: // Medical History (add new entry)
-          response = await axios.post(
-            `${baseUrl}/api/patient/medical-history/${userId}`,
-            {
-              condition: newMedicalEntry.condition,
-              allergy: newMedicalEntry.allergy,
-              description: newMedicalEntry.description,
-              diagnosedDate: newMedicalEntry.diagnosedDate || null,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          if (response) {
-            setNewMedicalEntry({ condition: "", allergy: "", description: "", diagnosedDate: "" });
-            fetchFullProfile();
-          }
-          break;
         default:
           break;
       }
 
-      if (response && activeTab !== 3) {
+      if (response && activeTab !== 1) {
         toast.success("Profile updated successfully");
       }
     } catch (error) {
@@ -509,11 +526,12 @@ export default function Profile() {
     }
   };
 
+  // Profile first, Documents second — easy to find on mobile dropdown
   const tabs = [
     { name: "Profile", icon: User },
-    { name: "Emergency", icon: Phone },
-    { name: "Medical", icon: HeartPulse },
     { name: "Documents", icon: FileUp },
+    { name: "Medical", icon: HeartPulse },
+    { name: "Emergency", icon: Phone },
     { name: "Address", icon: MapPin },
   ];
 
@@ -555,8 +573,55 @@ export default function Profile() {
             />
 
             <div className="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
-              <Tab.Group onChange={setActiveTab}>
-                <Tab.List className="flex gap-1 overflow-x-auto border-b border-gray-100 p-2 sm:p-3">
+              <Tab.Group selectedIndex={activeTab} onChange={setActiveTab}>
+                {/* Mobile: compact custom dropdown (native select popup was oversized) */}
+                <div className="border-b border-gray-100 p-3 sm:hidden">
+                  <Listbox value={activeTab} onChange={setActiveTab}>
+                    <ListboxLabel className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Section
+                    </ListboxLabel>
+                    <div className="relative">
+                      <ListboxButton className="relative flex h-11 w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 text-left text-sm font-semibold text-[#020e7c] focus:border-[#020e7c] focus:outline-none focus:ring-2 focus:ring-[#020e7c]/20">
+                        <span className="flex min-w-0 items-center gap-2">
+                          {React.createElement(tabs[activeTab].icon, {
+                            className: "h-4 w-4 shrink-0",
+                          })}
+                          <span className="truncate">{tabs[activeTab].name}</span>
+                        </span>
+                        <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+                      </ListboxButton>
+
+                      <ListboxOptions className="absolute left-0 right-0 z-50 mt-1 max-h-[min(16rem,45vh)] overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg focus:outline-none">
+                        {tabs.map((tab, index) => (
+                          <ListboxOption
+                            key={tab.name}
+                            value={index}
+                            className={({ focus, selected }) =>
+                              classNames(
+                                "flex cursor-pointer items-center gap-2 px-3 py-2.5 text-sm",
+                                focus ? "bg-blue-50 text-[#020e7c]" : "text-gray-700",
+                                selected ? "font-semibold text-[#020e7c]" : "font-medium"
+                              )
+                            }
+                          >
+                            {({ selected }) => (
+                              <>
+                                <tab.icon className="h-4 w-4 shrink-0" />
+                                <span className="flex-1">{tab.name}</span>
+                                {selected && (
+                                  <Check className="h-4 w-4 shrink-0 text-[#020e7c]" />
+                                )}
+                              </>
+                            )}
+                          </ListboxOption>
+                        ))}
+                      </ListboxOptions>
+                    </div>
+                  </Listbox>
+                </div>
+
+                {/* Desktop: normal tabs */}
+                <Tab.List className="hidden gap-1 border-b border-gray-100 p-2 sm:flex sm:p-3">
                   {tabs.map((tab) => (
                     <Tab
                       key={tab.name}
@@ -662,207 +727,6 @@ export default function Profile() {
                         <ProfileSaveButton loading={loading} />
                       </form>
                     </ProfileSectionCard>
-                  </Tab.Panel>
-
-                  <Tab.Panel>
-                    <ProfileSectionCard
-                      title="Emergency contact"
-                      description="Someone we can reach if you need urgent assistance during care."
-                    >
-                      <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                          <div>
-                            <label className={profileLabelClass}>Name</label>
-                            <input
-                              type="text"
-                              name="emergencyContact.name"
-                              value={profileData.emergencyContact.name}
-                              onChange={handleChange}
-                              className={profileInputClass}
-                              placeholder="Full name"
-                            />
-                          </div>
-                          <div>
-                            <label className={profileLabelClass}>Relationship</label>
-                            <input
-                              type="text"
-                              name="emergencyContact.relationship"
-                              value={capitalizeFirstLetter(
-                                profileData.emergencyContact.relationship || ""
-                              )}
-                              onChange={handleChange}
-                              className={profileInputClass}
-                              placeholder="e.g. Spouse, Parent"
-                            />
-                          </div>
-                          <div>
-                            <label className={profileLabelClass}>Phone</label>
-                            <input
-                              type="tel"
-                              name="emergencyContact.phoneNumber"
-                              value={profileData.emergencyContact.phoneNumber}
-                              onChange={handleChange}
-                              className={profileInputClass}
-                              placeholder="+234 …"
-                            />
-                          </div>
-                          <div>
-                            <label className={profileLabelClass}>Email</label>
-                            <input
-                              type="email"
-                              name="emergencyContact.email"
-                              value={profileData.emergencyContact.email}
-                              onChange={handleChange}
-                              className={profileInputClass}
-                              placeholder="email@example.com"
-                            />
-                          </div>
-                        </div>
-                        <ProfileSaveButton loading={loading} />
-                      </form>
-                    </ProfileSectionCard>
-                  </Tab.Panel>
-
-                  <Tab.Panel>
-                    <div className="space-y-6">
-                      {Array.isArray(profileData.medicalHistory) &&
-                        profileData.medicalHistory.length > 0 && (
-                          <ProfileSectionCard
-                            title="Recorded history"
-                            description="Entries saved to your Medfair health record."
-                          >
-                            <div className="space-y-3">
-                              {profileData.medicalHistory.map((entry, index) => {
-                                const hasContent =
-                                  entry.condition ||
-                                  entry.allergy ||
-                                  entry.description ||
-                                  entry.diagnosedDate;
-                                if (!hasContent) return null;
-                                return (
-                                  <div
-                                    key={index}
-                                    className="rounded-xl border border-gray-100 bg-gradient-to-r from-slate-50 to-white p-4"
-                                  >
-                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                      {entry.condition && (
-                                        <div>
-                                          <p className="text-xs font-medium text-gray-500">
-                                            Condition
-                                          </p>
-                                          <p className="text-sm text-gray-900">
-                                            {entry.condition}
-                                          </p>
-                                        </div>
-                                      )}
-                                      {entry.allergy && (
-                                        <div>
-                                          <p className="text-xs font-medium text-gray-500">
-                                            Allergy
-                                          </p>
-                                          <p className="text-sm text-gray-900">
-                                            {entry.allergy}
-                                          </p>
-                                        </div>
-                                      )}
-                                      {entry.description && (
-                                        <div className="sm:col-span-2">
-                                          <p className="text-xs font-medium text-gray-500">
-                                            Description
-                                          </p>
-                                          <p className="text-sm text-gray-900">
-                                            {entry.description}
-                                          </p>
-                                        </div>
-                                      )}
-                                      {entry.diagnosedDate && (
-                                        <div>
-                                          <p className="text-xs font-medium text-gray-500">
-                                            Diagnosed date
-                                          </p>
-                                          <p className="text-sm text-gray-900">
-                                            {new Date(
-                                              entry.diagnosedDate
-                                            ).toLocaleDateString()}
-                                          </p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </ProfileSectionCard>
-                        )}
-
-                      <ProfileSectionCard
-                        title="Add new entry"
-                        description="Allergies, conditions, and notes visible to your doctors."
-                      >
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                          <div>
-                            <label className={profileLabelClass}>Allergies</label>
-                            <textarea
-                              value={newMedicalEntry.allergy}
-                              onChange={(e) =>
-                                setNewMedicalEntry((prev) => ({
-                                  ...prev,
-                                  allergy: e.target.value,
-                                }))
-                              }
-                              rows={2}
-                              className={profileTextareaClass}
-                              placeholder="e.g. Penicillin, peanuts"
-                            />
-                          </div>
-                          <div>
-                            <label className={profileLabelClass}>Chronic conditions</label>
-                            <textarea
-                              value={newMedicalEntry.condition}
-                              onChange={(e) =>
-                                setNewMedicalEntry((prev) => ({
-                                  ...prev,
-                                  condition: e.target.value,
-                                }))
-                              }
-                              rows={2}
-                              className={profileTextareaClass}
-                              placeholder="e.g. Hypertension, asthma"
-                            />
-                          </div>
-                          <div>
-                            <label className={profileLabelClass}>Description</label>
-                            <textarea
-                              value={newMedicalEntry.description}
-                              onChange={(e) =>
-                                setNewMedicalEntry((prev) => ({
-                                  ...prev,
-                                  description: e.target.value,
-                                }))
-                              }
-                              rows={2}
-                              className={profileTextareaClass}
-                              placeholder="Additional notes"
-                            />
-                          </div>
-                          <div>
-                            <label className={profileLabelClass}>Diagnosed date</label>
-                            <input
-                              type="date"
-                              value={newMedicalEntry.diagnosedDate}
-                              onChange={(e) =>
-                                setNewMedicalEntry((prev) => ({
-                                  ...prev,
-                                  diagnosedDate: e.target.value,
-                                }))
-                              }
-                              className={profileInputClass}
-                            />
-                          </div>
-                          <ProfileSaveButton loading={loading} label="Add entry" />
-                        </form>
-                      </ProfileSectionCard>
-                    </div>
                   </Tab.Panel>
 
                   <Tab.Panel>
@@ -1273,6 +1137,207 @@ export default function Profile() {
                           </ProfileSectionCard>
                         )}
                     </div>
+                  </Tab.Panel>
+
+                  <Tab.Panel>
+                    <div className="space-y-6">
+                      {Array.isArray(profileData.medicalHistory) &&
+                        profileData.medicalHistory.length > 0 && (
+                          <ProfileSectionCard
+                            title="Recorded history"
+                            description="Entries saved to your Medfair health record."
+                          >
+                            <div className="space-y-3">
+                              {profileData.medicalHistory.map((entry, index) => {
+                                const hasContent =
+                                  entry.condition ||
+                                  entry.allergy ||
+                                  entry.description ||
+                                  entry.diagnosedDate;
+                                if (!hasContent) return null;
+                                return (
+                                  <div
+                                    key={index}
+                                    className="rounded-xl border border-gray-100 bg-gradient-to-r from-slate-50 to-white p-4"
+                                  >
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                      {entry.condition && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Condition
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {entry.condition}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {entry.allergy && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Allergy
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {entry.allergy}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {entry.description && (
+                                        <div className="sm:col-span-2">
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Description
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {entry.description}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {entry.diagnosedDate && (
+                                        <div>
+                                          <p className="text-xs font-medium text-gray-500">
+                                            Diagnosed date
+                                          </p>
+                                          <p className="text-sm text-gray-900">
+                                            {new Date(
+                                              entry.diagnosedDate
+                                            ).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </ProfileSectionCard>
+                        )}
+
+                      <ProfileSectionCard
+                        title="Add new entry"
+                        description="Allergies, conditions, and notes visible to your doctors."
+                      >
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                          <div>
+                            <label className={profileLabelClass}>Allergies</label>
+                            <textarea
+                              value={newMedicalEntry.allergy}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  allergy: e.target.value,
+                                }))
+                              }
+                              rows={2}
+                              className={profileTextareaClass}
+                              placeholder="e.g. Penicillin, peanuts"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Chronic conditions</label>
+                            <textarea
+                              value={newMedicalEntry.condition}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  condition: e.target.value,
+                                }))
+                              }
+                              rows={2}
+                              className={profileTextareaClass}
+                              placeholder="e.g. Hypertension, asthma"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Description</label>
+                            <textarea
+                              value={newMedicalEntry.description}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  description: e.target.value,
+                                }))
+                              }
+                              rows={2}
+                              className={profileTextareaClass}
+                              placeholder="Additional notes"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Diagnosed date</label>
+                            <input
+                              type="date"
+                              value={newMedicalEntry.diagnosedDate}
+                              onChange={(e) =>
+                                setNewMedicalEntry((prev) => ({
+                                  ...prev,
+                                  diagnosedDate: e.target.value,
+                                }))
+                              }
+                              className={profileInputClass}
+                            />
+                          </div>
+                          <ProfileSaveButton loading={loading} label="Add entry" />
+                        </form>
+                      </ProfileSectionCard>
+                    </div>
+                  </Tab.Panel>
+
+                  <Tab.Panel>
+                    <ProfileSectionCard
+                      title="Emergency contact"
+                      description="Someone we can reach if you need urgent assistance during care."
+                    >
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                          <div>
+                            <label className={profileLabelClass}>Name</label>
+                            <input
+                              type="text"
+                              name="emergencyContact.name"
+                              value={profileData.emergencyContact.name}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="Full name"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Relationship</label>
+                            <input
+                              type="text"
+                              name="emergencyContact.relationship"
+                              value={capitalizeFirstLetter(
+                                profileData.emergencyContact.relationship || ""
+                              )}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="e.g. Spouse, Parent"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Phone</label>
+                            <input
+                              type="tel"
+                              name="emergencyContact.phoneNumber"
+                              value={profileData.emergencyContact.phoneNumber}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="+234 …"
+                            />
+                          </div>
+                          <div>
+                            <label className={profileLabelClass}>Email</label>
+                            <input
+                              type="email"
+                              name="emergencyContact.email"
+                              value={profileData.emergencyContact.email}
+                              onChange={handleChange}
+                              className={profileInputClass}
+                              placeholder="email@example.com"
+                            />
+                          </div>
+                        </div>
+                        <ProfileSaveButton loading={loading} />
+                      </form>
+                    </ProfileSectionCard>
                   </Tab.Panel>
 
                   <Tab.Panel>
