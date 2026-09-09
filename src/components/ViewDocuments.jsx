@@ -52,7 +52,7 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
   const role = resolveViewerRole();
   const isDoctor = role === "DOCTOR";
 
-  const fetchDocuments = useCallback(async () => {
+  const fetchDocuments = useCallback(async ({ silent = false } = {}) => {
     if (!userId || !token) {
       const missingItems = [];
       if (!userId) missingItems.push("patient ID");
@@ -64,8 +64,11 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
     }
 
     try {
-      setLoading(true);
-      setError(null);
+      // Silent polls must not flip loading — that unmounts the open PDF/image preview.
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
 
       const doctorUrl = `${baseUrl}/api/doctor/patients/${userId}/documents`;
       const patientUrl = `${baseUrl}/api/patient/documents/${userId}`;
@@ -99,6 +102,7 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
           ? data.documents
           : [];
       setDocuments(list);
+      if (silent) setError(null);
     } catch (err) {
       const status = err.response?.status;
       const apiMessage =
@@ -106,14 +110,19 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
         err.response?.data?.error ||
         (typeof err.response?.data === "string" ? err.response.data : null) ||
         err.message;
-      setError(
-        status
-          ? `Failed to load documents (${status}): ${apiMessage}`
-          : `Failed to load documents: ${apiMessage}`,
-      );
-      setDocuments([]);
+      // Keep the current list + open preview on background poll failures.
+      if (!silent) {
+        setError(
+          status
+            ? `Failed to load documents (${status}): ${apiMessage}`
+            : `Failed to load documents: ${apiMessage}`,
+        );
+        setDocuments([]);
+      } else {
+        console.warn("Silent document refresh failed:", apiMessage);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [userId, token, isDoctor]);
 
@@ -123,9 +132,14 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
 
   useEffect(() => {
     if (!userId || !token) return undefined;
-    const interval = window.setInterval(fetchDocuments, 15000);
+    // Pause polling while a preview is open so the iframe never remounts mid-view.
+    if (preview) return undefined;
+    const interval = window.setInterval(
+      () => fetchDocuments({ silent: true }),
+      15000,
+    );
     return () => window.clearInterval(interval);
-  }, [userId, token, fetchDocuments]);
+  }, [userId, token, fetchDocuments, preview]);
 
   const getCategoryColor = (category) => {
     const colors = {
@@ -265,7 +279,8 @@ const ViewDocuments = ({ patientId: patientIdProp = null, refreshKey = 0 }) => {
     anchor.click();
   };
 
-  if (loading) {
+  // Only block the whole view on the first load — never while a document preview is open.
+  if (loading && documents.length === 0 && !preview) {
     return (
       <div className="md:p-6 max-w-4xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
