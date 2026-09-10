@@ -16,10 +16,7 @@ import { isSlotDateTimeExpired } from "../../utils/slotDateTime";
 import DoctorAvatar, {
   getDoctorDisplayName,
 } from "./DoctorAvatar";
-import DoctorSlotsByDate from "../../components/doctor/DoctorSlotsByDate";
-import TodaySlotsPreview, {
-  countFutureDays,
-} from "../../components/doctor/TodaySlotsPreview";
+import TodaySlotsPreview from "../../components/doctor/TodaySlotsPreview";
 import { getDoctorSubtitleForBookingCard } from "../../utils/doctorDisplayMeta";
 import { normalizeSpecialistSlotGroups } from "../../utils/normalizeSpecialistSlots";
 import {
@@ -98,7 +95,6 @@ function SpecialistCard({
   };
 
   const subtitle = getDoctorSubtitleForBookingCard(profile);
-  const upcomingDays = countFutureDays(slotGroups);
   const totalSlots = slotGroups.reduce(
     (n, g) => n + (g.slots?.length || 0),
     0
@@ -149,6 +145,7 @@ function SpecialistCard({
         </div>
       </div>
 
+      {/* List view: today only. Future days open on doctor profile. */}
       <div className="border-t border-gray-100 px-4 py-4 sm:px-5">
         <TodaySlotsPreview
           slotGroups={slotGroups}
@@ -165,33 +162,6 @@ function SpecialistCard({
           onViewProfile={viewProfile}
         />
       </div>
-
-      {(upcomingDays > 0 || totalSlots > 0) && (
-      <div className="border-t border-gray-50 p-4 sm:p-5">
-        {upcomingDays > 0 && (
-          <>
-            <h4 className="mb-2 text-sm font-semibold text-gray-700">
-              Upcoming dates
-            </h4>
-            <DoctorSlotsByDate
-              slotGroups={slotGroups}
-              excludeToday
-              isSlotBooked={isSlotBooked}
-              isSlotExpired={isSlotExpired ?? isSlotDateTimeExpired}
-              onSlotClick={(e, slot) =>
-                onSlotClick(
-                  e,
-                  normalized,
-                  `${slot.date}T${slot.time}`,
-                  slot.slotId
-                )
-              }
-              emptyMessage=""
-            />
-          </>
-        )}
-      </div>
-      )}
 
       {totalSlots === 0 && (
       <div className="border-t border-gray-50 px-4 pb-4 sm:px-5 sm:pb-5">

@@ -54,9 +54,9 @@ export default function TodaySlotsPreview({
           <button
             type="button"
             onClick={onViewProfile}
-            className="mt-2 w-full text-center text-xs font-semibold text-[#020e7c] hover:underline"
+            className="mt-3 w-full rounded-xl border border-[#020e7c]/20 bg-[#020e7c]/5 px-3 py-2.5 text-sm font-semibold text-[#020e7c] transition hover:bg-[#020e7c]/10"
           >
-            View {otherDays} upcoming day{otherDays !== 1 ? "s" : ""} on profile →
+            Upcoming days ({otherDays}) →
           </button>
         ) : (
           <p className="mt-1 text-center text-xs text-gray-500">
@@ -116,9 +116,9 @@ export default function TodaySlotsPreview({
         <button
           type="button"
           onClick={onViewProfile}
-          className="mt-3 w-full text-left text-xs font-semibold text-[#020e7c] hover:underline"
+          className="mt-3 w-full rounded-xl border border-[#020e7c]/20 bg-white/80 px-3 py-2.5 text-sm font-semibold text-[#020e7c] transition hover:bg-[#020e7c]/5"
         >
-          More dates on full profile ({otherDays} day{otherDays !== 1 ? "s" : ""}) →
+          Upcoming days ({otherDays}) →
         </button>
       )}
     </div>
