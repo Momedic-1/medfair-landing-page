@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import DashboardIcon from "../assets/DashboardIcon.jsx";
 import DocumentsIcon from "../assets/DocumentIcon.jsx";
 import FinanceIcon from "../assets/FinanceIcon.jsx";
+import SettingsIcon from "../assets/SettingsIcon.jsx";
 import { FaUser, FaUserEdit } from "react-icons/fa";
 import Logout from "../Logout.jsx";
 import { capitalizeFirstLetter } from "../utils";
@@ -123,6 +124,16 @@ const Sidebar = () => {
                 <NavLink to="/doctor-dashboard/chat" className={linkClass} onClick={closeSidebar}>
                   <span className="text-lg leading-none">💬</span>
                   Chat
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/doctor-dashboard/settings"
+                  className={linkClass}
+                  onClick={closeSidebar}
+                >
+                  <SettingsIcon />
+                  Settings
                 </NavLink>
               </li>
               <li>
