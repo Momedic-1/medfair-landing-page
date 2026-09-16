@@ -73,7 +73,7 @@ function DoctorChatModal({ threadKey, open, closesAt, patientName, onClose }) {
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <p className="font-semibold text-slate-900">
-              Chat with {patientName || "patient"}
+              {patientName || "Patient"}
             </p>
             <p className="text-xs text-slate-500">
               {open
@@ -229,8 +229,9 @@ export default function DoctorConsultationChat() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Patient chats</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Past consultations stay here. Patients can message for 24 hours after a
-            consult; after that you can still view the thread.
+            One chat per patient (like WhatsApp). The most recent consult or message
+            stays on top. Messaging is open for 24 hours after a consult; after that
+            you can still view the thread.
           </p>
         </div>
         <button
@@ -269,11 +270,11 @@ export default function DoctorConsultationChat() {
                       {item.patientName || "Patient"}
                     </p>
                     <p className="text-sm text-slate-600">
-                      {item.category} · {item.specializationLabel || item.channel} ·{" "}
-                      {item.status}
+                      {item.category} · {item.specializationLabel || item.channel}
+                      {item.visitCount > 1 ? ` · ${item.visitCount} visits` : ""}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Consult {formatWhen(item.dateTime)}
+                      Last activity {formatWhen(item.dateTime)}
                       {item.chatOpen
                         ? ` · Open until ${formatWhen(item.chatClosesAt)}`
                         : item.chatClosesAt
@@ -281,8 +282,7 @@ export default function DoctorConsultationChat() {
                           : ""}
                     </p>
                   </div>
-                  {(item.chatOpen || item.status === "completed") && (
-                    <button
+                  <button
                       type="button"
                       onClick={() =>
                         setChatTarget({
@@ -297,7 +297,6 @@ export default function DoctorConsultationChat() {
                       <MessageCircle className="h-4 w-4" />
                       {item.chatOpen ? "Open chat" : "View chat"}
                     </button>
-                  )}
                 </div>
               </li>
             ))}

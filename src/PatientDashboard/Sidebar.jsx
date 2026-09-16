@@ -382,7 +382,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     onClick={toggleSidebar}
                   >
                     <FaCommentMedical />
-                    <span className="ml-3">Consultations</span>
+                    <span className="ml-3">Chats</span>
                   </NavLink>
 
                   <NavLink

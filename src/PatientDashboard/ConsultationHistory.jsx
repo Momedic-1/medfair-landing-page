@@ -72,11 +72,11 @@ function ConsultationChat({ threadKey, open, closesAt, onClose }) {
       <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
-            <p className="font-semibold text-slate-900">Consultation chat</p>
+            <p className="font-semibold text-slate-900">Chat with your doctor</p>
             <p className="text-xs text-slate-500">
               {open
                 ? `Open until ${formatWhen(closesAt)}`
-                : "This chat window has closed (24 hours)"}
+                : "This chat window has closed (24 hours) — view only"}
             </p>
           </div>
           <button type="button" className="text-sm text-slate-600" onClick={onClose}>
@@ -212,10 +212,11 @@ export default function ConsultationHistory() {
     <div className="mx-auto max-w-4xl px-3 py-6 sm:px-6">
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Consultation history</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Doctor chats</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Past GP and specialist visits. Chat with your doctor for 24 hours after the
-            consultation (free in-app messaging).
+            One chat per doctor (like WhatsApp). Your most recent consult or message
+            stays on top. You can message for 24 hours after a consultation; after that
+            you can still view the thread.
           </p>
         </div>
         <button
@@ -252,10 +253,17 @@ export default function ConsultationHistory() {
                   <div>
                     <p className="font-semibold text-slate-900">{item.doctorName}</p>
                     <p className="text-sm text-slate-600">
-                      {item.category} · {item.specializationLabel || item.channel} ·{" "}
-                      {item.status}
+                      {item.category} · {item.specializationLabel || item.channel}
+                      {item.visitCount > 1 ? ` · ${item.visitCount} visits` : ""}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">{formatWhen(item.dateTime)}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Last activity {formatWhen(item.dateTime)}
+                      {item.chatOpen
+                        ? ` · Open until ${formatWhen(item.chatClosesAt)}`
+                        : item.chatClosesAt
+                          ? ` · Chat closed ${formatWhen(item.chatClosesAt)}`
+                          : ""}
+                    </p>
                     {item.organizationName && (
                       <p className="mt-1 text-xs text-emerald-700">
                         Paid by {item.organizationName} (organization)
@@ -265,8 +273,7 @@ export default function ConsultationHistory() {
                       <p className="mt-1 text-xs text-slate-500">Paid with personal plan</p>
                     )}
                   </div>
-                  {(item.chatOpen || item.status === "completed") && (
-                    <button
+                  <button
                       type="button"
                       onClick={() =>
                         setChatTarget({
@@ -280,7 +287,6 @@ export default function ConsultationHistory() {
                       <MessageCircle className="h-4 w-4" />
                       {item.chatOpen ? "Open chat" : "View chat"}
                     </button>
-                  )}
                 </div>
               </li>
             ))}
