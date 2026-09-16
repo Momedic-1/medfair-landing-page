@@ -214,9 +214,8 @@ export default function ConsultationHistory() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Doctor chats</h1>
           <p className="mt-1 text-sm text-slate-600">
-            One chat per doctor (like WhatsApp). Your most recent consult or message
-            stays on top. You can message for 24 hours after a consultation; after that
-            you can still view the thread.
+            You can message for 24 hours after a consultation; after that you can still
+            view the thread.
           </p>
         </div>
         <button

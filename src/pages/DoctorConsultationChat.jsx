@@ -229,9 +229,8 @@ export default function DoctorConsultationChat() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Patient chats</h1>
           <p className="mt-1 text-sm text-slate-600">
-            One chat per patient (like WhatsApp). The most recent consult or message
-            stays on top. Messaging is open for 24 hours after a consult; after that
-            you can still view the thread.
+            Messaging is open for 24 hours after a consult; after that you can still
+            view the thread.
           </p>
         </div>
         <button
