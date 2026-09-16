@@ -463,6 +463,25 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
               )}
 
               <NavLink
+                to={
+                  isPartnersRoute
+                    ? "/patient-dashboard/partners/settings"
+                    : "/patient-dashboard/settings"
+                }
+                className={({ isActive }) =>
+                  `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                    isActive
+                      ? "bg-white text-[#020E7C]"
+                      : "hover:bg-white hover:text-[#020E7C]"
+                  }`
+                }
+                onClick={toggleSidebar}
+              >
+                <SettingsIcon />
+                <span className="ml-3">Settings</span>
+              </NavLink>
+
+              <NavLink
                 to="/patient-dashboard/contact-us"
                 className={({ isActive }) =>
                   `flex items-center p-3 m-3 py-2 px-4 rounded ${
@@ -583,6 +602,22 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                       Settings
                     </NavLink>
                   </li> */}
+                  <li>
+                    <NavLink
+                      to="/doctor-dashboard/settings"
+                      onClick={toggleSidebar}
+                      className={({ isActive }) =>
+                        `flex items-center gap-x-3.5 py-2 px-2.5 rounded-lg ${
+                          isActive
+                            ? "bg-blue-100 text-blue-800"
+                            : "text-gray-100 hover:text-[#020E7C] hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <SettingsIcon />
+                      Settings
+                    </NavLink>
+                  </li>
                   <li>
                     <NavLink
                       to="/doctor-dashboard/contact-us"

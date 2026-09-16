@@ -78,7 +78,7 @@ function DoctorChatModal({ threadKey, open, closesAt, patientName, onClose }) {
             <p className="text-xs text-slate-500">
               {open
                 ? `Open until ${formatWhen(closesAt)}`
-                : "This chat window has closed (24 hours)"}
+                : "This chat window has closed (24 hours) — view only"}
             </p>
           </div>
           <button type="button" className="text-sm text-slate-600" onClick={onClose}>
@@ -139,7 +139,8 @@ function DoctorChatModal({ threadKey, open, closesAt, patientName, onClose }) {
 }
 
 /**
- * Doctor menu: only consultations with an open 24h chat window (after consult).
+ * Doctor menu: consultation chat history (kept like patient history).
+ * Messaging stays open for 24h; older chats remain for read-only view.
  */
 const PAGE_SIZE = 5;
 
@@ -170,13 +171,13 @@ export default function DoctorConsultationChat() {
   const token = getToken();
   const userId = getId();
 
-  const load = async (pageNum = page) => {
+  const load = async (pageNum = page, { silent = false } = {}) => {
     if (!token || !userId) {
       setError("Please sign in again.");
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError("");
     try {
       const res = await axios.get(
@@ -203,10 +204,12 @@ export default function DoctorConsultationChat() {
       setHasNext(Boolean(data?.hasNext));
       setHasPrevious(Boolean(data?.hasPrevious));
     } catch (e) {
-      setError(e?.response?.data?.message || "Could not load open chats");
-      setItems([]);
+      if (!silent) {
+        setError(e?.response?.data?.message || "Could not load chats");
+        setItems([]);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -215,7 +218,8 @@ export default function DoctorConsultationChat() {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(() => load(page), 30000);
+    // Silent poll — do not remount spinner / wipe the list.
+    const t = setInterval(() => load(page, { silent: true }), 30000);
     return () => clearInterval(t);
   }, [page]);
 
@@ -225,7 +229,8 @@ export default function DoctorConsultationChat() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Patient chats</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Chats appear here only after a consultation, and stay open for 24 hours.
+            Past consultations stay here. Patients can message for 24 hours after a
+            consult; after that you can still view the thread.
           </p>
         </div>
         <button
@@ -248,7 +253,7 @@ export default function DoctorConsultationChat() {
         </p>
       ) : items.length === 0 ? (
         <p className="rounded-xl border border-dashed px-4 py-12 text-center text-slate-500">
-          No open chats. Complete a consultation and patients can message you for 24 hours.
+          No consultations yet. Completed visits will appear here.
         </p>
       ) : (
         <>
@@ -264,28 +269,35 @@ export default function DoctorConsultationChat() {
                       {item.patientName || "Patient"}
                     </p>
                     <p className="text-sm text-slate-600">
-                      {item.category} · {item.specializationLabel || item.channel}
+                      {item.category} · {item.specializationLabel || item.channel} ·{" "}
+                      {item.status}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Consult {formatWhen(item.dateTime)} · Open until{" "}
-                      {formatWhen(item.chatClosesAt)}
+                      Consult {formatWhen(item.dateTime)}
+                      {item.chatOpen
+                        ? ` · Open until ${formatWhen(item.chatClosesAt)}`
+                        : item.chatClosesAt
+                          ? ` · Chat closed ${formatWhen(item.chatClosesAt)}`
+                          : ""}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setChatTarget({
-                        threadKey: item.id,
-                        open: item.chatOpen,
-                        closesAt: item.chatClosesAt,
-                        patientName: item.patientName,
-                      })
-                    }
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#020e7c] px-3 py-2 text-sm font-semibold text-white"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Open chat
-                  </button>
+                  {(item.chatOpen || item.status === "completed") && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setChatTarget({
+                          threadKey: item.id,
+                          open: item.chatOpen,
+                          closesAt: item.chatClosesAt,
+                          patientName: item.patientName,
+                        })
+                      }
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#020e7c] px-3 py-2 text-sm font-semibold text-white"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {item.chatOpen ? "Open chat" : "View chat"}
+                    </button>
+                  )}
                 </div>
               </li>
             ))}

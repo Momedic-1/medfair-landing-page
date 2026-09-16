@@ -120,6 +120,7 @@ import GetAppPage from "./pages/GetAppPage.jsx";
 import SignupRolePage from "./pages/SignupRolePage.jsx";
 import Search from "./pages/Search.jsx";
 import Finances from "./pages/Finances.jsx";
+import AccountSettings from "./pages/AccountSettings.jsx";
 import { useEffect } from "react";
 import { refreshAccessTokenIfNeeded } from "./utils";
 
@@ -197,10 +198,12 @@ const App = () => {
             <Route path="subscription-unsuccessful" element={<SubscriptionNotSuccessful />} />
             <Route path="payment" element={<PaymentPage />} />
             <Route path="contact-us" element={<ContactUs />} />
+            <Route path="settings" element={<AccountSettings />} />
 
             {/* Partners section */}
             <Route path="partners" element={<Dashboard />} />
             <Route path="partners/profile" element={<Profile />} />
+            <Route path="partners/settings" element={<AccountSettings />} />
           </Route>
 
           <Route
@@ -214,6 +217,7 @@ const App = () => {
               <Route path="notes" element={<Search />} />
               <Route path="chat" element={<DoctorConsultationChat />} />
               <Route path="contact-us" element={<ContactUs />} />
+              <Route path="settings" element={<AccountSettings />} />
               <Route path="finances" element={<Finances />} />
               <Route path="doctor-profile" element={<DoctorProfile />} />
             </Route>
