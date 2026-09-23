@@ -82,7 +82,7 @@ export default function PartnerOrganizationSelect({
           onChange={(e) => onChange?.(e.target.value)}
           className={boxClass}
         >
-          <option value={DIRECT_MEDFAIR_VALUE}>Medfair direct (no partner)</option>
+          <option value={DIRECT_MEDFAIR_VALUE}>No partner</option>
           {partners.map((p) => (
             <option key={p.slug} value={p.slug}>
               {p.name}
@@ -93,7 +93,7 @@ export default function PartnerOrganizationSelect({
 
       {loadError ? (
         <p className="text-xs text-amber-700">
-          {loadError} You can still continue with Medfair direct.
+          {loadError} You can still continue with no partner.
         </p>
       ) : null}
 

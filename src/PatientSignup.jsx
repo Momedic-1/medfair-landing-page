@@ -171,6 +171,7 @@ const PatientSignup = () => {
       const slug = formData.partnerSlug?.trim();
       if (slug) {
         payload.partnerSlug = slug;
+        payload.partnerInvite = Boolean(partnerSlugFromUrl);
         setPatientPartnerSlug(slug);
       }
 

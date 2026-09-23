@@ -19,11 +19,24 @@ export async function fetchPartnerOrganizations() {
 
   return data
     .filter((row) => row?.slug && String(row.slug).trim())
+    .filter((row) => !isPlatformMedfairPartner(row))
     .map((row) => ({
       name: String(row.name || row.slug).trim(),
       slug: String(row.slug).trim(),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function isPlatformMedfairPartner(row) {
+  const slug = String(row?.slug || "").trim().toLowerCase();
+  const name = String(row?.name || "").trim().toLowerCase();
+  return (
+    slug === "medfair" ||
+    slug.startsWith("medfair-") ||
+    name === "medfair" ||
+    name === "medfair direct" ||
+    name === "medfair technologies"
+  );
 }
 
 export function findPartnerBySlug(partners, slug) {

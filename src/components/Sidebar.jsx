@@ -9,6 +9,7 @@ import Logout from "../Logout.jsx";
 import { capitalizeFirstLetter } from "../utils";
 import DarkModeToggle from "./common/DarkModeToggle.jsx";
 import { useDashboardTheme } from "../hooks/useDashboardTheme";
+import { MessageCircle } from "lucide-react";
 
 const linkClass = ({ isActive }) =>
   `flex items-center gap-x-3.5 rounded-lg py-2.5 px-2.5 text-sm font-medium transition-colors ${
@@ -122,7 +123,7 @@ const Sidebar = () => {
               </li>
               <li>
                 <NavLink to="/doctor-dashboard/chat" className={linkClass} onClick={closeSidebar}>
-                  <span className="text-lg leading-none">💬</span>
+                  <MessageCircle className="h-5 w-5 shrink-0" />
                   Chat
                 </NavLink>
               </li>
