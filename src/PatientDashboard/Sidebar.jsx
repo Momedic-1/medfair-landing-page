@@ -258,7 +258,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import dashboard from "./assets/dashboard.svg";
 import profile from "./assets/profile (2).svg";
 import {
-  FaCommentMedical,
   FaHandHoldingMedical,
   FaHospital,
   FaMoneyBill,
@@ -267,7 +266,7 @@ import {
 } from "react-icons/fa";
 import Logout from "../Logout";
 import DashboardIcon from "../assets/DashboardIcon";
-import { CalendarHeart, Dumbbell, Pencil, UserCircle, Users } from "lucide-react";
+import { CalendarHeart, Dumbbell, MessageCircle, Pencil, UserCircle, Users } from "lucide-react";
 import DocumentsIcon from "../assets/DocumentIcon";
 import FinanceIcon from "../assets/FinanceIcon";
 import SettingsIcon from "../assets/SettingsIcon";
@@ -381,7 +380,7 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                     }
                     onClick={toggleSidebar}
                   >
-                    <FaCommentMedical />
+                    <MessageCircle className="h-4 w-4 shrink-0" />
                     <span className="ml-3">Chats</span>
                   </NavLink>
 
