@@ -51,6 +51,16 @@ function AppointmentRequests({ appointments, onRefresh }) {
       const id = appointment.slotId;
       if (!id) return;
 
+      if (
+        (appointment.canJoin === true || status === "active") &&
+        !reminderShown.has(`reminder-${id}`)
+      ) {
+        setReminderShown((prev) => new Set(prev).add(`reminder-${id}`));
+        setCurrentUpcomingAppointment(appointment);
+        setShowUpcomingModal(true);
+        return;
+      }
+
       if (status === "upcoming") {
         const dt = getAppointmentDateTime(appointment);
         if (!dt) return;

@@ -2,6 +2,7 @@ import { CalendarDays, Video, XCircle } from "lucide-react";
 import { formatTime, formatAppointmentDate } from "../../utils";
 import {
   APPOINTMENT_STATUS_STYLES,
+  canJoinAppointment,
   getAppointmentDateTime,
   getAppointmentStatus,
   sortAppointmentsByStatus,
@@ -83,7 +84,7 @@ export default function UpcomingAppointmentsList({
         const styles = APPOINTMENT_STATUS_STYLES[status] || APPOINTMENT_STATUS_STYLES.unknown;
         const dt = getAppointmentDateTime(apt);
         const displayName = apt.name || "Unknown";
-        const canJoin = status === "active";
+        const canJoin = canJoinAppointment(apt);
         const showCancel = Boolean(onCancel) && canCancelAppointment(apt);
 
         const dateLabel = apt.date

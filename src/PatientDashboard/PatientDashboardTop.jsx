@@ -35,19 +35,18 @@ export function PatientDashboardTop({
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-  const nextActive = upcomingAppointments?.find(
-    (a) => getAppointmentStatus?.(a) === "active"
-  );
+  const isJoinable = (a) =>
+    a?.canJoin === true || getAppointmentStatus?.(a) === "active";
+
+  const nextActive = upcomingAppointments?.find((a) => isJoinable(a));
   const nextUpcoming = upcomingAppointments?.find(
-    (a) => getAppointmentStatus?.(a) === "upcoming"
+    (a) => !isJoinable(a) && getAppointmentStatus?.(a) === "upcoming"
   );
   const highlight = nextActive || nextUpcoming;
 
-  const activeCount = upcomingAppointments?.filter(
-    (a) => getAppointmentStatus?.(a) === "active"
-  ).length;
+  const activeCount = upcomingAppointments?.filter((a) => isJoinable(a)).length;
   const upcomingCount = upcomingAppointments?.filter(
-    (a) => getAppointmentStatus?.(a) === "upcoming"
+    (a) => !isJoinable(a) && getAppointmentStatus?.(a) === "upcoming"
   ).length;
 
   return (
@@ -159,11 +158,22 @@ export function PatientDashboardTop({
         {highlight && !activeMeeting?.roomUrl && (
           <DashboardAlert
             variant={nextActive ? "success" : "info"}
-            title={nextActive ? "Appointment happening now" : "Next appointment"}
+            title={
+              nextActive
+                ? highlight.doctorJoined &&
+                  highlight.joinOpensAt &&
+                  highlight.serverNow &&
+                  new Date(highlight.serverNow) < new Date(highlight.joinOpensAt)
+                  ? "Doctor is waiting"
+                  : "Appointment happening now"
+                : "Next appointment"
+            }
             message={
               nextActive
-                ? `Dr. ${highlight.name}: join your consultation.`
-                : `Dr. ${highlight.name} on ${highlight.date} at ${formatTime?.(highlight.time)}`
+                ? highlight.doctorJoined
+                  ? `Dr. ${highlight.name} is in the room — join your consultation.`
+                  : `Dr. ${highlight.name}: join your consultation.`
+                : `Dr. ${highlight.name} on ${highlight.date} at ${formatTime?.(highlight.time)}. Join opens 5 minutes before, or when the doctor joins.`
             }
             primaryAction={
               nextActive ? (

@@ -9,7 +9,7 @@ import DashboardAlert from "./shared/DashboardAlert";
 import StatCard from "./shared/StatCard";
 import DashboardSection from "./shared/DashboardSection";
 import { baseUrl } from "../../env";
-import { getAppointmentStatus } from "../../utils/appointmentStatus";
+import { canJoinAppointment, getAppointmentStatus } from "../../utils/appointmentStatus";
 import { notifyAppointmentReminders } from "../../utils/appointmentReminderNotifications";
 import { useDashboardTheme } from "../../hooks/useDashboardTheme";
 import DarkModeToggle from "../common/DarkModeToggle";
@@ -85,7 +85,7 @@ function LeftPanel({ status, setStatus }) {
     const refresh = setInterval(() => {
       getDoctorsAppointmentRequest();
       fetchSlotCount();
-    }, 90000);
+    }, 20000);
     return () => clearInterval(refresh);
   }, [fetchProfile]);
 
@@ -99,11 +99,9 @@ function LeftPanel({ status, setStatus }) {
 
   const stats = useMemo(() => {
     const now = new Date();
-    const active = appointments.filter(
-      (a) => getAppointmentStatus(a, now) === "active"
-    ).length;
+    const active = appointments.filter((a) => canJoinAppointment(a, now)).length;
     const upcoming = appointments.filter(
-      (a) => getAppointmentStatus(a, now) === "upcoming"
+      (a) => !canJoinAppointment(a, now) && getAppointmentStatus(a, now) === "upcoming"
     ).length;
     const incoming = callAlerts?.hasIncoming
       ? callAlerts.activeCalls?.length || 0
@@ -248,7 +246,7 @@ function LeftPanel({ status, setStatus }) {
         <div className="order-1 lg:col-span-2">
           <DashboardSection
             title="Appointment requests"
-            subtitle="Join opens 5 minutes before start. Stays open 45 minutes after."
+            subtitle="You can join up to 2 hours before. Stays open 45 minutes after start."
             className="h-full"
             noPadding
           >

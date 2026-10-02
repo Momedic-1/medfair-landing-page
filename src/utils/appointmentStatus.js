@@ -1,4 +1,6 @@
-/** Shared appointment window: join from 5 min before until 45 min after start */
+/** Shared appointment window: join from 5 min before until 45 min after start.
+ * Prefer server-provided canJoin / joinStatus when present (Africa/Lagos server clock).
+ */
 
 function normalizeAppointmentDate(raw) {
   if (raw == null || raw === "") return null;
@@ -28,7 +30,15 @@ export function getAppointmentDateTime(appointment) {
   return null;
 }
 
+/**
+ * Prefer server joinStatus. Fallback to local clock only for older API responses.
+ */
 export function getAppointmentStatus(appointment, now = new Date()) {
+  const serverStatus = appointment?.joinStatus;
+  if (serverStatus === "upcoming" || serverStatus === "active" || serverStatus === "over") {
+    return serverStatus;
+  }
+
   const appointmentTime = getAppointmentDateTime(appointment);
   if (!appointmentTime || Number.isNaN(appointmentTime.getTime())) {
     return "unknown";
@@ -41,6 +51,14 @@ export function getAppointmentStatus(appointment, now = new Date()) {
   if (minutesDiff > 45) return "over";
   if (minutesDiff >= -5 && minutesDiff <= 45) return "active";
   return "upcoming";
+}
+
+/** Prefer server canJoin (includes early join when doctor is already waiting). */
+export function canJoinAppointment(appointment, now = new Date()) {
+  if (typeof appointment?.canJoin === "boolean") {
+    return appointment.canJoin;
+  }
+  return getAppointmentStatus(appointment, now) === "active";
 }
 
 export const APPOINTMENT_STATUS_STYLES = {

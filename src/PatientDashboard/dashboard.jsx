@@ -239,15 +239,15 @@ const Dashboard = () => {
   // Handle calendar event click
   const handleEventClick = (event) => {
     const appointment = event.resource;
-    const status = getAppointmentStatus(appointment);
-
-    if (status === "active") {
+    if (appointment?.canJoin || getAppointmentStatus(appointment) === "active") {
       handleJoinCall(appointment.slotId);
     } else {
       toast.info(
-        `Appointment with Dr. ${appointment.name} on ${appointment.date
-        } at ${formatTime(appointment.time)}`
+        appointment?.doctorJoined
+          ? `Dr. ${appointment.name} is ready — refreshing join status…`
+          : `Join opens 5 minutes before start, or as soon as Dr. ${appointment.name} joins.`
       );
+      getUpcomingAppointments();
     }
   };
 
@@ -1304,6 +1304,16 @@ const Dashboard = () => {
       const dt = getAppointmentDateTime(appointment);
       if (!dt) return;
 
+      if (
+        (appointment.canJoin === true || status === "active") &&
+        !notificationShown.has(`active-${id}`)
+      ) {
+        setNotificationShown((prev) => new Set(prev).add(`active-${id}`));
+        setCurrentUpcomingAppointment(appointment);
+        setShowUpcomingModal(true);
+        return;
+      }
+
       if (status === "upcoming") {
         const minutesUntil = Math.floor((dt.getTime() - now.getTime()) / 60000);
         if (
@@ -1315,12 +1325,6 @@ const Dashboard = () => {
           setCurrentUpcomingAppointment(appointment);
           setShowUpcomingModal(true);
         }
-      }
-
-      if (status === "active" && !notificationShown.has(`active-${id}`)) {
-        setNotificationShown((prev) => new Set(prev).add(`active-${id}`));
-        setCurrentUpcomingAppointment(appointment);
-        setShowUpcomingModal(true);
       }
     });
   }, [currentTime, upcomingAppointments, notificationShown]);
@@ -1373,7 +1377,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     getUpcomingAppointments();
-    const refresh = setInterval(getUpcomingAppointments, 90000);
+    // Poll often enough that Join appears quickly when the doctor enters early.
+    const refresh = setInterval(getUpcomingAppointments, 20000);
     return () => clearInterval(refresh);
   }, []);
 
@@ -1625,7 +1630,7 @@ const Dashboard = () => {
                 Your appointments
               </h2>
               <p className="text-sm text-gray-500">
-                Join opens 5 minutes before start time
+                Join opens 5 minutes before start, or when your doctor joins
               </p>
             </div>
             <div className="max-h-[480px] flex-1 overflow-y-auto p-3 sm:p-4">
