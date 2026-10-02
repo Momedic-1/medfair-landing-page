@@ -53,7 +53,14 @@ export async function joinScheduledAppointment({
   }
 
   try {
-    const expiresAt = Date.now() + 40 * 60 * 1000;
+    const closesAtMs = call?.joinClosesAt
+      ? new Date(call.joinClosesAt).getTime()
+      : NaN;
+    const startMs = call?.startTime ? new Date(call.startTime).getTime() : NaN;
+    const graceEndMs = Number.isFinite(startMs)
+      ? startMs + 45 * 60 * 1000
+      : Date.now() + 45 * 60 * 1000;
+    const expiresAt = Number.isFinite(closesAtMs) ? closesAtMs : graceEndMs;
     const callPayload = call || { slotId };
     localStorage.setItem(
       "activeCall",
@@ -69,6 +76,8 @@ export async function joinScheduledAppointment({
             .filter(Boolean)
             .join(" "),
         expiresAt,
+        kind: "scheduled",
+        slotId,
       })
     );
     // Keep scheduled rejoin separate from GP instant-call `activeMeeting`

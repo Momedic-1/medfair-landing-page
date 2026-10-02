@@ -1329,6 +1329,42 @@ const Dashboard = () => {
     });
   }, [currentTime, upcomingAppointments, notificationShown]);
 
+  // Drop local scheduled "active call" markers once the booking is over / ended.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("activeScheduledMeeting");
+      if (!raw) return;
+      const stored = JSON.parse(raw);
+      const storedSlotId = stored?.slotId;
+      if (storedSlotId == null) return;
+
+      const apt = upcomingAppointments.find(
+        (a) => String(a.slotId) === String(storedSlotId),
+      );
+      const status = apt ? getAppointmentStatus(apt) : null;
+      const expired =
+        stored.expiresAt != null && Date.now() >= Number(stored.expiresAt);
+      if (status === "over" || apt?.canJoin === false || expired) {
+        localStorage.removeItem("activeScheduledMeeting");
+        try {
+          const activeCall = JSON.parse(
+            localStorage.getItem("activeCall") || "null",
+          );
+          if (
+            activeCall?.kind === "scheduled" &&
+            String(activeCall?.slotId) === String(storedSlotId)
+          ) {
+            localStorage.removeItem("activeCall");
+          }
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [upcomingAppointments, currentTime]);
+
   const checkSubscriptionStatus = async () => {
     try {
       const response = await axios.get(

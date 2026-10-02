@@ -46,6 +46,16 @@ export function clearAllGpCallPersistence() {
     // ignore
   }
   try {
+    localStorage.removeItem("activeScheduledMeeting");
+  } catch {
+    // ignore
+  }
+  try {
+    localStorage.removeItem("activeCall");
+  } catch {
+    // ignore
+  }
+  try {
     localStorage.removeItem("patientId");
   } catch {
     // ignore
@@ -106,6 +116,61 @@ export async function fetchGpCallStatus(callId, token) {
       message.includes("not found")
     ) {
       return { status: "ENDED", callId, message: "Call not found" };
+    }
+    return null;
+  }
+}
+
+/**
+ * Doctor formally ends a booked (scheduled) appointment consultation.
+ */
+export async function endAppointmentConsultationByDoctor({
+  slotId,
+  userId,
+  token,
+}) {
+  if (slotId == null || userId == null || !token) {
+    throw new Error("Missing appointment or sign-in details.");
+  }
+
+  const response = await axios.post(
+    `${baseUrl}/api/appointment/meetings/${slotId}/users/${userId}/end`,
+    {},
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  clearAllGpCallPersistence();
+  return response.data;
+}
+
+/** Poll booked appointment consultation status (ACTIVE / ENDED). */
+export async function fetchAppointmentConsultationStatus(slotId, token) {
+  if (slotId == null || !token) return null;
+  try {
+    const response = await axios.get(
+      `${baseUrl}/api/appointment/meetings/${slotId}/status`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return response.data;
+  } catch (error) {
+    const status = error?.response?.status;
+    const message = String(
+      error?.response?.data?.message ||
+        error?.response?.data ||
+        error?.message ||
+        "",
+    ).toLowerCase();
+    if (
+      status === 404 ||
+      message.includes("appointment not found") ||
+      message.includes("not found")
+    ) {
+      return { status: "ENDED", slotId, message: "Appointment not found" };
     }
     return null;
   }

@@ -33,10 +33,12 @@ import {
   loadPatientGpVideoContext,
   savePatientGpVideoContext,
 } from "../utils/activeCallSession";
-import { getToken } from "../utils";
+import { getId, getToken } from "../utils";
 import {
   clearAllGpCallPersistence,
+  endAppointmentConsultationByDoctor,
   endGpConsultationByDoctor,
+  fetchAppointmentConsultationStatus,
   fetchGpCallStatus,
   parseEndConsultationError,
 } from "../utils/endGpConsultation";
@@ -97,7 +99,17 @@ function connectionLabel(connectionStatus, remoteCount) {
   return "In room — waiting for the other person";
 }
 
+function resolveSlotId(call) {
+  const slotId = call?.slotId;
+  if (slotId == null || slotId === "") return null;
+  const n = Number(slotId);
+  return Number.isFinite(n) ? n : null;
+}
+
 function resolveCallId(call) {
+  // Booked appointments use slotId — never treat that as a GP video_calls id.
+  if (resolveSlotId(call) != null) return null;
+
   try {
     const fromQuery = new URLSearchParams(window.location.search).get("callId");
     if (fromQuery) return fromQuery;
@@ -400,15 +412,22 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
         throw new Error("Please sign in again before ending the consultation.");
       }
 
-      // Scheduled appointments: local leave only (no GP video_calls row).
-      if (call?.slotId) {
-        clearAllGpCallPersistence();
-        if (callId != null) dismissIncomingCallId(callId);
+      const slotId = resolveSlotId(call);
+      if (slotId != null) {
+        const userId = userData?.id ?? userData?.userId ?? getId();
+        if (userId == null) {
+          throw new Error("Missing user id — sign in again and retry End call.");
+        }
+        await endAppointmentConsultationByDoctor({
+          slotId,
+          userId,
+          token,
+        });
         await detachLocalMedia();
         dispatch(setRoomUrl(null));
         dispatch(setCall(null));
         setShowEndConfirm(false);
-        toast.success("You left the appointment call.");
+        toast.success("Consultation ended.");
         redirectToDoctorDashboard();
         return;
       }
@@ -478,15 +497,23 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
     return undefined;
   }, [isDoctor, roomUrl, call]);
 
-  // Poll backend so patient learns when doctor ends the consultation.
+  const slotId = resolveSlotId(call);
+
+  // Poll backend so both sides learn when the consultation ends (GP or booking).
   useEffect(() => {
-    if (!callId) return undefined;
     const token = getToken();
     if (!token) return undefined;
 
     let cancelled = false;
     const tick = async () => {
-      const statusPayload = await fetchGpCallStatus(callId, token);
+      let statusPayload = null;
+      if (slotId != null) {
+        statusPayload = await fetchAppointmentConsultationStatus(slotId, token);
+      } else if (callId != null) {
+        statusPayload = await fetchGpCallStatus(callId, token);
+      } else {
+        return;
+      }
       if (cancelled || !statusPayload) return;
       if (statusPayload.status === "ENDED") {
         await handleRemoteConsultationEnded(
@@ -497,6 +524,8 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       }
     };
 
+    if (slotId == null && callId == null) return undefined;
+
     tick();
     const interval = window.setInterval(tick, 4000);
     return () => {
@@ -504,7 +533,7 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
       window.clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callId, isDoctor]);
+  }, [callId, slotId, isDoctor]);
 
   useEffect(() => {
     intentionalLeaveRef.current = false;
@@ -927,8 +956,10 @@ function VideoCallRoom({ roomUrl, userData, call, callFromRedux }) {
             <h2 className="text-xl font-bold text-[#020e7c]">End consultation?</h2>
             <p className="mt-3 text-sm leading-relaxed text-gray-700">
               This will permanently end the call for you and the patient. The
-              patient will not be able to rejoin, and they will be able to start
-              a new call afterward.
+              patient will not be able to rejoin
+              {resolveSlotId(call)
+                ? ", and this booking will no longer show as an active call."
+                : ", and they will be able to start a new call afterward."}
             </p>
             <p className="mt-2 text-sm text-gray-500">
               Finish any clinical notes before ending if you still need them.
