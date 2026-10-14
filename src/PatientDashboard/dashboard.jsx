@@ -69,6 +69,44 @@ const calendarStyle = {
   overflow: "hidden",
 };
 
+function appointmentSnapshot(appointment) {
+  if (!appointment) return "";
+  return [
+    appointment.slotId,
+    appointment.canJoin,
+    appointment.joinStatus,
+    appointment.date,
+    appointment.time,
+    appointment.name,
+    appointment.doctorJoined,
+    appointment.canCancel,
+  ].join("|");
+}
+
+function sameAppointmentList(prev, next) {
+  if (prev === next) return true;
+  if (!Array.isArray(prev) || !Array.isArray(next) || prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((item, index) => appointmentSnapshot(item) === appointmentSnapshot(next[index]));
+}
+
+function sameCalendarEvents(prev, next) {
+  if (prev === next) return true;
+  if (!Array.isArray(prev) || !Array.isArray(next) || prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((item, index) => {
+    const other = next[index];
+    return (
+      item?.id === other?.id &&
+      item?.title === other?.title &&
+      item?.time === other?.time &&
+      item?.start?.getTime?.() === other?.start?.getTime?.()
+    );
+  });
+}
+
 /** Align with backend pending-call visibility / Whereby room window (30 min). */
 const CALL_WAIT_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -1030,9 +1068,9 @@ const Dashboard = () => {
     }
   };
 
-  const getUpcomingAppointments = async () => {
+  const getUpcomingAppointments = async ({ silent = false } = {}) => {
     if (!patientId || !token) return;
-    setAppointmentsLoading(true);
+    if (!silent) setAppointmentsLoading(true);
     try {
       const response = await axios.get(
         `${GETUPCOMINGAPPOINTMENTS}/${patientId}?_=${Date.now()}`,
@@ -1044,17 +1082,22 @@ const Dashboard = () => {
         }
       );
       const formattedData = response.data || [];
-      setUpcomingAppointments(formattedData);
-      setCalendarEvents(transformAppointmentsToEvents(formattedData));
+      setUpcomingAppointments((prev) =>
+        sameAppointmentList(prev, formattedData) ? prev : formattedData
+      );
+      setCalendarEvents((prev) => {
+        const next = transformAppointmentsToEvents(formattedData);
+        return sameCalendarEvents(prev, next) ? prev : next;
+      });
     } catch (error) {
       console.log("Error fetching upcoming appointments:", error);
       const statusCode = error?.response?.status;
       const onPatientDashboard = window.location.pathname.startsWith("/patient-dashboard");
-      if (onPatientDashboard && statusCode !== 401 && statusCode !== 403) {
+      if (!silent && onPatientDashboard && statusCode !== 401 && statusCode !== 403) {
         toast.error(parseApiError(error, "Could not load your appointments. Pull to refresh or try again."));
       }
     } finally {
-      setAppointmentsLoading(false);
+      if (!silent) setAppointmentsLoading(false);
     }
   };
 
@@ -1398,11 +1441,12 @@ const Dashboard = () => {
     );
     setNotificationShown((prev) => {
       const filtered = new Set();
-      prev.forEach((slotId) => {
-        if (currentSlotIds.has(slotId)) {
-          filtered.add(slotId);
-        }
+      prev.forEach((key) => {
+        const id = String(key).replace(/^active-/, "");
+        const stillBooked = [...currentSlotIds].some((slotId) => String(slotId) === id);
+        if (stillBooked) filtered.add(key);
       });
+      if (filtered.size === prev.size) return prev;
       return filtered;
     });
   }, [upcomingAppointments]);
@@ -1413,17 +1457,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     getUpcomingAppointments();
-    // Poll often enough that Join appears quickly when the doctor enters early.
-    const refresh = setInterval(getUpcomingAppointments, 20000);
+    // Poll in the background so Join can appear when the doctor enters.
+    // Do not flip the list into a loading skeleton; that remounts the card on scroll.
+    const refresh = setInterval(() => {
+      getUpcomingAppointments({ silent: true });
+    }, 20000);
     return () => clearInterval(refresh);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(dayjs());
-    }, 1000);
-
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
