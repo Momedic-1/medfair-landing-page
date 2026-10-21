@@ -474,7 +474,10 @@ const AddNoteModal = ({ isOpen, onClose, onNoteAdded, patientId: patientIdProp =
       }
     } catch (err) {
       setLoading(false);
-      toast.error("Failed to add note, please try again.");
+      const serverMessage =
+        err?.response?.data?.exceptionMessage ||
+        err?.response?.data?.message;
+      toast.error(serverMessage || "Failed to add note, please try again.");
       // Don't show success modal on error
     }
   };

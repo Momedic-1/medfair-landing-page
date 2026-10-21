@@ -18,7 +18,9 @@ export function isStandalonePwa() {
   if (typeof window === "undefined") return false;
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    window.navigator.standalone === true ||
+    String(document.referrer || "").startsWith("android-app://")
   );
 }
 

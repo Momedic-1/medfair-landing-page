@@ -96,6 +96,7 @@ import IncomingCalls from "./components/dashboard/WelcomeBack/IncomingCall.jsx";
 import PatientNotes from "./PatientDashboard/patientNotes.jsx";
 import VerifyPayment from "./VerifyPayment.jsx";
 import VideoCall from "./components/VideoCall.jsx";
+import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
 import Subscription from "./PatientDashboard/Subscription.jsx";
 import SubscriptionPreview from "./PatientDashboard/SubscriptionPreview.jsx";
 import ConsultationHistory from "./PatientDashboard/ConsultationHistory.jsx";
@@ -171,7 +172,14 @@ const App = () => {
             element={<LoginPage isPartnerLogin={true} />}
           />
           <Route path="/incoming-call" element={<IncomingCalls />} />
-          <Route path="/video-call" element={<VideoCall />} />
+          <Route
+            path="/video-call"
+            element={
+              <RouteErrorBoundary>
+                <VideoCall />
+              </RouteErrorBoundary>
+            }
+          />
           <Route path="/verify-payment" element={<VerifyPayment />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/otp-verification" element={<OTPVerification />} />

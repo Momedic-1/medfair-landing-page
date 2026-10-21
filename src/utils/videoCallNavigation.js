@@ -1,3 +1,4 @@
+import { isStandalonePwa } from "./installApp.js";
 import { stashVideoRoomUrl } from "./videoCallRoomUrl.js";
 
 const CALL_ID_SESSION_KEY = "medfair_pending_video_call_id";
@@ -98,10 +99,17 @@ export function openVideoCallInNewTab(roomUrl, callId = null) {
 }
 
 /**
- * Open video call in a new tab, or same tab if the browser blocks pop-ups.
+ * Open video call in a new tab in the browser, or the same window in the
+ * installed app. Standalone PWAs often give a white about:blank window from
+ * window.open, and that is treated as success unless we skip it.
  * @returns {{ opened: boolean, blocked: boolean, usedSameTab: boolean }}
  */
 export function openVideoCallPreferNewTab(roomUrl, callId = null) {
+  if (isStandalonePwa()) {
+    navigateToVideoCall(roomUrl, callId);
+    return { opened: false, blocked: false, usedSameTab: true };
+  }
+
   const result = openVideoCallInNewTab(roomUrl, callId);
   if (result.blocked) {
     navigateToVideoCall(roomUrl, callId);
