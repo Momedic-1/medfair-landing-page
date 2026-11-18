@@ -293,7 +293,8 @@
 //     )}
 
 import { useState, useRef } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import Sidebar from "./Sidebar";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -349,11 +350,19 @@ export default function PatientLayout() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const swiperRef = useRef(null);
 
   const token = localStorage.getItem("authToken");
   const userData = getUserData();
   const { isDarkMode, toggleDarkMode } = useDashboardTheme();
+
+  const path = (location.pathname || "").replace(/\/+$/, "") || "/";
+  const isPatientHome =
+    path === "/patient-dashboard" || path === "/patient-dashboard/partners";
+  const homePath = path.startsWith("/patient-dashboard/partners")
+    ? "/patient-dashboard/partners"
+    : "/patient-dashboard";
 
   if (!token || !userData) {
     navigate("/login");
@@ -429,16 +438,6 @@ export default function PatientLayout() {
     }
   };
 
-  const userName = (() => {
-    const first = userData?.firstName;
-    if (first) {
-      return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
-    }
-    const full = [userData?.firstName, userData?.lastName].filter(Boolean).join(" ");
-    if (full) return full;
-    return userData?.emailAddress?.split("@")[0] || "there";
-  })();
-
   return (
     <PartnerLocationsProvider>
       <div
@@ -465,13 +464,25 @@ export default function PatientLayout() {
             >
               ☰
             </button>
-            <div className="flex w-full items-center justify-between gap-4">
-              <FirstCareHospitalLogo />
-              <span
-                className={`truncate font-bold ${isDarkMode ? "text-white" : "text-[#020E7C]"} max-lg:text-sm lg:text-base`}
-              >
-                Welcome, {userName}
-              </span>
+            <div className="flex w-full items-center justify-between gap-3 sm:gap-4">
+              <div className="flex min-w-0 items-center gap-2">
+                <FirstCareHospitalLogo />
+                {!isPatientHome ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate(homePath)}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm font-semibold transition hover:bg-slate-100 ${
+                      isDarkMode
+                        ? "text-white hover:bg-white/10"
+                        : "text-[#020E7C]"
+                    }`}
+                    aria-label="Back to home"
+                  >
+                    <ArrowLeft className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Home</span>
+                  </button>
+                ) : null}
+              </div>
               <DarkModeToggle
                 isDarkMode={isDarkMode}
                 onToggle={toggleDarkMode}

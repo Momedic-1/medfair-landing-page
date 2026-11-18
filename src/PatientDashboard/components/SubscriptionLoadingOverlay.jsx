@@ -10,7 +10,7 @@ const SubscriptionLoadingOverlay = ({ isLoading }) => {
           visible={true}
           height="50"
           width="50"
-          ariaLabel="hourglass-loading"
+          ariaLabel="hourglass loading"
           colors={["#306cce", "#72a1ed"]}
         />
         <p className="mt-4 text-gray-600 font-medium">Processing...</p>

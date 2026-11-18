@@ -83,8 +83,8 @@ export default function NotificationPermissionPrompt({ open, onClose, onGranted 
 
                 <p className="mt-3 text-sm text-gray-600">
                   Allow notifications to receive your daily health tip each morning at 7:00 AM,
-                  plus appointment reminders and period alerts. Browsers require your permission —
-                  we cannot enable them automatically.
+                  plus appointment reminders and period alerts. Browsers require your permission.
+                  We cannot enable them automatically.
                 </p>
 
                 {permission === "denied" && (

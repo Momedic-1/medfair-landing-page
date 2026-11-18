@@ -77,7 +77,7 @@ const PaymentGatewayDialog = ({ open, handleClose, paymentLink }) => {
             fontSize: "0.875rem",
           }}
         >
-          Your payment is protected with bank-level security
+          Your payment is protected with bank level security
         </Typography>
       </Box>
 

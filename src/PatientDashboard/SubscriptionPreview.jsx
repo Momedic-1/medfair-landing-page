@@ -25,7 +25,7 @@ const SubscriptionPreview = () => {
     <div className="min-h-full bg-gradient-to-b from-slate-50 via-blue-50/30 to-gray-50">
       <div className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-10">
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <strong>Local preview</strong> — mock plan data. Subscribe buttons are
+          <strong>Local preview</strong>. Mock plan data. Subscribe buttons are
           disabled here.
         </div>
 

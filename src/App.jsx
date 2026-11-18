@@ -117,6 +117,7 @@ import AddDependents from "./PatientDashboard/AddDependents.jsx";
 import PatientDoctorProfile from "./PatientDashboard/PatientDoctorProfile.jsx";
 import PeriodTracker from "./PatientDashboard/PeriodTracker.jsx";
 import WeightLossProgram from "./PatientDashboard/WeightLossProgram.jsx";
+import CheckSymptoms from "./PatientDashboard/CheckSymptoms.jsx";
 import GetAppPage from "./pages/GetAppPage.jsx";
 import SignupRolePage from "./pages/SignupRolePage.jsx";
 import Search from "./pages/Search.jsx";
@@ -200,6 +201,7 @@ const App = () => {
             <Route path="add-dependent" element={<AddDependents />} />
             <Route path="period-tracker" element={<PeriodTracker />} />
             <Route path="weight-loss" element={<WeightLossProgram />} />
+            <Route path="check-symptoms" element={<CheckSymptoms />} />
             <Route path="subscription" element={<Subscription />} />
             <Route path="consultation-history" element={<ConsultationHistory />} />
             <Route path="subscription-success" element={<SubscriptionSuccessful />} />

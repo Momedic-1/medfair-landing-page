@@ -45,23 +45,26 @@ export default function CallDoctorModal({
   return (
     <Modal open={open} onClose={handleBackdropClose} aria-labelledby="call-doctor-modal">
       <Box sx={callDoctorModalSx}>
-        <div className="border-b border-gray-100 bg-gradient-to-r from-[#020e7c] to-blue-700 px-4 py-4 sm:px-5">
+        <div className="bg-[#020e7c] px-4 py-5 sm:px-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200">
+            Instant care
+          </p>
           <h2
             id="call-doctor-modal"
-            className="text-lg font-semibold text-white sm:text-xl"
+            className="mt-1 text-xl font-bold text-white"
           >
             {title}
           </h2>
         </div>
 
-        <div className="flex flex-col gap-5 px-4 py-6 sm:px-6 sm:py-7">
+        <div className="flex flex-col gap-4 px-4 py-6 sm:px-6 sm:py-7">
           {callStatus === "WAITING" && (
             <>
               <div className="flex flex-col items-center gap-3 text-center">
                 <ColorRing
                   height="56"
                   width="56"
-                  ariaLabel="waiting-for-doctor"
+                  ariaLabel="waiting for doctor"
                   colors={["#3b82f6", "#3b82f6", "#3b82f6", "#3b82f6", "#3b82f6"]}
                 />
                 <p className="text-base font-medium text-gray-900 sm:text-lg">
@@ -69,14 +72,14 @@ export default function CallDoctorModal({
                 </p>
                 <p className="rounded-xl bg-blue-50 px-3 py-3 text-sm leading-relaxed text-blue-900">
                   Keep this screen open. As soon as a doctor accepts, you will
-                  see <span className="font-semibold">Join call</span> — they
+                  see <span className="font-semibold">Join call</span>. They
                   may already be waiting in the video room. You can cancel only
                   while no doctor has joined yet.
                 </p>
               </div>
               <button
                 type="button"
-                className="flex h-12 w-full items-center justify-center rounded-full bg-[#020e7c] font-semibold text-white transition hover:bg-blue-800 disabled:opacity-70"
+                className="flex h-12 w-full items-center justify-center rounded-xl bg-[#020e7c] font-semibold text-white transition hover:bg-blue-900 disabled:opacity-70"
                 onClick={onRefreshWaitingStatus}
                 disabled={isLoading}
               >
@@ -84,7 +87,7 @@ export default function CallDoctorModal({
                   <ColorRing
                     height="36"
                     width="36"
-                    ariaLabel="checking-status"
+                    ariaLabel="checking status"
                     colors={["white", "white", "white", "white", "white"]}
                   />
                 ) : (
@@ -93,7 +96,7 @@ export default function CallDoctorModal({
               </button>
               <button
                 type="button"
-                className="flex h-12 w-full items-center justify-center rounded-full bg-red-500 font-medium text-white transition hover:bg-red-600"
+                className="flex h-12 w-full items-center justify-center rounded-xl bg-red-500 font-medium text-white transition hover:bg-red-600"
                 onClick={onCancelWaiting}
               >
                 Cancel call
@@ -109,7 +112,7 @@ export default function CallDoctorModal({
                     <ColorRing
                       height="40"
                       width="40"
-                      ariaLabel="joining-call"
+                      ariaLabel="joining call"
                       colors={["#059669", "#059669", "#059669", "#059669", "#059669"]}
                     />
                   ) : (
@@ -125,19 +128,19 @@ export default function CallDoctorModal({
                 </p>
                 <p className="rounded-xl bg-blue-50 px-3 py-3 text-sm leading-relaxed text-blue-900">
                   {isLoading
-                    ? "The doctor may already be waiting in the video room. Please keep this screen open — do not cancel or close while we connect you."
+                    ? "The doctor may already be waiting in the video room. Please keep this screen open. Do not cancel or close while we connect you."
                     : "The doctor may already be in the video room. Tap Join call below and keep this screen open while we connect you."}
                 </p>
                 {!isLoading && (
                   <p className="text-sm leading-relaxed text-gray-600">
-                    If the call does not open, allow pop-ups or use the Rejoin
+                    If the call does not open, allow popups or use the Rejoin
                     banner on your dashboard.
                   </p>
                 )}
               </div>
               <button
                 type="button"
-                className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-emerald-600 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-70"
+                className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-70"
                 onClick={onJoinCall}
                 disabled={isLoading || !videoLink?.roomUrl}
               >
@@ -146,7 +149,7 @@ export default function CallDoctorModal({
                     <ColorRing
                       height="36"
                       width="36"
-                      ariaLabel="joining-call"
+                      ariaLabel="joining call"
                       colors={["white", "white", "white", "white", "white"]}
                     />
                     Connecting…
@@ -161,7 +164,7 @@ export default function CallDoctorModal({
               {!isLoading && (
                 <button
                   type="button"
-                  className="flex h-11 w-full items-center justify-center rounded-full border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   onClick={onClose}
                 >
                   Join later from dashboard
@@ -186,7 +189,7 @@ export default function CallDoctorModal({
               </div>
               <button
                 type="button"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#020e7c] font-semibold text-white transition hover:bg-blue-800"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#020e7c] font-semibold text-white transition hover:bg-blue-900"
                 onClick={onBookAppointment}
               >
                 <CalendarDays className="h-5 w-5" aria-hidden />
@@ -194,7 +197,7 @@ export default function CallDoctorModal({
               </button>
               <button
                 type="button"
-                className="flex h-11 w-full items-center justify-center rounded-full border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                 onClick={onTryAgain}
               >
                 Try calling again
@@ -218,15 +221,15 @@ export default function CallDoctorModal({
               </div>
               <button
                 type="button"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#020e7c] font-semibold text-white transition hover:bg-blue-800"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#020e7c] font-semibold text-white transition hover:bg-blue-900"
                 onClick={onBuySubscription}
               >
                 <CreditCard className="h-5 w-5" aria-hidden />
-                Buy Instant / subscribe
+                Buy Instant or subscribe
               </button>
               <button
                 type="button"
-                className="flex h-11 w-full items-center justify-center rounded-full border border-gray-200 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                 onClick={onClose}
               >
                 Close
@@ -244,7 +247,7 @@ export default function CallDoctorModal({
               </p>
               <button
                 type="button"
-                className="flex h-14 w-full items-center justify-center rounded-full bg-[#020e7c] font-semibold text-white transition hover:bg-blue-800 disabled:opacity-70"
+                className="flex h-14 w-full items-center justify-center rounded-xl bg-[#020e7c] font-semibold text-white transition hover:bg-blue-900 disabled:opacity-70"
                 onClick={onCreateMeeting}
                 disabled={isLoading}
               >
@@ -252,7 +255,7 @@ export default function CallDoctorModal({
                   <ColorRing
                     height="36"
                     width="36"
-                    ariaLabel="creating-meeting"
+                    ariaLabel="creating meeting"
                     colors={["white", "white", "white", "white", "white"]}
                   />
                 ) : (

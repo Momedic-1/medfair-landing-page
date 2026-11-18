@@ -329,7 +329,7 @@ const AppointmentModals = ({
                     <ColorRing
                       height="40"
                       width="40"
-                      ariaLabel="color-ring-loading"
+                      ariaLabel="color ring loading"
                       wrapperStyle={{}}
                       wrapperClass="color-ring-wrapper"
                       colors={["white", "white", "white", "white", "white"]}
@@ -404,7 +404,7 @@ const AppointmentModals = ({
                 <ColorRing
                   height="20"
                   width="20"
-                  ariaLabel="color-ring-loading"
+                  ariaLabel="color ring loading"
                   wrapperStyle={{}}
                   wrapperClass="color-ring-wrapper"
                   colors={["white", "white", "white", "white", "white"]}

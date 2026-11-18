@@ -266,7 +266,7 @@ import {
 } from "react-icons/fa";
 import Logout from "../Logout";
 import DashboardIcon from "../assets/DashboardIcon";
-import { CalendarHeart, Dumbbell, MessageCircle, Pencil, UserCircle, Users } from "lucide-react";
+import { CalendarHeart, Dumbbell, MessageCircle, Pencil, Thermometer, UserCircle, Users } from "lucide-react";
 import DocumentsIcon from "../assets/DocumentIcon";
 import FinanceIcon from "../assets/FinanceIcon";
 import SettingsIcon from "../assets/SettingsIcon";
@@ -367,6 +367,21 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
                   >
                     <FaMoneyBill />
                     <span className="ml-3">Subscriptions</span>
+                  </NavLink>
+
+                  <NavLink
+                    to="/patient-dashboard/check-symptoms"
+                    className={({ isActive }) =>
+                      `flex items-center p-3 m-3 py-2 px-4 rounded ${
+                        isActive
+                          ? "bg-white text-[#020E7C]"
+                          : "hover:bg-white hover:text-[#020E7C]"
+                      }`
+                    }
+                    onClick={toggleSidebar}
+                  >
+                    <Thermometer className="h-4 w-4 shrink-0" />
+                    <span className="ml-3">Check Symptoms</span>
                   </NavLink>
 
                   <NavLink

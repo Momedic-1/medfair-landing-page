@@ -72,7 +72,7 @@ export default function PeriodReminderModal({ open, onClose, insights }) {
                   <p>
                     Estimated fertile window:{" "}
                     <span className="font-semibold">
-                      {formatPeriodDate(fertileStart)} – {formatPeriodDate(fertileEnd)}
+                      {formatPeriodDate(fertileStart)} to {formatPeriodDate(fertileEnd)}
                     </span>
                   </p>
                 </div>

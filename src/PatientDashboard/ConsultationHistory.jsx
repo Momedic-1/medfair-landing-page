@@ -5,7 +5,7 @@ import { getId, getToken } from "../utils";
 import { Loader2, MessageCircle, RefreshCw } from "lucide-react";
 
 function formatWhen(value) {
-  if (!value) return "—";
+  if (!value) return "None";
   try {
     return new Date(value).toLocaleString("en-NG", {
       dateStyle: "medium",
@@ -76,7 +76,7 @@ function ConsultationChat({ threadKey, open, closesAt, onClose }) {
             <p className="text-xs text-slate-500">
               {open
                 ? `Open until ${formatWhen(closesAt)}`
-                : "This chat window has closed (24 hours) — view only"}
+                : "This chat window has closed (24 hours). View only"}
             </p>
           </div>
           <button type="button" className="text-sm text-slate-600" onClick={onClose}>

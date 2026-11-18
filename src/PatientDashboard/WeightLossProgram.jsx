@@ -48,7 +48,7 @@ export default function WeightLossProgram() {
             : []
         );
       } catch (error) {
-        toast.error("Could not load weight-loss data.");
+        toast.error("Could not load weight loss data.");
       } finally {
         setLoading(false);
       }
@@ -102,7 +102,7 @@ export default function WeightLossProgram() {
             }))
           : []
       );
-      toast.success("Weight-loss plan saved.");
+      toast.success("Weight loss plan saved.");
     } catch (error) {
       toast.error("Could not save plan.");
     }
@@ -135,9 +135,9 @@ export default function WeightLossProgram() {
       );
       setNewWeight("");
       setNote("");
-      toast.success("Weekly check-in added.");
+      toast.success("Weekly check in added.");
     } catch (error) {
-      toast.error("Could not add check-in.");
+      toast.error("Could not add check in.");
     }
   };
 
@@ -149,7 +149,7 @@ export default function WeightLossProgram() {
           Set goals, log weekly progress, and monitor your journey with backend sync.
         </p>
       </div>
-      {loading && <p className="text-sm text-gray-500">Loading weight-loss data...</p>}
+      {loading && <p className="text-sm text-gray-500">Loading weight loss data...</p>}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -229,12 +229,12 @@ export default function WeightLossProgram() {
               <p className="font-semibold">{progress.remaining.toFixed(1)} kg</p>
             </div>
           </div>
-          <p className="mt-3 text-sm text-gray-600">Current BMI: {bmi || "-"}</p>
+          <p className="mt-3 text-sm text-gray-600">Current BMI: {bmi || "None"}</p>
         </div>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-[#020e7c]">Weekly check-in</h2>
+        <h2 className="text-lg font-semibold text-[#020e7c]">Weekly check in</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-[160px_1fr_auto]">
           <input
             type="number"
@@ -255,13 +255,13 @@ export default function WeightLossProgram() {
             onClick={addCheckin}
             className="rounded-lg border border-[#020e7c] px-4 py-2 text-sm font-semibold text-[#020e7c]"
           >
-            Add check-in
+            Add check in
           </button>
         </div>
 
         <div className="mt-5 space-y-2">
           {checkins.length === 0 ? (
-            <p className="text-sm text-gray-500">No check-ins yet.</p>
+            <p className="text-sm text-gray-500">No check ins yet.</p>
           ) : (
             checkins.map((item) => (
               <div
@@ -272,7 +272,7 @@ export default function WeightLossProgram() {
                 <div className="text-gray-600">
                   {new Date(item.date).toLocaleDateString("en-NG")}
                 </div>
-                <div className="w-full text-xs text-gray-500 md:w-auto">{item.note || "-"}</div>
+                <div className="w-full text-xs text-gray-500 md:w-auto">{item.note || "None"}</div>
               </div>
             ))
           )}

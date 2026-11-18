@@ -4,12 +4,12 @@ export const bookingModalSx = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: { xs: "calc(100% - 1.5rem)", sm: "min(92vw, 640px)" },
-  maxWidth: 640,
+  width: { xs: "calc(100% - 1.25rem)", sm: "min(94vw, 680px)" },
+  maxWidth: 680,
   maxHeight: { xs: "92vh", sm: "90vh" },
   bgcolor: "background.paper",
-  boxShadow: 24,
-  borderRadius: { xs: 2, sm: 3 },
+  boxShadow: "0 24px 64px rgba(2, 14, 124, 0.18)",
+  borderRadius: { xs: "1.25rem", sm: "1.5rem" },
   overflow: "hidden",
   outline: "none",
   display: "flex",
@@ -40,8 +40,8 @@ export const callDoctorModalSx = {
   width: { xs: "calc(100% - 2rem)", sm: "min(92vw, 420px)" },
   maxWidth: 420,
   bgcolor: "background.paper",
-  boxShadow: 24,
-  borderRadius: 3,
+  boxShadow: "0 24px 64px rgba(2, 14, 124, 0.18)",
+  borderRadius: "1.25rem",
   overflow: "hidden",
   outline: "none",
 };
@@ -49,4 +49,18 @@ export const callDoctorModalSx = {
 export const confirmModalSx = {
   ...callDoctorModalSx,
   p: { xs: 2.5, sm: 3 },
+};
+
+export const confirmBookingModalSx = {
+  position: "fixed",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: { xs: "calc(100% - 2rem)", sm: "min(92vw, 400px)" },
+  maxWidth: 400,
+  bgcolor: "background.paper",
+  boxShadow: 24,
+  borderRadius: 3,
+  overflow: "hidden",
+  outline: "none",
 };

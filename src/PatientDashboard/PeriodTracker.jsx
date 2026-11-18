@@ -144,7 +144,7 @@ export default function PeriodTracker() {
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-[#020e7c]">Period Tracker</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Track cycle dates, get on-screen reminders, and optional email alerts.
+          Track cycle dates, get on screen reminders, and optional email alerts.
         </p>
       </div>
       {loading && <p className="text-sm text-gray-500">Loading period tracker...</p>}
@@ -247,7 +247,7 @@ export default function PeriodTracker() {
           <div className="mt-6 border-t pt-4">
             <h3 className="text-sm font-semibold text-gray-700">Email reminder</h3>
             <p className="mt-1 text-xs text-gray-500">
-              Defaults to your account email. You also get an on-screen popup on the dashboard
+              Defaults to your account email. You also get an on screen popup on the dashboard
               when your period is within 3 days.
             </p>
             <input

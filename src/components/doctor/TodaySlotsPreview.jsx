@@ -56,7 +56,7 @@ export default function TodaySlotsPreview({
             onClick={onViewProfile}
             className="mt-3 w-full rounded-xl border border-[#020e7c]/20 bg-[#020e7c]/5 px-3 py-2.5 text-sm font-semibold text-[#020e7c] transition hover:bg-[#020e7c]/10"
           >
-            Upcoming days ({otherDays}) →
+            Upcoming days ({otherDays})
           </button>
         ) : (
           <p className="mt-1 text-center text-xs text-gray-500">

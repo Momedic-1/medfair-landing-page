@@ -48,15 +48,15 @@ export const getPlanContent = (planName, consultationCount) => {
   const name = String(planName || "").toLowerCase();
   if (name.includes("instant")) {
     return [
-      "GP consultations only — not for specialist visits",
-      "One-time consultation for immediate advice",
+      "GP consultations only, not for specialist visits",
+      "One time consultation for immediate advice",
       "Access to certified GPs",
       "Available 24/7",
     ];
   }
   if (name.includes("monthly")) {
     return [
-      "GP consultations only — not for specialist visits",
+      "GP consultations only, not for specialist visits",
       `Up to ${GP_MONTHLY_CONSULTATIONS} GP consultations per month`,
       "Ongoing health support",
       "Available 24/7",
@@ -64,8 +64,8 @@ export const getPlanContent = (planName, consultationCount) => {
   }
   if (name.includes("yearly")) {
     return [
-      "GP consultations only — not for specialist visits",
-      `Up to ${GP_YEARLY_CONSULTATIONS} GP consultations per year (~3 per month)`,
+      "GP consultations only, not for specialist visits",
+      `Up to ${GP_YEARLY_CONSULTATIONS} GP consultations per year (about 3 per month)`,
       "Expert care anytime",
       "Priority support",
     ];
@@ -85,7 +85,7 @@ export const getPlanContent = (planName, consultationCount) => {
       "Covers: Ear, Nose & Throat (ENT) Specialist",
       "One scheduled video consultation",
       "Diagnosis and management of ENT conditions",
-      "Follow-up reviews when needed",
+      "Follow up reviews when needed",
     ];
   }
   return [

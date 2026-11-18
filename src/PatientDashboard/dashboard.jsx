@@ -194,6 +194,7 @@ const Dashboard = () => {
     useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null); // persisted quick-call meeting
   const [isCancelCallConfirmOpen, setIsCancelCallConfirmOpen] = useState(false);
+  const [showCalendarSection, setShowCalendarSection] = useState(false);
   const [callStatus, setCallStatus] = useState(null);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [currentCallId, setCurrentCallId] = useState(null);
@@ -282,7 +283,7 @@ const Dashboard = () => {
     } else {
       toast.info(
         appointment?.doctorJoined
-          ? `Dr. ${appointment.name} is ready — refreshing join status…`
+          ? `Dr. ${appointment.name} is ready. Refreshing join status…`
           : `Join opens 5 minutes before start, or as soon as Dr. ${appointment.name} joins.`
       );
       getUpcomingAppointments();
@@ -695,7 +696,7 @@ const Dashboard = () => {
         clearActiveMeeting();
         toast.info("This call has ended. You can start a new one.");
       } else {
-        toast.info("Still waiting — a doctor has not joined yet.");
+        toast.info("Still waiting. A doctor has not joined yet.");
       }
     } finally {
       setIsLoading(false);
@@ -729,7 +730,7 @@ const Dashboard = () => {
 
     if (blocked && !usedSameTab) {
       toast.warn(
-        "Pop-up was blocked. Allow pop-ups, or the call will open in this tab on retry.",
+        "Popup was blocked. Allow popups, or the call will open in this tab on retry.",
       );
       return;
     }
@@ -823,7 +824,7 @@ const Dashboard = () => {
 
       if (blocked) {
         toast.warn(
-          "Allow pop-ups for this site, then click Join again. Your dashboard will stay here."
+          "Allow popups for this site, then click Join again. Your dashboard will stay here."
         );
       } else if (opened) {
         toast.success("Video call opened in a new tab. You can stay on this page.");
@@ -1242,7 +1243,7 @@ const Dashboard = () => {
         });
         setIsCancelCallConfirmOpen(false);
         toast.info(
-          "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+          "A doctor has already joined. Please tap Join call. You can no longer cancel.",
           { toastId: `gp-no-cancel-${currentCallId}` },
         );
         return;
@@ -1275,7 +1276,7 @@ const Dashboard = () => {
           });
           setIsCancelCallConfirmOpen(false);
           toast.info(
-            "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+            "A doctor has already joined. Please tap Join call. You can no longer cancel.",
           );
           return;
         }
@@ -1324,7 +1325,7 @@ const Dashboard = () => {
         });
         setIsCancelCallConfirmOpen(false);
         toast.info(
-          "A doctor has already joined. Please tap Join call — you can no longer cancel.",
+          "A doctor has already joined. Please tap Join call. You can no longer cancel.",
           { toastId: `gp-no-cancel-${currentCallId}` },
         );
         return;
@@ -1504,6 +1505,13 @@ const Dashboard = () => {
   const location = useLocation();
   const isPartnersDashboard = location.pathname.includes("/partners");
 
+  useEffect(() => {
+    if (!location.state?.openCallGp) return;
+    handleCallADoctorClick();
+    navigate(location.pathname, { replace: true, state: {} });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open call once when navigated from Check Symptoms
+  }, [location.state?.openCallGp]);
+
   return (
     <div className="w-full">
       <ToastContainer />
@@ -1635,6 +1643,7 @@ const Dashboard = () => {
           videoMeetingUrl={videoMeetingUrl}
           showMeetingModal={showModal}
           upcomingAppointments={upcomingAppointments}
+          appointmentsLoading={appointmentsLoading}
           isLoading={isLoading}
           onCallDoctor={handleCallADoctorClick}
           onScheduleAppointment={() =>
@@ -1649,80 +1658,86 @@ const Dashboard = () => {
           onJoinAppointment={handleJoinCall}
           onRejoinCall={handlePatientRejoin}
           onJoinDoctorReadyCall={handleJoinReadyCall}
+          onCancelAppointment={(apt) => setCancelTarget(apt)}
+          joiningSlotId={joiningSlotId}
+          cancellingSlotId={cancellingSlotId}
+          showCalendarSection={showCalendarSection}
+          onToggleCalendar={() => setShowCalendarSection((v) => !v)}
         />
 
-        <div className="mt-6 flex flex-col gap-6 xl:flex-row">
-          <div className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[68%]">
-            <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
-              <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
-                Appointments calendar
-              </h2>
-              <p className="mt-0.5 text-sm text-gray-500">
-                View and manage your scheduled visits
-              </p>
-            </div>
-            <div className="flex flex-1 flex-col p-3 sm:p-4">
+        {showCalendarSection && (
+          <div className="mt-6 flex flex-col gap-6 xl:flex-row">
+            <div className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[68%]">
+              <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
+                <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
+                  Appointments calendar
+                </h2>
+                <p className="mt-0.5 text-sm text-gray-500">
+                  View and manage your scheduled visits
+                </p>
+              </div>
+              <div className="flex flex-1 flex-col p-3 sm:p-4">
+                <div className="flex-1">
+                  <Calendar
+                    localizer={localizer}
+                    events={calendarEvents}
+                    startAccessor="start"
+                    endAccessor="end"
+                    onSelectEvent={handleEventClick}
+                    eventPropGetter={eventStyleGetter}
+                    components={{ event: CustomEvent }}
+                    style={calendarStyle}
+                    views={["month", "week", "day"]}
+                    defaultView="month"
+                    popup={true}
+                    popupOffset={30}
+                    messages={{
+                      next: "Next",
+                      previous: "Prev",
+                      today: "Today",
+                      month: "Month",
+                      week: "Week",
+                      day: "Day",
+                    }}
+                  />
 
-            <div className="flex-1">
-              <Calendar
-                localizer={localizer}
-                events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                onSelectEvent={handleEventClick}
-                eventPropGetter={eventStyleGetter}
-                components={{ event: CustomEvent }}
-                style={calendarStyle}
-                views={["month", "week", "day"]}
-                defaultView="month"
-                popup={true}
-                popupOffset={30}
-                messages={{
-                  next: "Next",
-                  previous: "Prev",
-                  today: "Today",
-                  month: "Month",
-                  week: "Week",
-                  day: "Day",
-                }}
-              />
-
-              {calendarEvents.length === 0 && !isLoading && (
-                <div className="text-center text-gray-500 pt-4">
-                  <p className="text-lg mb-2">📅 No appointments scheduled</p>
-                  <p className="text-sm">
-                    Book an appointment with a specialist to see it here
-                  </p>
+                  {calendarEvents.length === 0 && !isLoading && (
+                    <div className="text-center text-gray-500 pt-4">
+                      <p className="text-lg mb-2">📅 No appointments scheduled</p>
+                      <p className="text-sm">
+                        Book an appointment with a specialist to see it here
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-            </div>
-          </div>
 
-          <div className="flex w-full flex-col overflow-x-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[32%]">
-            <div className="border-b border-gray-100 px-4 py-4">
-              <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
-                Your appointments
-              </h2>
-              <p className="text-sm text-gray-500">
-                Join opens 5 minutes before start, or when your doctor joins
-              </p>
-            </div>
-            <div className="max-h-[480px] flex-1 overflow-y-auto p-3 sm:p-4">
-              <UpcomingAppointmentsList
-                appointments={upcomingAppointments}
-                loading={appointmentsLoading}
-                personPrefix="Dr."
-                emptyTitle="No upcoming appointments"
-                emptyHint="Schedule a specialist visit to see it here."
-                onJoin={handleJoinCall}
-                isJoiningId={joiningSlotId}
-                onCancel={(apt) => setCancelTarget(apt)}
-                isCancellingId={cancellingSlotId}
-              />
+            <div className="flex w-full flex-col overflow-x-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm xl:w-[32%]">
+              <div className="border-b border-gray-100 px-4 py-4">
+                <h2 className="text-base font-bold text-[#020e7c] sm:text-lg">
+                  Your appointments
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Join opens 5 minutes before start, or when your doctor joins
+                </p>
+              </div>
+              <div className="max-h-[480px] flex-1 overflow-y-auto p-3 sm:p-4">
+                <UpcomingAppointmentsList
+                  appointments={upcomingAppointments}
+                  loading={appointmentsLoading}
+                  personPrefix="Dr."
+                  emptyTitle="No upcoming appointments"
+                  emptyHint="Schedule a specialist visit to see it here."
+                  onJoin={handleJoinCall}
+                  isJoiningId={joiningSlotId}
+                  onCancel={(apt) => setCancelTarget(apt)}
+                  isCancellingId={cancellingSlotId}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       <PatientBookingModals
@@ -1807,7 +1822,7 @@ const Dashboard = () => {
                   <ColorRing
                     height="20"
                     width="20"
-                    ariaLabel="color-ring-loading"
+                    ariaLabel="color ring loading"
                     wrapperStyle={{}}
                     wrapperClass="color-ring-wrapper"
                     colors={["white", "white", "white", "white", "white"]}

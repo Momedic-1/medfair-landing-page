@@ -195,14 +195,14 @@ export default function Profile() {
   };
 
   const bloodGroupOptions = [
-    { value: "A_POSITIVE", label: "A+" },
-    { value: "A_NEGATIVE", label: "A-" },
-    { value: "B_POSITIVE", label: "B+" },
-    { value: "B_NEGATIVE", label: "B-" },
-    { value: "AB_POSITIVE", label: "AB+" },
-    { value: "AB_NEGATIVE", label: "AB-" },
-    { value: "O_POSITIVE", label: "O+" },
-    { value: "O_NEGATIVE", label: "O-" },
+    { value: "A_POSITIVE", label: "A positive" },
+    { value: "A_NEGATIVE", label: "A negative" },
+    { value: "B_POSITIVE", label: "B positive" },
+    { value: "B_NEGATIVE", label: "B negative" },
+    { value: "AB_POSITIVE", label: "AB positive" },
+    { value: "AB_NEGATIVE", label: "AB negative" },
+    { value: "O_POSITIVE", label: "O positive" },
+    { value: "O_NEGATIVE", label: "O negative" },
   ];
 
   const genotypeOptions = [
