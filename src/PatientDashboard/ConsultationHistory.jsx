@@ -3,6 +3,11 @@ import axios from "axios";
 import { baseUrl } from "../env";
 import { getId, getToken } from "../utils";
 import { Loader2, MessageCircle, RefreshCw } from "lucide-react";
+import {
+  isSamePatientPageData,
+  readPatientPageCache,
+  writePatientPageCache,
+} from "../utils/patientPageCache";
 
 function formatWhen(value) {
   if (!value) return "None";
@@ -152,25 +157,42 @@ function pickConsultationRows(payload) {
 }
 
 export default function ConsultationHistory() {
-  const [items, setItems] = useState([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-  const [hasPrevious, setHasPrevious] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [chatTarget, setChatTarget] = useState(null);
   const token = getToken();
   const userId = getId();
+  const cacheKey = userId ? `consultation-history:${userId}:0` : null;
+  const cachedPage = cacheKey ? readPatientPageCache(cacheKey) : null;
 
-  const load = async (pageNum = page) => {
+  const [items, setItems] = useState(() =>
+    Array.isArray(cachedPage?.items) ? cachedPage.items : []
+  );
+  const [page, setPage] = useState(() =>
+    typeof cachedPage?.page === "number" ? cachedPage.page : 0
+  );
+  const [totalPages, setTotalPages] = useState(() =>
+    typeof cachedPage?.totalPages === "number" ? cachedPage.totalPages : 0
+  );
+  const [totalElements, setTotalElements] = useState(() =>
+    typeof cachedPage?.totalElements === "number" ? cachedPage.totalElements : 0
+  );
+  const [hasNext, setHasNext] = useState(() => Boolean(cachedPage?.hasNext));
+  const [hasPrevious, setHasPrevious] = useState(() =>
+    Boolean(cachedPage?.hasPrevious)
+  );
+  const [loading, setLoading] = useState(
+    () => !Array.isArray(cachedPage?.items)
+  );
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [chatTarget, setChatTarget] = useState(null);
+
+  const load = async (pageNum = page, { silent = false } = {}) => {
     if (!token || !userId) {
       setError("Please sign in again.");
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (silent) setRefreshing(true);
+    else if (!items.length) setLoading(true);
     setError("");
     try {
       const res = await axios.get(
@@ -182,30 +204,47 @@ export default function ConsultationHistory() {
       );
       const data = res?.data;
       const rows = pickConsultationRows(data);
-      setItems(rows);
-      setPage(typeof data?.page === "number" ? data.page : pageNum);
-      setTotalPages(
-        typeof data?.totalPages === "number"
-          ? data.totalPages
-          : rows.length > 0
-            ? 1
-            : 0
+      const nextMeta = {
+        items: rows,
+        page: typeof data?.page === "number" ? data.page : pageNum,
+        totalPages:
+          typeof data?.totalPages === "number"
+            ? data.totalPages
+            : rows.length > 0
+              ? 1
+              : 0,
+        totalElements:
+          typeof data?.totalElements === "number"
+            ? data.totalElements
+            : rows.length,
+        hasNext: Boolean(data?.hasNext),
+        hasPrevious: Boolean(data?.hasPrevious),
+      };
+      setItems((prev) =>
+        isSamePatientPageData(prev, nextMeta.items) ? prev : nextMeta.items
       );
-      setTotalElements(
-        typeof data?.totalElements === "number" ? data.totalElements : rows.length
-      );
-      setHasNext(Boolean(data?.hasNext));
-      setHasPrevious(Boolean(data?.hasPrevious));
+      setPage(nextMeta.page);
+      setTotalPages(nextMeta.totalPages);
+      setTotalElements(nextMeta.totalElements);
+      setHasNext(nextMeta.hasNext);
+      setHasPrevious(nextMeta.hasPrevious);
+      writePatientPageCache(`consultation-history:${userId}:${pageNum}`, nextMeta);
     } catch (e) {
-      setError(e?.response?.data?.message || "Could not load consultation history");
-      setItems([]);
+      if (!items.length) {
+        setError(
+          e?.response?.data?.message || "Could not load consultation history"
+        );
+        setItems([]);
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    load(0);
+    load(0, { silent: Array.isArray(cachedPage?.items) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -220,19 +259,20 @@ export default function ConsultationHistory() {
         </div>
         <button
           type="button"
-          onClick={() => load(page)}
-          className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm"
+          onClick={() => load(page, { silent: items.length > 0 })}
+          disabled={loading || refreshing}
+          className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm disabled:opacity-50"
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>
 
-      {loading ? (
+      {loading && !items.length ? (
         <div className="flex justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-[#020e7c]" />
         </div>
-      ) : error ? (
+      ) : error && !items.length ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
           {error}
         </p>
@@ -299,7 +339,7 @@ export default function ConsultationHistory() {
               <button
                 type="button"
                 disabled={!hasPrevious || loading}
-                onClick={() => load(page - 1)}
+                onClick={() => load(page - 1, { silent: false })}
                 className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
               >
                 Previous
@@ -307,7 +347,7 @@ export default function ConsultationHistory() {
               <button
                 type="button"
                 disabled={!hasNext || loading}
-                onClick={() => load(page + 1)}
+                onClick={() => load(page + 1, { silent: false })}
                 className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
               >
                 Next

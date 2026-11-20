@@ -292,7 +292,7 @@
 //     </div>
 //     )}
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Sidebar from "./Sidebar";
@@ -306,13 +306,22 @@ import {
   PartnerLocationsProvider,
   usePartnerLocations,
 } from "../context/PartnerLocationsContext";
-import { getPatientPartnerSlug, getUserData } from "../utils";
+import { getId, getPatientPartnerSlug, getToken, getUserData } from "../utils";
 import { openVideoCallPreferNewTab } from "../utils/videoCallNavigation";
 import { parseApiError } from "../utils/parseApiError";
 import { useDashboardTheme } from "../hooks/useDashboardTheme";
 import DarkModeToggle from "../components/common/DarkModeToggle";
 import PatientWellnessPopups from "../components/patient/PatientWellnessPopups";
 import RouteErrorBoundary from "../components/common/RouteErrorBoundary";
+import {
+  readPatientPageCache,
+  writePatientPageCache,
+} from "../utils/patientPageCache";
+import {
+  mapPatientProfileApi,
+  readCachedPatientProfile,
+  writeCachedPatientProfile,
+} from "../utils/patientProfileCache";
 
 const FIRST_CARE_HOSPITAL_SLUG = "first-care-hospital";
 const LOGO_SRC = "/logo.jpeg";
@@ -363,6 +372,82 @@ export default function PatientLayout() {
   const homePath = path.startsWith("/patient-dashboard/partners")
     ? "/patient-dashboard/partners"
     : "/patient-dashboard";
+
+  // Warm pharmacy / labs / chat caches so those pages paint instantly.
+  useEffect(() => {
+    const patientId = getId();
+    const apiToken = getToken();
+    if (!patientId || !apiToken) return;
+    const headers = { Authorization: `Bearer ${apiToken}` };
+    const warm = async (key, url, pick) => {
+      if (readPatientPageCache(key)) return;
+      try {
+        const res = await axios.get(url, { headers });
+        const data = pick(res?.data);
+        if (data != null) writePatientPageCache(key, data);
+      } catch {
+        // ignore prefetch errors
+      }
+    };
+    warm(
+      `pharmacy-notes:${patientId}`,
+      `${baseUrl}/api/notes/patient/${patientId}`,
+      (raw) =>
+        Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.items)
+            ? raw.items
+            : Array.isArray(raw?.content)
+              ? raw.content
+              : null
+    );
+    warm(
+      `investigations:${patientId}`,
+      `${baseUrl}/api/investigations/orders/patient/${patientId}`,
+      (raw) => (Array.isArray(raw) ? raw : null)
+    );
+    warm(
+      `consultation-history:${patientId}:0`,
+      `${baseUrl}/api/consultations/history/${patientId}?page=0&size=5`,
+      (raw) => {
+        const rows = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.items)
+            ? raw.items
+            : Array.isArray(raw?.content)
+              ? raw.content
+              : [];
+        return {
+          items: rows,
+          page: typeof raw?.page === "number" ? raw.page : 0,
+          totalPages:
+            typeof raw?.totalPages === "number"
+              ? raw.totalPages
+              : rows.length
+                ? 1
+                : 0,
+          totalElements:
+            typeof raw?.totalElements === "number"
+              ? raw.totalElements
+              : rows.length,
+          hasNext: Boolean(raw?.hasNext),
+          hasPrevious: Boolean(raw?.hasPrevious),
+        };
+      }
+    );
+    // Upload results / profile documents
+    if (!readCachedPatientProfile(patientId)) {
+      axios
+        .get(`${baseUrl}/api/patient-profile/${patientId}`, { headers })
+        .then((res) => {
+          const raw = res?.data;
+          const data = raw?.data ?? raw;
+          const mapped = mapPatientProfileApi(data);
+          if (mapped) writeCachedPatientProfile(patientId, mapped);
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   if (!token || !userData) {
     navigate("/login");

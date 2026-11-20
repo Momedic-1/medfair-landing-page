@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { formatDate, getToken } from "../../utils";
 import { usePartnerLocations } from "../../context/PartnerLocationsContext";
 import { Hourglass } from "react-loader-spinner";
@@ -6,6 +6,9 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Modal, Box } from "@mui/material";
 import { baseUrl } from "../../env";
+import SimplePager from "../common/SimplePager";
+
+const PAGE_SIZE = 5;
 
 const modalStyle = {
   position: "absolute",
@@ -54,8 +57,10 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(0);
+  const [medPage, setMedPage] = useState(0);
+  const [orderMedPage, setOrderMedPage] = useState(0);
+  const [pharmacyPage, setPharmacyPage] = useState(0);
 
   const dropdownRef = useRef(null);
 
@@ -65,6 +70,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
       return;
     }
     setMedications(prescriptions);
+    setMedPage(0);
     setModalIsOpen(true);
   };
 
@@ -72,6 +78,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
     setSelectedPharmacyCode(pharmacy.partner);
     setSelectedPharmacy(pharmacy);
     setSelectedPatient(patientData);
+    setOrderMedPage(0);
     setOrderModalOpen(true);
     setShowPharmacyDropdown(null);
 
@@ -80,6 +87,10 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
       toast.warning("No medications prescribed for this patient");
     }
   };
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [data]);
 
   // Order drugs API call
   const handleOrderDrugs = async () => {
@@ -148,21 +159,50 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
     };
   }, [showPharmacyDropdown]);
 
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const currentData = data.slice(startIndex, startIndex + rowsPerPage);
+  const totalPages = Math.max(1, Math.ceil((data?.length || 0) / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages - 1);
+  const startIndex = safePage * PAGE_SIZE;
+  const currentData = (data || []).slice(startIndex, startIndex + PAGE_SIZE);
 
-  const goToNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
+  const pagedMedications = useMemo(() => {
+    const start = medPage * PAGE_SIZE;
+    return medications.slice(start, start + PAGE_SIZE);
+  }, [medications, medPage]);
 
-  const goToPrevPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
+  const medTotalPages = Math.max(1, Math.ceil(medications.length / PAGE_SIZE));
+
+  const orderPrescriptions = selectedPatient?.prescriptions;
+  const orderPrescriptionList = Array.isArray(orderPrescriptions)
+    ? orderPrescriptions
+    : [];
+  const pagedOrderMeds = useMemo(() => {
+    const start = orderMedPage * PAGE_SIZE;
+    return orderPrescriptionList.slice(start, start + PAGE_SIZE);
+  }, [orderPrescriptionList, orderMedPage]);
+
+  const orderMedTotalPages = Math.max(
+    1,
+    Math.ceil(orderPrescriptionList.length / PAGE_SIZE)
+  );
+
+  const pagedPharmacies = useMemo(() => {
+    const start = pharmacyPage * PAGE_SIZE;
+    return (partnerPharmacies || []).slice(start, start + PAGE_SIZE);
+  }, [partnerPharmacies, pharmacyPage]);
+
+  const pharmacyTotalPages = Math.max(
+    1,
+    Math.ceil((partnerPharmacies?.length || 0) / PAGE_SIZE)
+  );
+
+  const showBlockingLoader = isLoading && !(data && data.length);
 
   return (
     <div className="relative w-full max-w-4xl mx-auto px-3 py-4 sm:px-0">
-      {isLoading ? (
+      {isLoading && data?.length > 0 ? (
+        <p className="mb-2 text-xs text-slate-500">Updating…</p>
+      ) : null}
+      {showBlockingLoader ? (
         <div className="w-full h-[280px] flex items-center justify-center">
           <Hourglass
             visible={true}
@@ -213,6 +253,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        setPharmacyPage(0);
                         setShowPharmacyDropdown(
                           showPharmacyDropdown === index ? null : index
                         );
@@ -225,7 +266,7 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                         <div className="bg-gradient-to-r from-orange-500 to-red-500 px-4 py-3 text-sm font-semibold text-white">
                           Available Pharmacies
                         </div>
-                        {locationsLoading ? (
+                        {locationsLoading && partnerPharmacies.length === 0 ? (
                           <div className="px-4 py-6 text-center text-sm text-gray-600">
                             Loading pharmacies…
                           </div>
@@ -235,20 +276,55 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                               "No pharmacies available for your account."}
                           </div>
                         ) : (
-                          <ul className="divide-y divide-gray-100">
-                            {partnerPharmacies.map((pharmacy) => (
-                              <li
-                                key={pharmacy.id}
-                                className="cursor-pointer px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-orange-50"
-                                onClick={() =>
-                                  handlePharmacySelect(pharmacy, patient)
-                                }
-                                onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                {pharmacy.name}
-                              </li>
-                            ))}
-                          </ul>
+                          <div>
+                            <ul className="divide-y divide-gray-100">
+                              {pagedPharmacies.map((pharmacy) => (
+                                <li
+                                  key={pharmacy.id}
+                                  className="cursor-pointer px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-orange-50"
+                                  onClick={() =>
+                                    handlePharmacySelect(pharmacy, patient)
+                                  }
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  {pharmacy.name}
+                                </li>
+                              ))}
+                            </ul>
+                            {pharmacyTotalPages > 1 ? (
+                              <div className="flex items-center justify-between gap-2 border-t px-2 py-2">
+                                <button
+                                  type="button"
+                                  className="rounded-lg px-2 py-1 text-xs text-slate-600 disabled:opacity-40"
+                                  disabled={pharmacyPage <= 0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPharmacyPage((p) => Math.max(0, p - 1));
+                                  }}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  Prev
+                                </button>
+                                <span className="text-[10px] text-slate-500">
+                                  {pharmacyPage + 1}/{pharmacyTotalPages}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="rounded-lg px-2 py-1 text-xs text-slate-600 disabled:opacity-40"
+                                  disabled={pharmacyPage >= pharmacyTotalPages - 1}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPharmacyPage((p) =>
+                                      Math.min(pharmacyTotalPages - 1, p + 1)
+                                    );
+                                  }}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  Next
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
                         )}
                       </div>
                     )}
@@ -260,29 +336,14 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
         </ul>
       )}
 
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={goToPrevPage}
-            disabled={currentPage <= 1}
-            className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
-          >
-            Previous
-          </button>
-          <p className="text-xs text-slate-500">
-            Page {currentPage} of {totalPages}
-          </p>
-          <button
-            type="button"
-            onClick={goToNextPage}
-            disabled={currentPage >= totalPages}
-            className="rounded-xl border px-3 py-2 text-sm disabled:opacity-40"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <SimplePager
+        page={safePage}
+        totalPages={totalPages}
+        totalElements={data?.length || 0}
+        pageSize={PAGE_SIZE}
+        onPrev={() => setCurrentPage((p) => Math.max(0, p - 1))}
+        onNext={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+      />
 
       {/* View Medications Modal */}
       <Modal
@@ -296,24 +357,36 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
             Prescribed Medications
           </h2>
           {medications.length > 0 ? (
-            <ul className="space-y-3">
-              {medications.map((medication) => (
-                <li
-                  key={medication?.id}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3"
-                >
-                  <p className="font-semibold text-slate-900">{medication?.drugName}</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {medication?.dosage}
-                    {medication?.frequency ? ` · ${medication.frequency}` : ""}
-                    {medication?.duration ? ` · ${medication.duration}` : ""}
-                  </p>
-                  {medication?.instructions ? (
-                    <p className="mt-1 text-xs text-slate-500">{medication.instructions}</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="space-y-3">
+                {pagedMedications.map((medication) => (
+                  <li
+                    key={medication?.id}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                  >
+                    <p className="font-semibold text-slate-900">{medication?.drugName}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {medication?.dosage}
+                      {medication?.frequency ? ` · ${medication.frequency}` : ""}
+                      {medication?.duration ? ` · ${medication.duration}` : ""}
+                    </p>
+                    {medication?.instructions ? (
+                      <p className="mt-1 text-xs text-slate-500">{medication.instructions}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              <SimplePager
+                page={medPage}
+                totalPages={medTotalPages}
+                totalElements={medications.length}
+                pageSize={PAGE_SIZE}
+                onPrev={() => setMedPage((p) => Math.max(0, p - 1))}
+                onNext={() =>
+                  setMedPage((p) => Math.min(medTotalPages - 1, p + 1))
+                }
+              />
+            </>
           ) : (
             <p id="medications-modal-description" className="text-gray-600">
               No medications available.
@@ -461,13 +534,13 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                   />
                 </svg>
                 Prescribed Medications (
-                {selectedPatient?.prescriptions?.length || 0})
+                {orderPrescriptionList.length})
               </h3>
 
               <div className="max-h-64 overflow-y-auto">
-                {selectedPatient?.prescriptions?.length > 0 ? (
+                {orderPrescriptionList.length > 0 ? (
                   <div className="space-y-3">
-                    {selectedPatient.prescriptions.map((medication, index) => (
+                    {pagedOrderMeds.map((medication, index) => (
                       <div
                         key={medication?.id || index}
                         className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
@@ -517,6 +590,18 @@ const Table = ({ data = [], isLoading = false, emptyMessage }) => {
                         </div>
                       </div>
                     ))}
+                    <SimplePager
+                      page={orderMedPage}
+                      totalPages={orderMedTotalPages}
+                      totalElements={orderPrescriptionList.length}
+                      pageSize={PAGE_SIZE}
+                      onPrev={() => setOrderMedPage((p) => Math.max(0, p - 1))}
+                      onNext={() =>
+                        setOrderMedPage((p) =>
+                          Math.min(orderMedTotalPages - 1, p + 1)
+                        )
+                      }
+                    />
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">

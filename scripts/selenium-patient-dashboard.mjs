@@ -328,13 +328,19 @@ async function run() {
       driver,
       "Pharmacy tile route",
       `${FE}/patient-dashboard/patient-notes`,
-      /Note|Medication|Pharmacy|Empty|No notes|Consultation/i,
+      /Note|Medication|Pharmacy|Empty|No notes|Consultation|No pharmacy|Doctor/i,
     );
     await smokePage(
       driver,
       "Lab tests tile route",
       `${FE}/patient-dashboard/patient-investigations`,
-      /Investigation|Lab|Ready to send|Sent|Download|partner/i,
+      /Investigation|Lab|Ready to send|Sent|Download|partner|Upload lab/i,
+    );
+    await smokePage(
+      driver,
+      "Upload results route",
+      `${FE}/patient-dashboard/profile?section=documents`,
+      /Document|Upload|Lab result|Radiology|Your documents|Profile/i,
     );
     await smokePage(
       driver,
@@ -342,6 +348,25 @@ async function run() {
       `${FE}/patient-dashboard/consultation-history`,
       /Doctor chats|Consultation|chat|No consultations|Open chat|View chat/i,
     );
+
+    // 5b. Upload results tile from home
+    try {
+      await driver.get(`${FE}/patient-dashboard`);
+      await pause(1000);
+      await clickTile(driver, "Upload results");
+      await driver.wait(until.urlContains("profile"), 15000);
+      await pause(1200);
+      const uploadBody = await bodyText(driver);
+      await shot(driver, "upload-results");
+      if (/Document|Upload|Lab|Radiology|category|Choose file/i.test(uploadBody)) {
+        ok("Upload results tile opens documents");
+      } else {
+        fail("Upload results tile opens documents", new Error(uploadBody.slice(0, 220)));
+      }
+    } catch (err) {
+      fail("Upload results tile", err);
+      await shot(driver, "upload-fail");
+    }
 
     // 6. Other patient pages
     await smokePage(driver, "Profile page", `${FE}/patient-dashboard/profile`, /Profile|Personal|Email|Phone|Blood/i);

@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { baseUrl } from "../env";
 import { capitalizeFirstLetter, getId, getToken, getUserData } from "../utils";
-import { normalizeDateOfBirth } from "../utils/normalizeDateOfBirth";
 import "../styling/profile.css";
 import { Box, Modal } from "@mui/material";
 import {
@@ -26,10 +25,46 @@ import {
   profileLabelClass,
   profileTextareaClass,
 } from "./components/profileUi";
+import SimplePager from "../components/common/SimplePager";
+import {
+  mapPatientProfileApi,
+  readCachedPatientProfile,
+  writeCachedPatientProfile,
+} from "../utils/patientProfileCache";
+
+const DOCS_PAGE_SIZE = 5;
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
+
+const EMPTY_PROFILE = {
+  fullName: "",
+  email: "",
+  dateOfBirth: "",
+  age: 0,
+  weight: "",
+  bloodGroup: "",
+  genotype: "",
+  imageUrl: "",
+  emergencyContact: {
+    name: "",
+    relationship: "",
+    phoneNumber: "",
+    email: "",
+  },
+  medicalHistory: [],
+  address: {
+    street: "",
+    city: "",
+    state: "",
+    country: "",
+    postalCode: "",
+  },
+  documents: [],
+  documentCategories: [],
+  documentCategory: "",
+};
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -37,7 +72,10 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState(
     initialSection === "documents" ? 1 : 0
   );
-  const [profileLoading, setProfileLoading] = useState(true);
+  const userDataEarly = getUserData() || {};
+  const userIdEarly = getId();
+  const cachedProfile = readCachedPatientProfile(userIdEarly);
+  const [profileLoading, setProfileLoading] = useState(() => !cachedProfile);
 
   useEffect(() => {
     if (searchParams.get("section") === "documents") {
@@ -52,6 +90,7 @@ export default function Profile() {
   const [filePreview, setFilePreview] = useState(null);
   const [showFileModal, setShowFileModal] = useState(false);
   const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [docsPage, setDocsPage] = useState(0);
   const [newMedicalEntry, setNewMedicalEntry] = useState({
     condition: "",
     allergy: "",
@@ -84,49 +123,26 @@ export default function Profile() {
     setIsModalOpen(false);
   };
 
-  const [profileData, setProfileData] = useState({
-    dateOfBirth: "",
-    age: 0,
-    weight: 0,
-    bloodGroup: "",
-    genotype: "",
-    imageUrl: "",
-    fullName: "",
-    email: "",
-    emergencyContact: {
-      name: "",
-      relationship: "",
-      phoneNumber: "",
-      email: "",
-    },
-    medicalHistory: [],
-    address: {
-      street: "",
-      city: "",
-      state: "",
-      country: "",
-      postalCode: "",
-    },
-    documents: [],
-    documentCategories: [],
-    documentCategory: "",
-  });
+  const [profileData, setProfileData] = useState(
+    () => cachedProfile || EMPTY_PROFILE
+  );
 
-  const userData = getUserData() || {};
+  const userData = userDataEarly;
   const token = getToken();
-  const userId = getId();
+  const userId = userIdEarly;
 
   useEffect(() => {
     if (!token || !userId) {
       setProfileLoading(false);
       return;
     }
-    fetchFullProfile();
+    fetchFullProfile({ silent: Boolean(cachedProfile) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, userId]);
 
   /** Single API: GET /api/patient-profile/{userId} returns profile, address, emergencyContact, medicalHistory, documents, documentCategories */
-  const fetchFullProfile = async () => {
-    setProfileLoading(true);
+  const fetchFullProfile = async ({ silent = false } = {}) => {
+    if (!silent) setProfileLoading(true);
     try {
       const response = await axios.get(
         `${baseUrl}/api/patient-profile/${userId}`,
@@ -134,61 +150,19 @@ export default function Profile() {
       );
       const raw = response?.data;
       const data = raw?.data ?? raw;
-      if (!data || typeof data !== "object") return;
-
-      const profile = data.profile || data.patientProfile || {};
-      const address = data.address || {};
-      const emergencyContact = data.emergencyContact || {};
-      const medicalHistory = Array.isArray(data.medicalHistory) ? data.medicalHistory : [];
-      const docUrls = Array.isArray(data.documents) ? data.documents : [];
-      const docCategories = Array.isArray(data.documentCategories) ? data.documentCategories : [];
-
-      const documents = docUrls.map((url, i) => ({
-        fileUrl: typeof url === "string" ? url : url?.fileUrl || url?.url,
-        url: typeof url === "string" ? url : url?.fileUrl || url?.url,
-        category: docCategories[i] || "",
-        documentCategory: docCategories[i] || "",
-        fileName: `Document ${i + 1}`,
-        name: `Document ${i + 1}`,
-      }));
-
-      setProfileData((prev) => ({
-        ...prev,
-        fullName: profile.fullName ?? prev.fullName,
-        email: profile.email ?? prev.email,
-        dateOfBirth:
-          normalizeDateOfBirth(profile.dateOfBirth) ||
-          normalizeDateOfBirth(prev.dateOfBirth) ||
-          "",
-        age: profile.age ?? prev.age ?? 0,
-        weight: profile.weight ?? prev.weight ?? "",
-        bloodGroup: profile.bloodGroup ?? prev.bloodGroup,
-        genotype: profile.genotype ?? prev.genotype,
-        imageUrl: profile.imageUrl ?? prev.imageUrl,
-        emergencyContact: {
-          name: emergencyContact.fullName ?? prev.emergencyContact.name,
-          relationship: emergencyContact.relationship ?? prev.emergencyContact.relationship,
-          phoneNumber: emergencyContact.phoneNumber ?? prev.emergencyContact.phoneNumber,
-          email: emergencyContact.email ?? prev.emergencyContact.email,
-        },
-        address: {
-          street: address.streetAddress ?? address.street ?? prev.address.street,
-          city: address.city ?? prev.address.city,
-          state: address.state ?? prev.address.state,
-          country: address.country ?? prev.address.country,
-          postalCode: address.zipCode ?? address.postalCode ?? prev.address.postalCode,
-        },
-        medicalHistory,
-        documents,
-        documentCategories: docCategories,
-      }));
+      setProfileData((prev) => {
+        const next = mapPatientProfileApi(data, prev);
+        if (!next) return prev;
+        writeCachedPatientProfile(userId, next);
+        return next;
+      });
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error("Please log in again.");
         return;
       }
       console.error("Error fetching profile:", error);
-      toast.error("Could not load your profile.");
+      if (!cachedProfile) toast.error("Could not load your profile.");
     } finally {
       setProfileLoading(false);
     }
@@ -361,11 +335,16 @@ export default function Profile() {
         };
 
         // Update local state with the new document
-        setProfileData((prev) => ({
-          ...prev,
-          documents: [...prev.documents, newDocument],
-          documentCategory: "", // Clear the category selection
-        }));
+        setProfileData((prev) => {
+          const next = {
+            ...prev,
+            documents: [...prev.documents, newDocument],
+            documentCategory: "",
+          };
+          writeCachedPatientProfile(userId, next);
+          return next;
+        });
+        setDocsPage(0);
 
         // Create preview for different file types
         if (file.type.startsWith("image/")) {
@@ -1059,9 +1038,14 @@ export default function Profile() {
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                              {profileData.documents.map((doc, index) => (
+                              {profileData.documents
+                                .slice(
+                                  docsPage * DOCS_PAGE_SIZE,
+                                  docsPage * DOCS_PAGE_SIZE + DOCS_PAGE_SIZE
+                                )
+                                .map((doc, index) => (
                                 <div
-                                  key={index}
+                                  key={docsPage * DOCS_PAGE_SIZE + index}
                                   className="group relative bg-gray-50 hover:bg-white border border-gray-200 hover:border-blue-300 rounded-lg p-4 transition-all duration-200 cursor-pointer hover:shadow-md"
                                   onClick={() => openModal(doc)}
                                 >
@@ -1134,6 +1118,31 @@ export default function Profile() {
                                 </div>
                               ))}
                             </div>
+                            <SimplePager
+                              page={docsPage}
+                              totalPages={Math.max(
+                                1,
+                                Math.ceil(
+                                  profileData.documents.length / DOCS_PAGE_SIZE
+                                )
+                              )}
+                              totalElements={profileData.documents.length}
+                              pageSize={DOCS_PAGE_SIZE}
+                              onPrev={() =>
+                                setDocsPage((p) => Math.max(0, p - 1))
+                              }
+                              onNext={() =>
+                                setDocsPage((p) =>
+                                  Math.min(
+                                    Math.ceil(
+                                      profileData.documents.length /
+                                        DOCS_PAGE_SIZE
+                                    ) - 1,
+                                    p + 1
+                                  )
+                                )
+                              }
+                            />
                           </ProfileSectionCard>
                         )}
                     </div>

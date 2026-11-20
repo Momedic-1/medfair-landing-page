@@ -98,13 +98,20 @@ body.app-dark .dashboard-theme-dark [class*="from-gray"] {
   background-image: none !important;
 }
 
+body.app-dark .dashboard-theme-dark [class*="to-white"] {
+  background-image: none !important;
+  background-color: #0b1220 !important;
+}
+
 body.app-dark .dashboard-theme-dark .bg-white,
 body.app-dark .dashboard-theme-dark .bg-white\/90,
 body.app-dark .dashboard-theme-dark .bg-white\/80,
 body.app-dark .dashboard-theme-dark .bg-slate-50,
+body.app-dark .dashboard-theme-dark .bg-slate-50\/80,
 body.app-dark .dashboard-theme-dark .bg-slate-100,
 body.app-dark .dashboard-theme-dark .bg-gray-50,
-body.app-dark .dashboard-theme-dark .bg-gray-100 {
+body.app-dark .dashboard-theme-dark .bg-gray-100,
+body.app-dark .dashboard-theme-dark .bg-indigo-50 {
   background-color: #111827 !important;
 }
 
@@ -115,15 +122,19 @@ body.app-dark .dashboard-theme-dark .text-slate-900,
 body.app-dark .dashboard-theme-dark .text-slate-800,
 body.app-dark .dashboard-theme-dark .text-slate-700,
 body.app-dark .dashboard-theme-dark .text-\[\#020E7C\],
-body.app-dark .dashboard-theme-dark .text-\[\#020e7c\] {
+body.app-dark .dashboard-theme-dark .text-\[\#020e7c\],
+body.app-dark .dashboard-theme-dark .text-\[\#020e7c\]\/80,
+body.app-dark .dashboard-theme-dark .text-\[\#020e7c\]\/70 {
   color: #f9fafb !important;
 }
 
 body.app-dark .dashboard-theme-dark .text-gray-600,
 body.app-dark .dashboard-theme-dark .text-gray-500,
 body.app-dark .dashboard-theme-dark .text-slate-600,
-body.app-dark .dashboard-theme-dark .text-slate-500 {
-  color: #e5e7eb !important;
+body.app-dark .dashboard-theme-dark .text-slate-500,
+body.app-dark .dashboard-theme-dark .text-slate-400,
+body.app-dark .dashboard-theme-dark .text-slate-300 {
+  color: #d1d5db !important;
 }
 
 body.app-dark .dashboard-theme-dark .text-red-800,
@@ -133,22 +144,50 @@ body.app-dark .dashboard-theme-dark .text-blue-700,
 body.app-dark .dashboard-theme-dark .text-emerald-800,
 body.app-dark .dashboard-theme-dark .text-emerald-700,
 body.app-dark .dashboard-theme-dark .text-violet-800,
-body.app-dark .dashboard-theme-dark .text-violet-700 {
-  color: #f9fafb !important;
+body.app-dark .dashboard-theme-dark .text-violet-700,
+body.app-dark .dashboard-theme-dark .text-indigo-700 {
+  color: #f3f4f6 !important;
 }
 
 body.app-dark .dashboard-theme-dark .bg-red-50,
 body.app-dark .dashboard-theme-dark .bg-blue-50,
 body.app-dark .dashboard-theme-dark .bg-emerald-50,
-body.app-dark .dashboard-theme-dark .bg-violet-50\/80 {
+body.app-dark .dashboard-theme-dark .bg-violet-50\/80,
+body.app-dark .dashboard-theme-dark .bg-\[\#020e7c\]\/5 {
   background-color: #1f2937 !important;
 }
 
 body.app-dark .dashboard-theme-dark .border-gray-100,
 body.app-dark .dashboard-theme-dark .border-gray-200,
 body.app-dark .dashboard-theme-dark .border-gray-200\/80,
-body.app-dark .dashboard-theme-dark .border-slate-200 {
-  border-color: #374151 !important;
+body.app-dark .dashboard-theme-dark .border-slate-100,
+body.app-dark .dashboard-theme-dark .border-slate-200,
+body.app-dark .dashboard-theme-dark .border-slate-200\/80,
+body.app-dark .dashboard-theme-dark .border-slate-300 {
+  border-color: #4b5563 !important;
+}
+
+body.app-dark .dashboard-theme-dark .ring-slate-200,
+body.app-dark .dashboard-theme-dark .ring-indigo-200,
+body.app-dark .dashboard-theme-dark .ring-emerald-200 {
+  --tw-ring-color: #4b5563 !important;
+}
+
+/* Lab / pharmacy / chat cards: keep contrast on muted chips */
+body.app-dark .dashboard-theme-dark .shadow-\[0_10px_40px_-24px_rgba\(2\,14\,124\,0\.35\)\] {
+  box-shadow: 0 10px 40px -24px rgba(0, 0, 0, 0.65) !important;
+}
+
+body.app-dark .dashboard-theme-dark .bg-teal-50,
+body.app-dark .dashboard-theme-dark .bg-teal-50\/80,
+body.app-dark .dashboard-theme-dark .hover\:bg-teal-50:hover {
+  background-color: #134e4a !important;
+}
+
+body.app-dark .dashboard-theme-dark .border-teal-200\/80,
+body.app-dark .dashboard-theme-dark .border-teal-300,
+body.app-dark .dashboard-theme-dark .hover\:border-teal-300:hover {
+  border-color: #2dd4bf !important;
 }
 
 body.app-dark ::-webkit-scrollbar-track {

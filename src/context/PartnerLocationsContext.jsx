@@ -7,6 +7,11 @@ import {
 } from "react";
 import { baseUrl } from "../env";
 import { getToken, getUserData } from "../utils";
+import {
+  isSamePatientPageData,
+  readPatientPageCache,
+  writePatientPageCache,
+} from "../utils/patientPageCache";
 
 export const DEFAULT_PARTNER_PHARMACIES = [
   {
@@ -91,16 +96,28 @@ function getPatientIdForPartnerApi() {
 const PartnerLocationsContext = createContext(null);
 
 export function PartnerLocationsProvider({ children }) {
-  const [apiPharmacies, setApiPharmacies] = useState([]);
-  const [apiLabs, setApiLabs] = useState([]);
+  const patientId = getPatientIdForPartnerApi();
+  const cacheKey = patientId ? `partner-locations:${patientId}` : null;
+  const cached = cacheKey ? readPatientPageCache(cacheKey) : null;
+
+  const [apiPharmacies, setApiPharmacies] = useState(() =>
+    Array.isArray(cached?.pharmacies) ? cached.pharmacies : []
+  );
+  const [apiLabs, setApiLabs] = useState(() =>
+    Array.isArray(cached?.labs) ? cached.labs : []
+  );
   const [pharmaciesError, setPharmaciesError] = useState(null);
   const [labsError, setLabsError] = useState(null);
   const [networkError, setNetworkError] = useState(false);
-  const [locationsLoading, setLocationsLoading] = useState(true);
+  const [locationsLoading, setLocationsLoading] = useState(
+    () =>
+      !(
+        Array.isArray(cached?.pharmacies) ||
+        Array.isArray(cached?.labs)
+      )
+  );
   const [selectedPharmacyCode, setSelectedPharmacyCode] = useState(null);
   const [selectedLabCode, setSelectedLabCode] = useState(null);
-
-  const patientId = getPatientIdForPartnerApi();
 
   useEffect(() => {
     if (!patientId) {
@@ -109,9 +126,11 @@ export function PartnerLocationsProvider({ children }) {
     }
 
     let cancelled = false;
+    const hasCache =
+      Array.isArray(cached?.pharmacies) || Array.isArray(cached?.labs);
 
     const run = async () => {
-      setLocationsLoading(true);
+      if (!hasCache) setLocationsLoading(true);
       setPharmaciesError(null);
       setLabsError(null);
       setNetworkError(false);
@@ -163,14 +182,21 @@ export function PartnerLocationsProvider({ children }) {
         }
 
         if (!cancelled) {
-          setApiPharmacies(ph);
-          setApiLabs(lab);
+          setApiPharmacies((prev) =>
+            isSamePatientPageData(prev, ph) ? prev : ph
+          );
+          setApiLabs((prev) => (isSamePatientPageData(prev, lab) ? prev : lab));
+          if (cacheKey) {
+            writePatientPageCache(cacheKey, { pharmacies: ph, labs: lab });
+          }
         }
       } catch (e) {
         if (!cancelled) {
           setNetworkError(true);
-          setApiPharmacies([]);
-          setApiLabs([]);
+          if (!hasCache) {
+            setApiPharmacies([]);
+            setApiLabs([]);
+          }
         }
       } finally {
         if (!cancelled) setLocationsLoading(false);

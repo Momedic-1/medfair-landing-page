@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
+  FileUp,
   FlaskConical,
   Lock,
   MessageCircle,
@@ -57,10 +58,18 @@ const TILES = [
   {
     id: "labs",
     title: "Lab tests",
-    description: "Partner labs and results.",
+    description: "Orders and partner labs.",
     accent: "#0891B2",
     icon: FlaskConical,
     action: "labs",
+  },
+  {
+    id: "results",
+    title: "Upload results",
+    description: "Lab and radiology files.",
+    accent: "#0F766E",
+    icon: FileUp,
+    action: "results",
   },
   {
     id: "chat",
@@ -148,6 +157,9 @@ export function PatientDashboardTop({
         break;
       case "labs":
         navigate("/patient-dashboard/patient-investigations");
+        break;
+      case "results":
+        navigate("/patient-dashboard/profile?section=documents");
         break;
       case "chat":
         navigate("/patient-dashboard/consultation-history");
@@ -336,7 +348,7 @@ export function PatientDashboardTop({
           What do you need today?
         </h2>
         <p className="mt-0.5 text-sm text-slate-500">
-          Book, check symptoms, pharmacy, labs, or chat.
+          Book, check symptoms, pharmacy, labs, upload results, or chat.
         </p>
       </div>
 

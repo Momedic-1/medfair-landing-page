@@ -3,17 +3,30 @@ import { baseUrl } from "../env";
 import Table from "../components/reuseables/Table";
 import axios from "axios";
 import { getId, getToken } from "../utils";
+import {
+  isSamePatientPageData,
+  readPatientPageCache,
+  writePatientPageCache,
+} from "../utils/patientPageCache";
 
 const PatientNotes = () => {
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   const patientId = getId();
   const token = getToken();
+  const cacheKey = patientId ? `pharmacy-notes:${patientId}` : null;
+  const cached = cacheKey ? readPatientPageCache(cacheKey) : null;
 
-  const fetchPatients = async () => {
-    setLoading(true);
+  const [results, setResults] = useState(() =>
+    Array.isArray(cached) ? cached : []
+  );
+  const [loading, setLoading] = useState(() => !Array.isArray(cached));
+  const [error, setError] = useState(null);
+
+  const fetchPatients = async ({ silent = false } = {}) => {
+    if (!patientId || !token) {
+      setLoading(false);
+      return;
+    }
+    if (!silent && !results.length) setLoading(true);
     try {
       const response = await axios.get(
         `${baseUrl}/api/notes/patient/${patientId}`,
@@ -25,30 +38,43 @@ const PatientNotes = () => {
         }
       );
 
-      const data = response?.data;
-      console.log("Fetched patient notes:", data);
-
-      setResults(data);
-    } catch (error) {
-      setError(error.message);
-      setLoading(false);
+      const raw = response?.data;
+      const next = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.items)
+          ? raw.items
+          : Array.isArray(raw?.content)
+            ? raw.content
+            : [];
+      setResults((prev) => (isSamePatientPageData(prev, next) ? prev : next));
+      if (cacheKey) writePatientPageCache(cacheKey, next);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      setResults((prev) => (prev.length ? prev : []));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPatients();
+    fetchPatients({ silent: Array.isArray(cached) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="h-screen flex ">
-      <div className="md:p-4 w-full">
+    <div className="flex min-h-[50vh]">
+      <div className="w-full md:p-4">
+        {error && !results.length ? (
+          <p className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
         <Table
           data={results}
-          isLoading={loading}
+          isLoading={loading && results.length === 0}
           patientId={patientId}
-          emptyMessage={"No Patients data"}
+          emptyMessage={"No pharmacy orders yet"}
         />
       </div>
     </div>
